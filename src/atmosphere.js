@@ -10,8 +10,9 @@ export function createAtmosphere(scene) {
 void main(){vec3 d=normalize(vWorld);float h=d.y;vec3 col=mix(bottom,mid,smoothstep(-.2,.28,h));col=mix(col,top,smoothstep(.15,.8,h));float sun=pow(max(0.,dot(d,normalize(vec3(-.8,.13,-1.)))),18.);col+=vec3(.17,.10,.025)*sun;float clouds=fbm(d.xz*5./max(.25,abs(d.y)+.3)+time*.002);float veil=smoothstep(.48,.77,clouds)*(1.-smoothstep(.08,.6,h));col=mix(col,bottom*1.07,veil*.38);float stars=step(.9978,hash(floor(d.xz/max(.16,h)*340.)))*smoothstep(.28,.75,h);col+=stars*.38;gl_FragColor=vec4(col,1.);#include <tonemapping_fragment>\n#include <colorspace_fragment>}`.replace(';#include',';\n#include')}));
   scene.add(sky);
   const cloudUniforms={time:uniforms.time,tint:{value:new T.Color()}};
-  const sea=new T.Mesh(new T.PlaneGeometry(1100,1100),new T.ShaderMaterial({uniforms:cloudUniforms,transparent:true,depthWrite:false,side:T.DoubleSide,vertexShader:`varying vec3 vWorld;void main(){vWorld=(modelMatrix*vec4(position,1.)).xyz;gl_Position=projectionMatrix*viewMatrix*vec4(vWorld,1.);}`,fragmentShader:`varying vec3 vWorld;uniform float time;uniform vec3 tint;${noise}
-void main(){vec2 p=vWorld.xz*.026+vec2(time*.002,0.);float n=fbm(p);float detail=fbm(p*3.);vec3 col=mix(tint*.83,vec3(1.,.9,.81),smoothstep(.22,.8,n));col+=pow(detail,3.)*.14;gl_FragColor=vec4(col,.98);#include <tonemapping_fragment>\n#include <colorspace_fragment>}`.replace(';#include',';\n#include')}));
+  // the cloud sea is far wider than any view and fades out, so no edge ever shows
+  const sea=new T.Mesh(new T.PlaneGeometry(4000,4000),new T.ShaderMaterial({uniforms:cloudUniforms,transparent:true,depthWrite:false,side:T.DoubleSide,vertexShader:`varying vec3 vWorld;void main(){vWorld=(modelMatrix*vec4(position,1.)).xyz;gl_Position=projectionMatrix*viewMatrix*vec4(vWorld,1.);}`,fragmentShader:`varying vec3 vWorld;uniform float time;uniform vec3 tint;${noise}
+void main(){vec2 p=vWorld.xz*.026+vec2(time*.002,0.);float n=fbm(p);float detail=fbm(p*3.);vec3 col=mix(tint*.83,vec3(1.,.9,.81),smoothstep(.22,.8,n));col+=pow(detail,3.)*.14;gl_FragColor=vec4(col,.98*(1.-smoothstep(700.,1800.,length(vWorld.xz))));#include <tonemapping_fragment>\n#include <colorspace_fragment>}`.replace(';#include',';\n#include')}));
   sea.rotation.x=-Math.PI/2;sea.position.y=-17;scene.add(sea);
   // Soft billows use one shared procedural sprite, keeping the cloud sea inexpensive.
   const canvas=document.createElement('canvas');canvas.width=canvas.height=128;
@@ -23,7 +24,27 @@ void main(){vec2 p=vWorld.xz*.026+vec2(time*.002,0.);float n=fbm(p);float detail
   for(const y of [7,19,32]){const band=new T.Mesh(new T.CylinderGeometry(190,190,.13,100,1,true),new T.MeshBasicMaterial({color:'#fae5c1',transparent:true,opacity:.095,side:T.DoubleSide,depthWrite:false}));band.position.y=y;bands.add(band);}
   // .004 buried the islands in haze; .0009 keeps depth without the milk
   scene.fog=new T.FogExp2('#dec4d1',.0009);
-  return {texture,setTone(tone){const p=palettes[tone]??palettes.peach;uniforms.top.value.set(p[0]);uniforms.mid.value.set(p[1]);uniforms.bottom.value.set(p[2]);cloudUniforms.tint.value.set(p[3]);scene.fog.color.set(p[3]);},update(t){uniforms.time.value=t;clouds.rotation.y=t*.001;}};
+  // far scenery for the sky view: small islands adrift, and thin high cloud
+  const isles=new T.Group(), haze=new T.Group();scene.add(isles,haze);
+  const mat=c=>new T.MeshStandardMaterial({color:c,roughness:1,flatShading:true});
+  const grass=mat('#c3cf9c'), rock=mat('#c7b6ab'), leaves=[mat('#a9c08a'),mat('#e9bfcc'),mat('#c9b6e4')];
+  for(let i=0;i<9;i++){
+    const a=i*2.399+.6, r=280+(i*53)%150, s=5+(i*7)%9, g=new T.Group();
+    const base=new T.Mesh(new T.ConeGeometry(s*.95,s*1.7,9),rock);base.rotation.x=Math.PI;base.position.y=-s*.95;
+    g.add(new T.Mesh(new T.CylinderGeometry(s,s*.92,s*.22,9),grass),base);
+    for(let k=0;k<1+i%3;k++){const t=new T.Mesh(new T.IcosahedronGeometry(s*(.28+.08*k),0),leaves[(i+k)%3]);t.position.set((k-1)*s*.35,s*.35,((k*5)%3-1)*s*.25);g.add(t);}
+    g.position.set(Math.cos(a)*r,-2+(i*17)%38,Math.sin(a)*r);g.rotation.y=a;g.userData={y:g.position.y,p:i};isles.add(g);
+  }
+  for(let n=0;n<26;n++){
+    const s=new T.Sprite(new T.SpriteMaterial({map:texture,color:'#fff3ea',transparent:true,depthWrite:false,opacity:.16+(n%4)*.04}));
+    const a=n*2.399+.3,r=160+(n*37)%230;s.position.set(Math.cos(a)*r,24+(n*13)%46,Math.sin(a)*r);s.scale.set(60+(n%5)*14,14+(n%3)*5,1);haze.add(s);
+  }
+  return {texture,setTone(tone){const p=palettes[tone]??palettes.peach;uniforms.top.value.set(p[0]);uniforms.mid.value.set(p[1]);uniforms.bottom.value.set(p[2]);cloudUniforms.tint.value.set(p[3]);scene.fog.color.set(p[3]);},
+    update(t,camera){
+      uniforms.time.value=t;clouds.rotation.y=t*.001;haze.rotation.y=t*.0006;
+      for(const g of isles.children)g.position.y=g.userData.y+Math.sin(t*.15+g.userData.p)*.8;
+      if(camera)sky.position.copy(camera.position);   // the dome travels with the eye: no outside to see
+    }};
 }
 
 const ramp=(a,b,x)=>{const t=Math.min(1,Math.max(0,(x-a)/(b-a)));return t*t*(3-2*t);};

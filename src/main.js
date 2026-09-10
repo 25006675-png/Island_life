@@ -22,6 +22,9 @@ const SPECIES_SCALE={sakura:1.05,purple:1.2,oak:.85,palm:1.0,mushrooms:.5,clover
 // NOTE: owner names are placeholders -- swap them for your real members.
 // Torii pillars, in member-island model units (same for every variant).
 const TORII_POSTS=[{x:-6.44,z:-3.85,r:.42},{x:-4.36,z:-6.15,r:.42}];
+// Everyone arrives just inside their own torii (PRODUCT.md: the arch is the
+// spawn point), the camera out beyond the gate looking in across the island.
+const ARCH_SPAWN=[-4.1,-3.8], ARCH_CAM=[-11.9,10,-10.7];
 
 // Bridges leave the gathering tree at 150, 10 and 300 degrees; the pond sits
 // in the middle against the tree's plaza, ringed by a path. Each member island is its own
@@ -38,13 +41,13 @@ const definitions=[
               {asset:'clover',n:4,a:4.10,r:15,spread:3.5}]},
 
   {id:'sakura',model:'meadow_a',owner:'Aisha',description:'A study-heavy week, softened by friends.',
-   x:-73.6,z:-42.5,altitude:5,scale:2.0,spawn:[0,4],obstacles:TORII_POSTS},
+   x:-73.6,z:-42.5,altitude:5,scale:2.0,spawn:ARCH_SPAWN,cam:ARCH_CAM,obstacles:TORII_POSTS},
 
   {id:'purple',model:'meadow_b',owner:'Ben',description:'Café shifts, lab work and band practice.',
-   x:83.7,z:-14.8,altitude:7,scale:2.0,spawn:[0,4],obstacles:TORII_POSTS},
+   x:83.7,z:-14.8,altitude:7,scale:2.0,spawn:ARCH_SPAWN,cam:ARCH_CAM,obstacles:TORII_POSTS},
 
   {id:'oak',model:'meadow_c',owner:'Chen',description:'Long internship days and exam prep.',
-   x:42.5,z:73.6,altitude:-4,scale:2.0,spawn:[0,4],obstacles:TORII_POSTS},
+   x:42.5,z:73.6,altitude:-4,scale:2.0,spawn:ARCH_SPAWN,cam:ARCH_CAM,obstacles:TORII_POSTS},
 ];
 for(const d of definitions){
   d.name=d.owner?`${d.owner}’s island`:d.name;
@@ -83,7 +86,7 @@ function plantIsland(island,group,assets){
 let renderer,scene,camera,controls,composer,atmosphere,gardener,life,forest;
 const islands=[],bridges=[],keys=new Set();
 let selected='community',mode='overview',ready=false,motion=!matchMedia('(prefers-reduced-motion: reduce)').matches,elapsed=0,last=0,transition=null,noticeTimer;
-const player={position:new T.Vector3(),surface:null,distance:0,hop:0,vy:0};
+const player={position:new T.Vector3(),surface:null,distance:0,hop:0,vy:0,stuck:0};
 const look=new T.Vector3(),targetPosition=new T.Vector3(),cameraOffset=new T.Vector3(0,11,17);
 const raycaster=new T.Raycaster(),pointer=new T.Vector2();
 const bridgeMaterial=new T.MeshStandardMaterial({color:'#efd2a2',emissive:'#ffbd62',emissiveIntensity:.3,roughness:.8});
@@ -143,13 +146,15 @@ function spawnOn(island){
   player.position.set(found.x,found.y,found.z);player.surface=found;
 }
 
-function visit(id){if(!ready)return;selected=id;mode='walk';const island=islands.find(i=>i.id===id);spawnOn(island);controls.enabled=true;controls.minDistance=6;controls.maxDistance=40;cameraOffset.set(0,10,16);camDesired=0;
+function visit(id){if(!ready)return;selected=id;mode='walk';const island=islands.find(i=>i.id===id);spawnOn(island);controls.enabled=true;controls.minDistance=6;controls.maxDistance=40;cameraOffset.set(...(island.cam??[0,10,16]));camDesired=0;camPull=0;
   transition={from:camera.position.clone(),targetFrom:controls.target.clone(),time:0};
   $('location-kicker').textContent=island.owner?`Visiting ${island.owner}`:'Everyone’s island';
   $('location-title').textContent=island.name;
   $('hint').textContent=(island.activities?.length?`${island.activities.join(' · ')}. `:'')
     +'WASD or arrow keys to wander. Cross a light bridge to visit a neighbour.';$('mode-hint').textContent='WASD to walk · Space to jump · Drag to look around · Esc for sky view';$('overview').setAttribute('aria-pressed','false');$('walk').setAttribute('aria-pressed','true');syncPanel();canvas.focus({preventScroll:true});}
-function overview(){if(!ready)return;mode='overview';controls.enabled=true;controls.minDistance=14;controls.maxDistance=520;transition={from:camera.position.clone(),targetFrom:controls.target.clone(),time:0};$('location-kicker').textContent='Your sky neighborhood';$('location-title').textContent='A world of little wonders.';$('hint').textContent='Choose an island. Stay a little while.';$('mode-hint').textContent='Drag to look around · Scroll to zoom';$('overview').setAttribute('aria-pressed','true');$('walk').setAttribute('aria-pressed','false');keys.clear();}
+function overview(){if(!ready)return;mode='overview';controls.enabled=true;controls.minDistance=14;controls.maxDistance=skyReach();transition={from:camera.position.clone(),targetFrom:controls.target.clone(),time:0};$('location-kicker').textContent='Your sky neighborhood';$('location-title').textContent='A world of little wonders.';$('hint').textContent='Choose an island. Stay a little while.';$('mode-hint').textContent='Drag to look around · Scroll to zoom';$('overview').setAttribute('aria-pressed','true');$('walk').setAttribute('aria-pressed','false');keys.clear();}
+// The sky view may zoom out a little past the framing, never far enough to lose the world.
+const skyReach=()=>overviewPosition().distanceTo(new T.Vector3(0,2,0))*1.25;
 function overviewPosition(){
   // Project every island's corners and solve for the distance that fits them
   // all. A closed-form guess breaks as soon as the layout is asymmetric --
@@ -182,11 +187,12 @@ function overviewPosition(){
 
 const facing=new T.Vector3();
 let camDesired=0;   // the orbit distance the user chose; collisions only pull in from it
+let camPull=0;      // where collisions currently hold the camera, eased
 const occRay=new T.Ray(),occHit=new T.Vector3(),camDir=new T.Vector3(),occSphere=new T.Sphere();
 // Trees between the gardener and the camera would swallow the view: pull the
 // camera in front of the nearest one. Planted trees are rough spheres; the
 // gathering tree's own trunk and canopy are raycast.
-function keepCameraClear(){
+function keepCameraClear(dt){
   camDir.subVectors(camera.position,look).normalize();occRay.set(look,camDir);
   let near=camDesired;
   for(const i of islands){
@@ -200,7 +206,22 @@ function keepCameraClear(){
       raycaster.far=Infinity;
     }
   }
-  if(near<camDesired)camera.position.copy(look).addScaledVector(camDir,Math.max(1.5,near-.5));
+  // ease rather than snap: in briskly when something blocks, back out slowly
+  const want=near<camDesired?Math.max(1.5,near-.5):camDesired;
+  camPull=camPull||camDesired;
+  camPull+=(want-camPull)*(1-Math.exp(-(want<camPull?10:2.5)*dt));
+  if(camPull<camDesired-.01)camera.position.copy(look).addScaledVector(camDir,camPull);
+}
+// Never trapped: when pressing a direction goes nowhere, check whether any
+// nearby step is possible; if none is (a tree grew here, the island moved),
+// step out to the nearest open ground.
+const around=(r,n,ok)=>{
+  for(let k=0;k<n;k++){const a=k/n*Math.PI*2,s=surfaceAt(islands,bridges,player.position.x+Math.cos(a)*r,player.position.z+Math.sin(a)*r);if(s&&ok(s))return s;}
+  return null;
+};
+function unstick(){
+  if(surfaceAt(islands,bridges,player.position.x,player.position.z)&&around(.3,8,s=>Math.abs(s.y-player.position.y)<.65))return;
+  for(let r=.5;r<=3;r+=.5){const s=around(r,16,()=>true);if(s){player.position.set(s.x,s.y,s.z);player.surface=s;return;}}
 }
 function jump(){if(mode==='walk'&&!transition&&!player.hop&&!player.vy)player.vy=6.2;}
 function walk(dt){
@@ -224,6 +245,7 @@ function walk(dt){
       if(s&&Math.abs(s.y-player.position.y)<.65){player.position.set(s.x,s.y,s.z);player.surface=s;moved=true;break;}
     }
   }
+  if(moved)player.stuck=0;else if((player.stuck+=dt)>.5){player.stuck=0;unstick();}
   if(moved){player.distance+=speed*dt;const turn=Math.atan2(dx,dz)-gardener.rotation.y;gardener.rotation.y+=Math.atan2(Math.sin(turn),Math.cos(turn))*(1-Math.exp(-12*dt));if(!player.hop)gardener.position.y=motion?Math.sin(player.distance*5)*.045:0;gardener.rotation.z=motion?Math.sin(player.distance*2.5)*.025:0;
     if(player.surface.kind==='island'&&player.surface.id!==selected){selected=player.surface.id;const i=islands.find(i=>i.id===selected);$('location-title').textContent=i.name;syncPanel();notice(`Welcome to ${i.name.toLowerCase()}.`);}
   }
@@ -243,7 +265,7 @@ renderer=new T.WebGLRenderer({canvas,antialias:true,powerPreference:'high-perfor
     return x?gl.getParameter(x.UNMASKED_RENDERER_WEBGL):gl.getParameter(gl.RENDERER);}catch(e){return 'unknown';}})();
   console.info('[Island Life] rendering on:',gpu);
   scene=new T.Scene();camera=new T.PerspectiveCamera(44,innerWidth/innerHeight,.1,2000);camera.position.copy(overviewPosition());
-  controls=new OrbitControls(camera,canvas);controls.target.set(0,2,0);controls.enableDamping=true;controls.enablePan=false;controls.minDistance=14;controls.maxDistance=520;controls.minPolarAngle=.3;controls.maxPolarAngle=1.33;controls.update();
+  controls=new OrbitControls(camera,canvas);controls.target.set(0,2,0);controls.enableDamping=true;controls.enablePan=false;controls.minDistance=14;controls.maxDistance=camera.position.distanceTo(controls.target)*1.25;controls.minPolarAngle=.3;controls.maxPolarAngle=1.33;controls.update();
   scene.add(new T.HemisphereLight('#fff2d4','#8d92aa',1.15));
   const sun=new T.DirectionalLight('#ffdeb2',2.0);sun.position.set(-45,65,25);sun.castShadow=true;sun.shadow.mapSize.set(LITE?512:2048,LITE?512:2048);sun.shadow.camera.left=-65;sun.shadow.camera.right=65;sun.shadow.camera.top=65;sun.shadow.camera.bottom=-65;sun.shadow.camera.far=180;sun.shadow.normalBias=.09;sun.shadow.bias=-.00015;scene.add(sun);
   const fill=new T.DirectionalLight('#bcd9e5',.9);fill.position.set(20,20,-30);scene.add(fill);
@@ -275,7 +297,7 @@ renderer=new T.WebGLRenderer({canvas,antialias:true,powerPreference:'high-perfor
   for(const island of islands){
     island.group.updateMatrixWorld(true);
     island.occluders=island.group.children.filter(c=>c!==island.model&&c.userData.islandId).map(c=>{
-      const s=new T.Box3().setFromObject(c).getBoundingSphere(new T.Sphere());s.center.sub(island.group.position);s.radius*=.75;return s;
+      const s=new T.Box3().setFromObject(c).getBoundingSphere(new T.Sphere());s.center.sub(island.group.position);s.radius*=.6;return s;
     }).filter(s=>s.radius>1.2);
     island.solid=['TreeWood','Canopy'].map(n=>island.model.getObjectByName(n)).filter(Boolean);
   }
@@ -298,13 +320,13 @@ function frame(time){
   if(LITE){ if(time-_last<33) return; _last=time; }   // cap ~30fps
 
   const dt=Math.min((time-last)/1000,.04);last=time;if(document.hidden)return;if(motion)elapsed+=dt;
-  walk(dt);player.root.position.copy(player.position);atmosphere.update(elapsed);for(const i of islands)i.weatherFx.update(elapsed);
+  walk(dt);player.root.position.copy(player.position);atmosphere.update(elapsed,camera);for(const i of islands)i.weatherFx.update(elapsed);
   if(transition){transition.time+=dt;const a=motion?Math.min(transition.time/1.2,1):1,e=1-Math.pow(1-a,4);look.copy(mode==='walk'?player.position:new T.Vector3(0,2,0));if(mode==='walk')look.y+=1;targetPosition.copy(mode==='walk'?player.position.clone().add(cameraOffset):overviewPosition());camera.position.lerpVectors(transition.from,targetPosition,e);controls.target.lerpVectors(transition.targetFrom,look,e);camera.lookAt(controls.target);if(a===1)transition=null;}
   // walk: orbit controls around the gardener -- drag to turn, scroll to zoom -- carried along as they move
   else if(mode==='walk'){look.copy(player.position);look.y+=1;
     camDir.subVectors(camera.position,controls.target).setLength(camDesired||camera.position.distanceTo(controls.target));
     camera.position.copy(look).add(camDir);controls.target.copy(look);controls.autoRotate=false;controls.update(dt);
-    camDesired=camera.position.distanceTo(look);keepCameraClear();}
+    camDesired=camera.position.distanceTo(look);keepCameraClear(dt);}
   else {controls.autoRotate=motion;controls.autoRotateSpeed=.1;controls.update(dt);}
   life.update(dt,elapsed,motion);
   forest.update(dt,elapsed,motion,id=>life.api.getSchedule(id));
