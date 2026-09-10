@@ -1,9 +1,29 @@
 // Rasterize the authored terrain once. Walking reads a small height field,
 // never a high-detail render mesh. Coordinates are local Three.js x/z.
 export class HeightField {
-  constructor(mesh, step = 0.35) {
-    this.step = step; this.size = 92; this.origin = -16;
+  // Accepts one object or several (terrain + plaza terraces + steps): the
+  // walkable height is the HIGHEST surface in each cell, so the gardener walks
+  // up the stone terraces instead of wading through them at grass level.
+  // Bounds come from the geometry, so larger or irregular islands just fit.
+  constructor(objects, step = 0.35) {
+    const list = [];
+    for (const o of (Array.isArray(objects) ? objects : [objects]))
+      o?.traverse?.(c => { if (c.isMesh) list.push(c); });
+    let lo = Infinity, hi = -Infinity;
+    for (const m of list) {
+      const p = m.geometry.attributes.position;
+      for (let n = 0; n < p.count; n++) {
+        const x = p.getX(n), z = p.getZ(n);
+        if (x < lo) lo = x; if (z < lo) lo = z; if (x > hi) hi = x; if (z > hi) hi = z;
+      }
+    }
+    this.step = step; this.origin = Math.floor(lo) - 1;
+    this.size = Math.ceil((hi - this.origin + 1) / step) + 1;
     this.heights = new Float32Array(this.size ** 2).fill(NaN);
+    for (const m of list) this.rasterize(m);
+  }
+  rasterize(mesh) {
+    const step = this.step;
     const pos = mesh.geometry.attributes.position, index = mesh.geometry.index;
     const get = (n) => { const i = index ? index.getX(n) : n; return [pos.getX(i), pos.getY(i), pos.getZ(i)]; };
     for (let k = 0, count = index?.count ?? pos.count; k < count; k += 3) {

@@ -8,6 +8,8 @@ OUT = os.path.join(ROOT, 'public', 'assets')
 os.makedirs(OUT, exist_ok=True)
 SOURCES = {
     'community': 'island1.blend', 'meadow': 'island2.blend',
+    'meadow_a': 'island2a.blend', 'meadow_b': 'island2b.blend',
+    'meadow_c': 'island2c.blend',
     'purple': 'Ghibli/Purple tree/ghibli_purple_tree_v7.blend',
     'oak': 'Ghibli/Golden oak/ghibli_oak.blend',
     'sakura': 'Ghibli/Sakura tree/ghibli_sakura.blend',
@@ -66,7 +68,7 @@ for key, source in SOURCES.items():
             flat_colors[mat.name] = tuple(src.default_value)
         links.new(emit.outputs[0], output.inputs['Surface'])
     # Combine prop/character objects before baking for a small number of draw calls.
-    if key not in {'community','meadow'}:
+    if not (key == 'community' or key.startswith('meadow')):
         bpy.ops.object.select_all(action='SELECT')
         bpy.context.view_layer.objects.active = objects[0]
         bpy.ops.object.join()

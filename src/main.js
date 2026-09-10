@@ -18,30 +18,41 @@ const ACTIVITIES={sakura:'Reading',purple:'Music',oak:'Cooking',
 const SPECIES_SCALE={sakura:1.05,purple:1.2,oak:.85,palm:1.0,mushrooms:.5,clover:.32};
 
 // NOTE: owner names are placeholders -- swap them for your real members.
+// Torii pillars, in member-island model units (same for every variant).
+const TORII_POSTS=[{x:-6.44,z:-3.85,r:.42},{x:-4.36,z:-6.15,r:.42}];
+
+// Bridges leave the gathering tree at 150, 10 and 300 degrees -- the pond was
+// rebuilt on the one side none of them use. Each member island is its own
+// irregular outline (meadow_a/b/c), and plantings sit away from its bridge
+// landing, its torii, and the camera side (+z) of the spawn -- the walk-in
+// camera sits behind the gardener at +z, so a grove there fills the view.
 const definitions=[
-  {id:'community',name:'The gathering tree',owner:null,
+  {id:'community',model:'community',name:'The gathering tree',owner:null,
    description:'Everyone’s island. The bridges start here.',
-   x:0,z:0,altitude:0,scale:2.2,spawn:[1,10],obstacles:[{x:6.2,z:-5.6,r:2.7}],
-   plantings:[{asset:'clover',n:4,a:2.2,r:15,spread:4},
-              {asset:'mushrooms',n:4,a:5.0,r:14,spread:3.5}]},
+   x:0,z:0,altitude:0,scale:2.2,spawn:[2,.5],
+   // trunk base is r3.2 with flutes to ~3.6; the old r2.7 let the gardener
+   // walk into the tree
+   obstacles:[{x:6.2,z:-5.6,r:4.4}],
+   plantings:[{asset:'mushrooms',n:4,a:2.79,r:6,spread:2.5},
+              {asset:'clover',n:4,a:4.10,r:15,spread:3.5}]},
 
-  {id:'sakura',owner:'Aisha',description:'Reading, and a little music.',
-   x:-78,z:-26,altitude:5,scale:1.9,spawn:[0,4],
-   plantings:[{asset:'sakura',n:4,a:0.5,r:12,spread:4.5},
-              {asset:'purple',n:3,a:2.7,r:13,spread:3.5},
-              {asset:'mushrooms',n:4,a:4.5,r:10,spread:3}]},
+  {id:'sakura',model:'meadow_a',owner:'Aisha',description:'Reading, and a little music.',
+   x:-73.6,z:-42.5,altitude:5,scale:2.0,spawn:[0,4],obstacles:TORII_POSTS,
+   plantings:[{asset:'sakura',n:4,a:2.79,r:15,spread:5},
+              {asset:'purple',n:3,a:4.89,r:16,spread:4},
+              {asset:'mushrooms',n:4,a:5.76,r:13,spread:3.5}]},
 
-  {id:'purple',owner:'Ben',description:'Music, cooking, a patch of clover.',
-   x:78,z:-28,altitude:7,scale:1.9,spawn:[0,4],
-   plantings:[{asset:'purple',n:4,a:1.1,r:12,spread:4},
-              {asset:'oak',n:3,a:3.3,r:13,spread:3.5},
-              {asset:'clover',n:4,a:5.2,r:11,spread:3.5}]},
+  {id:'purple',model:'meadow_b',owner:'Ben',description:'Music, cooking, a patch of clover.',
+   x:83.7,z:-14.8,altitude:7,scale:2.0,spawn:[0,4],obstacles:TORII_POSTS,
+   plantings:[{asset:'purple',n:4,a:0.35,r:15,spread:5},
+              {asset:'oak',n:3,a:4.89,r:16,spread:4},
+              {asset:'clover',n:4,a:5.76,r:13,spread:4}]},
 
-  {id:'oak',owner:'Chen',description:'Cooking, travel, and foraging.',
-   x:-8,z:86,altitude:-4,scale:1.9,spawn:[0,4],
-   plantings:[{asset:'oak',n:4,a:0.9,r:12,spread:4},
-              {asset:'palm',n:3,a:2.9,r:13,spread:3.5},
-              {asset:'mushrooms',n:4,a:4.8,r:10,spread:3}]},
+  {id:'oak',model:'meadow_c',owner:'Chen',description:'Cooking, travel, and foraging.',
+   x:42.5,z:73.6,altitude:-4,scale:2.0,spawn:[0,4],obstacles:TORII_POSTS,
+   plantings:[{asset:'oak',n:4,a:0.35,r:15,spread:5},
+              {asset:'palm',n:3,a:2.79,r:16,spread:4},
+              {asset:'mushrooms',n:4,a:5.59,r:13,spread:3.5}]},
 ];
 for(const d of definitions){
   d.name=d.owner?`${d.owner}’s island`:d.name;
@@ -100,7 +111,7 @@ function buildBridge(island){
   const cs=central.scale;
   let startRadius=10.8*cs;
   for(let r=10.8*cs;r<14*cs;r+=.15*cs){if(islandSurface(central,ux*r,uz*r,.05)){startRadius=r;break;}}
-  const endRadius=9.0*island.scale;
+  const endRadius=10.5*island.scale;
   const sx=ux*startRadius,sz=uz*startRadius,ex=island.x-ux*endRadius,ez=island.z-uz*endRadius;
   const sh=central.field.height(sx,sz)??.35,eh=island.field.height((ex-island.x)/island.scale,(ez-island.z)/island.scale)??.35;
   bridge.start=new T.Vector3(sx,central.altitude+Math.max(sh,.2)+.06,sz);
@@ -149,7 +160,7 @@ function overviewPosition(){
   // an island placed toward the camera sits much nearer than its radius says.
   const dir=new T.Vector3(0,.64,.77).normalize(),target=new T.Vector3(0,2,0),pts=[];
   for(const d of definitions){
-    const r=12.6*d.scale;
+    const r=15.5*d.scale;
     for(const ox of [-r,r]) for(const oz of [-r,r]) for(const oy of [-3*d.scale,9*d.scale])
       pts.push(new T.Vector3(d.x+ox,d.altitude+oy,d.z+oz));
   }
@@ -213,12 +224,18 @@ renderer=new T.WebGLRenderer({canvas,antialias:true,powerPreference:'high-perfor
   const fill=new T.DirectionalLight('#bcd9e5',.9);fill.position.set(20,20,-30);scene.add(fill);
   atmosphere=createAtmosphere(scene);atmosphere.setTone('peach');lanterns=createLanterns(scene,atmosphere.texture);lanterns.setDensity(36);
   composer=new EffectComposer(renderer);composer.addPass(new RenderPass(scene,camera));if(!LITE){const bloom=new UnrealBloomPass(new T.Vector2(innerWidth/2,innerHeight/2),.14,.6,1.25);composer.addPass(bloom);}composer.addPass(new OutputPass());
+  const KEYS=['community','meadow_a','meadow_b','meadow_c','purple','oak','sakura','palm','mushrooms','clover','gardener'];
+  $('load-progress').max=KEYS.length;
   const loader=new GLTFLoader(),assets={};let loaded=0;
-  await Promise.all(['community','meadow','purple','oak','sakura','palm','mushrooms','clover','gardener'].map(async key=>{assets[key]=(await loader.loadAsync(`${import.meta.env.BASE_URL}assets/${key}.glb`)).scene;setMaterials(assets[key]);$('load-progress').value=++loaded;$('loading-text').textContent=`Gathering the gardens · ${loaded} of 9`; }));
-  const fields={community:new HeightField(assets.community.getObjectByName('Island')),meadow:new HeightField(assets.meadow.getObjectByName('Island'))};
-  for(const def of definitions){const island={...def,weather:'clear',field:fields[def.id==='community'?'community':'meadow'],obstacles:[...(def.obstacles??[])]};
+  await Promise.all(KEYS.map(async key=>{assets[key]=(await loader.loadAsync(`${import.meta.env.BASE_URL}assets/${key}.glb`)).scene;setMaterials(assets[key]);$('load-progress').value=++loaded;$('loading-text').textContent=`Gathering the gardens · ${loaded} of ${KEYS.length}`; }));
+  // walkable = terrain PLUS the raised surfaces people stand on
+  const WALKABLE={community:['Island','Plaza'],meadow:['Island','Path','ToriiSteps']};
+  const fields={};
+  for(const key of ['community','meadow_a','meadow_b','meadow_c'])
+    fields[key]=new HeightField(WALKABLE[key==='community'?'community':'meadow'].map(n=>assets[key].getObjectByName(n)));
+  for(const def of definitions){const island={...def,weather:'clear',field:fields[def.model],obstacles:[...(def.obstacles??[])]};
     const group=new T.Group();group.position.set(def.x,def.altitude,def.z);scene.add(group);island.group=group;
-    const model=assets[def.id==='community'?'community':'meadow'].clone(true);model.scale.setScalar(def.scale);group.add(model);island.model=model;model.traverse(o=>{o.userData.islandId=def.id;});
+    const model=assets[def.model].clone(true);model.scale.setScalar(def.scale);group.add(model);island.model=model;model.traverse(o=>{o.userData.islandId=def.id;});
     plantIsland(island,group,assets);
     island.weatherFx=createWeather(atmosphere.texture);island.weatherFx.group.position.copy(group.position);scene.add(island.weatherFx.group);
     const label=document.createElement('button');label.className='island-label';label.textContent=def.name;label.dataset.island=def.id;label.addEventListener('click',()=>visit(def.id));$('island-labels').append(label);island.label=label;

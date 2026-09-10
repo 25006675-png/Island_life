@@ -9,16 +9,20 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 exec(compile(open(os.path.join(HERE, "island_build.py"), encoding="utf-8").read(),
              "island_build.py", "exec"))
 
-# ---- pond: sized so there is a continuous walkable shore all the way round.
-# Measured: at the old 8.7 x 6.6 the shore pinched to 0.98 m at 158 deg, which
-# is impassable at this scale (the bridges are 2 m wide). Shrinking 15% and
-# recentring lifts the worst case to 2.53 m, mean 5.6 m.
-POND_A, POND_B = 7.39, 5.61
-POND_C         = (-1.9, -0.7)
+# ---- pond: pushed to the front-left rim, clear of every bridge.
+# The web scene's bridges leave this island at 150, 10 and 300 degrees
+# (Blender frame). The only wide bridge-free side is the front-left, so the
+# pond lives there as a kidney that follows the rim (POND_BEND), leaving the
+# middle and the whole back open for walking. Its tips sit at ~177 and ~273
+# degrees, at least 5.8 units from the nearest bridge landing.
+POND_C         = (-4.67, -4.67)       # 6.6 units out at 225 degrees
+POND_A, POND_B = 4.9, 3.1
+POND_ROT       = math.radians(-45)    # long axis tangential to the rim
+POND_BEND      = 0.70
 
 # bridge / waterfall / vine placement, in radians around the rim
-BRIDGES   = [-math.pi / 2, 0.0, math.pi, math.pi * 0.52]
-FALLS     = [-1.38, -0.96, -2.42]
+BRIDGES   = [math.radians(300), math.radians(10), math.radians(150)]  # = web bridges
+FALLS     = [math.radians(221), math.radians(250), math.radians(112)]  # clear of them
 TREE_AT   = (6.2, 5.6, None)
 
 
@@ -47,16 +51,14 @@ def build_all():
 
     # ---------------- stone plaza + paths ----------------
     mb_stone = build_plaza(torig, r_out=5.8, steps=3)
-    front = rim_point(BRIDGES[0])
-    right = rim_point(BRIDGES[1])
-    path_ribbon(mb_stone, [
-        (torig[0] - 4.0, torig[1] - 3.0), (2.2, -0.9), (0.6, -4.2),
-        (front.x * 0.55, front.y * 0.62), (front.x * 0.86, front.y * 0.88)],
-        width=1.45)
-    path_ribbon(mb_stone, [
-        (torig[0] + 1.2, torig[1] - 4.6), (7.4, -1.2),
-        (right.x * 0.80, right.y * 0.8 - 0.6), (right.x * 0.93, right.y - 0.3)],
-        width=1.25)
+    def landing(a, r=10.9):
+        return (math.cos(a) * r, math.sin(a) * r)
+    # a paved route from the plaza to each bridge; the 10-degree bridge lands
+    # on the plaza apron itself, so it needs no path of its own
+    path_ribbon(mb_stone, [(5.9, -1.2), (5.8, -4.6), landing(BRIDGES[0])],
+                width=1.45)
+    path_ribbon(mb_stone, [(-0.5, 5.6), (-4.5, 6.4), landing(BRIDGES[2])],
+                width=1.35)
     plaza = mb_stone.emit("Plaza", mat_stone())
     link(plaza, "Props")
 
@@ -148,6 +150,9 @@ def main():
     setup_compositor(sc)
     if SAVEBLEND:
         bpy.ops.wm.save_as_mainfile(filepath=SAVEBLEND)
+    if "--norender" in argv:          # asset rebuilds only need the .blend
+        print("SAVED", SAVEBLEND)
+        return
     sc.render.filepath = OUT
     bpy.ops.render.render(write_still=True)
     print("WROTE", OUT)

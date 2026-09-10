@@ -13,12 +13,15 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 exec(compile(open(os.path.join(HERE, "island_build.py"), encoding="utf-8").read(),
              "island_build.py", "exec"))
 
-# ---- island 2 is a hard-edged square slab, dry, with a deep keel ----------
+# ---- member islands: dry meadow, irregular outline, deep keel -------------
 POND_ON  = False
-SQUIRCLE = 11.0          # near-square plateau with only a hint of rounding
-R0       = 10.5
+VARIANT  = argval("--variant", 0, int)   # 0,1,2 -> one outline per member
+SQUIRCLE = 2.7           # rounded, not square
+R0       = 13.0          # ~24% larger than the old 10.5 -- room for ~30 plantings
 KEEL     = 1.02          # tapers to a ridge, as in the reference
-RIM_WOBBLE = 0.022       # crisp square edge, unlike island 1
+RIM_WOBBLE  = 0.13       # broad lobes
+RIM_WOBBLE2 = 0.055      # finer bays and headlands
+RIM_SEED = 0.7 + 3.1 * VARIANT
 GRASS_Z  = 0.35
 CLIFF_DEEP = 1.35        # island 2 sits on a deeper block
 
@@ -29,7 +32,7 @@ TORII_FACING = math.radians(-42.0)
 def build_all():
     wipe()
     sc = bpy.context.scene
-    rnd = random.Random(1717)
+    rnd = random.Random(1717 + 101 * VARIANT)
 
     # ---------------- landmass ----------------
     island, outline, rim_xy = build_island()
@@ -112,6 +115,9 @@ def main():
     setup_compositor(sc)
     if SAVEBLEND:
         bpy.ops.wm.save_as_mainfile(filepath=SAVEBLEND)
+    if "--norender" in argv:          # asset rebuilds only need the .blend
+        print("SAVED", SAVEBLEND)
+        return
     sc.render.filepath = OUT
     bpy.ops.render.render(write_still=True)
     print("WROTE", OUT)

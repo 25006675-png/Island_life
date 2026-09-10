@@ -133,6 +133,9 @@ WATER_Z   = 0.10
 POND_ON   = True         # island 2 has no pond
 KEEL      = 0.86         # how hard the underside tapers to a keel
 RIM_WOBBLE= 0.055        # organic wander of the plateau outline
+RIM_WOBBLE2 = 0.0        # second, finer wobble -> bays and headlands
+RIM_SEED  = 0.0          # shifts the outline noise; 0 keeps island 1 as is
+POND_BEND = 0.0          # >0 curves the pond into a kidney along the rim
 CLIFF_DEEP= 1.00         # multiplier on total cliff depth
 
 RIM_ROT = math.pi / 4.0          # corner toward the viewer
@@ -142,8 +145,10 @@ def rim_radius(t):
     tt = t + RIM_ROT
     c, s = abs(math.cos(tt)), abs(math.sin(tt))
     sq = R0 / ((c ** SQUIRCLE + s ** SQUIRCLE) ** (1.0 / SQUIRCLE))
-    w  = fbm((math.cos(t) * 1.7, math.sin(t) * 1.7, 3.3), 3)
-    return sq * (1.0 + RIM_WOBBLE * w)
+    w  = fbm((math.cos(t) * 1.7 + RIM_SEED, math.sin(t) * 1.7, 3.3 + RIM_SEED), 3)
+    w2 = (fbm((math.cos(t) * 3.6 - RIM_SEED, math.sin(t) * 3.6, 7.1 + RIM_SEED), 2)
+          if RIM_WOBBLE2 else 0.0)
+    return sq * (1.0 + RIM_WOBBLE * w + RIM_WOBBLE2 * w2)
 
 def pond_sd(x, y):
     """signed distance-ish field of the pond, <0 inside"""
@@ -152,9 +157,9 @@ def pond_sd(x, y):
     dx, dy = x - POND_C[0], y - POND_C[1]
     ca, sa = math.cos(POND_ROT), math.sin(POND_ROT)
     u, v = (dx * ca + dy * sa) / POND_A, (-dx * sa + dy * ca) / POND_B
+    v -= POND_BEND * u * u        # bend the ends inward so it hugs the rim
     d = math.hypot(u, v) - 1.0
     d += 0.085 * fbm((u * 2.2, v * 2.2, 11.0), 3)
-    # bite out of the right side so the shore wraps around the tree plaza
     return d
 
 def smoothstep(e0, e1, x):
