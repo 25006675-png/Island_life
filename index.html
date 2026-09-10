@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><meta name="theme-color" content="#b9afd1"/><title>Island Life · Above the clouds</title></head>
+<body>
+  <main id="app">
+    <canvas id="world" aria-label="Floating island world. Choose an island below to visit, then use WASD or arrow keys to walk." tabindex="0"></canvas>
+    <header><div class="brand"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M4 17 16 23 28 17 16 12Z M9 20 16 29 23 20 M16 13V6 M16 9C8 10 8 3 8 3s8-1 8 6Zm0-2c0-7 9-5 9-5s-1 7-9 7"/></svg><div>Island Life<span>A little closer to the sky</span></div></div><div class="header-actions"><span id="sky-label">Peach twilight</span><button id="settings-toggle" aria-expanded="false" aria-controls="settings">Tune the world <span aria-hidden="true">☷</span></button></div></header>
+    <div id="island-labels" aria-label="Visit an island"></div>
+    <aside id="settings" hidden aria-label="World settings">
+      <div class="panel-heading"><h2>Make it your evening</h2><button id="settings-close" aria-label="Close world settings">×</button></div>
+      <label>Sky tone<select id="sky-tone"><option value="peach">Peach twilight</option><option value="lavender">Lavender dusk</option><option value="mint">Mint daybreak</option></select></label>
+      <label>Floating lanterns <output id="lantern-value">36</output><input id="lantern-density" type="range" min="0" max="80" value="36"/></label>
+      <label class="check"><input id="motion" type="checkbox" checked/> Gentle motion</label>
+      <hr/><label>Island<select id="island-select"></select></label>
+      <label>Altitude <output id="altitude-value"></output><input id="altitude" type="range" min="-7" max="16" step="0.5"/></label>
+      <label>Local weather<select id="weather"><option value="clear">Clear skies</option><option value="rain">A passing rain cloud</option><option value="mist">Soft morning mist</option></select></label>
+      <label id="bridge-control">Bridge glow <output id="bridge-value"></output><input id="bridge-glow" type="range" min="0" max="3" step="0.1"/></label>
+      <button id="reset" class="text-button">Restore this evening</button>
+    </aside>
+    <footer><div class="place"><span id="location-kicker">Your sky neighborhood</span><h1 id="location-title">A world of little wonders.</h1><p id="hint">Choose an island. Stay a little while.</p></div><nav class="view-controls" aria-label="Camera view"><button id="overview" aria-pressed="true">↗ <span>Sky view</span></button><button id="walk" aria-pressed="false">♧ <span>Take a walk</span></button></nav><div class="help"><span id="mode-hint">Drag to look around · Scroll to zoom</span><span>Somewhere above the everyday</span></div></footer>
+    <div id="loading" role="status"><div class="loading-leaf">♧</div><h2>Your islands are coming into view.</h2><p id="loading-text">Gathering the gardens…</p><progress id="load-progress" max="9" value="0"></progress></div>
+    <div id="notice" role="status" aria-live="polite"></div>
+  </main><script type="module" src="/src/main.js"></script>
+</body></html>

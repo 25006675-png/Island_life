@@ -1,0 +1,15 @@
+{
+  "mesh_objects": 154,
+  "evaluated_vertices": 2208144,
+  "evaluated_triangles": 4413956,
+  "nonfinite_vertices": 0,
+  "inverted_closed_meshes": [],
+  "cameras": [
+    "Camera \u2022 face study",
+    "Camera \u2022 rear three quarter",
+    "Camera \u2022 reference portrait",
+    "Camera \u2022 side profile",
+    "Camera \u2022 straight front"
+  ],
+  "packed_reference": true
+}
