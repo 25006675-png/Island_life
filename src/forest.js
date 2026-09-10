@@ -17,11 +17,33 @@ import { SPECIES, HISTORY, tier, treeCard } from './groves.js';
 const ORDER=['study','work','errands','social','exercise','rest','other'];
 const R_IN=11.5, R_OUT=26;   // scene units; the timetable loop runs at r=8 (timetable.js RADIUS)
 const BRIDGE_GAP=.35;        // radians kept clear either side of the bridge landing
-// ...and either side of the walk-in camera, which looks over the gardener's
-// shoulder from +z of the spawn: trees there pull the camera in close
-// (main.js keepCameraClear).
-const CAMERA_GAP=.42;
+// ...and either side of the line from the walk-in camera to the spawn point
+// (main.js island.spawn / island.cam): trees there pull the camera in close.
+const CAMERA_GAP=.35;
 const TAU=Math.PI*2, mod=a=>((a%TAU)+TAU)%TAU;
+
+// Free arcs of the ring once the gaps ([centre, half-width] pairs, the first
+// being the bridge) are cut out. Gaps may overlap -- the camera line and the
+// bridge landing do on Chen's island -- so they are merged first. Returns the
+// total free angle and angleAt(u), which maps 0..span onto the free arcs.
+function freeRing(gaps){
+  const start=mod(gaps[0][0]+gaps[0][1]);
+  const cuts=[];
+  for(const [c,h] of gaps){
+    const a=mod(c-h-start), b=a+2*h;
+    if(b<=TAU)cuts.push([a,b]);else cuts.push([a,TAU],[0,b-TAU]);
+  }
+  cuts.sort((p,q)=>p[0]-q[0]);
+  const free=[];let at=0;
+  for(const [a,b] of cuts){if(a>at)free.push([at,a]);at=Math.max(at,b);}
+  if(at<TAU)free.push([at,TAU]);
+  const span=free.reduce((s,[a,b])=>s+b-a,0);
+  const angleAt=u=>{
+    for(const [a,b] of free){if(u<=b-a)return start+a+u;u-=b-a;}
+    return start+free.at(-1)[1];
+  };
+  return {span,angleAt};
+}
 const ROOT_SECONDS=2.6, DRIFT_SECONDS=3;
 const STATUS={done:'done',now:'happening now',planned:'planned',skipped:'let go'};
 const SUN=new T.Vector3(-45,65,25).normalize();   // main.js key light
@@ -91,17 +113,17 @@ export function createForest({assets,islandSurface,speciesScale}){
   // One wedge per category, widths weighted by tree count (+2 so a small
   // category still gets room). Wedges are laid out in "free angle" u, which
   // runs round the island from just past the bridge landing and skips the
-  // camera gap; island.angleAt(u) turns it back into a real angle.
+  // gaps; island.angleAt(u) turns it back into a real angle.
   function layout(island){
     const count={};
     for(const e of HISTORY[island.id]??[])count[e.cat]=(count[e.cat]??0)+1;
     for(const b of SCHEDULES[island.id]??[])count[b.cat]=(count[b.cat]??0)+1;
     const cats=ORDER.filter(c=>count[c]), weight=c=>count[c]+2;
     const total=cats.reduce((a,c)=>a+weight(c),0);
-    const start=Math.atan2(-island.z,-island.x)+BRIDGE_GAP;   // island-local direction to the gathering island
-    const camAt=mod(Math.atan2(island.spawn[1],island.spawn[0])-CAMERA_GAP-start);
-    island.span=TAU-2*BRIDGE_GAP-2*CAMERA_GAP;
-    island.angleAt=u=>start+u+(u<camAt?0:2*CAMERA_GAP);
+    const s=island.scale, cam=island.cam??[0,10,16];
+    const camAngle=Math.atan2(island.spawn[1]*s+cam[2],island.spawn[0]*s+cam[0]);
+    const ring=freeRing([[Math.atan2(-island.z,-island.x),BRIDGE_GAP],[camAngle,CAMERA_GAP]]);
+    island.span=ring.span;island.angleAt=ring.angleAt;
     island.territories={};
     let u=0;
     for(const c of cats){const w=island.span*weight(c)/total;island.territories[c]={u0:u,u1:u+w};u+=w;}
