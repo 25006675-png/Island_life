@@ -34,22 +34,36 @@ for key, source in SOURCES.items():
             if m.type == 'SUBSURF': m.levels = min(m.levels, 1); m.render_levels = m.levels
     bpy.ops.object.convert(target='MESH')
     objects = list(scene.objects)
-    # Convert each material's authored base-color graph to emission for baking.
+    # Resolve each material's authored base colour.
+    #   - flat colour  -> recorded, written straight to vertex colours later
+    #   - node graph   -> routed to an Emission shader and baked by Cycles
+    # The old code read only `default_value` for non-Principled materials, so
+    # every shader whose colour was LINKED to a ramp (all the painterly foliage,
+    # and the whole character) baked out as flat 0.8 grey / white.
+    flat_colors, needs_bake = {}, False
     for mat in bpy.data.materials:
-        if not mat.use_nodes: continue
+        if not mat.use_nodes:
+            flat_colors[mat.name] = tuple(mat.diffuse_color); continue
         nodes, links = mat.node_tree.nodes, mat.node_tree.links
         output = next((n for n in nodes if n.type == 'OUTPUT_MATERIAL'), None)
-        bsdf = next((n for n in nodes if n.type == 'BSDF_PRINCIPLED'), None)
         if not output: continue
-        emit = nodes.new('ShaderNodeEmission')
-        if bsdf:
-            color = bsdf.inputs['Base Color']
-            if color.is_linked: links.new(color.links[0].from_socket, emit.inputs['Color'])
-            else: emit.inputs['Color'].default_value = color.default_value
+        bsdf = next((n for n in nodes if n.type == 'BSDF_PRINCIPLED'), None)
+        src = None
+        if bsdf: src = bsdf.inputs['Base Color']
         else:
-            diffuse = next((n for n in nodes if n.type in {'BSDF_DIFFUSE','EMISSION'} and n != emit), None)
-            if diffuse: emit.inputs['Color'].default_value = diffuse.inputs['Color'].default_value
-            else: emit.inputs['Color'].default_value = mat.diffuse_color
+            alt = next((n for n in nodes if n.type in {'BSDF_DIFFUSE','EMISSION'}), None)
+            if alt: src = alt.inputs['Color']
+        if src is None:
+            flat_colors[mat.name] = tuple(mat.diffuse_color); continue
+        emit = nodes.new('ShaderNodeEmission')
+        if src.is_linked:
+            links.new(src.links[0].from_socket, emit.inputs['Color'])
+            needs_bake = True
+            # fallback so a failed/blank bake can never leave the mesh black
+            flat_colors[mat.name] = tuple(src.default_value)
+        else:
+            emit.inputs['Color'].default_value = src.default_value
+            flat_colors[mat.name] = tuple(src.default_value)
         links.new(emit.outputs[0], output.inputs['Surface'])
     # Combine prop/character objects before baking for a small number of draw calls.
     if key not in {'community','meadow'}:
@@ -68,11 +82,49 @@ for key, source in SOURCES.items():
     scene.cycles.samples = 1
     scene.render.bake.target = 'VERTEX_COLORS'
     for o in objects:
-        attr = o.data.color_attributes.get('BrowserColor') or o.data.color_attributes.new(name='BrowserColor', type='FLOAT_COLOR', domain='CORNER')
-        o.data.color_attributes.active_color = attr
-    bpy.ops.object.select_all(action='SELECT')
-    bpy.context.view_layer.objects.active = objects[0]
-    bpy.ops.object.bake(type='EMIT')
+        me = o.data
+        # NB: authored colour attributes are stripped AFTER baking, not before.
+        # The character's face material READS its 'Peach and blush' layer, so
+        # deleting it early made the face bake to black.
+        attr = me.color_attributes.get('BrowserColor') or me.color_attributes.new(
+            name='BrowserColor', type='FLOAT_COLOR', domain='CORNER')
+        me.color_attributes.active_color = attr
+        try:
+            i = me.color_attributes.find('BrowserColor')
+            me.color_attributes.active_color_index = i
+            me.color_attributes.render_color_index = i
+        except Exception:
+            pass
+    # Flat colours are written directly -- deterministic, and immune to the
+    # bake silently producing white (which is what happened to the character).
+    for o in objects:
+        me = o.data
+        attr = me.color_attributes['BrowserColor']
+        slots = [ms.material.name if ms.material else None for ms in o.material_slots]
+        for poly in me.polygons:
+            name = slots[poly.material_index] if poly.material_index < len(slots) else None
+            col = flat_colors.get(name)
+            if col is None: continue
+            for li in poly.loop_indices:
+                attr.data[li].color = (col[0], col[1], col[2], 1.0)
+        painted = sum(1 for n in slots if n in flat_colors)
+        print('  %s: %d/%d slots flat-painted' % (o.name[:28], painted, len(slots)), flush=True)
+    if needs_bake:
+        bpy.ops.object.select_all(action='SELECT')
+        bpy.context.view_layer.objects.active = objects[0]
+        bpy.ops.object.bake(type='EMIT')
+    # Now that baking is done, leave exactly one colour attribute so it lands
+    # in COLOR_0 -- a second one exports as COLOR_1, which glTF readers ignore.
+    for o in objects:
+        for ca in list(o.data.color_attributes):
+            if ca.name != 'BrowserColor':
+                o.data.color_attributes.remove(ca)
+        i = o.data.color_attributes.find('BrowserColor')
+        try:
+            o.data.color_attributes.active_color_index = i
+            o.data.color_attributes.render_color_index = i
+        except Exception:
+            pass
     browser_mat = bpy.data.materials.new('Painted asset colors')
     browser_mat.use_nodes = True
     bsdf = browser_mat.node_tree.nodes.get('Principled BSDF')

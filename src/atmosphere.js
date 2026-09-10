@@ -21,7 +21,8 @@ void main(){vec2 p=vWorld.xz*.026+vec2(time*.002,0.);float n=fbm(p);float detail
   for(let n=0;n<100;n++) {const s=new T.Sprite(new T.SpriteMaterial({map:texture,color:'#ffe3d3',transparent:true,depthWrite:false,opacity:.45}));const angle=n*2.399,r=22+Math.sqrt(n/100)*150;s.position.set(Math.cos(angle)*r,-13+(n%5)*.5,Math.sin(angle)*r);s.scale.set(30+n%7*5,11+n%4*3,1);clouds.add(s);}
   const bands=new T.Group();scene.add(bands);
   for(const y of [7,19,32]){const band=new T.Mesh(new T.CylinderGeometry(190,190,.13,100,1,true),new T.MeshBasicMaterial({color:'#fae5c1',transparent:true,opacity:.095,side:T.DoubleSide,depthWrite:false}));band.position.y=y;bands.add(band);}
-  scene.fog=new T.FogExp2('#dec4d1',.004);
+  // .004 buried the islands in haze; .0009 keeps depth without the milk
+  scene.fog=new T.FogExp2('#dec4d1',.0009);
   return {texture,setTone(tone){const p=palettes[tone]??palettes.peach;uniforms.top.value.set(p[0]);uniforms.mid.value.set(p[1]);uniforms.bottom.value.set(p[2]);cloudUniforms.tint.value.set(p[3]);scene.fog.color.set(p[3]);},update(t){uniforms.time.value=t;clouds.rotation.y=t*.001;}};
 }
 

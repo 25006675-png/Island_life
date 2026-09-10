@@ -10,13 +10,71 @@ import { HeightField, bridgePoint, surfaceAt, islandSurface } from './navigation
 import { createAtmosphere, createLanterns, createWeather } from './atmosphere.js';
 
 const $=id=>document.getElementById(id), canvas=$('world');
+// One tree species = one activity type. Rename freely; nothing else depends
+// on the wording. `plantings` groups each species into its own grove rather
+// than interleaving them, so a glance reads as "this member does X and Y".
+const ACTIVITIES={sakura:'Reading',purple:'Music',oak:'Cooking',
+                  palm:'Travel',mushrooms:'Foraging',clover:'Gardening'};
+const SPECIES_SCALE={sakura:1.05,purple:1.2,oak:.85,palm:1.0,mushrooms:.5,clover:.32};
+
+// NOTE: owner names are placeholders -- swap them for your real members.
 const definitions=[
-  {id:'community',name:'The gathering tree',description:'A quiet shore, a familiar place.',x:0,z:0,altitude:0,scale:1,spawn:[1,10],obstacles:[{x:6.2,z:-5.6,r:2.7}]},
-  {id:'sakura',name:'Blossom garden',description:'A few petals, carried on the breeze.',x:-33,z:-14,altitude:7,scale:.55,tree:'sakura',treeScale:1.05,spawn:[0,4]},
-  {id:'purple',name:'Lavender grove',description:'Room to wander. Time to breathe.',x:33,z:-15,altitude:10,scale:.53,tree:'purple',treeScale:1.2,spawn:[0,4]},
-  {id:'oak',name:'Golden meadow',description:'The last of the sunlight lives here.',x:-29,z:27,altitude:-3,scale:.48,tree:'oak',treeScale:.85,spawn:[0,4]},
-  {id:'palm',name:'The little hideaway',description:'A small corner of the endless sky.',x:30,z:26,altitude:-5,scale:.48,tree:'palm',treeScale:1.0,spawn:[0,4]},
+  {id:'community',name:'The gathering tree',owner:null,
+   description:'Everyone’s island. The bridges start here.',
+   x:0,z:0,altitude:0,scale:2.2,spawn:[1,10],obstacles:[{x:6.2,z:-5.6,r:2.7}],
+   plantings:[{asset:'clover',n:4,a:2.2,r:15,spread:4},
+              {asset:'mushrooms',n:4,a:5.0,r:14,spread:3.5}]},
+
+  {id:'sakura',owner:'Aisha',description:'Reading, and a little music.',
+   x:-78,z:-26,altitude:5,scale:1.9,spawn:[0,4],
+   plantings:[{asset:'sakura',n:4,a:0.5,r:12,spread:4.5},
+              {asset:'purple',n:3,a:2.7,r:13,spread:3.5},
+              {asset:'mushrooms',n:4,a:4.5,r:10,spread:3}]},
+
+  {id:'purple',owner:'Ben',description:'Music, cooking, a patch of clover.',
+   x:78,z:-28,altitude:7,scale:1.9,spawn:[0,4],
+   plantings:[{asset:'purple',n:4,a:1.1,r:12,spread:4},
+              {asset:'oak',n:3,a:3.3,r:13,spread:3.5},
+              {asset:'clover',n:4,a:5.2,r:11,spread:3.5}]},
+
+  {id:'oak',owner:'Chen',description:'Cooking, travel, and foraging.',
+   x:-8,z:86,altitude:-4,scale:1.9,spawn:[0,4],
+   plantings:[{asset:'oak',n:4,a:0.9,r:12,spread:4},
+              {asset:'palm',n:3,a:2.9,r:13,spread:3.5},
+              {asset:'mushrooms',n:4,a:4.8,r:10,spread:3}]},
 ];
+for(const d of definitions){
+  d.name=d.owner?`${d.owner}’s island`:d.name;
+  d.activities=[...new Set((d.plantings??[]).map(p=>ACTIVITIES[p.asset]).filter(Boolean))];
+}
+
+// Plant one species per group so each grove reads as a single activity.
+function plantIsland(island,group,assets){
+  let seed=island.id.length*977+41;
+  const rnd=()=>{seed=(seed*1103515245+12345)&0x7fffffff;return seed/0x7fffffff;};
+  for(const g of island.plantings??[]){
+    const cx=Math.cos(g.a)*g.r,cz=Math.sin(g.a)*g.r;
+    let made=0;
+    for(let tries=0;tries<g.n*20&&made<g.n;tries++){
+      const t=rnd()*Math.PI*2,d=Math.sqrt(rnd())*g.spread;
+      const ox=cx+Math.cos(t)*d,oz=cz+Math.sin(t)*d;
+      const surface=islandSurface(island,island.x+ox,island.z+oz,1.1);
+      if(!surface)continue;
+      const lx=ox/island.scale,lz=oz/island.scale;
+      if(island.obstacles.some(o=>Math.hypot(lx-o.x,lz-o.z)<o.r+.8))continue;
+      const model=assets[g.asset].clone(true);
+      const sc=(SPECIES_SCALE[g.asset]??1)*(.85+rnd()*.4);
+      model.scale.setScalar(sc);
+      model.position.set(ox,surface.y-island.altitude,oz);
+      model.rotation.y=rnd()*Math.PI*2;
+      model.traverse(o=>{o.userData.islandId=island.id;});
+      group.add(model);
+      if(g.asset!=='mushrooms'&&g.asset!=='clover')
+        island.obstacles.push({x:lx,z:lz,r:.85*sc/island.scale});
+      made++;
+    }
+  }
+}
 let renderer,scene,camera,controls,composer,atmosphere,lanterns,gardener;
 const islands=[],bridges=[],keys=new Set();
 let selected='community',mode='overview',ready=false,motion=!matchMedia('(prefers-reduced-motion: reduce)').matches,elapsed=0,last=0,transition=null,noticeTimer;
@@ -39,9 +97,10 @@ function buildBridge(island){
   else {bridge={id:island.id,glow:1.2,width:1.75,arch:3.4};bridges.push(bridge);}
   const central=islands[0],dx=island.x,dz=island.z,length=Math.hypot(dx,dz),ux=dx/length,uz=dz/length;
   // Start well inside each safe shoreline so terrain and bridge overlap.
-  let startRadius=10.8;
-  for(let r=10.8;r<14;r+=.15){if(islandSurface(central,ux*r,uz*r,.05)){startRadius=r;break;}}
-  const endRadius=5.0;
+  const cs=central.scale;
+  let startRadius=10.8*cs;
+  for(let r=10.8*cs;r<14*cs;r+=.15*cs){if(islandSurface(central,ux*r,uz*r,.05)){startRadius=r;break;}}
+  const endRadius=9.0*island.scale;
   const sx=ux*startRadius,sz=uz*startRadius,ex=island.x-ux*endRadius,ez=island.z-uz*endRadius;
   const sh=central.field.height(sx,sz)??.35,eh=island.field.height((ex-island.x)/island.scale,(ez-island.z)/island.scale)??.35;
   bridge.start=new T.Vector3(sx,central.altitude+Math.max(sh,.2)+.06,sz);
@@ -79,9 +138,40 @@ function spawnOn(island){
 
 function visit(id){if(!ready)return;selected=id;mode='walk';const island=islands.find(i=>i.id===id);spawnOn(island);controls.enabled=false;cameraOffset.set(0,10,16);
   transition={from:camera.position.clone(),targetFrom:controls.target.clone(),time:0};
-  $('location-kicker').textContent='A little time on your island';$('location-title').textContent=island.name;$('hint').textContent='WASD or arrow keys to wander. Follow a light bridge to visit a neighbor.';$('mode-hint').textContent='WASD / arrows to walk · Esc for sky view';$('overview').setAttribute('aria-pressed','false');$('walk').setAttribute('aria-pressed','true');syncPanel();canvas.focus({preventScroll:true});}
+  $('location-kicker').textContent=island.owner?`Visiting ${island.owner}`:'Everyone’s island';
+  $('location-title').textContent=island.name;
+  $('hint').textContent=(island.activities?.length?`${island.activities.join(' · ')}. `:'')
+    +'WASD or arrow keys to wander. Cross a light bridge to visit a neighbour.';$('mode-hint').textContent='WASD / arrows to walk · Esc for sky view';$('overview').setAttribute('aria-pressed','false');$('walk').setAttribute('aria-pressed','true');syncPanel();canvas.focus({preventScroll:true});}
 function overview(){if(!ready)return;mode='overview';controls.enabled=true;transition={from:camera.position.clone(),targetFrom:controls.target.clone(),time:0};$('location-kicker').textContent='Your sky neighborhood';$('location-title').textContent='A world of little wonders.';$('hint').textContent='Choose an island. Stay a little while.';$('mode-hint').textContent='Drag to look around · Scroll to zoom';$('overview').setAttribute('aria-pressed','true');$('walk').setAttribute('aria-pressed','false');keys.clear();}
-function overviewPosition(){return new T.Vector3(0,55,96).multiplyScalar(Math.max(1,1.5/camera.aspect));}
+function overviewPosition(){
+  // Project every island's corners and solve for the distance that fits them
+  // all. A closed-form guess breaks as soon as the layout is asymmetric --
+  // an island placed toward the camera sits much nearer than its radius says.
+  const dir=new T.Vector3(0,.64,.77).normalize(),target=new T.Vector3(0,2,0),pts=[];
+  for(const d of definitions){
+    const r=12.6*d.scale;
+    for(const ox of [-r,r]) for(const oz of [-r,r]) for(const oy of [-3*d.scale,9*d.scale])
+      pts.push(new T.Vector3(d.x+ox,d.altitude+oy,d.z+oz));
+  }
+  const probe=camera.clone();
+  const tanY=Math.tan(T.MathUtils.degToRad(probe.fov)/2),tanX=tanY*probe.aspect;
+  let dist=220;
+  for(let n=0;n<26;n++){
+    probe.position.copy(target).addScaledVector(dir,dist);
+    probe.lookAt(target); probe.updateMatrixWorld(true);
+    const inv=new T.Matrix4().copy(probe.matrixWorld).invert();
+    let need=0;
+    for(const p of pts){
+      const q=p.clone().applyMatrix4(inv),z=-q.z;
+      if(z<=.5){need=Math.max(need,4);continue;}
+      need=Math.max(need,Math.abs(q.x)/(z*tanX),Math.abs(q.y)/(z*tanY));
+    }
+    const want=need*0.99;
+    if(Math.abs(want-1)<.008)break;
+    dist*=1+.8*(want-1);
+  }
+  return target.clone().addScaledVector(dir,dist);
+}
 
 function walk(dt){
   if(mode!=='walk'||transition)return;
@@ -103,35 +193,33 @@ function walk(dt){
   }
 }
 
+// module scope: frame() is top-level and reads this too
+const LITE=new URLSearchParams(location.search).has('lite');
+
 async function init(){
   // ?lite  -> low-stress dev mode: halves resolution, drops bloom + shadows,
   // caps to 30fps. Purely additive; default behaviour is unchanged.
-  const LITE=new URLSearchParams(location.search).has('lite');
-renderer=new T.WebGLRenderer({canvas,antialias:true,powerPreference:'high-performance'});renderer.setPixelRatio(LITE?1:Math.min(devicePixelRatio,1.5));renderer.setSize(innerWidth,innerHeight);renderer.toneMapping=T.ACESFilmicToneMapping;renderer.toneMappingExposure=1.25;renderer.shadowMap.enabled=!LITE;renderer.shadowMap.type=T.PCFSoftShadowMap;
+renderer=new T.WebGLRenderer({canvas,antialias:true,powerPreference:'high-performance'});renderer.setPixelRatio(LITE?1:Math.min(devicePixelRatio,1.5));renderer.setSize(innerWidth,innerHeight);renderer.toneMapping=T.ACESFilmicToneMapping;renderer.toneMappingExposure=.95;renderer.shadowMap.enabled=!LITE;renderer.shadowMap.type=T.PCFSoftShadowMap;
   // Hybrid-graphics laptop: report which adapter WebGL actually picked.
   // The internal panel is wired to the Radeon iGPU, so Task Manager shows it
   // busy even when the RTX 4070 is doing all the rendering.
   const gpu=(()=>{try{const gl=renderer.getContext();const x=gl.getExtension('WEBGL_debug_renderer_info');
     return x?gl.getParameter(x.UNMASKED_RENDERER_WEBGL):gl.getParameter(gl.RENDERER);}catch(e){return 'unknown';}})();
   console.info('[Island Life] rendering on:',gpu);
-  scene=new T.Scene();camera=new T.PerspectiveCamera(44,innerWidth/innerHeight,.1,700);camera.position.copy(overviewPosition());
-  controls=new OrbitControls(camera,canvas);controls.target.set(0,2,0);controls.enableDamping=true;controls.enablePan=false;controls.minDistance=18;controls.maxDistance=180;controls.minPolarAngle=.3;controls.maxPolarAngle=1.33;controls.update();
-  scene.add(new T.HemisphereLight('#fff2d4','#8d92aa',2.5));
-  const sun=new T.DirectionalLight('#ffdeb2',3.2);sun.position.set(-45,65,25);sun.castShadow=true;sun.shadow.mapSize.set(LITE?512:2048,LITE?512:2048);sun.shadow.camera.left=-65;sun.shadow.camera.right=65;sun.shadow.camera.top=65;sun.shadow.camera.bottom=-65;sun.shadow.camera.far=180;sun.shadow.normalBias=.09;sun.shadow.bias=-.00015;scene.add(sun);
+  scene=new T.Scene();camera=new T.PerspectiveCamera(44,innerWidth/innerHeight,.1,2000);camera.position.copy(overviewPosition());
+  controls=new OrbitControls(camera,canvas);controls.target.set(0,2,0);controls.enableDamping=true;controls.enablePan=false;controls.minDistance=14;controls.maxDistance=520;controls.minPolarAngle=.3;controls.maxPolarAngle=1.33;controls.update();
+  scene.add(new T.HemisphereLight('#fff2d4','#8d92aa',1.15));
+  const sun=new T.DirectionalLight('#ffdeb2',2.0);sun.position.set(-45,65,25);sun.castShadow=true;sun.shadow.mapSize.set(LITE?512:2048,LITE?512:2048);sun.shadow.camera.left=-65;sun.shadow.camera.right=65;sun.shadow.camera.top=65;sun.shadow.camera.bottom=-65;sun.shadow.camera.far=180;sun.shadow.normalBias=.09;sun.shadow.bias=-.00015;scene.add(sun);
   const fill=new T.DirectionalLight('#bcd9e5',.9);fill.position.set(20,20,-30);scene.add(fill);
   atmosphere=createAtmosphere(scene);atmosphere.setTone('peach');lanterns=createLanterns(scene,atmosphere.texture);lanterns.setDensity(36);
-  composer=new EffectComposer(renderer);composer.addPass(new RenderPass(scene,camera));if(!LITE){const bloom=new UnrealBloomPass(new T.Vector2(innerWidth/2,innerHeight/2),.24,.65,1.1);composer.addPass(bloom);}composer.addPass(new OutputPass());
+  composer=new EffectComposer(renderer);composer.addPass(new RenderPass(scene,camera));if(!LITE){const bloom=new UnrealBloomPass(new T.Vector2(innerWidth/2,innerHeight/2),.14,.6,1.25);composer.addPass(bloom);}composer.addPass(new OutputPass());
   const loader=new GLTFLoader(),assets={};let loaded=0;
   await Promise.all(['community','meadow','purple','oak','sakura','palm','mushrooms','clover','gardener'].map(async key=>{assets[key]=(await loader.loadAsync(`${import.meta.env.BASE_URL}assets/${key}.glb`)).scene;setMaterials(assets[key]);$('load-progress').value=++loaded;$('loading-text').textContent=`Gathering the gardens · ${loaded} of 9`; }));
   const fields={community:new HeightField(assets.community.getObjectByName('Island')),meadow:new HeightField(assets.meadow.getObjectByName('Island'))};
   for(const def of definitions){const island={...def,weather:'clear',field:fields[def.id==='community'?'community':'meadow'],obstacles:[...(def.obstacles??[])]};
     const group=new T.Group();group.position.set(def.x,def.altitude,def.z);scene.add(group);island.group=group;
     const model=assets[def.id==='community'?'community':'meadow'].clone(true);model.scale.setScalar(def.scale);group.add(model);island.model=model;model.traverse(o=>{o.userData.islandId=def.id;});
-    if(def.tree){const tree=assets[def.tree].clone(true);tree.position.set(2.1,.22,-1.8);tree.scale.setScalar(def.treeScale);tree.rotation.y=def.id==='palm'?-.5:.3;group.add(tree);tree.traverse(o=>{o.userData.islandId=def.id;});island.obstacles.push({x:2.1/def.scale,z:-1.8/def.scale,r:.8/def.scale});
-      for(let n=0;n<3;n++){const prop=assets[n===2?'mushrooms':'clover'].clone(true);prop.scale.setScalar(n===2?.5:.3);prop.position.set(-2+n*2,.24,1.7+n%2*.9);group.add(prop);}
-      // The authored gate posts are solid; the opening remains walkable.
-      island.obstacles.push({x:-6.5,z:-6,r:.3},{x:-4.3,z:-4,r:.3});
-    }
+    plantIsland(island,group,assets);
     island.weatherFx=createWeather(atmosphere.texture);island.weatherFx.group.position.copy(group.position);scene.add(island.weatherFx.group);
     const label=document.createElement('button');label.className='island-label';label.textContent=def.name;label.dataset.island=def.id;label.addEventListener('click',()=>visit(def.id));$('island-labels').append(label);island.label=label;
     const option=document.createElement('option');option.value=def.id;option.textContent=def.name;$('island-select').append(option);islands.push(island);
@@ -139,7 +227,10 @@ renderer=new T.WebGLRenderer({canvas,antialias:true,powerPreference:'high-perfor
   for(const island of islands.slice(1))buildBridge(island);
   const playerRoot=new T.Group();scene.add(playerRoot);gardener=assets.gardener;gardener.scale.setScalar(.38);playerRoot.add(gardener);player.root=playerRoot;
   const shadow=new T.Mesh(new T.CircleGeometry(.43,24),new T.MeshBasicMaterial({color:'#35492f',transparent:true,opacity:.22,depthWrite:false}));shadow.rotation.x=-Math.PI/2;shadow.position.y=.035;playerRoot.add(shadow);
-  spawnOn(islands[0]);ready=true;$('loading').hidden=true;$('motion').checked=motion;syncPanel();
+  spawnOn(islands[0]);ready=true;
+  const want=new URLSearchParams(location.search).get('island');
+  if(want&&islands.some(i=>i.id===want))setTimeout(()=>visit(want),0);
+$('loading').hidden=true;$('motion').checked=motion;syncPanel();
   renderer.setAnimationLoop(frame);
   // A small inspection API also exposes meaningful world state for embedding.
   window.islandLife={visit,overview,setAltitude:(id,h)=>{if(!Number.isFinite(h))return;updateAltitude(islands.find(i=>i.id===id),T.MathUtils.clamp(h,-7,16));syncPanel();},setWeather:(id,type)=>{if(!['clear','rain','mist'].includes(type))return;const i=islands.find(i=>i.id===id);i.weather=type;i.weatherFx.set(type);syncPanel();},getState:()=>({ready,mode,selected,gpu,player:{x:player.position.x,y:player.position.y,z:player.position.z,surface:player.surface},islands:islands.map(({id,altitude,weather})=>({id,altitude,weather})),bridges:bridges.map(({id,start,end,width,arch,glow})=>({id,start,end,width,arch,glow})),render:renderer.info.render}),surfaceAt:(x,z)=>surfaceAt(islands,bridges,x,z)};
