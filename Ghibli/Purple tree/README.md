@@ -1,6 +1,9 @@
 # Ghibli purple tree
 
-**Chosen version: v6** — `ghibli_purple_tree_v6.blend` / `.png`, built by `create_ghibli_tree_v6.py`.
+**Chosen version: `ghibli_purple_tree.blend` / `.png`** — the three-parasol build from the
+v3 era (saved 9 Sep, 22:04). Picked by the user over v6/v7, and it's the one
+`tools/export_assets.py` exports as `purple.glb`. No script regenerates it exactly, so treat the
+`.blend` as the source.
 
 Reference: `c0ec40e8-1b70-46ed-9d95-3ceae3f08f49.png`
 

@@ -46,6 +46,20 @@ export class HeightField {
       }
     }
   }
+  // Solid scenery standing on the ground (a trunk, buttress roots) makes its
+  // cells unwalkable: any vertex between `above` and `below` over the ground.
+  block(objects,above=.15,below=2.6) {
+    const hit=new Set();
+    for(const o of objects)o?.traverse?.(m=>{
+      if(!m.isMesh)return;const p=m.geometry.attributes.position;
+      for(let n=0;n<p.count;n++){
+        const x=p.getX(n),z=p.getZ(n),h=this.height(x,z);if(h===null)continue;
+        const rise=p.getY(n)-h;
+        if(rise>above&&rise<below)hit.add(Math.round((z-this.origin)/this.step)*this.size+Math.round((x-this.origin)/this.step));
+      }
+    });
+    for(const id of hit)this.heights[id]=NaN;
+  }
   height(x,z) {
     const ix=Math.round((x-this.origin)/this.step),iz=Math.round((z-this.origin)/this.step);
     if(ix<0||iz<0||ix>=this.size||iz>=this.size)return null;

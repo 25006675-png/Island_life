@@ -136,6 +136,7 @@ RIM_WOBBLE= 0.055        # organic wander of the plateau outline
 RIM_WOBBLE2 = 0.0        # second, finer wobble -> bays and headlands
 RIM_SEED  = 0.0          # shifts the outline noise; 0 keeps island 1 as is
 POND_BEND = 0.0          # >0 curves the pond into a kidney along the rim
+LILY_PADS = 70           # small scattered pads on the pond
 CLIFF_DEEP= 1.00         # multiplier on total cliff depth
 
 RIM_ROT = math.pi / 4.0          # corner toward the viewer
@@ -710,21 +711,43 @@ def build_tree(origin=(5.6, 4.4, 0.35), scale=1.0):
     blobs = []                     # (centre, radius) for the canopy
     rnd = random.Random(21)
 
-    # ---------------- buttress roots ----------------
-    NROOT = 11
-    for i in range(NROOT):
-        a = 2 * math.pi * i / NROOT + rnd.uniform(-0.16, 0.16)
-        out = Vector((math.cos(a), math.sin(a), 0))
-        L = (3.0 + rnd.uniform(-0.6, 1.3)) * scale
-        pts = branch_path(O + out * 0.9 * scale + Vector((0, 0, 1.15 * scale)),
-                          out * 0.75 + Vector((0, 0, -0.62)),
-                          L, 7, 0.30, -0.16, seed=i * 3.7)
-        pts = [(x, y, max(z, O.z - 0.35 + 0.10 * fbm((x, y, 3), 2))) for x, y, z in pts]
-        r0 = (1.15 + rnd.uniform(0, 0.40)) * scale
-        radii = [r0 * (1 - 0.86 * (k / (len(pts) - 1)) ** 0.75) + 0.05
-                 for k in range(len(pts))]
-        sweep(verts, faces, midx, 0, pts, radii, 10, lobes=3, lobe_amp=0.22,
-              twist=0.7, gnarl=0.14, seedo=i * 2.0)
+    # ---------------- buttress roots (板根) ----------------
+    # tall thin plank roots: each leaves the trunk ~2 m up and snakes away,
+    # sinking into the ground, so trunk and roots read as one flared form
+    for _ in range(33):                # keep the crown's random stream as it was
+        rnd.random()
+    frnd = random.Random(8)
+    base_r = 1.87 * scale
+    for i in range(6):
+        a = 2 * math.pi * i / 6 + frnd.uniform(-0.25, 0.25)
+        L = (3.3 + frnd.uniform(-0.4, 1.2)) * scale
+        H0 = (2.1 + frnd.uniform(-0.2, 0.4)) * scale
+        T0 = 0.42 * scale
+        steps = max(12, int(L / 0.25))
+        pts, heading = [], a
+        p = Vector((O.x + math.cos(a) * base_r * 0.55, O.y + math.sin(a) * base_r * 0.55, 0))
+        for k in range(steps + 1):
+            pts.append(p.copy())
+            heading += 0.35 * fbm((i * 3.1, k * 0.25, 7.0), 2) * (L / steps)
+            p = p + Vector((math.cos(heading), math.sin(heading), 0)) * (L / steps)
+        rings = []
+        for k, c in enumerate(pts):
+            f = k / steps
+            d = pts[min(k + 1, steps)] - pts[max(k - 1, 0)]
+            side = Vector((-d.y, d.x, 0)).normalized()
+            h = H0 * (1 - f) ** 1.7 * (1 + 0.10 * fbm((i, f * 4, 2.0), 2)) + 0.10
+            t = T0 * (1 - 0.65 * f) * 0.5
+            g = ground(c.x, c.y)
+            ring = []
+            for sx, sz in ((-t * 1.5, -0.35), (-t, h * 0.55), (-t * 0.7, h * 0.9), (0, h),
+                           (t * 0.7, h * 0.9), (t, h * 0.55), (t * 1.5, -0.35)):
+                ring.append(len(verts))
+                verts.append((c.x + side.x * sx, c.y + side.y * sx, g + sz))
+            rings.append(ring)
+        for k in range(len(rings) - 1):
+            for j in range(6):
+                faces.append((rings[k][j], rings[k + 1][j], rings[k + 1][j + 1], rings[k][j + 1]))
+                midx.append(0)
 
     # ---------------- trunk ----------------
     TH = 4.15 * scale
@@ -733,7 +756,7 @@ def build_tree(origin=(5.6, 4.4, 0.35), scale=1.0):
     trad = []
     for k in range(len(tpts)):
         f = k / (len(tpts) - 1)
-        r = 2.55 * scale * (0.40 + 0.60 * math.exp(-2.3 * f)) * (1 - 0.14 * f)
+        r = scale * (1.12 + 0.75 * math.exp(-3.2 * f)) * (1 - 0.14 * f)   # the roots carry the flare
         r *= 1 + 0.05 * math.sin(f * 9.0)
         trad.append(r)
     sweep(verts, faces, midx, 0, tpts, trad, 20, lobes=7, lobe_amp=0.13,
@@ -1124,7 +1147,21 @@ def build_plaza(centre, r_out=5.6, steps=3):
     return mb
 
 
+CLEAR_PATHS = []   # (polyline, half-width) -- scatter keeps off these
+
+
+def on_path(x, y, pad=0.1):
+    for pts, hw in CLEAR_PATHS:
+        for (ax, ay), (bx, by) in zip(pts, pts[1:]):
+            dx, dy = bx - ax, by - ay
+            t = max(0.0, min(1.0, ((x - ax) * dx + (y - ay) * dy) / (dx * dx + dy * dy or 1)))
+            if math.hypot(x - ax - dx * t, y - ay - dy * t) < hw + pad:
+                return True
+    return False
+
+
 def path_ribbon(mb, pts, width=1.5, mid=0, lift=0.045):
+    CLEAR_PATHS.append(([tuple(p[:2]) for p in pts], width * 0.55))
     dense = []
     for i in range(len(pts) - 1):
         a, b = Vector(pts[i]), Vector(pts[i + 1])
@@ -1364,7 +1401,7 @@ def scatter_top(mb_rock, mb_flower, mb_tuft, mb_pad, rnd):
         a = rnd.uniform(0, 2 * math.pi)
         rr = rim_radius(a) * math.sqrt(rnd.random()) * 0.99
         x, y = math.cos(a) * rr, math.sin(a) * rr
-        if pond_sd(x, y) < 0.10:
+        if pond_sd(x, y) < 0.10 or on_path(x, y):
             continue
         z = ground(x, y)
         edge = min(1.0, max(0.0, (rr / rim_radius(a) - 0.55) / 0.45))
@@ -1378,7 +1415,7 @@ def scatter_top(mb_rock, mb_flower, mb_tuft, mb_pad, rnd):
                            squash=0.2, seed=rnd.uniform(0, 90), mid=0, subd=1)
 
     # --- lily pads near the pond edge ---------------------------------------
-    for i in range(70):
+    for i in range(LILY_PADS):
         t = rnd.uniform(0, 2 * math.pi)
         f = rnd.uniform(0.45, 0.94)
         x = POND_C[0] + math.cos(t) * POND_A * f * math.cos(POND_ROT) \

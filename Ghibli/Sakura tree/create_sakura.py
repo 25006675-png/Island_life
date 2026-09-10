@@ -16,6 +16,7 @@ import random
 import sys
 import pathlib
 
+import bmesh
 import bpy
 from mathutils import Vector, Matrix
 
@@ -31,12 +32,18 @@ bloom_g = gs.collection('02 - Blossom clusters')
 fall_g = gs.collection('03 - Falling petals')
 studio_g = gs.collection('04 - Camera and cream studio')
 
-PINK = gs.ramp('Blossom', [(255, 228, 238), (252, 203, 219), (246, 176, 202),
-                           (240, 149, 182), (224, 128, 165), (203, 108, 143),
-                           (178, 92, 124)], 14)
-BARK = gs.ramp('Bark', [(158, 124, 114), (140, 108, 100), (120, 92, 86),
-                        (102, 78, 74), (84, 63, 62), (66, 49, 50)], 8)
-CORE = gs.mat('Cluster core', gs.srgb(206, 122, 152))
+# Stops follow the reference's k-means pinks, nudged bluer because the warm
+# key light pushes them toward salmon. The old ramp ran on to a deep crimson
+# (178,92,124) darker than anything in the reference, which read as dirt in
+# the cluster shadows.
+PINK_STOPS = [(252, 216, 232), (250, 200, 222), (246, 176, 204), (238, 152, 188),
+              (228, 138, 178), (220, 128, 170), (204, 112, 152)]
+PINK = gs.ramp('Blossom', PINK_STOPS, 14)
+BARK = gs.ramp('Bark', [(170, 138, 128), (152, 120, 112), (134, 104, 98),
+                        (118, 90, 86), (102, 77, 74), (88, 66, 64)], 8)
+# The core is a painted ball, not a hidden filler: its smooth light-to-dark
+# gradient is what makes each cluster read round (see cluster()).
+CORE = gs.vcol_material('Cluster core')
 
 KX, KY = math.cos(gs.KEY_AZIMUTH), math.sin(gs.KEY_AZIMUTH)
 KEY3 = Vector((KX, KY, 1.05)).normalized()
@@ -47,10 +54,12 @@ def bole_center(z):
     return Vector((.20 * math.sin(z * .85) - .05 * z, .07 * math.sin(z * 1.2), z))
 
 
-BZ = [0, .14, .34, .62, .95, 1.30, 1.65, 2.00, 2.30]
-BR = [.86, .74, .64, .565, .515, .482, .458, .440, .425]
-gs.tube('Bole', [bole_center(z) for z in BZ], BR, BARK, wood_g, sides=20,
-        gnarl=.085, crease=.55, smooth=True, twist=.05)
+# The bole runs on up into the fork and tapers away inside it, so the limbs
+# grow out of its sides; ending it flat at the fork left a visible collar.
+BZ = [0, .14, .34, .62, .95, 1.30, 1.65, 2.00, 2.30, 2.55, 2.80]
+BR = [.86, .74, .64, .565, .51, .465, .425, .39, .36, .30, .20]
+gs.tube('Bole', [bole_center(z) for z in BZ], BR, BARK, wood_g, sides=24,
+        gnarl=.085, crease=.35, smooth=True, twist=.05)
 
 for i in range(7):
     a = i * math.tau / 7 + .25 + random.uniform(-.12, .12)
@@ -73,11 +82,19 @@ def branch(start, direction, length, radius, depth, tag):
     end = start + direction * length
     mid1 = start + direction * (length * .34) + rise * (length * .10)
     mid2 = start + direction * (length * .68) + rise * (length * .06)
-    gs.tube('Branch %s' % tag,
-            [start, mid1, mid2, end],
-            [radius, radius * .80, radius * .60, radius * .46],
-            BARK, wood_g, sides=max(6, 11 - depth * 2), gnarl=.075,
-            crease=.5, smooth=True)
+    o = gs.tube('Branch %s' % tag,
+                [start, mid1, mid2, end],
+                [radius, radius * .80, radius * .60, radius * .46],
+                BARK, wood_g, sides=max(6, 11 - depth * 2), gnarl=.075,
+                crease=.5, smooth=True)
+    # Drop the end caps: smooth shading averages each cap into its last ring,
+    # which drew a band at every joint. Open ends sit inside the parent.
+    bm = bmesh.new()
+    bm.from_mesh(o.data)
+    bmesh.ops.delete(bm, geom=[f for f in bm.faces if len(f.verts) > 4],
+                     context='FACES_ONLY')
+    bm.to_mesh(o.data)
+    bm.free()
     if depth >= 3:
         tips.append((end, radius))
         return
@@ -96,7 +113,7 @@ def branch(start, direction, length, radius, depth, tag):
                depth + 1, '%s.%d' % (tag, k))
 
 
-FORK = bole_center(2.30)
+FORK = bole_center(2.15)
 for i, a in enumerate([.35, 2.45, 4.35]):
     d = Vector((math.cos(a) * .62, math.sin(a) * .62, 1.0)).normalized()
     branch(FORK, d, 1.55, .34, 1, str(i + 1))
@@ -112,8 +129,11 @@ def rosette(name, R, lobes=5, steps=72, material=None):
         # |cos| lobes give rounded petals with a clean notch at each join.
         f = .46 + .54 * abs(math.cos(lobes * th / 2)) ** .55
         r = R * f
+        # Deeply cupped: edge-on at a cluster's outline a flat rosette is a
+        # straight line, and stacked lines squared the clusters off. A cup
+        # shows as a curved bump instead, so the outline scallops round.
         verts.append((r * math.cos(th), r * math.sin(th),
-                      -.14 * R * f * f + .06 * R))
+                      -.36 * R * f * f + .12 * R))
     for i in range(steps):
         faces.append((0, 1 + i, 1 + (i + 1) % steps))
     d = bpy.data.meshes.new(name)
@@ -126,7 +146,8 @@ def rosette(name, R, lobes=5, steps=72, material=None):
     return d
 
 
-BLOSSOMS = [rosette('Blossom %d' % i, random.uniform(.42, .56),
+# Fewer, larger blossoms: thousands of small ones read as speckle.
+BLOSSOMS = [rosette('Blossom %d' % i, random.uniform(.52, .66),
                     material=PINK[4]) for i in range(8)]
 
 
@@ -151,7 +172,11 @@ count = 0
 
 def cluster(cx, cy, cz, R, n, seed):
     global count
-    bpy.ops.mesh.primitive_uv_sphere_add(segments=24, ring_count=14, radius=R * .78,
+    # A shell of flat outward-facing rosettes read as a box: the top ones are
+    # edge-on to the camera (a flat lid), the side ones face it (flat walls).
+    # So the round form comes from this painted core, and the blossoms sit
+    # right on its surface as petal detail with a scalloped edge.
+    bpy.ops.mesh.primitive_uv_sphere_add(segments=32, ring_count=18, radius=R * .82,
                                          location=(cx, cy, cz))
     core = bpy.context.object
     core.name = 'Cluster core %d' % seed
@@ -159,18 +184,20 @@ def cluster(cx, cy, cz, R, n, seed):
         col.objects.unlink(core)
     bloom_g.objects.link(core)
     core.data.materials.append(CORE)
-    core.scale = (1, 1, .86)
+    core.scale = (1, 1, .95)
     for p in core.data.polygons:
         p.use_smooth = True
+    gs.paint(core, lambda co, n: gs.grad(PINK_STOPS, .60 - .26 * n.dot(KEY3) - .12 * n.z))
 
     golden = math.pi * (3 - math.sqrt(5))
     for k in range(n):
-        u = 1 - 1.7 * (k + .5) / n
-        u = max(-.68, u)
+        # wraps well under the ball: stopping at -.68 left a flat-cut bottom
+        u = 1 - 1.85 * (k + .5) / n
+        u = max(-.85, u)
         rho = math.sqrt(max(0., 1 - u * u))
         a = k * golden + seed
         nrm = Vector((rho * math.cos(a), rho * math.sin(a), u))
-        pos = Vector((cx, cy, cz)) + nrm * (R * (.90 + .12 * gs.lump(
+        pos = Vector((cx, cy, cz)) + nrm * (R * (.81 + .07 * gs.lump(
             cx + nrm.x * 2.2, cy + nrm.y * 2.2, seed)))
         o = bpy.data.objects.new('Blossom %04d' % count,
                                  BLOSSOMS[(count * 3 + seed) % len(BLOSSOMS)])
@@ -183,8 +210,10 @@ def cluster(cx, cy, cz, R, n, seed):
             right = fwd.cross(Vector((1, 0, 0)))
         right.normalize()
         up2 = right.cross(fwd).normalized()
-        fwd = (fwd + right * random.uniform(-.34, .34)
-               + up2 * random.uniform(-.34, .34)).normalized()
+        # Modest tilt: at +-.34 some rosettes faced the key head-on and blew
+        # out to near-white stickers whatever shade they were given.
+        fwd = (fwd + right * random.uniform(-.17, .17)
+               + up2 * random.uniform(-.17, .17)).normalized()
         right = fwd.cross(Vector((0, 0, 1)))
         if right.length < 1e-5:
             right = fwd.cross(Vector((1, 0, 0)))
@@ -193,10 +222,14 @@ def cluster(cx, cy, cz, R, n, seed):
         m = Matrix((right, up2, fwd)).transposed().to_4x4()
         o.rotation_euler = m.to_euler()
         o.rotation_euler.rotate_axis('Z', random.uniform(0, math.tau))
-        L = R * random.uniform(.26, .42)
+        # .22-.33 read too sparse, .28-.40 squared the clusters off again
+        L = R * random.uniform(.25, .36)
         o.scale = (L, L, L)
         lit = nrm.dot(KEY3)
-        e = .34 + .38 * lit + .20 * (u * .5 + .5) + random.uniform(-.12, .12)
+        # Small jitter only: at +-.12 neighbouring blossoms jumped several
+        # shades apart and the canopy looked speckled.
+        # Narrow range: the ramp's ends are for accents, not whole blossoms.
+        e = .40 + .24 * lit + .18 * (u * .5 + .5) + random.uniform(-.05, .05)
         o.material_slots[0].link = 'OBJECT'
         o.material_slots[0].material = gs.pick(PINK, e)
         count += 1
@@ -223,7 +256,7 @@ CLUSTERS = [
     (2.05, 1.05, 5.72, .68, 140),
 ]
 for i, (x, y, z, r, n) in enumerate(CLUSTERS):
-    cluster(x, y, z, r, n, i)
+    cluster(x, y, z, r, int(n * .75), i)
 
 # Petals drifting around the tree, as in the reference.
 for i in range(16):
@@ -238,7 +271,7 @@ for i in range(16):
     s = random.uniform(.30, .46)
     o.scale = (s, s, s)
     o.material_slots[0].link = 'OBJECT'
-    o.material_slots[0].material = gs.pick(PINK, random.uniform(.45, .95))
+    o.material_slots[0].material = gs.pick(PINK, random.uniform(.40, .78))
 
 # Reference bbox 353x390 of 420.
 gs.studio(studio_g, cam_pos=(1.3, -22, 5.0), target_z=3.75, ortho_scale=8.30,

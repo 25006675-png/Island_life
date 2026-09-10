@@ -26,20 +26,56 @@ void main(){vec2 p=vWorld.xz*.026+vec2(time*.002,0.);float n=fbm(p);float detail
   return {texture,setTone(tone){const p=palettes[tone]??palettes.peach;uniforms.top.value.set(p[0]);uniforms.mid.value.set(p[1]);uniforms.bottom.value.set(p[2]);cloudUniforms.tint.value.set(p[3]);scene.fog.color.set(p[3]);},update(t){uniforms.time.value=t;clouds.rotation.y=t*.001;}};
 }
 
-export function createLanterns(scene,texture) {
-  const count=80,group=new T.Group();scene.add(group);
-  const body=new T.InstancedMesh(new T.CylinderGeometry(.22,.17,.48,8),new T.MeshStandardMaterial({color:'#ffd496',emissive:'#ffb951',emissiveIntensity:2.4,roughness:1}),count);group.add(body);
-  const sparks=new T.BufferGeometry(),positions=new Float32Array(160*3);sparks.setAttribute('position',new T.BufferAttribute(positions,3));
-  const points=new T.Points(sparks,new T.PointsMaterial({color:'#ffdea0',size:.19,map:texture,transparent:true,opacity:.8,depthWrite:false,blending:T.AdditiveBlending}));group.add(points);
-  const dummy=new T.Object3D();let density=36;
-  return {setDensity(n){density=n;body.count=n;sparks.setDrawRange(0,n*2);},update(t,altitude){group.position.y=altitude;for(let i=0;i<density;i++){const y=2+((i*1.71+t*.7)%29),a=i*2.399;dummy.position.set(Math.cos(a)*(3+i%7)+Math.sin(t*.2+i)*.4,y,Math.sin(a)*(3+i%5));dummy.rotation.set(Math.sin(t+i)*.08,a,Math.sin(t*.5+i)*.08);dummy.scale.setScalar(.7+(i%3)*.18);dummy.updateMatrix();body.setMatrixAt(i,dummy.matrix);}body.instanceMatrix.needsUpdate=true;for(let i=0;i<density*2;i++){positions[i*3]=Math.sin(i*9.1+t*.04)*(6+i%15);positions[i*3+1]=(i*.47+t*.25)%20;positions[i*3+2]=Math.cos(i*3.1+t*.06)*(5+i%10);}sparks.attributes.position.needsUpdate=true;}};
-}
+const ramp=(a,b,x)=>{const t=Math.min(1,Math.max(0,(x-a)/(b-a)));return t*t*(3-2*t);};
+// Weather is one continuous strain value (0..1) and reads from the sky view:
+// the sun glow fades as cloud gathers; the cloud deck thickens and darkens;
+// low mist comes and goes in the middle; past ~0.55 rain starts as a drizzle
+// and grows into a shower. `radius` is the island's, in world units.
+export function createWeather(texture,radius=26) {
+  const group=new T.Group(), mist=new T.Group(), R=radius;group.add(mist);
+  const sprite=(color,blending=T.NormalBlending)=>new T.Sprite(new T.SpriteMaterial({map:texture,color,opacity:0,transparent:true,depthWrite:false,blending}));
+  // the cloud deck: each puff arrives at its own strain, so cover accumulates
+  const deck=[], light=new T.Color('#f0eef4'), dark=new T.Color('#65607f');
+  for(let i=0;i<18;i++){
+    const a=i*2.399, r=Math.sqrt((i+.5)/18)*R*.5, s=sprite('#f0eef4');
+    s.position.set(Math.cos(a)*r,19+(i%3)*.9,Math.sin(a)*r);s.scale.set(24*(1+(i%4)*.15),10,1);
+    s.userData.from=.12+.45*((i*7)%18)/18;group.add(s);deck.push(s);
+  }
+  // low mist banks hugging the island
+  for(let i=0;i<9;i++){const a=i/9*Math.PI*2,s=sprite('#eceef0');s.position.set(Math.cos(a)*R*.55,1.2+(i%3)*.8,Math.sin(a)*R*.55);s.scale.set(R*.9,7,1);mist.add(s);}
+  // rain: a streaked shaft that fades top and bottom, plus close-up streaks
+  const paint=(w,h,draw)=>{const c=document.createElement('canvas');c.width=w;c.height=h;draw(c.getContext('2d'));return new T.CanvasTexture(c);};
+  const streaks=paint(64,128,x=>{for(let i=0;i<70;i++){const px=Math.random()*64,py=Math.random()*128;
+    x.strokeStyle=`rgba(225,235,248,${.25+Math.random()*.55})`;x.lineWidth=1+Math.random();x.beginPath();x.moveTo(px,py);x.lineTo(px-2,py+18+Math.random()*20);x.stroke();}});
+  streaks.wrapS=streaks.wrapT=T.RepeatWrapping;streaks.repeat.set(7,1.5);
+  const fade=paint(4,64,x=>{const g=x.createLinearGradient(0,0,0,64);g.addColorStop(0,'#000');g.addColorStop(.25,'#fff');g.addColorStop(.7,'#fff');g.addColorStop(1,'#000');x.fillStyle=g;x.fillRect(0,0,4,64);});
+  const shaft=new T.Mesh(new T.CylinderGeometry(R*.42,R*.5,16,32,1,true),
+    new T.MeshBasicMaterial({map:streaks,alphaMap:fade,color:'#8e9bbd',transparent:true,opacity:0,depthWrite:false,side:T.DoubleSide}));
+  shaft.position.y=10;shaft.scale.y=1.2;group.add(shaft);
+  const DROPS=320,positions=new Float32Array(DROPS*6),geometry=new T.BufferGeometry();geometry.setAttribute('position',new T.BufferAttribute(positions,3));
+  const drops=new T.LineSegments(geometry,new T.LineBasicMaterial({color:'#d4e4f0',transparent:true,opacity:.6,depthWrite:false}));group.add(drops);
+  // clear: a soft warm sun glow
+  const glow=sprite('#ffc766',T.AdditiveBlending);glow.position.y=22;glow.scale.setScalar(22);group.add(glow);
 
-export function createWeather(texture) {
-  const group=new T.Group(),rainGroup=new T.Group(),mist=new T.Group();group.add(rainGroup,mist);
-  for(let i=0;i<7;i++){const s=new T.Sprite(new T.SpriteMaterial({map:texture,color:'#c8c4de',opacity:.9,depthWrite:false}));s.position.set((i%4-1.5)*1.8,10+(i%3)*.4,-1);s.scale.set(8,4.5,1);rainGroup.add(s);}
-  const positions=new Float32Array(160*6),geometry=new T.BufferGeometry();geometry.setAttribute('position',new T.BufferAttribute(positions,3));const rain=new T.LineSegments(geometry,new T.LineBasicMaterial({color:'#c8dfec',transparent:true,opacity:.5,depthWrite:false}));rainGroup.add(rain);
-  for(let i=0;i<7;i++){const s=new T.Sprite(new T.SpriteMaterial({map:texture,color:'#e0e3df',opacity:.42,depthWrite:false}));s.position.set(Math.sin(i*3)*6,.7+ i%3*.7,Math.cos(i*3)*5);s.scale.set(18,5,1);mist.add(s);}
-  rainGroup.visible=mist.visible=false;
-  return {group,set(type){rainGroup.visible=type==='rain';mist.visible=type==='mist';},update(t){if(rainGroup.visible){for(let i=0;i<160;i++){let y=9-(i*.21+t*4)%8.5,x=Math.sin(i*12.2)*4,z=Math.cos(i*2.8)*3;positions.set([x,y,z,x-.04,y-.35,z],i*6);}geometry.attributes.position.needsUpdate=true;}mist.rotation.y=Math.sin(t*.05)*.2;}};
+  let strain=0, rain=0;
+  function setStrain(s){
+    strain=Math.min(1,Math.max(0,s));
+    const tone=ramp(.3,.9,strain);
+    for(const p of deck){p.material.opacity=ramp(p.userData.from,p.userData.from+.1,strain)*.95;p.material.color.copy(light).lerp(dark,tone);}
+    const m=ramp(.2,.4,strain)*(1-ramp(.65,.85,strain))*.5;for(const b of mist.children)b.material.opacity=m;
+    rain=ramp(.55,.95,strain);
+    shaft.material.opacity=rain*.85;shaft.visible=rain>0;
+    geometry.setDrawRange(0,Math.floor(DROPS*ramp(.5,1,strain))*2);drops.visible=strain>.5;
+  }
+  setStrain(0);
+  return {group,setStrain,
+    update(t){
+      if(shaft.visible)streaks.offset.y=t*(.6+rain*.8);
+      if(drops.visible){
+        for(let i=0;i<DROPS;i++){const y=15-(i*.21+t*(3+4*rain))%14,x=Math.sin(i*12.2)*R*.4,z=Math.cos(i*2.8)*R*.4;positions.set([x,y,z,x-.05,y-.5,z],i*6);}
+        geometry.attributes.position.needsUpdate=true;
+      }
+      mist.rotation.y=Math.sin(t*.05)*.2;
+      glow.material.opacity=(1-ramp(.1,.3,strain))*(.72+Math.sin(t*.6)*.08);
+    }};
 }

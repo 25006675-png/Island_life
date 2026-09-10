@@ -7,22 +7,24 @@ import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { HeightField, bridgePoint, surfaceAt, islandSurface } from './navigation.js';
-import { createAtmosphere, createLanterns, createWeather } from './atmosphere.js';
+import { createAtmosphere, createWeather } from './atmosphere.js';
+import { initLife, setStrain } from './life.js';
+import { CATEGORIES } from './data.js';
+import { HISTORY } from './groves.js';
+import { createForest } from './forest.js';
 
 const $=id=>document.getElementById(id), canvas=$('world');
-// One tree species = one activity type. Rename freely; nothing else depends
-// on the wording. `plantings` groups each species into its own grove rather
-// than interleaving them, so a glance reads as "this member does X and Y".
-const ACTIVITIES={sakura:'Reading',purple:'Music',oak:'Cooking',
-                  palm:'Travel',mushrooms:'Foraging',clover:'Gardening'};
-const SPECIES_SCALE={sakura:1.05,purple:1.2,oak:.85,palm:1.0,mushrooms:.5,clover:.32};
+// One activity category = one tree species (groves.js). The gathering
+// island's mushrooms and clover are decoration only.
+const SPECIES_SCALE={sakura:1.05,purple:1.2,oak:.85,palm:1.0,mushrooms:.5,clover:.32,
+                     willow:.95,pale:.9,magic_mushrooms:1.25};
 
 // NOTE: owner names are placeholders -- swap them for your real members.
 // Torii pillars, in member-island model units (same for every variant).
 const TORII_POSTS=[{x:-6.44,z:-3.85,r:.42},{x:-4.36,z:-6.15,r:.42}];
 
-// Bridges leave the gathering tree at 150, 10 and 300 degrees -- the pond was
-// rebuilt on the one side none of them use. Each member island is its own
+// Bridges leave the gathering tree at 150, 10 and 300 degrees; the pond sits
+// in the middle against the tree's plaza, ringed by a path. Each member island is its own
 // irregular outline (meadow_a/b/c), and plantings sit away from its bridge
 // landing, its torii, and the camera side (+z) of the spawn -- the walk-in
 // camera sits behind the gardener at +z, so a grove there fills the view.
@@ -30,36 +32,28 @@ const definitions=[
   {id:'community',model:'community',name:'The gathering tree',owner:null,
    description:'Everyone’s island. The bridges start here.',
    x:0,z:0,altitude:0,scale:2.2,spawn:[2,.5],
-   // trunk base is r3.2 with flutes to ~3.6; the old r2.7 let the gardener
-   // walk into the tree
-   obstacles:[{x:6.2,z:-5.6,r:4.4}],
-   plantings:[{asset:'mushrooms',n:4,a:2.79,r:6,spread:2.5},
+   // the trunk; its buttress roots are fenced off by field.block() in init()
+   obstacles:[{x:6.2,z:-5.6,r:2.7}],
+   plantings:[{asset:'mushrooms',n:4,a:2.36,r:16,spread:3},
               {asset:'clover',n:4,a:4.10,r:15,spread:3.5}]},
 
-  {id:'sakura',model:'meadow_a',owner:'Aisha',description:'Reading, and a little music.',
-   x:-73.6,z:-42.5,altitude:5,scale:2.0,spawn:[0,4],obstacles:TORII_POSTS,
-   plantings:[{asset:'sakura',n:4,a:2.79,r:15,spread:5},
-              {asset:'purple',n:3,a:4.89,r:16,spread:4},
-              {asset:'mushrooms',n:4,a:5.76,r:13,spread:3.5}]},
+  {id:'sakura',model:'meadow_a',owner:'Aisha',description:'A study-heavy week, softened by friends.',
+   x:-73.6,z:-42.5,altitude:5,scale:2.0,spawn:[0,4],obstacles:TORII_POSTS},
 
-  {id:'purple',model:'meadow_b',owner:'Ben',description:'Music, cooking, a patch of clover.',
-   x:83.7,z:-14.8,altitude:7,scale:2.0,spawn:[0,4],obstacles:TORII_POSTS,
-   plantings:[{asset:'purple',n:4,a:0.35,r:15,spread:5},
-              {asset:'oak',n:3,a:4.89,r:16,spread:4},
-              {asset:'clover',n:4,a:5.76,r:13,spread:4}]},
+  {id:'purple',model:'meadow_b',owner:'Ben',description:'Café shifts, lab work and band practice.',
+   x:83.7,z:-14.8,altitude:7,scale:2.0,spawn:[0,4],obstacles:TORII_POSTS},
 
-  {id:'oak',model:'meadow_c',owner:'Chen',description:'Cooking, travel, and foraging.',
-   x:42.5,z:73.6,altitude:-4,scale:2.0,spawn:[0,4],obstacles:TORII_POSTS,
-   plantings:[{asset:'oak',n:4,a:0.35,r:15,spread:5},
-              {asset:'palm',n:3,a:2.79,r:16,spread:4},
-              {asset:'mushrooms',n:4,a:5.59,r:13,spread:3.5}]},
+  {id:'oak',model:'meadow_c',owner:'Chen',description:'Long internship days and exam prep.',
+   x:42.5,z:73.6,altitude:-4,scale:2.0,spawn:[0,4],obstacles:TORII_POSTS},
 ];
 for(const d of definitions){
   d.name=d.owner?`${d.owner}’s island`:d.name;
-  d.activities=[...new Set((d.plantings??[]).map(p=>ACTIVITIES[p.asset]).filter(Boolean))];
+  // most-planted first: HISTORY lists each week's dominant category first
+  d.activities=d.owner?[...new Set(HISTORY[d.id].map(e=>e.cat))].map(c=>CATEGORIES[c].label):[];
 }
 
-// Plant one species per group so each grove reads as a single activity.
+// Decorative groves on the gathering island: `n` of one species in a tight
+// cluster. Member islands grow their activity trees in forest.js.
 function plantIsland(island,group,assets){
   let seed=island.id.length*977+41;
   const rnd=()=>{seed=(seed*1103515245+12345)&0x7fffffff;return seed/0x7fffffff;};
@@ -86,10 +80,10 @@ function plantIsland(island,group,assets){
     }
   }
 }
-let renderer,scene,camera,controls,composer,atmosphere,lanterns,gardener;
+let renderer,scene,camera,controls,composer,atmosphere,gardener,life,forest;
 const islands=[],bridges=[],keys=new Set();
 let selected='community',mode='overview',ready=false,motion=!matchMedia('(prefers-reduced-motion: reduce)').matches,elapsed=0,last=0,transition=null,noticeTimer;
-const player={position:new T.Vector3(),surface:null,distance:0};
+const player={position:new T.Vector3(),surface:null,distance:0,hop:0,vy:0};
 const look=new T.Vector3(),targetPosition=new T.Vector3(),cameraOffset=new T.Vector3(0,11,17);
 const raycaster=new T.Raycaster(),pointer=new T.Vector2();
 const bridgeMaterial=new T.MeshStandardMaterial({color:'#efd2a2',emissive:'#ffbd62',emissiveIntensity:.3,roughness:.8});
@@ -100,6 +94,8 @@ function setMaterials(root){root.traverse(o=>{if(!o.isMesh)return;o.castShadow=t
   if(/Glass|Lantern/i.test(o.name)){o.material=o.material.clone();o.material.emissive=new T.Color('#ffd38a');o.material.emissiveIntensity=2.2;}
   if(o.name==='Water'){o.material=new T.MeshStandardMaterial({color:'#8ac5b6',metalness:.35,roughness:.2,transparent:true,opacity:.86});}
   if(o.name==='Waterfalls'){o.material=new T.MeshStandardMaterial({color:'#c0e3d9',emissive:'#87c6c4',emissiveIntensity:.15,transparent:true,opacity:.65,side:T.DoubleSide,roughness:.3});}
+  // Mushroom gills and spots, pale-tree motes: unlit, and bright enough to bloom.
+  if(o.name==='Glow'){o.material=new T.MeshBasicMaterial({vertexColors:true,color:new T.Color(1.7,1.55,1.3),side:T.DoubleSide});o.castShadow=false;}
 });}
 
 function buildBridge(island){
@@ -137,7 +133,7 @@ function updateAltitude(island,altitude){
   const surface=surfaceAt(islands,bridges,player.position.x,player.position.z);if(surface){player.position.y=surface.y;player.surface=surface;}
 }
 
-function syncPanel(){const i=islands.find(i=>i.id===selected);if(!i)return;$('island-select').value=selected;$('altitude').value=i.altitude;$('altitude-value').value=`${i.altitude.toFixed(1)} m`;$('weather').value=i.weather;$('bridge-control').hidden=i.id==='community';if(i.id!=='community'){const b=bridges.find(b=>b.id===i.id);$('bridge-glow').value=b.glow;$('bridge-value').value=b.glow.toFixed(1);}document.querySelectorAll('.island-label').forEach(b=>b.classList.toggle('selected',b.dataset.island===selected));}
+function syncPanel(){const i=islands.find(i=>i.id===selected);if(!i)return;$('island-select').value=selected;$('altitude').value=i.altitude;$('altitude-value').value=`${i.altitude.toFixed(1)} m`;$('weather').value=i.strain??0;$('weather-value').value=i.weather;$('bridge-control').hidden=i.id==='community';if(i.id!=='community'){const b=bridges.find(b=>b.id===i.id);$('bridge-glow').value=b.glow;$('bridge-value').value=b.glow.toFixed(1);}document.querySelectorAll('.island-label').forEach(b=>b.classList.toggle('selected',b.dataset.island===selected));}
 
 function spawnOn(island){
   const desired={x:island.x+island.spawn[0]*island.scale,z:island.z+island.spawn[1]*island.scale};
@@ -147,13 +143,13 @@ function spawnOn(island){
   player.position.set(found.x,found.y,found.z);player.surface=found;
 }
 
-function visit(id){if(!ready)return;selected=id;mode='walk';const island=islands.find(i=>i.id===id);spawnOn(island);controls.enabled=false;cameraOffset.set(0,10,16);
+function visit(id){if(!ready)return;selected=id;mode='walk';const island=islands.find(i=>i.id===id);spawnOn(island);controls.enabled=true;controls.minDistance=6;controls.maxDistance=40;cameraOffset.set(0,10,16);camDesired=0;
   transition={from:camera.position.clone(),targetFrom:controls.target.clone(),time:0};
   $('location-kicker').textContent=island.owner?`Visiting ${island.owner}`:'Everyone’s island';
   $('location-title').textContent=island.name;
   $('hint').textContent=(island.activities?.length?`${island.activities.join(' · ')}. `:'')
-    +'WASD or arrow keys to wander. Cross a light bridge to visit a neighbour.';$('mode-hint').textContent='WASD / arrows to walk · Esc for sky view';$('overview').setAttribute('aria-pressed','false');$('walk').setAttribute('aria-pressed','true');syncPanel();canvas.focus({preventScroll:true});}
-function overview(){if(!ready)return;mode='overview';controls.enabled=true;transition={from:camera.position.clone(),targetFrom:controls.target.clone(),time:0};$('location-kicker').textContent='Your sky neighborhood';$('location-title').textContent='A world of little wonders.';$('hint').textContent='Choose an island. Stay a little while.';$('mode-hint').textContent='Drag to look around · Scroll to zoom';$('overview').setAttribute('aria-pressed','true');$('walk').setAttribute('aria-pressed','false');keys.clear();}
+    +'WASD or arrow keys to wander. Cross a light bridge to visit a neighbour.';$('mode-hint').textContent='WASD to walk · Space to jump · Drag to look around · Esc for sky view';$('overview').setAttribute('aria-pressed','false');$('walk').setAttribute('aria-pressed','true');syncPanel();canvas.focus({preventScroll:true});}
+function overview(){if(!ready)return;mode='overview';controls.enabled=true;controls.minDistance=14;controls.maxDistance=520;transition={from:camera.position.clone(),targetFrom:controls.target.clone(),time:0};$('location-kicker').textContent='Your sky neighborhood';$('location-title').textContent='A world of little wonders.';$('hint').textContent='Choose an island. Stay a little while.';$('mode-hint').textContent='Drag to look around · Scroll to zoom';$('overview').setAttribute('aria-pressed','true');$('walk').setAttribute('aria-pressed','false');keys.clear();}
 function overviewPosition(){
   // Project every island's corners and solve for the distance that fits them
   // all. A closed-form guess breaks as soon as the layout is asymmetric --
@@ -184,11 +180,40 @@ function overviewPosition(){
   return target.clone().addScaledVector(dir,dist);
 }
 
+const facing=new T.Vector3();
+let camDesired=0;   // the orbit distance the user chose; collisions only pull in from it
+const occRay=new T.Ray(),occHit=new T.Vector3(),camDir=new T.Vector3(),occSphere=new T.Sphere();
+// Trees between the gardener and the camera would swallow the view: pull the
+// camera in front of the nearest one. Planted trees are rough spheres; the
+// gathering tree's own trunk and canopy are raycast.
+function keepCameraClear(){
+  camDir.subVectors(camera.position,look).normalize();occRay.set(look,camDir);
+  let near=camDesired;
+  for(const i of islands){
+    for(const s of i.occluders){
+      occSphere.copy(s);occSphere.center.add(i.group.position);
+      if(!occSphere.containsPoint(look)&&occRay.intersectSphere(occSphere,occHit))near=Math.min(near,occHit.distanceTo(look));
+    }
+    if(i.solid.length&&player.surface?.id===i.id){
+      raycaster.set(look,camDir);raycaster.far=near;
+      const h=raycaster.intersectObjects(i.solid,false)[0];if(h)near=Math.min(near,h.distance);
+      raycaster.far=Infinity;
+    }
+  }
+  if(near<camDesired)camera.position.copy(look).addScaledVector(camDir,Math.max(1.5,near-.5));
+}
+function jump(){if(mode==='walk'&&!transition&&!player.hop&&!player.vy)player.vy=6.2;}
 function walk(dt){
   if(mode!=='walk'||transition)return;
-  const dx=Number(keys.has('KeyD')||keys.has('ArrowRight'))-Number(keys.has('KeyA')||keys.has('ArrowLeft'));
-  const dz=Number(keys.has('KeyS')||keys.has('ArrowDown'))-Number(keys.has('KeyW')||keys.has('ArrowUp'));
-  if(!dx&&!dz){gardener.position.y=0;gardener.rotation.z=0;return;}
+  // A hop only lifts the gardener off the ground; the surface underfoot keeps tracking.
+  if(player.vy||player.hop){player.vy-=18*dt;player.hop=Math.max(0,player.hop+player.vy*dt);if(!player.hop)player.vy=0;}
+  gardener.position.y=player.hop;
+  const ix=Number(keys.has('KeyD')||keys.has('ArrowRight'))-Number(keys.has('KeyA')||keys.has('ArrowLeft'));
+  const iz=Number(keys.has('KeyS')||keys.has('ArrowDown'))-Number(keys.has('KeyW')||keys.has('ArrowUp'));
+  if(!ix&&!iz){gardener.rotation.z=0;return;}
+  // Camera-relative: W always walks away from the camera, wherever it has been dragged.
+  const f=facing.subVectors(controls.target,camera.position).setY(0).normalize();
+  const dx=-f.z*ix-f.x*iz, dz=f.x*ix-f.z*iz;
   const len=Math.hypot(dx,dz),speed=4.1,step=speed*dt/len;
   let moved=false; // Small substeps and axis sliding keep the gardener inside the shore.
   const substeps=Math.max(1,Math.ceil(speed*dt/.1));
@@ -199,7 +224,7 @@ function walk(dt){
       if(s&&Math.abs(s.y-player.position.y)<.65){player.position.set(s.x,s.y,s.z);player.surface=s;moved=true;break;}
     }
   }
-  if(moved){player.distance+=speed*dt;gardener.rotation.y=T.MathUtils.lerp(gardener.rotation.y,Math.atan2(dx,dz),1-Math.exp(-12*dt));gardener.position.y=motion?Math.sin(player.distance*5)*.045:0;gardener.rotation.z=motion?Math.sin(player.distance*2.5)*.025:0;
+  if(moved){player.distance+=speed*dt;const turn=Math.atan2(dx,dz)-gardener.rotation.y;gardener.rotation.y+=Math.atan2(Math.sin(turn),Math.cos(turn))*(1-Math.exp(-12*dt));if(!player.hop)gardener.position.y=motion?Math.sin(player.distance*5)*.045:0;gardener.rotation.z=motion?Math.sin(player.distance*2.5)*.025:0;
     if(player.surface.kind==='island'&&player.surface.id!==selected){selected=player.surface.id;const i=islands.find(i=>i.id===selected);$('location-title').textContent=i.name;syncPanel();notice(`Welcome to ${i.name.toLowerCase()}.`);}
   }
 }
@@ -222,35 +247,50 @@ renderer=new T.WebGLRenderer({canvas,antialias:true,powerPreference:'high-perfor
   scene.add(new T.HemisphereLight('#fff2d4','#8d92aa',1.15));
   const sun=new T.DirectionalLight('#ffdeb2',2.0);sun.position.set(-45,65,25);sun.castShadow=true;sun.shadow.mapSize.set(LITE?512:2048,LITE?512:2048);sun.shadow.camera.left=-65;sun.shadow.camera.right=65;sun.shadow.camera.top=65;sun.shadow.camera.bottom=-65;sun.shadow.camera.far=180;sun.shadow.normalBias=.09;sun.shadow.bias=-.00015;scene.add(sun);
   const fill=new T.DirectionalLight('#bcd9e5',.9);fill.position.set(20,20,-30);scene.add(fill);
-  atmosphere=createAtmosphere(scene);atmosphere.setTone('peach');lanterns=createLanterns(scene,atmosphere.texture);lanterns.setDensity(36);
+  atmosphere=createAtmosphere(scene);atmosphere.setTone('peach');
   composer=new EffectComposer(renderer);composer.addPass(new RenderPass(scene,camera));if(!LITE){const bloom=new UnrealBloomPass(new T.Vector2(innerWidth/2,innerHeight/2),.14,.6,1.25);composer.addPass(bloom);}composer.addPass(new OutputPass());
-  const KEYS=['community','meadow_a','meadow_b','meadow_c','purple','oak','sakura','palm','mushrooms','clover','gardener'];
+  const KEYS=['community','meadow_a','meadow_b','meadow_c','purple','oak','sakura','palm','mushrooms','clover',
+              'willow','pale','magic_mushrooms','gardener'];
   $('load-progress').max=KEYS.length;
   const loader=new GLTFLoader(),assets={};let loaded=0;
   await Promise.all(KEYS.map(async key=>{assets[key]=(await loader.loadAsync(`${import.meta.env.BASE_URL}assets/${key}.glb`)).scene;setMaterials(assets[key]);$('load-progress').value=++loaded;$('loading-text').textContent=`Gathering the gardens · ${loaded} of ${KEYS.length}`; }));
   // walkable = terrain PLUS the raised surfaces people stand on
-  const WALKABLE={community:['Island','Plaza'],meadow:['Island','Path','ToriiSteps']};
+  const WALKABLE={community:['Island','Plaza','Jetty','LilySteps','Deck'],meadow:['Island','ToriiSteps']};
   const fields={};
   for(const key of ['community','meadow_a','meadow_b','meadow_c'])
     fields[key]=new HeightField(WALKABLE[key==='community'?'community':'meadow'].map(n=>assets[key].getObjectByName(n)));
+  fields.community.block([assets.community.getObjectByName('TreeWood')]);   // the buttress roots are solid
   for(const def of definitions){const island={...def,weather:'clear',field:fields[def.model],obstacles:[...(def.obstacles??[])]};
     const group=new T.Group();group.position.set(def.x,def.altitude,def.z);scene.add(group);island.group=group;
     const model=assets[def.model].clone(true);model.scale.setScalar(def.scale);group.add(model);island.model=model;model.traverse(o=>{o.userData.islandId=def.id;});
     plantIsland(island,group,assets);
+    // activity trees and today's ghosts, planted here so they count as camera occluders
+    forest??=createForest({assets,islandSurface,speciesScale:SPECIES_SCALE});
+    if(def.owner)forest.plant(island);
     island.weatherFx=createWeather(atmosphere.texture);island.weatherFx.group.position.copy(group.position);scene.add(island.weatherFx.group);
     const label=document.createElement('button');label.className='island-label';label.textContent=def.name;label.dataset.island=def.id;label.addEventListener('click',()=>visit(def.id));$('island-labels').append(label);island.label=label;
     const option=document.createElement('option');option.value=def.id;option.textContent=def.name;$('island-select').append(option);islands.push(island);
   }
   for(const island of islands.slice(1))buildBridge(island);
+  for(const island of islands){
+    island.group.updateMatrixWorld(true);
+    island.occluders=island.group.children.filter(c=>c!==island.model&&c.userData.islandId).map(c=>{
+      const s=new T.Box3().setFromObject(c).getBoundingSphere(new T.Sphere());s.center.sub(island.group.position);s.radius*=.75;return s;
+    }).filter(s=>s.radius>1.2);
+    island.solid=['TreeWood','Canopy'].map(n=>island.model.getObjectByName(n)).filter(Boolean);
+  }
   const playerRoot=new T.Group();scene.add(playerRoot);gardener=assets.gardener;gardener.scale.setScalar(.38);playerRoot.add(gardener);player.root=playerRoot;
   const shadow=new T.Mesh(new T.CircleGeometry(.43,24),new T.MeshBasicMaterial({color:'#35492f',transparent:true,opacity:.22,depthWrite:false}));shadow.rotation.x=-Math.PI/2;shadow.position.y=.035;playerRoot.add(shadow);
-  spawnOn(islands[0]);ready=true;
+  spawnOn(islands[0]);
+  life=initLife({islands,camera,texture:atmosphere.texture,player,notice,visit,nearTree:forest.near,getMode:()=>mode,getSelected:()=>selected,
+    setAltitude:(id,h)=>{updateAltitude(islands.find(i=>i.id===id),T.MathUtils.clamp(h,-7,16));syncPanel();}});
+  ready=true;
   const want=new URLSearchParams(location.search).get('island');
   if(want&&islands.some(i=>i.id===want))setTimeout(()=>visit(want),0);
 $('loading').hidden=true;$('motion').checked=motion;syncPanel();
   renderer.setAnimationLoop(frame);
   // A small inspection API also exposes meaningful world state for embedding.
-  window.islandLife={visit,overview,setAltitude:(id,h)=>{if(!Number.isFinite(h))return;updateAltitude(islands.find(i=>i.id===id),T.MathUtils.clamp(h,-7,16));syncPanel();},setWeather:(id,type)=>{if(!['clear','rain','mist'].includes(type))return;const i=islands.find(i=>i.id===id);i.weather=type;i.weatherFx.set(type);syncPanel();},getState:()=>({ready,mode,selected,gpu,player:{x:player.position.x,y:player.position.y,z:player.position.z,surface:player.surface},islands:islands.map(({id,altitude,weather})=>({id,altitude,weather})),bridges:bridges.map(({id,start,end,width,arch,glow})=>({id,start,end,width,arch,glow})),render:renderer.info.render}),surfaceAt:(x,z)=>surfaceAt(islands,bridges,x,z)};
+  window.islandLife={visit,overview,setAltitude:(id,h)=>{if(!Number.isFinite(h))return;updateAltitude(islands.find(i=>i.id===id),T.MathUtils.clamp(h,-7,16));syncPanel();},setWeather:(id,s)=>{const i=islands.find(i=>i.id===id),v=typeof s==='number'?s:{clear:.05,cloudy:.45,mist:.45,rain:.85}[s];if(!i||v==null)return;setStrain(i,v);syncPanel();},getState:()=>({ready,mode,selected,gpu,player:{x:player.position.x,y:player.position.y,z:player.position.z,surface:player.surface},islands:islands.map(({id,altitude,weather,strain})=>({id,altitude,weather,strain})),bridges:bridges.map(({id,start,end,width,arch,glow})=>({id,start,end,width,arch,glow})),render:renderer.info.render}),surfaceAt:(x,z)=>surfaceAt(islands,bridges,x,z),life:life.api};
 }
 
 let _last=0;
@@ -258,30 +298,34 @@ function frame(time){
   if(LITE){ if(time-_last<33) return; _last=time; }   // cap ~30fps
 
   const dt=Math.min((time-last)/1000,.04);last=time;if(document.hidden)return;if(motion)elapsed+=dt;
-  walk(dt);player.root.position.copy(player.position);atmosphere.update(elapsed);lanterns.update(elapsed,islands[0].altitude);for(const i of islands)i.weatherFx.update(elapsed);
+  walk(dt);player.root.position.copy(player.position);atmosphere.update(elapsed);for(const i of islands)i.weatherFx.update(elapsed);
   if(transition){transition.time+=dt;const a=motion?Math.min(transition.time/1.2,1):1,e=1-Math.pow(1-a,4);look.copy(mode==='walk'?player.position:new T.Vector3(0,2,0));if(mode==='walk')look.y+=1;targetPosition.copy(mode==='walk'?player.position.clone().add(cameraOffset):overviewPosition());camera.position.lerpVectors(transition.from,targetPosition,e);controls.target.lerpVectors(transition.targetFrom,look,e);camera.lookAt(controls.target);if(a===1)transition=null;}
-  else if(mode==='walk'){look.copy(player.position);look.y+=1;targetPosition.copy(player.position).add(cameraOffset);camera.position.lerp(targetPosition,1-Math.exp(-4*dt));controls.target.lerp(look,1-Math.exp(-5*dt));camera.lookAt(controls.target);}
+  // walk: orbit controls around the gardener -- drag to turn, scroll to zoom -- carried along as they move
+  else if(mode==='walk'){look.copy(player.position);look.y+=1;
+    camDir.subVectors(camera.position,controls.target).setLength(camDesired||camera.position.distanceTo(controls.target));
+    camera.position.copy(look).add(camDir);controls.target.copy(look);controls.autoRotate=false;controls.update(dt);
+    camDesired=camera.position.distanceTo(look);keepCameraClear();}
   else {controls.autoRotate=motion;controls.autoRotateSpeed=.1;controls.update(dt);}
+  life.update(dt,elapsed,motion);
+  forest.update(dt,elapsed,motion,id=>life.api.getSchedule(id));
   for(const island of islands){const p=new T.Vector3(island.x,island.altitude+.7,island.z+8*island.scale).project(camera);island.label.style.left=`${(p.x*.5+.5)*innerWidth}px`;island.label.style.top=`${(-p.y*.5+.5)*innerHeight}px`;island.label.hidden=mode==='walk'||p.z>1||Math.abs(p.x)>1.1||Math.abs(p.y)>1.1;}
   composer.render();
 }
 
 let down=null;
 canvas.addEventListener('pointerdown',e=>{down=[e.clientX,e.clientY];});
-canvas.addEventListener('pointerup',e=>{if(!ready||!down||Math.hypot(e.clientX-down[0],e.clientY-down[1])>5)return;down=null;if(mode!=='overview')return;pointer.set(e.clientX/innerWidth*2-1,-e.clientY/innerHeight*2+1);raycaster.setFromCamera(pointer,camera);const hit=raycaster.intersectObjects(islands.map(i=>i.group),true).find(h=>h.object.userData.islandId);if(hit)visit(hit.object.userData.islandId);});
-canvas.addEventListener('wheel',e=>{if(mode==='walk'){e.preventDefault();const factor=e.deltaY>0?1.08:.92;cameraOffset.multiplyScalar(factor);cameraOffset.clampLength(9,35);}},{passive:false});
-window.addEventListener('keydown',e=>{if(['INPUT','SELECT','TEXTAREA','BUTTON'].includes(document.activeElement.tagName))return;if(e.code==='Escape'){overview();return;}if(/^(Key[WASD]|Arrow(Up|Down|Left|Right))$/.test(e.code)){if(mode==='walk')e.preventDefault();keys.add(e.code);}});
+canvas.addEventListener('pointerup',e=>{if(!ready||!down||Math.hypot(e.clientX-down[0],e.clientY-down[1])>5)return;down=null;pointer.set(e.clientX/innerWidth*2-1,-e.clientY/innerHeight*2+1);raycaster.setFromCamera(pointer,camera);if(life.pick(raycaster))return;if(mode!=='overview')return;const hit=raycaster.intersectObjects(islands.map(i=>i.group),true).find(h=>h.object.userData.islandId);if(hit)visit(hit.object.userData.islandId);});
+window.addEventListener('keydown',e=>{if(['INPUT','SELECT','TEXTAREA','BUTTON'].includes(document.activeElement.tagName))return;if(e.code==='Escape'){overview();return;}if(e.code==='Space'&&mode==='walk'){e.preventDefault();jump();return;}if(/^(Key[WASD]|Arrow(Up|Down|Left|Right))$/.test(e.code)){if(mode==='walk')e.preventDefault();keys.add(e.code);}});
 window.addEventListener('keyup',e=>keys.delete(e.code));window.addEventListener('blur',()=>keys.clear());document.addEventListener('visibilitychange',()=>keys.clear());
 $('overview').onclick=overview;$('walk').onclick=()=>visit(selected);
 function setPanel(open){$('settings').hidden=!open;$('settings-toggle').setAttribute('aria-expanded',String(open));if(open)$('sky-tone').focus();else $('settings-toggle').focus();}
 $('settings-toggle').onclick=()=>setPanel($('settings').hidden);$('settings-close').onclick=()=>setPanel(false);
 $('island-select').onchange=e=>{selected=e.target.value;syncPanel();};
 $('sky-tone').onchange=e=>{atmosphere?.setTone(e.target.value);$('sky-label').textContent=e.target.selectedOptions[0].textContent;};
-$('lantern-density').oninput=e=>{lanterns?.setDensity(+e.target.value);$('lantern-value').value=e.target.value;};
 $('motion').onchange=e=>{motion=e.target.checked;};
 $('altitude').oninput=e=>{if(!ready)return;updateAltitude(islands.find(i=>i.id===selected),+e.target.value);syncPanel();};
-$('weather').onchange=e=>{if(!ready)return;const i=islands.find(i=>i.id===selected);i.weather=e.target.value;i.weatherFx.set(i.weather);};
+$('weather').oninput=e=>{if(!ready)return;setStrain(islands.find(i=>i.id===selected),+e.target.value);syncPanel();};
 $('bridge-glow').oninput=e=>{const b=bridges.find(b=>b.id===selected);if(!b)return;b.glow=+e.target.value;b.glowMaterial.emissiveIntensity=b.glow*2.2;b.deckMaterial.emissiveIntensity=b.glow*.16;$('bridge-value').value=b.glow.toFixed(1);};
-$('reset').onclick=()=>{if(!ready)return;for(const d of definitions){const i=islands.find(i=>i.id===d.id);updateAltitude(i,d.altitude);i.weather='clear';i.weatherFx.set('clear');}for(const b of bridges){b.glow=1.2;b.glowMaterial.emissiveIntensity=2.64;b.deckMaterial.emissiveIntensity=.192;}$('sky-tone').value='peach';$('sky-tone').dispatchEvent(new Event('change'));$('lantern-density').value=36;$('lantern-density').dispatchEvent(new Event('input'));syncPanel();notice('Back to a quiet peach twilight.');};
+$('reset').onclick=()=>{if(!ready)return;for(const d of definitions){const i=islands.find(i=>i.id===d.id);updateAltitude(i,d.altitude);setStrain(i,i.derivedStrain??0);}life.api.resettle();for(const b of bridges){b.glow=1.2;b.glowMaterial.emissiveIntensity=2.64;b.deckMaterial.emissiveIntensity=.192;}$('sky-tone').value='peach';$('sky-tone').dispatchEvent(new Event('change'));syncPanel();notice('Back to a quiet peach twilight.');};
 window.addEventListener('resize',()=>{if(!renderer)return;camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);composer.setSize(innerWidth,innerHeight);});
 init().catch(error=>{console.error(error);$('loading').hidden=false;$('loading-text').textContent='The world could not load. Check the local server and reload to try again.';$('load-progress').hidden=true;const button=document.createElement('button');button.textContent='Try again';button.onclick=()=>location.reload();$('loading').append(button);});

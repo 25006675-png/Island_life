@@ -57,15 +57,6 @@ def build_all():
         link(ob, "Props")
     add_point_lights([lantern], energy=26.0, radius=0.28)
 
-    # ---------------- worn dirt track across the sward ----------------
-    mb_path = MB()
-    path_ribbon(mb_path, [
-        (TORII_AT[0] + ap.x * 1.2, TORII_AT[1] + ap.y * 1.2),
-        (-2.4, 2.2), (0.9, 1.4), (3.6, 2.6), (6.2, 1.2)],
-        width=1.25, lift=0.03)
-    dirt = mb_path.emit("Path", mat_dirt())
-    link(dirt, "Props")
-
     # ---------------- hanging creepers, incl. wisteria ----------------
     mb_vs, mb_vl = MB(), MB()
     build_vines(mb_vs, mb_vl, vine_clumps(rnd, n_clumps=12, per=(4, 9),

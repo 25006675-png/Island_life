@@ -18,6 +18,10 @@ sampled off the matching `reference.png`.
 | [Coral palm](Coral%20palm/) | `create_palm.py` | ~21 s | 320 pinnae, 114 trunk plates |
 | [Golden oak](Golden%20oak/) | `create_oak.py` | ~36 s | 3,125 leaves in 12 clusters |
 | [Sakura tree](Sakura%20tree/) | `create_sakura.py` | ~40 s | 3,296 blossoms, 16 falling petals |
+| [Pale tree](Pale%20tree/) | `create_pale_tree.py` | ~25 s | 593 branch tubes, 14 motes |
+| [Blue willow](Blue%20willow/) | `create_willow.py` | ~35 s | 3,623 leaves on 159 strands |
+| [Sage topiary](Sage%20topiary/) | `create_topiary.py` | ~30 s | 2,316 leaves in 19 puffs, 4 mushrooms |
+| [Magic mushrooms](Magic%20mushrooms/) | `create_magic_mushrooms.py` | ~30 s | 3 tree-sized amanitas on one root mound, glowing gills and spots |
 
 Each script saves a `.blend` alongside its `.png`, with objects sorted into
 named collections (trunk / canopy / studio) so anything can be re-posed by hand.
@@ -102,3 +106,56 @@ that is what produces the reference's cauliflower silhouette.
 **Sakura** — blossoms are five-lobed rosettes generated as single flat meshes
 (`rosette()`). Clusters are kept small and gappy on purpose so the recursive
 branch work shows through, which the reference makes a feature of.
+A later pass cleaned up a "dirty" look. Blossoms had jumped several shades
+apart from ±.12 exposure jitter and ±.34 rosette tilt, which faced some into
+the key and blew them out to white stickers. The ramp had also run on to a
+crimson darker than anything in the reference. Now the ramp follows the
+reference's own pinks nudged bluer against the warm key, with a narrow
+exposure range. The bole continues up into the fork, where ending it flat had
+left a collar, and branch end caps are deleted.
+A third pass made the clusters round (now 2,556 blossoms: 1,530 read too sparse). A shell
+of flat outward-facing rosettes reads as a box: at the outline each one is
+edge-on, a straight line about 0.7× the cluster radius long, and the top ones
+make a flat lid. Now the round form comes from a painted core ball (a vertex
+colour gradient), and deeply cupped rosettes sit on its surface as petal
+detail, wrapping well under the ball. Rosette size is the balance point: at
+.22-.33 of the cluster radius the canopy read sparse, and at .28-.40 the
+clusters squared off again. It's set at .25-.36.
+
+The last three are the PRODUCT.md species for Other, Rest and Errands. Their
+positions are laid out in the reference's pixel space at 150 px per unit, so
+all three use ortho scale 8.36.
+
+**Pale tree** (Other) — two trunks braided about a shared axis, then recursive
+antler forks that open in each limb's own vertical plane. All wood is
+repainted with smooth vertex colour after building: per-face shade picking
+turned the dense braided trunk into a pixel mosaic. Branch end caps are
+deleted, because smooth shading averaged each cap into its last ring and drew a
+pale band at every joint. The motes are emission spheres with a facing-falloff
+halo that fakes bloom; the halos are render-only and would need dropping from
+a browser export.
+
+**Blue willow** (Rest) — the first build dressed core spheres in closed rings
+of straight curtains and read as heavy blue cylinders. Now each strand is a
+fountain curve (`droop()`): its heading relaxes exponentially from upward to
+straight down, so it arcs over and falls. Strands start at different depths
+inside the lobe, and there are no core spheres, so the canopy stays
+see-through. Hem lengths vary by about ±0.9 units and leaves taper toward the
+tips. Leaves are forced to hang even where the strand rises. There are no
+branchlet tubes: leaves hang below the path, so the arch always poked out.
+
+**Sage topiary** — three trunks with an oak-style puff canopy each (tangent
+leaves on hidden core spheres), with sprigs and painted mushroom caps at the
+foot. Built for Errands, then replaced there by the magic mushrooms.
+
+**Magic mushrooms** (Errands) — the mushroom cluster's amanitas at tree
+proportions: stems far taller than the caps are wide. At first there were five
+separate stems, which read as several things. Now three stems lean their feet
+in to one shared root mound, so each planting reads as a single organism. The gills are radial ridges painted into vertex
+colour, so the underside needs 144 segments. Both gills and cap spots use a
+Principled material that emits its own vertex colour. Spot emission above
+about 1 blows them out to white, and they read as holes in the cap. The camera
+looks slightly up so the gills show. With an ortho camera the lower frame then
+starts below the floor, so the floor is hidden from the camera and a
+camera-only cream wall stands behind instead. The original Mushroom cluster is
+untouched: it still serves the Foraging groves.

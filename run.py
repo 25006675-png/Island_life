@@ -9,16 +9,99 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 exec(compile(open(os.path.join(HERE, "island_build.py"), encoding="utf-8").read(),
              "island_build.py", "exec"))
 
-# ---- pond: pushed to the front-left rim, clear of every bridge.
-# The web scene's bridges leave this island at 150, 10 and 300 degrees
-# (Blender frame). The only wide bridge-free side is the front-left, so the
-# pond lives there as a kidney that follows the rim (POND_BEND), leaving the
-# middle and the whole back open for walking. Its tips sit at ~177 and ~273
-# degrees, at least 5.8 units from the nearest bridge landing.
-POND_C         = (-4.67, -4.67)       # 6.6 units out at 225 degrees
-POND_A, POND_B = 4.9, 3.1
-POND_ROT       = math.radians(-45)    # long axis tangential to the rim
-POND_BEND      = 0.70
+# ---- pond: in the middle of the island, tucked against the gathering tree's
+# plaza. A short jetty leaves the plaza side and giant lily pads step out to a
+# small round deck; a little footbridge from the far shore is the second way
+# on. The web scene's photo lanterns float over the deck. Its bridges leave
+# this island at 150, 10 and 300 degrees (Blender frame).
+POND_C         = (-2.0, -1.8)
+POND_A, POND_B = 4.4, 3.4
+POND_ROT       = math.radians(-48)    # long axis perpendicular to the tree
+POND_BEND      = 0.0
+LILY_PADS      = 18           # keep the water open; the pad steps carry the look
+PU =(math.cos(POND_ROT), math.sin(POND_ROT))    # long axis
+PV = (-PU[1], PU[0])                              # short axis, toward the tree
+DECK_V, DECK_R = -1.0, 1.3    # deck centre (short-axis offset) and radius
+WALK_Z = 0.24                 # jetty / pad / deck tops: above the 0.17 the web scene treats as water
+
+
+def pond_at(u, v):
+    """u along the pond's long axis, v along its short axis (toward the tree)"""
+    return (POND_C[0] + PU[0] * u + PV[0] * v, POND_C[1] + PU[1] * u + PV[1] * v)
+
+
+def build_pond_walk(mb_jetty, mb_pads, mb_deck):
+    rot = Matrix.Rotation(math.atan2(PV[1], PV[0]), 3, 'Z')
+    # jetty: planks from the plaza side out over the bank, on two pilings
+    for k in range(6):
+        mb_jetty.box((*pond_at(0, 4.45 - k * 0.3), WALK_Z - 0.03), (0.26, 1.35, 0.1), rot=rot)
+    for u in (-0.55, 0.55):
+        x, y = pond_at(u, 3.0)
+        mb_jetty.tube([(x, y, -0.5), (x, y, WALK_Z - 0.06)], [0.08, 0.08], 8)
+    # giant lily pads curving from the jetty to the deck; they overlap so the
+    # web scene's height field reads them as one walkable chain
+    p0, p1, p2 = pond_at(0, 2.55), pond_at(1.5, 0.9), pond_at(0, DECK_V + DECK_R * 0.85)
+    for i in range(5):
+        t = i / 4
+        x = (1 - t) ** 2 * p0[0] + 2 * (1 - t) * t * p1[0] + t * t * p2[0]
+        y = (1 - t) ** 2 * p0[1] + 2 * (1 - t) * t * p1[1] + t * t * p2[1]
+        mb_pads.blob((x, y, WALK_Z - 0.03), 0.62 + 0.05 * math.sin(i * 2.3),
+                     scale=(1.0, 1.0, 0.10), squash=0.2, seed=i * 5.1, mid=0, subd=2)
+    # the deck: round, planked, with a rim and two little lanterns
+    dc = pond_at(0, DECK_V)
+    for k in range(9):
+        o = -DECK_R + (k + 0.5) * (2 * DECK_R / 9)
+        w = 2 * math.sqrt(max(0.0, DECK_R ** 2 - o ** 2))
+        mb_deck.box((dc[0] + PV[0] * o, dc[1] + PV[1] * o, WALK_Z - 0.04),
+                    (2 * DECK_R / 9 * 0.92, w, 0.12), rot=rot)
+    rim = [(dc[0] + math.cos(a) * DECK_R, dc[1] + math.sin(a) * DECK_R, WALK_Z + 0.02)
+           for a in (2 * math.pi * k / 40 for k in range(41))]
+    mb_deck.tube(rim, [0.06] * len(rim), 6, cap=False)
+    # second way on: a little arched footbridge from the far shore; planks
+    # overlap so the height field never finds a gap between them
+    for k in range(8):
+        f = k / 7
+        mb_jetty.box((*pond_at(0, DECK_V - DECK_R * 0.8 - k * 0.3), WALK_Z - 0.03 + 0.14 * math.sin(math.pi * f)),
+                     (0.32, 1.2, 0.1), rot=rot)
+
+
+def build_reeds(mb_reed, mb_head, rnd):
+    # clumps at the waterline, clear of the jetty (t = pi/2)
+    for t in (0.25, 2.45, 3.95, 5.5):
+        lo, hi = 0.3, 1.7
+        for _ in range(20):
+            mid = (lo + hi) / 2
+            if pond_sd(*pond_at(math.cos(t) * POND_A * mid, math.sin(t) * POND_B * mid)) < 0: lo = mid
+            else: hi = mid
+        cx, cy = pond_at(math.cos(t) * POND_A * lo * 0.97, math.sin(t) * POND_B * lo * 0.97)
+        for _ in range(rnd.randint(5, 8)):
+            x, y = cx + rnd.uniform(-0.4, 0.4), cy + rnd.uniform(-0.4, 0.4)
+            h, lx, ly = rnd.uniform(0.7, 1.35), rnd.uniform(-0.2, 0.2), rnd.uniform(-0.2, 0.2)
+            pts = [(x + lx * f * f, y + ly * f * f, WATER_Z - 0.1 + h * f) for f in (0, 0.35, 0.7, 1)]
+            mb_reed.tube(pts, [0.03, 0.026, 0.02, 0.008], 5)
+            if rnd.random() < 0.45:
+                hx, hy, hz = pts[2]
+                mb_head.blob((hx, hy, hz + 0.05), 0.055, scale=(1, 1, 3.0), seed=rnd.uniform(0, 30), subd=1)
+
+
+def build_lotus(mb, rnd, n=4):
+    placed = tries = 0
+    while placed < n and tries < 400:
+        tries += 1
+        t, f = rnd.uniform(0, 2 * math.pi), rnd.uniform(0.55, 0.85)
+        u, v = math.cos(t) * POND_A * f, math.sin(t) * POND_B * f
+        if -0.9 < u < 2.2 and v > -0.3: continue                  # the jetty and pad steps
+        if abs(u) < 1.0 and v < DECK_V: continue                   # the footbridge
+        if math.hypot(u, v - DECK_V) < DECK_R + 1.5: continue      # the lanterns' ring round the deck
+        x, y = pond_at(u, v)
+        if pond_sd(x, y) > -0.08: continue
+        mb.blob((x, y, WATER_Z + 0.012), 0.34, scale=(1, 1, 0.07), squash=0.2, seed=placed * 3.3, mid=0, subd=1)
+        for k in range(6):
+            a = k * math.pi / 3 + rnd.uniform(-0.2, 0.2)
+            mb.blob((x + math.cos(a) * 0.09, y + math.sin(a) * 0.09, WATER_Z + 0.09), 0.08,
+                    scale=(1.6, 0.8, 0.9), squash=0.1, seed=k + placed, mid=1, subd=1)
+        mb.blob((x, y, WATER_Z + 0.12), 0.05, mid=2, subd=1)
+        placed += 1
 
 # bridge / waterfall / vine placement, in radians around the rim
 BRIDGES   = [math.radians(300), math.radians(10), math.radians(150)]  # = web bridges
@@ -41,7 +124,7 @@ def build_all():
     link(water, "Island")
 
     # ---------------- the great tree ----------------
-    torig = (TREE_AT[0], TREE_AT[1], ground(TREE_AT[0], TREE_AT[1]) + 0.55)
+    torig = (TREE_AT[0], TREE_AT[1], ground(TREE_AT[0], TREE_AT[1]) + 0.08)
     tree, blobs, O = build_tree(origin=torig, scale=1.26)
     assign(tree, mat_bark())
     link(tree, "Tree")
@@ -50,7 +133,8 @@ def build_all():
     link(canopy, "Tree")
 
     # ---------------- stone plaza + paths ----------------
-    mb_stone = build_plaza(torig, r_out=5.8, steps=3)
+    # a flat flagstone ring, flush with the grass; the buttress roots cross it
+    mb_stone = build_plaza(torig, r_out=5.8, steps=0)
     def landing(a, r=10.9):
         return (math.cos(a) * r, math.sin(a) * r)
     # a paved route from the plaza to each bridge; the 10-degree bridge lands
@@ -61,6 +145,22 @@ def build_all():
                 width=1.35)
     plaza = mb_stone.emit("Plaza", mat_stone())
     link(plaza, "Props")
+
+    # ---------------- pond: jetty, lily-pad steps, deck, reeds, lotus ----------------
+    prnd = random.Random(606)          # own stream, so the rest of the scatter is unchanged
+    mb_j, mb_p, mb_d = MB(), MB(), MB()
+    build_pond_walk(mb_j, mb_p, mb_d)
+    for ob, mt in ((mb_j.emit("Jetty"), mat_wood()), (mb_p.emit("LilySteps"), mat_lilypad()),
+                   (mb_d.emit("Deck"), mat_wood())):
+        assign(ob, mt)
+        link(ob, "Props")
+    mb_r, mb_h, mb_lo = MB(), MB(), MB()
+    build_reeds(mb_r, mb_h, prnd)
+    build_lotus(mb_lo, prnd)
+    for ob in (mb_r.emit("Reeds", mat_tuft()),
+               mb_h.emit("ReedHeads", mat_wood("ReedHead", (0.36, 0.22, 0.12, 1), (0.50, 0.33, 0.18, 1))),
+               mb_lo.emit("Lotus", mat_lilypad(), mat_flower(), mat("LotusHeart", (1.0, 0.78, 0.30, 1)))):
+        link(ob, "Scatter")
 
     # ---------------- bridges ----------------
     mbw, mbr, mbm, mbg, mbb = MB(), MB(), MB(), MB(), MB()

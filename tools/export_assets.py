@@ -10,23 +10,30 @@ SOURCES = {
     'community': 'island1.blend', 'meadow': 'island2.blend',
     'meadow_a': 'island2a.blend', 'meadow_b': 'island2b.blend',
     'meadow_c': 'island2c.blend',
-    'purple': 'Ghibli/Purple tree/ghibli_purple_tree_v7.blend',
+    'purple': 'Ghibli/Purple tree/ghibli_purple_tree.blend',
     'oak': 'Ghibli/Golden oak/ghibli_oak.blend',
     'sakura': 'Ghibli/Sakura tree/ghibli_sakura.blend',
     'palm': 'Ghibli/Coral palm/ghibli_palm.blend',
     'mushrooms': 'Ghibli/Mushroom cluster/ghibli_mushrooms.blend',
     'clover': 'Ghibli/Clover patch/ghibli_clover.blend',
+    'pale': 'Ghibli/Pale tree/ghibli_pale_tree.blend',
+    'willow': 'Ghibli/Blue willow/ghibli_willow.blend',
+    'magic_mushrooms': 'Ghibli/Magic mushrooms/ghibli_magic_mushrooms.blend',
     'gardener': 'Character/leaf_gardener.blend',
 }
+# Faces with these materials glow in the renders. They are split out as a
+# separate 'Glow' mesh, which main.js draws unlit so the bloom pass picks it up.
+GLOW_PREFIXES = ('Glowing', 'Mote light')
 only = sys.argv[sys.argv.index('--')+1:] if '--' in sys.argv else []
 for key, source in SOURCES.items():
     if only and key not in only: continue
     bpy.ops.wm.open_mainfile(filepath=os.path.join(ROOT, source))
     scene = bpy.context.scene
     # Studio planes/lights are presentation fixtures, not part of the assets.
+    # Mote halos fake bloom in Cycles only; exported they are opaque white balls.
     for o in list(scene.objects):
         studio = any('studio' in c.name.lower() or 'camera' in c.name.lower() for c in o.users_collection)
-        if o.type not in {'MESH','CURVE'} or studio or o.name in {'SkyLanterns','BridgeWood','BridgeRope','BridgeMetal','LanternGlass_','Banners'}:
+        if o.type not in {'MESH','CURVE'} or studio or o.name.endswith(' halo') or o.name in {'SkyLanterns','BridgeWood','BridgeRope','BridgeMetal','LanternGlass_','Banners'}:
             bpy.data.objects.remove(o, do_unlink=True)
     bpy.ops.object.select_all(action='SELECT')
     bpy.context.view_layer.objects.active = next(iter(scene.objects))
@@ -127,6 +134,26 @@ for key, source in SOURCES.items():
             o.data.color_attributes.render_color_index = i
         except Exception:
             pass
+    if len(objects) == 1:
+        o = objects[0]
+        glow = [i for i, ms in enumerate(o.material_slots)
+                if ms.material and ms.material.name.startswith(GLOW_PREFIXES)]
+        if glow:
+            bpy.ops.object.select_all(action='DESELECT')
+            o.select_set(True)
+            bpy.context.view_layer.objects.active = o
+            bpy.ops.object.mode_set(mode='EDIT')
+            bpy.ops.mesh.select_all(action='DESELECT')
+            for i in glow:
+                o.active_material_index = i
+                bpy.ops.object.material_slot_select()
+            bpy.ops.mesh.separate(type='SELECTED')
+            bpy.ops.object.mode_set(mode='OBJECT')
+            part = next(x for x in bpy.context.selected_objects if x is not o)
+            part.name = 'Glow'
+            objects.append(part)
+            print('  glow faces split out: %d' % len(part.data.polygons), flush=True)
+    bpy.ops.object.select_all(action='SELECT')
     browser_mat = bpy.data.materials.new('Painted asset colors')
     browser_mat.use_nodes = True
     bsdf = browser_mat.node_tree.nodes.get('Principled BSDF')
