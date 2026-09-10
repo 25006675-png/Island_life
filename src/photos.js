@@ -108,6 +108,7 @@ export function createPhotoLake({island,texture,members,me,notice,view,time}){
   return {
     ring,
     get items(){return items;},
+    get status(){return {open,rung};},
     update(t,camera,motion){
       for(const i of items){
         const r=i.radius+(motion?Math.sin(t*.35+i.angle*3)*.18:0);   // a gentle drift in place

@@ -127,6 +127,7 @@ dialog h2{font:normal 21px Georgia,serif;margin:0 0 14px}
 .bal-suggest li div{display:flex;flex-direction:column;gap:3px;font-size:13px}.bal-suggest li span{font-size:12px;color:var(--muted)}
 .bal-apply{border:0;border-radius:18px;padding:8px 16px;background:var(--accent);color:oklch(.99 .01 60);font-size:12px;white-space:nowrap}
 .bal-apply:hover{background:oklch(.48 .12 36)}
+.bal-dew{margin:18px 0 0;font-size:12px;line-height:1.5;color:var(--muted)}
 .bal-suggest li.done .bal-apply{background:oklch(.9 .05 150);color:var(--ink);opacity:1}
 @media(max-width:700px){.balance-avatar{display:none}.bal-row{grid-template-columns:64px 1fr 84px}.sheet-head{padding-right:48px}}
 @media(prefers-reduced-motion:reduce){.sheet{animation:none}}

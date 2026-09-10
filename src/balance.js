@@ -13,7 +13,7 @@ const el=(tag,props={},...kids)=>{const e=Object.assign(document.createElement(t
 const h1=h=>`${+h.toFixed(1)} h`;
 const list=parts=>parts.length<2?parts.join(''):`${parts.slice(0,-1).join(', ')} and ${parts.at(-1)}`;
 
-export function createBalance({plans,me,friends,clock,checkins,sheets,notice,avatar}){
+export function createBalance({plans,me,friends,clock,checkins,sheets,notice,avatar,dew}){
   const sheet=$('balance-sheet'), owner=me.id, cap=CAPACITY[owner];
   $('balance-avatar').src=avatar;
   const ended=b=>b.date<TODAY||(b.date===TODAY&&b.start+b.mins<=clock.minutes);
@@ -95,6 +95,7 @@ export function createBalance({plans,me,friends,clock,checkins,sheets,notice,ava
     chart(week);
     $('bal-weather').textContent=weatherLine(week,load);
     renderList();
+    $('bal-dew').textContent=`💧 ${dew()} dewdrops, a slow drip from finished blocks and golden-window moments. They grew the windmill in the middle of your island.`;
   }
   return {
     open(from){current=suggest();applied.clear();sheets.show(sheet,from??$('balance-toggle'));render();},

@@ -82,6 +82,12 @@ Tone: microcopy stays warm and non-clinical ("your rest grove has been quiet thi
 
 v1 demo: panel runs on mock data; 3 scripted suggestions (one rebalance, one rest, one social), each actually mutating the mock plan so the behind-scene updates on apply.
 
+Dewdrops (decoration economy, roadmap tier)
+
+A slow drip of dewdrops from completed blocks and golden-window participation, spent on island decorations and care tokens. It never claims to touch workload or stress; it's just how your island gets a windmill. v1 shows the counter (a chip beside the load and weather chips, and one line in the balance panel) and one decoration: a windmill at the hub of your clock-face path. No shop, no purchase flow.
+
+Achievements reward balance, never volume. Paying out for "50 study hours" or "20 tasks this week" would reward the burnout the app exists to prevent. So they celebrate what the brief wants more of: "First week with rest in every day" 🌿, "Completed a shared mission with a friend", "Accepted an invitation on a rainy week", "A balanced week: all six groves grew", and gentle milestones ("your first willow", "100 lanterns in your sky"). Volume-neutral, recovery-positive, social-positive. One-time or weekly-resetting, never chained (no streaks, no leaderboards). Rewards are seasoning, not the engine: the retention engine is the island itself, the accumulated landscape. In the pitch this is half a sentence: small rewards, tuned to celebrate balance rather than volume.
+
 Demo control panel (judge-facing, v1 only)
 
 Sliders/toggles to drive the scene without a backend: per-island altitude, per-island weather (one continuous strain slider: clear → cloud → drizzle → rain), bridge glow intensity, sky tone, time of day (or follow the real clock), ring the golden window now, ghost↔solid tree ratio.

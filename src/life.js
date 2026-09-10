@@ -8,6 +8,7 @@ import { createPhotoLake, loadSquare } from './photos.js';
 import { createSheets } from './sheets.js';
 import { createCalendar } from './calendar.js';
 import { createBalance } from './balance.js';
+import { createNoticeBoard, createWindmill } from './decor.js';
 
 // Everything PRODUCT.md asks the world to *mean*: the timetable path and wisp,
 // emotion lanterns, weather and altitude from the plan, the shared photo
@@ -38,6 +39,23 @@ export function initLife({islands,camera,texture,player,notice,visit,nearTree,ge
   const mood=createMood(texture);
   for(const i of members)mood.addIsland(i,checkins[i.id]);
   const photos=createPhotoLake({island:community,texture,members:members.map(({id,owner})=>({id,owner})),me:ME,notice,view,time:()=>clock.minutes});
+  // the gathering island's notice board carries shared news only
+  const board=createNoticeBoard(community,{at:[3.4,2.6],face:1.11});   // faces the pond and the arrival spot
+  let boardKey='';
+  const writeBoard=()=>{
+    const {open,rung}=photos.status, n=photos.items.length, key=`${open}${rung}${n}`;
+    if(key===boardKey)return;boardKey=key;
+    board.write(['The gathering tree',
+      open?'✦ The golden window is open':rung?`✦ ${n} moment${n===1?'':'s'} on the deck today`:'✦ The golden window comes by surprise',
+      'Saturday: picnic on the deck, all welcome','Bridges glow when friends visit']);
+  };
+  writeBoard();
+  // Dewdrops: a slow drip from finished blocks and golden-window moments,
+  // spent on decorations -- v1 shows the windmill they grew, at the hub of
+  // the clock-face path. They never touch load or stress.
+  const windmill=createWindmill(me,{face:-2.35});
+  const dew=()=>36+plans.week(ME).filter(b=>!b.skipped&&(b.date<TODAY||(b.date===TODAY&&b.start+b.mins<=clock.minutes))).length
+                  +(photos.items.some(i=>i.member.id===ME)?3:0);
   const loadText=i=>{
     const cap=CAPACITY[i.id];if(!cap)return '';
     const h=Math.round(loadFromAltitude(i.altitude)*cap);
@@ -54,7 +72,7 @@ export function initLife({islands,camera,texture,player,notice,visit,nearTree,ge
   // ---- sheets: the planner (input) and your balance (analysis + solutions) ---
   const sheets=createSheets();
   const calendar=createCalendar({plans,owner:ME,clock,notice,sheets});
-  const balance=createBalance({plans,me,friends:members.filter(i=>i.id!==ME),clock,checkins:checkins[ME],sheets,notice,
+  const balance=createBalance({plans,me,friends:members.filter(i=>i.id!==ME),clock,checkins:checkins[ME],sheets,notice,dew,
     avatar:`${import.meta.env.BASE_URL}assets/avatar.png`});
   // any plan edit re-draws that island's path, settles its altitude, refreshes the sheets
   plans.onChange(id=>{
@@ -88,7 +106,7 @@ export function initLife({islands,camera,texture,player,notice,visit,nearTree,ge
   $('mood-toggle').onclick=()=>setMoodPanel($('mood-panel').hidden);$('mood-close').onclick=()=>setMoodPanel(false);
   $('settings-toggle').addEventListener('click',()=>{closeOthers('settings');sheets.hide();});
   $('planner-toggle').onclick=()=>{closeOthers(null);calendar.open();};
-  for(const id of ['balance-toggle','load','weather-chip'])$(id).onclick=()=>{closeOthers(null);balance.open($(id));};
+  for(const id of ['balance-toggle','load','weather-chip','dew-chip'])$(id).onclick=()=>{closeOthers(null);balance.open($(id));};
 
   // ---- demo controls: time of day, golden window ------------------------------
   const showClock=()=>{$('clock').value=Math.round(clock.minutes);$('clock-value').value=fmt(clock.minutes);$('clock-live').checked=clock.live;};
@@ -170,14 +188,16 @@ export function initLife({islands,camera,texture,player,notice,visit,nearTree,ge
       // footer chips: the visited island's load and weather, your own from the sky;
       // only your own open the balance sheet
       const shown=mode==='walk'?islands.find(i=>i.id===selected):me, load=shown?.owner?loadText(shown):'';
-      const key=`${load}|${shown?.weather}|${shown===me}`;
+      const dewText=shown===me?`💧 ${dew()} dewdrops`:'', key=`${load}|${shown?.weather}|${shown===me}|${dewText}`;
       if(key!==chips){
         chips=key;
         for(const [id,text] of [['load',load],['weather-chip',shown?.weather??'']]){
           const c=$(id);c.hidden=!load;c.textContent=text;c.disabled=shown!==me;
           c.title=shown===me?'Open your balance':`${shown?.owner}’s ${id==='load'?'week':'weather'}`;
         }
+        $('dew-chip').hidden=!dewText;$('dew-chip').textContent=dewText;
       }
+      windmill.update(dt,motion);writeBoard();
       for(const t of Object.values(tables))t.update(clock.minutes,elapsed,dt,camera,motion);
       mood.update(elapsed,dt,motion);photos.update(elapsed,camera,motion);
       const table=lifted&&tables[lifted];
