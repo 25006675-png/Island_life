@@ -30,6 +30,8 @@ const HIGH=16, LOW=-7;
 export const loadFromAltitude=a=>Math.min(1,Math.max(0,(HIGH-a)/(HIGH-LOW)));
 export const altitudeFromLoad=l=>HIGH-Math.min(1,Math.max(0,l))*(HIGH-LOW);
 export const CAPACITY={sakura:35,purple:36,oak:35};   // hours a week each member can give
+// Bridge glow = recent interaction warmth with the group (0 quiet ... 3 bright); never breaks.
+export const WARMTH={sakura:1.7,purple:1.4,oak:.6};
 
 export const toMin=s=>{const [h,m]=s.split(':').map(Number);return h*60+m;};
 export const fmt=m=>`${String(Math.floor(m/60)%24).padStart(2,'0')}:${String(Math.floor(m%60)).padStart(2,'0')}`;

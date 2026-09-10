@@ -305,7 +305,8 @@ renderer=new T.WebGLRenderer({canvas,antialias:true,powerPreference:'high-perfor
   const shadow=new T.Mesh(new T.CircleGeometry(.43,24),new T.MeshBasicMaterial({color:'#35492f',transparent:true,opacity:.22,depthWrite:false}));shadow.rotation.x=-Math.PI/2;shadow.position.y=.035;playerRoot.add(shadow);
   spawnOn(islands[0]);
   life=initLife({islands,camera,texture:atmosphere.texture,player,notice,visit,nearTree:forest.near,getMode:()=>mode,getSelected:()=>selected,
-    setAltitude:(id,h)=>{updateAltitude(islands.find(i=>i.id===id),T.MathUtils.clamp(h,-7,16));syncPanel();}});
+    setAltitude:(id,h)=>{updateAltitude(islands.find(i=>i.id===id),T.MathUtils.clamp(h,-7,16));syncPanel();},
+    setGlow:(id,g)=>{const b=bridges.find(b=>b.id===id);if(!b)return;b.glow=T.MathUtils.clamp(g,.15,3);b.glowMaterial.emissiveIntensity=b.glow*2.2;b.deckMaterial.emissiveIntensity=b.glow*.16;syncPanel();}});
   ready=true;
   const want=new URLSearchParams(location.search).get('island');
   if(want&&islands.some(i=>i.id===want))setTimeout(()=>visit(want),0);
@@ -348,6 +349,6 @@ $('motion').onchange=e=>{motion=e.target.checked;};
 $('altitude').oninput=e=>{if(!ready)return;updateAltitude(islands.find(i=>i.id===selected),+e.target.value);syncPanel();};
 $('weather').oninput=e=>{if(!ready)return;setStrain(islands.find(i=>i.id===selected),+e.target.value);syncPanel();};
 $('bridge-glow').oninput=e=>{const b=bridges.find(b=>b.id===selected);if(!b)return;b.glow=+e.target.value;b.glowMaterial.emissiveIntensity=b.glow*2.2;b.deckMaterial.emissiveIntensity=b.glow*.16;$('bridge-value').value=b.glow.toFixed(1);};
-$('reset').onclick=()=>{if(!ready)return;for(const d of definitions){const i=islands.find(i=>i.id===d.id);updateAltitude(i,d.altitude);setStrain(i,i.derivedStrain??0);}life.api.resettle();for(const b of bridges){b.glow=1.2;b.glowMaterial.emissiveIntensity=2.64;b.deckMaterial.emissiveIntensity=.192;}$('sky-tone').value='peach';$('sky-tone').dispatchEvent(new Event('change'));syncPanel();notice('Back to a quiet peach twilight.');};
+$('reset').onclick=()=>{if(!ready)return;for(const d of definitions){const i=islands.find(i=>i.id===d.id);updateAltitude(i,d.altitude);setStrain(i,i.derivedStrain??0);}for(const b of bridges){b.glow=1.2;b.glowMaterial.emissiveIntensity=2.64;b.deckMaterial.emissiveIntensity=.192;}life.api.resettle();$('sky-tone').value='peach';$('sky-tone').dispatchEvent(new Event('change'));syncPanel();notice('Back to a quiet peach twilight.');};
 window.addEventListener('resize',()=>{if(!renderer)return;camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);composer.setSize(innerWidth,innerHeight);});
 init().catch(error=>{console.error(error);$('loading').hidden=false;$('loading-text').textContent='The world could not load. Check the local server and reload to try again.';$('load-progress').hidden=true;const button=document.createElement('button');button.textContent='Try again';button.onclick=()=>location.reload();$('loading').append(button);});

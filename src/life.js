@@ -1,5 +1,5 @@
 import * as T from 'three';
-import { ME, DAWN, NIGHT, CATEGORIES, MOODS, CHECKINS, CAPACITY, fmt, hours, toMin,
+import { ME, DAWN, NIGHT, CATEGORIES, MOODS, CHECKINS, CAPACITY, WARMTH, fmt, hours, toMin,
          deriveStrain, weatherLabel, loadFromAltitude, altitudeFromLoad } from './data.js';
 import { plans, TODAY } from './plan.js';
 import { createTimetable, blockStatus } from './timetable.js';
@@ -21,7 +21,7 @@ const nowMinutes=()=>{const d=new Date();return d.getHours()*60+d.getMinutes()+d
 // Weather is one strain value (0..1); the label is only a name for where it sits.
 export const setStrain=(island,s)=>{island.strain=s;island.weather=weatherLabel(s);island.weatherFx.setStrain(s);};
 
-export function initLife({islands,camera,texture,player,notice,visit,nearTree,getMode,getSelected,setAltitude}){
+export function initLife({islands,camera,texture,player,notice,visit,nearTree,getMode,getSelected,setAltitude,setGlow}){
   const me=islands.find(i=>i.id===ME), members=islands.filter(i=>i.owner), community=islands.find(i=>!i.owner);
   // Real time by default; outside the day the path would be empty, so start the demo mid-afternoon.
   const clock={live:true,minutes:nowMinutes()};
@@ -33,6 +33,10 @@ export function initLife({islands,camera,texture,player,notice,visit,nearTree,ge
   // Altitude = load: this week's committed hours against what the member can give.
   const settle=id=>setAltitude(id,altitudeFromLoad(plans.hours(plans.week(id))/CAPACITY[id]));
   members.forEach(i=>settle(i.id));
+  // Bridge glow = recent warmth with the group; time spent together warms it.
+  const warmth={};
+  const warm=(id,by=0)=>{warmth[id]=Math.min(3,(warmth[id]??WARMTH[id]??1.2)+by);setGlow?.(id,warmth[id]);};
+  members.forEach(i=>warm(i.id));
   const checkins=Object.fromEntries(members.map(i=>[i.id,[...(CHECKINS[i.id]??[])]]));
   const weather=i=>{i.derivedStrain=deriveStrain(checkins[i.id],loadFromAltitude(i.altitude));setStrain(i,i.derivedStrain);};
   members.forEach(weather);
@@ -72,7 +76,7 @@ export function initLife({islands,camera,texture,player,notice,visit,nearTree,ge
   // ---- sheets: the planner (input) and your balance (analysis + solutions) ---
   const sheets=createSheets();
   const calendar=createCalendar({plans,owner:ME,clock,notice,sheets});
-  const balance=createBalance({plans,me,friends:members.filter(i=>i.id!==ME),clock,checkins:checkins[ME],sheets,notice,dew,
+  const balance=createBalance({plans,me,friends:members.filter(i=>i.id!==ME),clock,checkins:checkins[ME],sheets,notice,dew,warm:id=>warm(id,.8),
     avatar:`${import.meta.env.BASE_URL}assets/avatar.png`});
   // any plan edit re-draws that island's path, settles its altitude, refreshes the sheets
   plans.onChange(id=>{
@@ -225,7 +229,7 @@ export function initLife({islands,camera,texture,player,notice,visit,nearTree,ge
       openPlanner:tab=>calendar.open(tab),
       openBalance:()=>balance.open(),
       // "Restore this evening": altitude and weather back to what the plan and check-ins say
-      resettle:()=>{members.forEach(i=>settle(i.id));members.forEach(weather);},
+      resettle:()=>{members.forEach(i=>{settle(i.id);weather(i);delete warmth[i.id];warm(i.id);});},
       photos:()=>photos.items.map(i=>({member:i.member.id,time:i.time,late:i.late})),
     },
   };

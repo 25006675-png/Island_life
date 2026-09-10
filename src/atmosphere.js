@@ -39,10 +39,16 @@ void main(){vec2 p=vWorld.xz*.026+vec2(time*.002,0.);float n=fbm(p);float detail
     const s=new T.Sprite(new T.SpriteMaterial({map:texture,color:'#fff3ea',transparent:true,depthWrite:false,opacity:.16+(n%4)*.04}));
     const a=n*2.399+.3,r=160+(n*37)%230;s.position.set(Math.cos(a)*r,24+(n*13)%46,Math.sin(a)*r);s.scale.set(60+(n%5)*14,14+(n%3)*5,1);haze.add(s);
   }
+  // drifting sparkles: a little light in the air, rising slowly and wrapping round
+  const SP=140, spark=new Float32Array(SP*3), sparkGeo=new T.BufferGeometry();
+  sparkGeo.setAttribute('position',new T.BufferAttribute(spark,3));
+  scene.add(new T.Points(sparkGeo,new T.PointsMaterial({map:texture,color:'#fff1c9',size:1.1,transparent:true,opacity:.7,depthWrite:false,blending:T.AdditiveBlending})));
   return {texture,setTone(tone){const p=palettes[tone]??palettes.peach;uniforms.top.value.set(p[0]);uniforms.mid.value.set(p[1]);uniforms.bottom.value.set(p[2]);cloudUniforms.tint.value.set(p[3]);scene.fog.color.set(p[3]);},
     update(t,camera){
       uniforms.time.value=t;clouds.rotation.y=t*.001;haze.rotation.y=t*.0006;
       for(const g of isles.children)g.position.y=g.userData.y+Math.sin(t*.15+g.userData.p)*.8;
+      for(let i=0;i<SP;i++){const a=i*2.399+t*.01*(i%3+1),r=20+(i*37)%120;spark.set([Math.cos(a)*r,-4+(i*7.3+t*.4)%34,Math.sin(a)*r],i*3);}
+      sparkGeo.attributes.position.needsUpdate=true;
       if(camera)sky.position.copy(camera.position);   // the dome travels with the eye: no outside to see
     }};
 }

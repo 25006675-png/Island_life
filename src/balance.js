@@ -13,7 +13,7 @@ const el=(tag,props={},...kids)=>{const e=Object.assign(document.createElement(t
 const h1=h=>`${+h.toFixed(1)} h`;
 const list=parts=>parts.length<2?parts.join(''):`${parts.slice(0,-1).join(', ')} and ${parts.at(-1)}`;
 
-export function createBalance({plans,me,friends,clock,checkins,sheets,notice,avatar,dew}){
+export function createBalance({plans,me,friends,clock,checkins,sheets,notice,avatar,dew,warm}){
   const sheet=$('balance-sheet'), owner=me.id, cap=CAPACITY[owner];
   $('balance-avatar').src=avatar;
   const ended=b=>b.date<TODAY||(b.date===TODAY&&b.start+b.mins<=clock.minutes);
@@ -45,8 +45,8 @@ export function createBalance({plans,me,friends,clock,checkins,sheets,notice,ava
     const friend=friends[0], sat=addDays(monday,5)>=TODAY?addDays(monday,5):addDays(monday,12);
     out.push({key:'social',text:`Invite ${friend.owner} for a walk ${sat===addDays(monday,5)?'this':'next'} Saturday`,
       sub:'A little warmth across the bridge.',
-      apply:()=>plans.add(owner,{date:sat,start:10*60,mins:60,cat:'social',title:`Walk with ${friend.owner}`,vis:'open'}),
-      done:`Walk with ${friend.owner} added for Saturday.`});
+      apply:()=>{plans.add(owner,{date:sat,start:10*60,mins:60,cat:'social',title:`Walk with ${friend.owner}`,vis:'open'});warm?.(friend.id);warm?.(owner);},
+      done:`Walk with ${friend.owner} added for Saturday. Your bridges warm a little.`});
     return out;
   }
 
