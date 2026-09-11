@@ -61,25 +61,26 @@ const ramp=(a,b,x)=>{const t=Math.min(1,Math.max(0,(x-a)/(b-a)));return t*t*(3-2
 export function createWeather(texture,radius=26) {
   const group=new T.Group(), mist=new T.Group(), R=radius;group.add(mist);
   const sprite=(color,blending=T.NormalBlending)=>new T.Sprite(new T.SpriteMaterial({map:texture,color,opacity:0,transparent:true,depthWrite:false,blending}));
-  // the cloud deck: each puff arrives at its own strain, so cover accumulates
-  const deck=[], light=new T.Color('#f0eef4'), dark=new T.Color('#65607f');
-  for(let i=0;i<18;i++){
-    const a=i*2.399, r=Math.sqrt((i+.5)/18)*R*.5, s=sprite('#f0eef4');
-    s.position.set(Math.cos(a)*r,19+(i%3)*.9,Math.sin(a)*r);s.scale.set(24*(1+(i%4)*.15),10,1);
-    s.userData.from=.12+.45*((i*7)%18)/18;group.add(s);deck.push(s);
+  // the cloud deck spans the whole island; each puff arrives at its own strain
+  // (in scattered order), so cover accumulates everywhere at once
+  const deck=[], light=new T.Color('#f0eef4'), dark=new T.Color('#65607f'), PUFFS=34;
+  for(let i=0;i<PUFFS;i++){
+    const a=i*2.399, r=Math.sqrt((i+.5)/PUFFS)*R*.95, s=sprite('#f0eef4');
+    s.position.set(Math.cos(a)*r,19+(i%3)*.9,Math.sin(a)*r);s.scale.set(28*(1+(i%4)*.15),11,1);
+    s.userData.from=.12+.45*((i*13)%PUFFS)/PUFFS;group.add(s);deck.push(s);
   }
-  // low mist banks hugging the island
-  for(let i=0;i<9;i++){const a=i/9*Math.PI*2,s=sprite('#eceef0');s.position.set(Math.cos(a)*R*.55,1.2+(i%3)*.8,Math.sin(a)*R*.55);s.scale.set(R*.9,7,1);mist.add(s);}
+  // low mist banks hugging the island's edge
+  for(let i=0;i<12;i++){const a=i/12*Math.PI*2,s=sprite('#eceef0');s.position.set(Math.cos(a)*R*.8,1.2+(i%3)*.8,Math.sin(a)*R*.8);s.scale.set(R*.9,7,1);mist.add(s);}
   // rain: a streaked shaft that fades top and bottom, plus close-up streaks
   const paint=(w,h,draw)=>{const c=document.createElement('canvas');c.width=w;c.height=h;draw(c.getContext('2d'));return new T.CanvasTexture(c);};
   const streaks=paint(64,128,x=>{for(let i=0;i<70;i++){const px=Math.random()*64,py=Math.random()*128;
     x.strokeStyle=`rgba(225,235,248,${.25+Math.random()*.55})`;x.lineWidth=1+Math.random();x.beginPath();x.moveTo(px,py);x.lineTo(px-2,py+18+Math.random()*20);x.stroke();}});
   streaks.wrapS=streaks.wrapT=T.RepeatWrapping;streaks.repeat.set(7,1.5);
   const fade=paint(4,64,x=>{const g=x.createLinearGradient(0,0,0,64);g.addColorStop(0,'#000');g.addColorStop(.25,'#fff');g.addColorStop(.7,'#fff');g.addColorStop(1,'#000');x.fillStyle=g;x.fillRect(0,0,4,64);});
-  const shaft=new T.Mesh(new T.CylinderGeometry(R*.42,R*.5,16,32,1,true),
+  const shaft=new T.Mesh(new T.CylinderGeometry(R*.8,R*.9,16,40,1,true),
     new T.MeshBasicMaterial({map:streaks,alphaMap:fade,color:'#8e9bbd',transparent:true,opacity:0,depthWrite:false,side:T.DoubleSide}));
   shaft.position.y=10;shaft.scale.y=1.2;group.add(shaft);
-  const DROPS=320,positions=new Float32Array(DROPS*6),geometry=new T.BufferGeometry();geometry.setAttribute('position',new T.BufferAttribute(positions,3));
+  const DROPS=700,positions=new Float32Array(DROPS*6),geometry=new T.BufferGeometry();geometry.setAttribute('position',new T.BufferAttribute(positions,3));
   const drops=new T.LineSegments(geometry,new T.LineBasicMaterial({color:'#d4e4f0',transparent:true,opacity:.6,depthWrite:false}));group.add(drops);
   // clear: a soft warm sun glow
   const glow=sprite('#ffc766',T.AdditiveBlending);glow.position.y=22;glow.scale.setScalar(22);group.add(glow);
@@ -99,7 +100,7 @@ export function createWeather(texture,radius=26) {
     update(t){
       if(shaft.visible)streaks.offset.y=t*(.6+rain*.8);
       if(drops.visible){
-        for(let i=0;i<DROPS;i++){const y=15-(i*.21+t*(3+4*rain))%14,x=Math.sin(i*12.2)*R*.4,z=Math.cos(i*2.8)*R*.4;positions.set([x,y,z,x-.05,y-.5,z],i*6);}
+        for(let i=0;i<DROPS;i++){const y=15-(i*.21+t*(3+4*rain))%14,a=i*2.399,d=Math.sqrt((i*.618)%1)*R*.85,x=Math.cos(a)*d,z=Math.sin(a)*d;positions.set([x,y,z,x-.05,y-.5,z],i*6);}
         geometry.attributes.position.needsUpdate=true;
       }
       mist.rotation.y=Math.sin(t*.05)*.2;
