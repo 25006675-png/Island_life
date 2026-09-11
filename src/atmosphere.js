@@ -107,7 +107,14 @@ void main(){vec2 p=vWorld.xz*.026+vec2(time*.002,0.);float n=fbm(p);float detail
     };
     g.scale.setScalar(size);scene.add(g);return g;
   }
-  const whales=[whale(12),whale(6)];
+  // Their lanes lie across the view (turning with the camera), so the whales
+  // are always seen side-on, swimming left or right -- never heading at you.
+  // A mother and calf, one higher adult going the other way, one small far one.
+  // (offsets put every whale in view when the page opens)
+  const pods=[{size:12,depth:250,y:44,speed:9,dir:1,off:480},{size:6,depth:250,y:38,speed:9,dir:1,off:434},
+              {size:10,depth:360,y:72,speed:7,dir:-1,off:620},{size:7,depth:430,y:20,speed:6,dir:1,off:820}]
+              .map(p=>({...p,w:whale(p.size)}));
+  const ahead=new T.Vector3(0,0,-1), across=new T.Vector3(1,0,0);
   for(let n=0;n<26;n++){
     const s=new T.Sprite(new T.SpriteMaterial({map:texture,color:'#fff3ea',transparent:true,depthWrite:false,opacity:.16+(n%4)*.04}));
     const a=n*2.399+.3,r=160+(n*37)%230;s.position.set(Math.cos(a)*r,24+(n*13)%46,Math.sin(a)*r);s.scale.set(60+(n%5)*14,14+(n%3)*5,1);haze.add(s);
@@ -120,12 +127,17 @@ void main(){vec2 p=vWorld.xz*.026+vec2(time*.002,0.);float n=fbm(p);float detail
     update(t,camera){
       uniforms.time.value=t;clouds.rotation.y=t*.001;haze.rotation.y=t*.0006;
       for(const g of isles.children)g.position.y=g.userData.y+Math.sin(t*.15+g.userData.p)*.8;
-      // mother and calf swim a slow circle centred behind the islands; the calf trails a little
-      whales.forEach((w,k)=>{
-        const a=t*.012-k*.16, r=150+k*10;   // centred behind the gathering island, never over it
-        w.position.set(Math.cos(a)*r,40+Math.sin(t*.25+k)*3-k*5,-200+Math.sin(a)*r);
-        w.rotation.set(0,-a,Math.sin(t*.25+k)*.05);
-        w.userData.swim(t+k*.9);
+      // each lane runs across the view, beyond the middle of the neighbourhood;
+      // whales wrap round far off-screen at the ends
+      if(camera&&Math.hypot(camera.position.x,camera.position.z)>1){
+        ahead.set(-camera.position.x,0,-camera.position.z).normalize();across.set(-ahead.z,0,ahead.x);
+      }
+      pods.forEach((p,k)=>{
+        const s=((t*p.speed+p.off)%1100+1100)%1100-550;
+        p.w.position.copy(ahead).multiplyScalar(p.depth).addScaledVector(across,s*p.dir);
+        p.w.position.y=p.y+Math.sin(t*.25+k)*3;
+        p.w.rotation.set(Math.sin(t*.25+k)*.03,Math.atan2(across.x*p.dir,across.z*p.dir),Math.sin(t*.2+k)*.04);
+        p.w.userData.swim(t+k*.9);
       });
       for(let i=0;i<SP;i++){const a=i*2.399+t*.01*(i%3+1),r=20+(i*37)%120;spark.set([Math.cos(a)*r,-4+(i*7.3+t*.4)%34,Math.sin(a)*r],i*3);}
       sparkGeo.attributes.position.needsUpdate=true;
