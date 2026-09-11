@@ -156,7 +156,7 @@ export function createForest({assets,islandSurface,speciesScale}){
     solid.scale.setScalar(sc);
     solid.position.set(p.x,p.y-island.altitude,p.z);
     solid.rotation.y=island.rnd()*Math.PI*2;
-    solid.traverse(o=>{o.userData.islandId=island.id;});   // main.js camera occluders rely on this
+    solid.traverse(o=>{o.userData.islandId=island.id;});   // the sky-view click-to-visit raycast relies on this
     island.group.add(solid);
     const obstacle={x:p.x/s,z:p.z/s,r:.85*sc/s};island.obstacles.push(obstacle);
     const tree={island,cat,key,sc,x:p.x,z:p.z,entry,block,solid,obstacle,reach:1.8+1.6*sc,state:'solid'};

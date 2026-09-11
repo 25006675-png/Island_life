@@ -146,7 +146,7 @@ function spawnOn(island){
   player.position.set(found.x,found.y,found.z);player.surface=found;
 }
 
-function visit(id){if(!ready)return;selected=id;mode='walk';const island=islands.find(i=>i.id===id);spawnOn(island);controls.enabled=true;controls.minDistance=6;controls.maxDistance=40;cameraOffset.set(...(island.cam??[0,10,16]));camDesired=0;camPull=0;
+function visit(id){if(!ready)return;selected=id;mode='walk';const island=islands.find(i=>i.id===id);spawnOn(island);controls.enabled=true;controls.minDistance=6;controls.maxDistance=skyReach();cameraOffset.set(...(island.cam??[0,10,16]));
   transition={from:camera.position.clone(),targetFrom:controls.target.clone(),time:0};
   $('location-kicker').textContent=island.owner?`Visiting ${island.owner}`:'Everyone’s island';
   $('location-title').textContent=island.name;
@@ -186,32 +186,6 @@ function overviewPosition(){
 }
 
 const facing=new T.Vector3();
-let camDesired=0;   // the orbit distance the user chose; collisions only pull in from it
-let camPull=0;      // where collisions currently hold the camera, eased
-const occRay=new T.Ray(),occHit=new T.Vector3(),camDir=new T.Vector3(),occSphere=new T.Sphere();
-// Trees between the gardener and the camera would swallow the view: pull the
-// camera in front of the nearest one. Planted trees are rough spheres; the
-// gathering tree's own trunk and canopy are raycast.
-function keepCameraClear(dt){
-  camDir.subVectors(camera.position,look).normalize();occRay.set(look,camDir);
-  let near=camDesired;
-  for(const i of islands){
-    for(const s of i.occluders){
-      occSphere.copy(s);occSphere.center.add(i.group.position);
-      if(!occSphere.containsPoint(look)&&occRay.intersectSphere(occSphere,occHit))near=Math.min(near,occHit.distanceTo(look));
-    }
-    if(i.solid.length&&player.surface?.id===i.id){
-      raycaster.set(look,camDir);raycaster.far=near;
-      const h=raycaster.intersectObjects(i.solid,false)[0];if(h)near=Math.min(near,h.distance);
-      raycaster.far=Infinity;
-    }
-  }
-  // ease rather than snap: in briskly when something blocks, back out slowly
-  const want=near<camDesired?Math.max(1.5,near-.5):camDesired;
-  camPull=camPull||camDesired;
-  camPull+=(want-camPull)*(1-Math.exp(-(want<camPull?10:2.5)*dt));
-  if(camPull<camDesired-.01)camera.position.copy(look).addScaledVector(camDir,camPull);
-}
 // Never trapped: when pressing a direction goes nowhere, check whether any
 // nearby step is possible; if none is (a tree grew here, the island moved),
 // step out to the nearest open ground.
@@ -286,7 +260,7 @@ renderer=new T.WebGLRenderer({canvas,antialias:true,powerPreference:'high-perfor
     const group=new T.Group();group.position.set(def.x,def.altitude,def.z);scene.add(group);island.group=group;
     const model=assets[def.model].clone(true);model.scale.setScalar(def.scale);group.add(model);island.model=model;model.traverse(o=>{o.userData.islandId=def.id;});
     plantIsland(island,group,assets);
-    // activity trees and today's ghosts, planted here so they count as camera occluders
+    // activity trees and today's ghosts
     forest??=createForest({assets,islandSurface,speciesScale:SPECIES_SCALE});
     if(def.owner)forest.plant(island);
     island.weatherFx=createWeather(atmosphere.texture);island.weatherFx.group.position.copy(group.position);scene.add(island.weatherFx.group);
@@ -294,13 +268,6 @@ renderer=new T.WebGLRenderer({canvas,antialias:true,powerPreference:'high-perfor
     const option=document.createElement('option');option.value=def.id;option.textContent=def.name;$('island-select').append(option);islands.push(island);
   }
   for(const island of islands.slice(1))buildBridge(island);
-  for(const island of islands){
-    island.group.updateMatrixWorld(true);
-    island.occluders=island.group.children.filter(c=>c!==island.model&&c.userData.islandId).map(c=>{
-      const s=new T.Box3().setFromObject(c).getBoundingSphere(new T.Sphere());s.center.sub(island.group.position);s.radius*=.6;return s;
-    }).filter(s=>s.radius>1.2);
-    island.solid=['TreeWood','Canopy'].map(n=>island.model.getObjectByName(n)).filter(Boolean);
-  }
   const playerRoot=new T.Group();scene.add(playerRoot);gardener=assets.gardener;gardener.scale.setScalar(.38);playerRoot.add(gardener);player.root=playerRoot;
   const shadow=new T.Mesh(new T.CircleGeometry(.43,24),new T.MeshBasicMaterial({color:'#35492f',transparent:true,opacity:.22,depthWrite:false}));shadow.rotation.x=-Math.PI/2;shadow.position.y=.035;playerRoot.add(shadow);
   spawnOn(islands[0]);
@@ -324,10 +291,8 @@ function frame(time){
   walk(dt);player.root.position.copy(player.position);atmosphere.update(elapsed,camera);for(const i of islands)i.weatherFx.update(elapsed);
   if(transition){transition.time+=dt;const a=motion?Math.min(transition.time/1.2,1):1,e=1-Math.pow(1-a,4);look.copy(mode==='walk'?player.position:new T.Vector3(0,2,0));if(mode==='walk')look.y+=1;targetPosition.copy(mode==='walk'?player.position.clone().add(cameraOffset):overviewPosition());camera.position.lerpVectors(transition.from,targetPosition,e);controls.target.lerpVectors(transition.targetFrom,look,e);camera.lookAt(controls.target);if(a===1)transition=null;}
   // walk: orbit controls around the gardener -- drag to turn, scroll to zoom -- carried along as they move
-  else if(mode==='walk'){look.copy(player.position);look.y+=1;
-    camDir.subVectors(camera.position,controls.target).setLength(camDesired||camera.position.distanceTo(controls.target));
-    camera.position.copy(look).add(camDir);controls.target.copy(look);controls.autoRotate=false;controls.update(dt);
-    camDesired=camera.position.distanceTo(look);keepCameraClear(dt);}
+  // (no collision pull-in: the camera stays exactly where the user put it)
+  else if(mode==='walk'){look.copy(player.position);look.y+=1;camera.position.add(look).sub(controls.target);controls.target.copy(look);controls.autoRotate=false;controls.update(dt);}
   else {controls.autoRotate=motion;controls.autoRotateSpeed=.1;controls.update(dt);}
   life.update(dt,elapsed,motion);
   forest.update(dt,elapsed,motion,id=>life.api.getSchedule(id));
