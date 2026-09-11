@@ -110,9 +110,11 @@ void main(){vec2 p=vWorld.xz*.026+vec2(time*.002,0.);float n=fbm(p);float detail
   // Their lanes lie across the view (turning with the camera), so the whales
   // are always seen side-on, swimming left or right -- never heading at you.
   // A mother and calf, one higher adult going the other way, one small far one.
-  // (offsets put every whale in view when the page opens)
-  const pods=[{size:12,depth:250,y:44,speed:9,dir:1,off:480},{size:6,depth:250,y:38,speed:9,dir:1,off:434},
-              {size:10,depth:360,y:72,speed:7,dir:-1,off:620},{size:7,depth:430,y:20,speed:6,dir:1,off:820}]
+  // They swim far out near the horizon, softened by haze -- part of the sky,
+  // never beside the islands. (Offsets put every whale in view at load.)
+  const LANE=2400;
+  const pods=[{size:18,depth:650,y:80,speed:14,dir:1,off:1150},{size:9,depth:650,y:70,speed:14,dir:1,off:1080},
+              {size:15,depth:820,y:130,speed:11,dir:-1,off:1450},{size:11,depth:900,y:40,speed:9,dir:1,off:1500}]
               .map(p=>({...p,w:whale(p.size)}));
   const ahead=new T.Vector3(0,0,-1), across=new T.Vector3(1,0,0);
   for(let n=0;n<26;n++){
@@ -133,7 +135,7 @@ void main(){vec2 p=vWorld.xz*.026+vec2(time*.002,0.);float n=fbm(p);float detail
         ahead.set(-camera.position.x,0,-camera.position.z).normalize();across.set(-ahead.z,0,ahead.x);
       }
       pods.forEach((p,k)=>{
-        const s=((t*p.speed+p.off)%1100+1100)%1100-550;
+        const s=((t*p.speed+p.off)%LANE+LANE)%LANE-LANE/2;
         p.w.position.copy(ahead).multiplyScalar(p.depth).addScaledVector(across,s*p.dir);
         p.w.position.y=p.y+Math.sin(t*.25+k)*3;
         p.w.rotation.set(Math.sin(t*.25+k)*.03,Math.atan2(across.x*p.dir,across.z*p.dir),Math.sin(t*.2+k)*.04);
