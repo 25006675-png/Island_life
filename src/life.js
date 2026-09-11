@@ -9,6 +9,7 @@ import { createSheets } from './sheets.js';
 import { createCalendar } from './calendar.js';
 import { createBalance } from './balance.js';
 import { createNoticeBoard, createWindmill } from './decor.js';
+import { createBuddy } from './buddy.js';
 
 // Everything PRODUCT.md asks the world to *mean*: the timetable path and wisp,
 // emotion lanterns, weather and altitude from the plan, the shared photo
@@ -58,7 +59,7 @@ export function initLife({islands,camera,texture,player,notice,visit,nearTree,ge
   // spent on decorations -- v1 shows the windmill they grew, at the hub of
   // the clock-face path. They never touch load or stress.
   const windmill=createWindmill(me,{face:-2.35});
-  const dew=()=>36+plans.week(ME).filter(b=>!b.skipped&&(b.date<TODAY||(b.date===TODAY&&b.start+b.mins<=clock.minutes))).length
+  const dew=()=>36+plans.week(ME).filter(b=>!b.skipped&&(b.done||b.date<TODAY||(b.date===TODAY&&b.start+b.mins<=clock.minutes))).length
                   +(photos.items.some(i=>i.member.id===ME)?3:0);
   const loadText=i=>{
     const cap=CAPACITY[i.id];if(!cap)return '';
@@ -76,13 +77,15 @@ export function initLife({islands,camera,texture,player,notice,visit,nearTree,ge
   // ---- sheets: the planner (input) and your balance (analysis + solutions) ---
   const sheets=createSheets();
   const calendar=createCalendar({plans,owner:ME,clock,notice,sheets});
-  const balance=createBalance({plans,me,friends:members.filter(i=>i.id!==ME),clock,checkins:checkins[ME],sheets,notice,dew,warm:id=>warm(id,.8),
-    avatar:`${import.meta.env.BASE_URL}assets/avatar.png`});
+  const balance=createBalance({plans,me,friends:members.filter(i=>i.id!==ME),clock,checkins:checkins[ME],sheets,notice,dew,warm:id=>warm(id,.8)});
+  // your gardener walks along the top of whichever sheet is open
+  const avatar=`${import.meta.env.BASE_URL}assets/avatar.png`;
+  const buddies={planner:createBuddy($('planner-sheet'),avatar),balance:createBuddy($('balance-sheet'),avatar)};
   // any plan edit re-draws that island's path, settles its altitude, refreshes the sheets
   plans.onChange(id=>{
     tables[id]?.setBlocks(plans.on(id,TODAY));settle(id);
     if(lifted===id)setLift(id);
-    if(id===ME){calendar.render();balance.render();}
+    if(id===ME){calendar.render();balance.render();buddies.planner.hop();buddies.balance.hop();}
   });
 
   // ---- check-in and the small top-right panels ------------------------------
@@ -109,8 +112,8 @@ export function initLife({islands,camera,texture,player,notice,visit,nearTree,ge
   }
   $('mood-toggle').onclick=()=>setMoodPanel($('mood-panel').hidden);$('mood-close').onclick=()=>setMoodPanel(false);
   $('settings-toggle').addEventListener('click',()=>{closeOthers('settings');sheets.hide();});
-  $('planner-toggle').onclick=()=>{closeOthers(null);calendar.open();};
-  for(const id of ['balance-toggle','load','weather-chip','dew-chip'])$(id).onclick=()=>{closeOthers(null);balance.open($(id));};
+  $('planner-toggle').onclick=()=>{closeOthers(null);calendar.open();buddies.planner.show();};
+  for(const id of ['balance-toggle','load','weather-chip','dew-chip'])$(id).onclick=()=>{closeOthers(null);balance.open($(id));buddies.balance.show();};
 
   // ---- demo controls: time of day, golden window ------------------------------
   const showClock=()=>{$('clock').value=Math.round(clock.minutes);$('clock-value').value=fmt(clock.minutes);$('clock-live').checked=clock.live;};
@@ -122,11 +125,28 @@ export function initLife({islands,camera,texture,player,notice,visit,nearTree,ge
   // ---- schedule: lift the path into a readable ribbon ----------------------------
   let lifted=null;
   const labels=[];
+  // on the lifted timetable your gardener stands on the ribbon at "now" and
+  // walks along it to whatever time you point at
+  const walker=Object.assign(document.createElement('img'),{src:avatar,alt:'',className:'buddy ribbon-buddy'});
+  let walkerMin=null, pointerX=null;
+  addEventListener('pointermove',e=>{pointerX=e.clientX;});
+  const w0=new T.Vector3(), w1=new T.Vector3();
+  function moveWalker(table,dt,motion){
+    table.ribbonPoint(DAWN,-1.3,w0).project(camera);table.ribbonPoint(NIGHT,-1.3,w1).project(camera);
+    const x0=(w0.x*.5+.5)*innerWidth, x1=(w1.x*.5+.5)*innerWidth;
+    const aimed=pointerX!==null&&pointerX>Math.min(x0,x1)&&pointerX<Math.max(x0,x1)?DAWN+(pointerX-x0)/(x1-x0)*(NIGHT-DAWN):clock.minutes;
+    walkerMin??=clock.minutes;
+    const d=aimed-walkerMin;walkerMin+=motion?Math.sign(d)*Math.min(Math.abs(d),300*dt):d;
+    table.ribbonPoint(walkerMin,-1.3,w0).project(camera);
+    walker.style.left=`${(w0.x*.5+.5)*innerWidth}px`;walker.style.top=`${(-w0.y*.5+.5)*innerHeight}px`;
+    if(Math.abs(d)>2)walker.style.setProperty('--face',d>0?1:-1);
+    walker.classList.toggle('walking',motion&&Math.abs(d)>2);
+  }
   function setLift(id){
     if(lifted&&lifted!==id)tables[lifted].setLift(false);
     lifted=id;if(id)tables[id].setLift(true);
     $('schedule').setAttribute('aria-pressed',String(!!id));
-    $('ribbon-labels').replaceChildren();labels.length=0;
+    $('ribbon-labels').replaceChildren(walker);labels.length=0;walkerMin=null;
     if(!id)return;
     const own=id===ME;
     for(const b of tables[id].blocks){
@@ -151,8 +171,11 @@ export function initLife({islands,camera,texture,player,notice,visit,nearTree,ge
     $('reveal').hidden=!next;if(!next)return;
     $('reveal').style.setProperty('--cat',next.color??'');
     $('reveal-kicker').textContent=next.kicker;$('reveal-title').textContent=next.title;$('reveal-sub').textContent=next.sub;
-    $('reveal-action').hidden=!next.action;
+    $('reveal-action').hidden=!next.action;$('reveal-action-label').textContent=next.actionLabel??'View photo';
   }
+  // Your own planned block, finished early: its card offers "Done", and the ghost takes root.
+  const finish=b=>{plans.markDone(ME,b);notice(`${b.title} took root.`);};
+  const withDone=(card,b)=>['planned','now'].includes(blockStatus(b,clock.minutes))?{...card,action:()=>finish(b),actionLabel:'Done'}:card;
   $('reveal-action').onclick=()=>card?.action?.();
   window.addEventListener('keydown',e=>{
     if(e.code!=='KeyE'||!card?.action||['INPUT','SELECT','TEXTAREA'].includes(document.activeElement.tagName)||document.querySelector('dialog[open]'))return;
@@ -163,21 +186,28 @@ export function initLife({islands,camera,texture,player,notice,visit,nearTree,ge
     const table=tables[getSelected()];
     if(table){
       // a path stop wins; otherwise the nearest tree's activity (main.js nearTree)
-      const n=table.near(player.position,4.5);if(!n)return nearTree?.(getSelected(),player.position)??null;
-      const b=n.block, own=getSelected()===ME, open=own||b.vis==='open';
-      return {key:`b${b.id}${b.skipped}`,color:CATEGORIES[b.cat].color,kicker:`${fmt(b.start)}–${fmt(b.start+b.mins)}`,
-              title:open?b.title:CATEGORIES[b.cat].label,sub:`${open?CATEGORIES[b.cat].label+' · ':''}${hours(b.mins)} · ${STATUS[blockStatus(b,clock.minutes)]}`};
+      const own=getSelected()===ME, n=table.near(player.position,4.5);
+      if(!n){
+        const c=nearTree?.(getSelected(),player.position)??null;
+        // a ghost of one of today's blocks: forest.js keys its card g<id><status>
+        const b=own&&c&&table.blocks.find(b=>c.key===`g${b.id}${blockStatus(b,clock.minutes)}`);
+        return b?withDone(c,b):c;
+      }
+      const b=n.block, open=own||b.vis==='open', st=blockStatus(b,clock.minutes);
+      const c={key:`b${b.id}${st}`,color:CATEGORIES[b.cat].color,kicker:`${fmt(b.start)}–${fmt(b.start+b.mins)}`,
+               title:open?b.title:CATEGORIES[b.cat].label,sub:`${open?CATEGORIES[b.cat].label+' · ':''}${hours(b.mins)} · ${STATUS[st]}`};
+      return own?withDone(c,b):c;
     }
     if(getSelected()===community.id){
       const p=photos.near(player.position,8);if(!p)return null;
       return {key:`p${p.item.member.id}`,kicker:'On the lake',title:p.item.member.id===ME?'Your moment':`${p.item.member.owner}’s moment`,
-              sub:`${fmt(p.item.time)}${p.item.late?' · a little late':''}`,action:p.view};
+              sub:`${fmt(p.item.time)}${p.item.late?' · a little late':''}`,action:p.view,actionLabel:'View photo'};
     }
     return null;
   }
 
   // ---- per frame --------------------------------------------------------------------
-  let lastSelected=null,lastMode=null,lastMinute=-1,chips='';
+  let lastSelected=null,lastMode=null,lastMinute=-1,chips='',lastDew=null;
   const v=new T.Vector3();
   return {
     update(dt,elapsed,motion){
@@ -192,7 +222,7 @@ export function initLife({islands,camera,texture,player,notice,visit,nearTree,ge
       // footer chips: the visited island's load and weather, your own from the sky;
       // only your own open the balance sheet
       const shown=mode==='walk'?islands.find(i=>i.id===selected):me, load=shown?.owner?loadText(shown):'';
-      const dewText=shown===me?`💧 ${dew()} dewdrops`:'', key=`${load}|${shown?.weather}|${shown===me}|${dewText}`;
+      const drops=dew(), dewText=shown===me?`💧 ${drops} dewdrops`:'', key=`${load}|${shown?.weather}|${shown===me}|${dewText}`;
       if(key!==chips){
         chips=key;
         for(const [id,text] of [['load',load],['weather-chip',shown?.weather??'']]){
@@ -201,15 +231,24 @@ export function initLife({islands,camera,texture,player,notice,visit,nearTree,ge
         }
         $('dew-chip').hidden=!dewText;$('dew-chip').textContent=dewText;
       }
+      // dewdrops earned: the badge pulses and the gain floats up from it
+      if(lastDew!==null&&drops>lastDew&&dewText){
+        const chip=$('dew-chip'), float=Object.assign(document.createElement('span'),{className:'dew-float',textContent:`+${drops-lastDew} 💧`});
+        chip.classList.remove('gain');void chip.offsetWidth;chip.classList.add('gain');chip.append(float);setTimeout(()=>float.remove(),1500);
+      }
+      lastDew=drops;
       windmill.update(dt,motion);writeBoard();
       for(const t of Object.values(tables))t.update(clock.minutes,elapsed,dt,camera,motion);
       mood.update(elapsed,dt,motion);photos.update(elapsed,camera,motion);
       const table=lifted&&tables[lifted];
       $('ribbon-labels').style.opacity=table?Math.max(0,table.lift*4-3):0;
-      if(table&&table.lift>.75)labels.forEach(({el,block},i)=>{
-        table.ribbonPoint(block.start+block.mins/2,.35+(i%2)*1.1,v).project(camera);
-        el.style.left=`${(v.x*.5+.5)*innerWidth}px`;el.style.top=`${(-v.y*.5+.5)*innerHeight}px`;
-      });
+      if(table&&table.lift>.75){
+        labels.forEach(({el,block},i)=>{
+          table.ribbonPoint(block.start+block.mins/2,.35+(i%2)*1.1,v).project(camera);
+          el.style.left=`${(v.x*.5+.5)*innerWidth}px`;el.style.top=`${(-v.y*.5+.5)*innerHeight}px`;
+        });
+        moveWalker(table,dt,motion);
+      }
       reveal(lifted?null:nearest());
     },
     pick(raycaster){
@@ -226,8 +265,9 @@ export function initLife({islands,camera,texture,player,notice,visit,nearTree,ge
       ringGoldenWindow:()=>photos.ring(),
       checkIn,
       lift:id=>setLift(id??null),
-      openPlanner:tab=>calendar.open(tab),
-      openBalance:()=>balance.open(),
+      openPlanner:tab=>{calendar.open(tab);buddies.planner.show();},
+      openBalance:()=>{balance.open();buddies.balance.show();},
+      markDone:id=>{const b=tables[ME].blocks.find(b=>String(b.id)===String(id));if(b)finish(b);},
       // "Restore this evening": altitude and weather back to what the plan and check-ins say
       resettle:()=>{members.forEach(i=>{settle(i.id);weather(i);delete warmth[i.id];warm(i.id);});},
       photos:()=>photos.items.map(i=>({member:i.member.id,time:i.time,late:i.late})),

@@ -27,8 +27,8 @@
       <label class="file-line">Add a photo to your lantern first (optional)<input id="checkin-photo" type="file" accept="image/*"/></label>
       <div id="moods" class="moods" role="group" aria-labelledby="checkin-title"></div>
     </aside>
-    <footer><div class="place"><span id="location-kicker">Your sky neighborhood</span><h1 id="location-title">A world of little wonders.</h1><p id="hint">Choose an island. Stay a little while.</p><div class="place-chips"><button id="load" class="chip" hidden></button><button id="weather-chip" class="chip" hidden></button><button id="dew-chip" class="chip" hidden title="Open your balance"></button></div></div><nav class="view-controls" aria-label="Camera view"><button id="overview" aria-pressed="true">↗ <span>Sky view</span></button><button id="walk" aria-pressed="false">♧ <span>Take a walk</span></button><button id="schedule" aria-pressed="false">☰ <span>Schedule</span></button></nav><div class="help"><span id="mode-hint">Drag to look around · Scroll to zoom</span><span>Somewhere above the everyday</span></div></footer>
-    <div id="reveal" hidden role="status"><span id="reveal-kicker"></span><strong id="reveal-title"></strong><span id="reveal-sub"></span><button id="reveal-action" hidden>View photo <kbd>E</kbd></button></div>
+    <footer><div class="place"><span id="location-kicker">Your sky neighborhood</span><h1 id="location-title">A world of little wonders.</h1><p id="hint">Choose an island. Stay a little while.</p><div class="place-chips"><button id="load" class="chip" hidden></button><button id="weather-chip" class="chip" hidden></button><button id="dew-chip" class="chip dew" hidden title="Your dewdrops: open your balance"></button></div></div><nav class="view-controls" aria-label="Camera view"><button id="overview" aria-pressed="true">↗ <span>Sky view</span></button><button id="walk" aria-pressed="false">♧ <span>Take a walk</span></button><button id="schedule" aria-pressed="false">☰ <span>Schedule</span></button></nav><div class="help"><span id="mode-hint">Drag to look around · Scroll to zoom</span><span>Somewhere above the everyday</span></div></footer>
+    <div id="reveal" hidden role="status"><span id="reveal-kicker"></span><strong id="reveal-title"></strong><span id="reveal-sub"></span><button id="reveal-action" hidden><span id="reveal-action-label">View photo</span> <kbd>E</kbd></button></div>
     <div id="golden" hidden><span class="golden-spark" aria-hidden="true">✦</span><div><strong id="golden-title">The golden window is open</strong><span id="golden-time"></span></div><button id="golden-share">Share this moment</button><button id="golden-dismiss" aria-label="Hide the golden window">×</button></div>
     <dialog id="capture" aria-labelledby="capture-title">
       <h2 id="capture-title">Share this moment</h2>
@@ -58,7 +58,6 @@
       <div class="sheet-handle" aria-hidden="true"></div>
       <button class="sheet-close" aria-label="Close your balance">×</button>
       <div class="balance">
-        <img id="balance-avatar" class="balance-avatar" alt=""/>
         <div class="balance-body">
           <h2 id="balance-title">Your week, in balance</h2>
           <div class="load-head"><div><strong id="bal-load"></strong><span id="bal-band"></span></div><svg id="bal-trend" viewBox="0 0 132 36" role="img"></svg></div>

@@ -1,8 +1,8 @@
 import { CATEGORIES, CAPACITY, TRENDS, MOODS, hours, weatherLabel } from './data.js';
 import { TODAY, addDays, mondayOf, dow } from './plan.js';
 
-// The balance sheet: analysis plus solutions for your own week. The avatar
-// stands at its edge looking at the readout (it never speaks or advises).
+// The balance sheet: analysis plus solutions for your own week. Your gardener
+// walks along its top edge (buddy.js; it never speaks or advises).
 // Every suggestion is an action; applying one edits the plan, and the path,
 // ghost trees and altitude behind the sheet rebalance at once.
 // Tone: surfacing, never diagnosing; suggesting, never scolding.
@@ -13,11 +13,10 @@ const el=(tag,props={},...kids)=>{const e=Object.assign(document.createElement(t
 const h1=h=>`${+h.toFixed(1)} h`;
 const list=parts=>parts.length<2?parts.join(''):`${parts.slice(0,-1).join(', ')} and ${parts.at(-1)}`;
 
-export function createBalance({plans,me,friends,clock,checkins,sheets,notice,avatar,dew,warm}){
+export function createBalance({plans,me,friends,clock,checkins,sheets,notice,dew,warm}){
   const sheet=$('balance-sheet'), owner=me.id, cap=CAPACITY[owner];
-  $('balance-avatar').src=avatar;
-  const ended=b=>b.date<TODAY||(b.date===TODAY&&b.start+b.mins<=clock.minutes);
-  const ahead=b=>b.date>TODAY||(b.date===TODAY&&b.start>=clock.minutes);
+  const ended=b=>b.done||b.date<TODAY||(b.date===TODAY&&b.start+b.mins<=clock.minutes);
+  const ahead=b=>!b.done&&(b.date>TODAY||(b.date===TODAY&&b.start>=clock.minutes));
   const when=day=>day===TODAY?'tonight':day===addDays(TODAY,1)?'tomorrow':`on ${DAYS[dow(day)-1]}`;
   let current=[];
   const applied=new Set();

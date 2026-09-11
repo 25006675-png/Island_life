@@ -26,6 +26,13 @@ input[type=text],input[type=time],input[type=date]{display:block;width:100%;marg
 .place-chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
 .chip{pointer-events:auto;border:0;border-radius:16px;padding:6px 12px;background:var(--surface);font-size:12px;color:var(--ink)}
 .chip:disabled{opacity:1;cursor:default;background:oklch(.97 .012 295 / .7)}
+/* dewdrops: a reward badge -- a glowing droplet that pulses when you earn some */
+.chip.dew{position:relative;font-weight:600;color:oklch(.36 .09 240);background:linear-gradient(135deg,oklch(.93 .06 225),oklch(.97 .035 190));box-shadow:0 0 0 1px oklch(.84 .07 225),0 4px 14px oklch(.72 .1 225 / .35)}
+.chip.dew:hover{background:linear-gradient(135deg,oklch(.9 .08 225),oklch(.96 .05 190))}
+.chip.dew.gain{animation:dew-pop .9s ease}
+@keyframes dew-pop{30%{transform:scale(1.16);box-shadow:0 0 0 5px oklch(.86 .08 225 / .55),0 6px 24px oklch(.72 .13 225 / .6)}}
+.dew-float{position:absolute;left:50%;top:-6px;pointer-events:none;white-space:nowrap;font-size:13px;font-weight:700;color:oklch(.45 .13 235);text-shadow:0 1px 6px oklch(1 0 0 / .9);animation:dew-rise 1.4s ease-out forwards}
+@keyframes dew-rise{from{opacity:0;transform:translate(-50%,0)}20%{opacity:1}to{opacity:0;transform:translate(-50%,-44px)}}
 /* lifted timetable ribbon */
 #ribbon-labels{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .3s}
 .ribbon-label{position:absolute;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:1px;padding:5px 9px;border-radius:9px;background:oklch(.98 .01 295 / .92);border-top:3px solid var(--cat);font-size:10px;white-space:nowrap}
@@ -107,7 +114,14 @@ dialog h2{font:normal 21px Georgia,serif;margin:0 0 14px}
 .mo-dots{display:flex;flex-wrap:wrap;gap:3px}.mo-dots i{width:7px;height:7px;border-radius:50%}
 /* balance sheet */
 .balance{display:flex;gap:26px;padding:0 30px 26px;overflow:auto}
-.balance-avatar{width:150px;align-self:flex-end;flex:none;object-fit:contain;filter:drop-shadow(0 8px 12px oklch(.3 .04 295 / .15))}
+/* your gardener stands on the sheet's top edge and walks to what you point at */
+.buddy{position:absolute;bottom:100%;left:60px;height:88px;margin-bottom:-8px;z-index:1;pointer-events:none;
+  transform:translateX(-50%) scaleX(var(--face,1));transform-origin:50% 100%;filter:drop-shadow(0 6px 8px oklch(.3 .04 295 / .25))}
+.buddy.walking{animation:buddy-walk .42s ease-in-out infinite}
+@keyframes buddy-walk{0%,100%{translate:0 0;rotate:0deg}25%{translate:0 -4px;rotate:-3deg}75%{translate:0 -4px;rotate:3deg}}
+.ribbon-buddy{bottom:auto;height:62px;margin:0;transform:translate(-50%,-96%) scaleX(var(--face,1))}
+.buddy.hop{animation:buddy-hop .6s cubic-bezier(.3,.7,.4,1)}
+@keyframes buddy-hop{40%{translate:0 -28px}}
 .balance-body{flex:1;min-width:0;max-width:720px}
 .balance-body h2{font:normal 24px Georgia,serif;margin:0 0 12px}
 .balance-body h3{font:normal 15px Georgia,serif;margin:18px 0 10px;color:var(--muted)}
@@ -129,5 +143,5 @@ dialog h2{font:normal 21px Georgia,serif;margin:0 0 14px}
 .bal-apply:hover{background:oklch(.48 .12 36)}
 .bal-dew{margin:18px 0 0;font-size:12px;line-height:1.5;color:var(--muted)}
 .bal-suggest li.done .bal-apply{background:oklch(.9 .05 150);color:var(--ink);opacity:1}
-@media(max-width:700px){.balance-avatar{display:none}.bal-row{grid-template-columns:64px 1fr 84px}.sheet-head{padding-right:48px}}
+@media(max-width:700px){.bal-row{grid-template-columns:64px 1fr 84px}.sheet-head{padding-right:48px}}
 @media(prefers-reduced-motion:reduce){.sheet{animation:none}}

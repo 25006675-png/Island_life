@@ -20,7 +20,7 @@ const clamp01=v=>Math.min(1,Math.max(0,v)), smooth=v=>v*v*(3-2*v);
 // curve parameter u: [0,UE] leaves the arch, [UE,UX] is the loop, [UX,1] heads home
 const UE=LEG/(SAMPLES-1), UX=1-UE;
 
-export const blockStatus=(b,now)=>b.skipped?'skipped':b.start+b.mins<=now?'done':b.start<=now?'now':'planned';
+export const blockStatus=(b,now)=>b.skipped?'skipped':b.done||b.start+b.mins<=now?'done':b.start<=now?'now':'planned';
 
 function timeToU(m){
   if(m<=DAWN)return 0;
@@ -117,7 +117,7 @@ export function createTimetable(island,{texture,own,blocks:initial}){
     // with motion on, light flows along the lit path every frame, so no caching
     const wu=timeToU(now), key=motion?null:`${wu.toFixed(4)}|${lift}`;if(key!==null&&painted===key)return;painted=key;
     for(let i=0;i<SAMPLES;i++){
-      const u=i/(SAMPLES-1), m=uToTime(u), b=blocks.find(b=>m>=b.start&&m<b.start+b.mins), glow=u<=wu;let a;
+      const u=i/(SAMPLES-1), m=uToTime(u), b=blocks.find(b=>m>=b.start&&m<b.start+b.mins), glow=u<=wu||!!b?.done;let a;   // finished early: lit now
       if(b){
         const f=((m-b.start)%30)/30;
         tmp.copy(!own&&b.vis==='hidden'?HIDDEN:COLORS[b.cat]??HIDDEN);

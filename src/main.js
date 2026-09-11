@@ -9,7 +9,7 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { HeightField, bridgePoint, surfaceAt, islandSurface } from './navigation.js';
 import { createAtmosphere, createWeather } from './atmosphere.js';
 import { initLife, setStrain } from './life.js';
-import { CATEGORIES } from './data.js';
+import { CATEGORIES, ME } from './data.js';
 import { HISTORY } from './groves.js';
 import { createForest } from './forest.js';
 
@@ -50,7 +50,7 @@ const definitions=[
    x:42.5,z:73.6,altitude:-4,scale:2.0,spawn:ARCH_SPAWN,cam:ARCH_CAM,obstacles:TORII_POSTS},
 ];
 for(const d of definitions){
-  d.name=d.owner?`${d.owner}’s island`:d.name;
+  d.name=d.id===ME?'My island':d.owner?`${d.owner}’s island`:d.name;
   // most-planted first: HISTORY lists each week's dominant category first
   d.activities=d.owner?[...new Set(HISTORY[d.id].map(e=>e.cat))].map(c=>CATEGORIES[c].label):[];
 }
@@ -148,7 +148,7 @@ function spawnOn(island){
 
 function visit(id){if(!ready)return;selected=id;mode='walk';const island=islands.find(i=>i.id===id);spawnOn(island);controls.enabled=true;controls.minDistance=6;controls.maxDistance=skyReach();cameraOffset.set(...(island.cam??[0,10,16]));
   transition={from:camera.position.clone(),targetFrom:controls.target.clone(),time:0};
-  $('location-kicker').textContent=island.owner?`Visiting ${island.owner}`:'Everyone’s island';
+  $('location-kicker').textContent=island.id===ME?'Home':island.owner?`Visiting ${island.owner}`:'Everyone’s island';
   $('location-title').textContent=island.name;
   $('hint').textContent=(island.activities?.length?`${island.activities.join(' · ')}. `:'')
     +'WASD or arrow keys to wander. Cross a light bridge to visit a neighbour.';$('mode-hint').textContent='WASD to walk · Space to jump · Drag to look around · Esc for sky view';$('overview').setAttribute('aria-pressed','false');$('walk').setAttribute('aria-pressed','true');syncPanel();canvas.focus({preventScroll:true});}
@@ -221,7 +221,7 @@ function walk(dt){
   }
   if(moved)player.stuck=0;else if((player.stuck+=dt)>.5){player.stuck=0;unstick();}
   if(moved){player.distance+=speed*dt;const turn=Math.atan2(dx,dz)-gardener.rotation.y;gardener.rotation.y+=Math.atan2(Math.sin(turn),Math.cos(turn))*(1-Math.exp(-12*dt));if(!player.hop)gardener.position.y=motion?Math.sin(player.distance*5)*.045:0;gardener.rotation.z=motion?Math.sin(player.distance*2.5)*.025:0;
-    if(player.surface.kind==='island'&&player.surface.id!==selected){selected=player.surface.id;const i=islands.find(i=>i.id===selected);$('location-title').textContent=i.name;syncPanel();notice(`Welcome to ${i.name.toLowerCase()}.`);}
+    if(player.surface.kind==='island'&&player.surface.id!==selected){selected=player.surface.id;const i=islands.find(i=>i.id===selected);$('location-title').textContent=i.name;syncPanel();notice(i.id===ME?'Welcome home.':`Welcome to ${i.name.toLowerCase()}.`);}
   }
 }
 
@@ -288,7 +288,7 @@ function frame(time){
   if(LITE){ if(time-_last<33) return; _last=time; }   // cap ~30fps
 
   const dt=Math.min((time-last)/1000,.04);last=time;if(document.hidden)return;if(motion)elapsed+=dt;
-  walk(dt);player.root.position.copy(player.position);atmosphere.update(elapsed,camera);for(const i of islands)i.weatherFx.update(elapsed);
+  walk(dt);player.root.position.copy(player.position);atmosphere.update(elapsed,camera);for(const i of islands)i.weatherFx.update(elapsed,camera);
   if(transition){transition.time+=dt;const a=motion?Math.min(transition.time/1.2,1):1,e=1-Math.pow(1-a,4);look.copy(mode==='walk'?player.position:new T.Vector3(0,2,0));if(mode==='walk')look.y+=1;targetPosition.copy(mode==='walk'?player.position.clone().add(cameraOffset):overviewPosition());camera.position.lerpVectors(transition.from,targetPosition,e);controls.target.lerpVectors(transition.targetFrom,look,e);camera.lookAt(controls.target);if(a===1)transition=null;}
   // walk: orbit controls around the gardener -- drag to turn, scroll to zoom -- carried along as they move
   // (no collision pull-in: the camera stays exactly where the user put it)

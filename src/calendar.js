@@ -18,7 +18,7 @@ const option=(value,text)=>el('option',{value,textContent:text});
 export function createCalendar({plans,owner,clock,notice,sheets}){
   const sheet=$('planner-sheet'), cap=CAPACITY[owner];
   let tab='day', date=TODAY, editing=null;
-  const statusOn=b=>b.skipped?'skipped':b.date<TODAY?'done':b.date>TODAY?'planned':blockStatus(b,clock.minutes);
+  const statusOn=b=>b.skipped?'skipped':b.done||b.date<TODAY?'done':b.date>TODAY?'planned':blockStatus(b,clock.minutes);
   const short=s=>{const d=fromIso(s);return `${DAYS[dow(s)-1]} ${d.getDate()} ${MONTHS[d.getMonth()].slice(0,3)}`;};
 
   // ---- editor (shared by every view) -------------------------------------------

@@ -70,7 +70,7 @@ Camera: in walk mode, drag to orbit the avatar and scroll to zoom; WASD moves re
 
 Balance panel (analysis + solutions)
 
-Not a separate page and not a modal popup — an expanding sheet that slides up over the current scene when triggered (tapping the altitude gauge, weather chip, or an "insights" button). The 3D scene stays alive behind it: dimmed and softly blurred, island still drifting, so the panel reads as part of the world, not a context switch. The user's avatar appears at the left edge of the panel, standing and viewing the readout (the avatar never speaks or gives advice). Collapse by swiping down or tapping the scene.
+Not a separate page and not a modal popup — an expanding sheet that slides up over the current scene when triggered (tapping the altitude gauge, weather chip, or an "insights" button). The 3D scene stays alive behind it: dimmed and softly blurred, island still drifting, so the panel reads as part of the world, not a context switch. The user's avatar appears at the left edge of the panel, standing and viewing the readout (the avatar never speaks or gives advice). v1: the gardener stands on the sheet's top edge, walks to whatever you point at or focus, and hops when the plan changes; the planner sheet has it too, so opening a sheet never feels like leaving the world. Collapse by swiping down or tapping the scene.
 
 Panel contents, top to bottom:
 Load header — current capacity: "31 / 35 hrs committed · 89%", with the altitude band it corresponds to and a small 4-week trend sparkline.

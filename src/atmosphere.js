@@ -67,10 +67,11 @@ export function createWeather(texture,radius=26) {
   for(let i=0;i<PUFFS;i++){
     const a=i*2.399, r=Math.sqrt((i+.5)/PUFFS)*R*.95, s=sprite('#f0eef4');
     s.position.set(Math.cos(a)*r,19+(i%3)*.9,Math.sin(a)*r);s.scale.set(28*(1+(i%4)*.15),11,1);
-    s.userData.from=.12+.45*((i*13)%PUFFS)/PUFFS;group.add(s);deck.push(s);
+    // a fixed draw order: re-sorting overlapping puffs as the camera moves made them blink
+    s.userData.from=.12+.45*((i*13)%PUFFS)/PUFFS;s.renderOrder=10+i;group.add(s);deck.push(s);
   }
   // low mist banks hugging the island's edge
-  for(let i=0;i<12;i++){const a=i/12*Math.PI*2,s=sprite('#eceef0');s.position.set(Math.cos(a)*R*.8,1.2+(i%3)*.8,Math.sin(a)*R*.8);s.scale.set(R*.9,7,1);mist.add(s);}
+  for(let i=0;i<12;i++){const a=i/12*Math.PI*2,s=sprite('#eceef0');s.position.set(Math.cos(a)*R*.8,1.2+(i%3)*.8,Math.sin(a)*R*.8);s.scale.set(R*.9,7,1);s.renderOrder=4+i;mist.add(s);}
   // rain: a streaked shaft that fades top and bottom, plus close-up streaks
   const paint=(w,h,draw)=>{const c=document.createElement('canvas');c.width=w;c.height=h;draw(c.getContext('2d'));return new T.CanvasTexture(c);};
   const streaks=paint(64,128,x=>{for(let i=0;i<70;i++){const px=Math.random()*64,py=Math.random()*128;
@@ -89,15 +90,24 @@ export function createWeather(texture,radius=26) {
   function setStrain(s){
     strain=Math.min(1,Math.max(0,s));
     const tone=ramp(.3,.9,strain);
-    for(const p of deck){p.material.opacity=ramp(p.userData.from,p.userData.from+.1,strain)*.95;p.material.color.copy(light).lerp(dark,tone);}
-    const m=ramp(.2,.4,strain)*(1-ramp(.65,.85,strain))*.5;for(const b of mist.children)b.material.opacity=m;
+    for(const p of deck){p.userData.base=ramp(p.userData.from,p.userData.from+.1,strain)*.95;p.material.opacity=p.userData.base;p.material.color.copy(light).lerp(dark,tone);}
+    const m=ramp(.2,.4,strain)*(1-ramp(.65,.85,strain))*.5;for(const b of mist.children){b.userData.base=m;b.material.opacity=m;}
     rain=ramp(.55,.95,strain);
     shaft.material.opacity=rain*.85;shaft.visible=rain>0;
     geometry.setDrawRange(0,Math.floor(DROPS*ramp(.5,1,strain))*2);drops.visible=strain>.5;
   }
   setStrain(0);
+  const eye=new T.Vector3();
   return {group,setStrain,
-    update(t){
+    update(t,camera){
+      // fade what the camera is about to fly through, instead of letting a
+      // puff (or the rain column) suddenly fill the whole screen
+      if(camera){
+        eye.copy(camera.position).sub(group.position);
+        for(const p of deck)p.material.opacity=p.userData.base*ramp(8,24,eye.distanceTo(p.position));
+        for(const b of mist.children)b.material.opacity=b.userData.base*ramp(4,14,eye.distanceTo(b.position));
+        shaft.material.opacity=rain*.85*ramp(R*.7,R*1.1,Math.hypot(eye.x,eye.z));
+      }
       if(shaft.visible)streaks.offset.y=t*(.6+rain*.8);
       if(drops.visible){
         for(let i=0;i<DROPS;i++){const y=15-(i*.21+t*(3+4*rain))%14,a=i*2.399,d=Math.sqrt((i*.618)%1)*R*.85,x=Math.cos(a)*d,z=Math.sin(a)*d;positions.set([x,y,z,x-.05,y-.5,z],i*6);}

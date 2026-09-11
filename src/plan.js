@@ -15,7 +15,7 @@ function createPlans(){
   let nextId=1;
   const store={}, listeners=new Set();
   const block=(date,[start,mins,cat,title,vis='silhouette',priority='normal'],repeat=false)=>
-    ({id:nextId++,date,start:toMin(start),mins,cat,title,vis,priority,repeat,skipped:false,skippedOn:[],exceptOn:[]});
+    ({id:nextId++,date,start:toMin(start),mins,cat,title,vis,priority,repeat,skipped:false,done:false,skippedOn:[],doneOn:[],exceptOn:[]});
   const monday=mondayOf(TODAY);
   for(const [id,seed] of Object.entries(SEEDS)){
     const list=store[id]=seed.today.map(r=>block(TODAY,r));
@@ -25,7 +25,7 @@ function createPlans(){
   }
 
   const occurs=(b,date)=>b.repeat?date>=b.date&&dow(date)===dow(b.date)&&!b.exceptOn.includes(date):b.date===date;
-  const occurrence=(b,date)=>b.repeat?{...b,id:`${b.id}@${date}`,date,series:b,skipped:b.skippedOn.includes(date)}:b;
+  const occurrence=(b,date)=>b.repeat?{...b,id:`${b.id}@${date}`,date,series:b,skipped:b.skippedOn.includes(date),done:b.doneOn.includes(date)}:b;
   const on=(id,date)=>(store[id]??[]).filter(b=>occurs(b,date)).map(b=>occurrence(b,date)).sort((a,b)=>a.start-b.start);
   const range=(id,from,days)=>{const out=[];for(let i=0;i<days;i++)out.push(...on(id,addDays(from,i)));return out;};
   const changed=id=>{SCHEDULES[id]=on(id,TODAY);for(const f of listeners)f(id);};
@@ -36,7 +36,7 @@ function createPlans(){
     week:(id,date=TODAY)=>range(id,mondayOf(date),7),
     hours:list=>list.filter(b=>!b.skipped).reduce((a,b)=>a+b.mins,0)/60,
     add(id,fields){
-      const b={id:nextId++,vis:'silhouette',priority:'normal',repeat:false,skipped:false,skippedOn:[],exceptOn:[],...fields};
+      const b={id:nextId++,vis:'silhouette',priority:'normal',repeat:false,skipped:false,done:false,skippedOn:[],doneOn:[],exceptOn:[],...fields};
       store[id].push(b);changed(id);return b;
     },
     // Edits land on the series for a repeating block; moving one of its days
@@ -53,11 +53,13 @@ function createPlans(){
       else occ.skipped=!occ.skipped;
       changed(id);
     },
+    // finished early: the block counts as done now, and its ghost takes root
+    markDone(id,occ){if(occ.series)occ.series.doneOn.push(occ.date);else occ.done=true;changed(id);},
     // Move one day's block `days` later; one occurrence of a series becomes a one-off.
     shift(id,occ,days){
       if(occ.series){
         const {series,...rest}=occ;series.exceptOn.push(occ.date);
-        store[id].push({...rest,id:nextId++,repeat:false,date:addDays(occ.date,days),skippedOn:[],exceptOn:[]});
+        store[id].push({...rest,id:nextId++,repeat:false,date:addDays(occ.date,days),done:false,skippedOn:[],doneOn:[],exceptOn:[]});
       }else occ.date=addDays(occ.date,days);
       changed(id);
     },
