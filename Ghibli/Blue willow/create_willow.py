@@ -38,9 +38,11 @@ leaf_g = gs.collection('02 - Hanging leaves')
 fall_g = gs.collection('03 - Falling leaves')
 studio_g = gs.collection('04 - Camera and cream studio')
 
-LEAF = gs.ramp('Willow leaf', [(208, 227, 216), (184, 214, 211), (160, 199, 204),
-                               (138, 182, 195), (118, 165, 182), (100, 148, 168),
-                               (84, 131, 152), (72, 116, 138)], 14)
+# Pushed bluer than the reference's teal, toward the Rest colour (data.js
+# CATEGORIES.rest, #5aa7e6), so the willow never reads as the teal Errands mushrooms.
+LEAF = gs.ramp('Willow leaf', [(216, 232, 247), (190, 216, 243), (163, 200, 238),
+                               (136, 182, 231), (112, 164, 222), (92, 146, 208),
+                               (76, 128, 192), (62, 110, 174)], 14)
 BARK = gs.ramp('Bark', [(200, 182, 163), (182, 163, 145), (163, 145, 129),
                         (143, 127, 115), (123, 110, 102), (102, 92, 88)], 8)
 

@@ -324,8 +324,8 @@ leaf('Crown sprout • right leaf',(.0,.025,4.10),(.62,.02,4.47),.24,leaf_green,
 current=SHIRT
 uv('Shirt • soft rounded torso',(0,.005,1.56),(.66,.37,.50),cream)
 for side in (-1,1):
-    if side<0:
-        points=[(-.51,0,1.84),(-.73,-.01,1.78),(-.93,-.025,1.69)]
+    if side<0:   # both arms hang; the left mirrors the right
+        points=[(-.52,0,1.83),(-.77,-.015,1.68),(-.99,-.035,1.47)]
     else:
         points=[(.52,0,1.83),(.77,-.015,1.68),(.99,-.035,1.47)]
     sweep('Shirt • puff sleeve '+str(side),points,[.22,.235,.20],[.25,.245,.195],cream)
@@ -341,9 +341,9 @@ current=FACE
 right=fuse('Right hand • rounded mitten and thumb',[
     uv('palm', (1.045,-.035,1.35),(.17,.18,.235),skin),
     uv('thumb',( .936,-.169,1.39),(.095,.09,.135),skin)],skin,.013)
-left=fuse('Left hand • relaxed raised mitten',[
-    uv('palm',(-1.082,-.04,1.71),(.205,.17,.18),skin),
-    uv('thumb',(-1.08,-.16,1.80),(.105,.09,.12),skin)],skin,.013)
+left=fuse('Left hand • rounded mitten and thumb',[
+    uv('palm', (-1.045,-.035,1.35),(.17,.18,.235),skin),
+    uv('thumb',( -.936,-.169,1.39),(.095,.09,.135),skin)],skin,.013)
 
 # Continuous shorts with a small crotch break, plus bib, straps and a dimensional pocket.
 current=SUIT

@@ -30,6 +30,8 @@ const HIGH=16, LOW=-7;
 export const loadFromAltitude=a=>Math.min(1,Math.max(0,(HIGH-a)/(HIGH-LOW)));
 export const altitudeFromLoad=l=>HIGH-Math.min(1,Math.max(0,l))*(HIGH-LOW);
 export const CAPACITY={sakura:35,purple:36,oak:35};   // hours a week each member can give
+// How full a week is, in words: shown instead of hours (balance and planner).
+export const fullness=l=>l<.35?'light':l<.65?'about half full':l<.85?'full':'very full';
 // Bridge glow = recent interaction warmth with the group (0 quiet ... 3 bright); never breaks.
 export const WARMTH={sakura:1.7,purple:1.4,oak:.6};
 
@@ -78,6 +80,28 @@ export const CHECKINS={
   oak:   [{day:6,mood:'tired'},{day:5,mood:'calm'},{day:4,mood:'stressed'},{day:3,mood:'tired'},
           {day:2,mood:'stressed'},{day:1,mood:'low'},{day:0,mood:'tired',time:toMin('07:15')}],
 };
+
+// Notes = support. A few words left for a friend, written on a wooden plaque
+// left at the friend's gate. Oldest first; `day` counts days before today.
+export const NOTE_PRESETS=['Thinking of you this week','Proud of you. Rest a little.','Tea on the deck soon?','You’ve got this.'];
+export const NOTES=[
+  {from:'purple',to:'oak',text:'Swim on Sunday? You need the air.',day:1,read:true},
+  {from:'oak',to:'sakura',text:'Thinking of you this week',day:1,read:false},
+  {from:'purple',to:'sakura',text:'Good luck with the essay. Lunch is on me.',day:0,read:false},
+];
+
+// The task board: small things anyone can post or join this week, then do on
+// their own, any day. Everyone who finishes earns the reward, plus one dewdrop
+// for each friend who finished too. `by` is who posted it (null: suggested for
+// the group). `done` maps a member to their optional photo (null: no photo).
+// Only finishers are named; everyone else is a count.
+export const TASKS=[
+  {id:'walk',title:'A 30-minute walk outside',cat:'exercise',mins:30,by:null,reward:3,joined:['purple','oak'],done:{purple:'walk.jpg'}},
+  {id:'cook',title:'Cook yourself a proper dinner',cat:'other',mins:60,by:'purple',reward:3,joined:['purple','sakura'],done:{purple:'dinner.jpg'}},
+  {id:'screens',title:'One evening with no screens after 9pm',cat:'rest',mins:60,by:'oak',reward:3,joined:['oak','purple'],done:{oak:'tea.jpg',purple:null}},
+  {id:'focus',title:'One focused hour, phone in another room',cat:'study',mins:60,by:'oak',reward:2,joined:['oak'],done:{}},
+  {id:'message',title:'Message someone you miss',cat:'social',mins:30,by:null,reward:2,joined:['sakura','oak'],done:{sakura:null}},
+];
 
 // Weather = subjective strain, looking back: the last five days of check-ins,
 // nudged by a heavy week. One continuous 0..1 value -- cloud gathers, then

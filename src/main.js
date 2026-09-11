@@ -9,9 +9,9 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { HeightField, bridgePoint, surfaceAt, islandSurface } from './navigation.js';
 import { createAtmosphere, createWeather } from './atmosphere.js';
 import { initLife, setStrain } from './life.js';
-import { CATEGORIES, ME } from './data.js';
-import { HISTORY } from './groves.js';
+import { ME } from './data.js';
 import { createForest } from './forest.js';
+import { createLogin } from './login.js';
 
 const $=id=>document.getElementById(id), canvas=$('world');
 // One activity category = one tree species (groves.js). The gathering
@@ -32,7 +32,7 @@ const ARCH_SPAWN=[-4.1,-3.8], ARCH_CAM=[-11.9,10,-10.7];
 // landing, its torii, and the camera side (+z) of the spawn -- the walk-in
 // camera sits behind the gardener at +z, so a grove there fills the view.
 const definitions=[
-  {id:'community',model:'community',name:'The gathering tree',owner:null,
+  {id:'community',model:'community',name:'The gathering Island',owner:null,
    description:'Everyone’s island. The bridges start here.',
    x:0,z:0,altitude:0,scale:2.2,spawn:[2,.5],
    // the trunk; its buttress roots are fenced off by field.block() in init()
@@ -51,8 +51,6 @@ const definitions=[
 ];
 for(const d of definitions){
   d.name=d.id===ME?'My island':d.owner?`${d.owner}’s island`:d.name;
-  // most-planted first: HISTORY lists each week's dominant category first
-  d.activities=d.owner?[...new Set(HISTORY[d.id].map(e=>e.cat))].map(c=>CATEGORIES[c].label):[];
 }
 
 // Decorative groves on the gathering island: `n` of one species in a tight
@@ -146,13 +144,27 @@ function spawnOn(island){
   player.position.set(found.x,found.y,found.z);player.surface=found;
 }
 
+// Arriving anywhere: "Welcome to …" sits in the middle of the screen for a
+// moment, then slides down into its corner and settles as the usual kicker.
+let arriveTimer;
+function arrive(island){
+  const kicker=island.id===ME?'Home':island.owner?`Visiting ${island.owner}`:'Everyone’s island';
+  $('location-kicker').textContent=island.id===ME?'Welcome home':'Welcome to';
+  $('location-title').textContent=island.name;
+  const place=document.querySelector('.place'), title=place.querySelector('.place-title');
+  title.style.transition='none';place.classList.add('arriving');
+  const r=title.getBoundingClientRect();
+  title.style.transform=`translate(${innerWidth/2-(r.left+r.width/2)}px,${innerHeight*.42-(r.top+r.height/2)}px) scale(1.4)`;
+  void title.offsetWidth;title.style.transition='';
+  clearTimeout(arriveTimer);
+  arriveTimer=setTimeout(()=>{title.style.transform='';place.classList.remove('arriving');$('location-kicker').textContent=kicker;},motion?1600:300);
+}
 function visit(id){if(!ready)return;selected=id;mode='walk';const island=islands.find(i=>i.id===id);spawnOn(island);controls.enabled=true;controls.minDistance=6;controls.maxDistance=skyReach();cameraOffset.set(...(island.cam??[0,10,16]));
   transition={from:camera.position.clone(),targetFrom:controls.target.clone(),time:0};
-  $('location-kicker').textContent=island.id===ME?'Home':island.owner?`Visiting ${island.owner}`:'Everyone’s island';
-  $('location-title').textContent=island.name;
-  $('hint').textContent=(island.activities?.length?`${island.activities.join(' · ')}. `:'')
-    +'WASD or arrow keys to wander. Cross a light bridge to visit a neighbour.';$('mode-hint').textContent='WASD to walk · Space to jump · Drag to look around · Esc for sky view';$('overview').setAttribute('aria-pressed','false');$('walk').setAttribute('aria-pressed','true');syncPanel();canvas.focus({preventScroll:true});}
-function overview(){if(!ready)return;mode='overview';controls.enabled=true;controls.minDistance=14;controls.maxDistance=skyReach();transition={from:camera.position.clone(),targetFrom:controls.target.clone(),time:0};$('location-kicker').textContent='Your sky neighborhood';$('location-title').textContent='A world of little wonders.';$('hint').textContent='Choose an island. Stay a little while.';$('mode-hint').textContent='Drag to look around · Scroll to zoom';$('overview').setAttribute('aria-pressed','true');$('walk').setAttribute('aria-pressed','false');keys.clear();}
+  arrive(island);
+  $('hint').textContent='';   // the island's status shows below instead (life.js)
+$('mode-hint').textContent='WASD to walk · Space to jump · Drag to look around · Esc for sky view';$('overview').setAttribute('aria-pressed','false');$('walk').setAttribute('aria-pressed','true');syncPanel();canvas.focus({preventScroll:true});}
+function overview(){if(!ready)return;mode='overview';controls.enabled=true;controls.minDistance=14;controls.maxDistance=skyReach();transition={from:camera.position.clone(),targetFrom:controls.target.clone(),time:0};clearTimeout(arriveTimer);document.querySelector('.place').classList.remove('arriving');document.querySelector('.place-title').style.transform='';$('location-kicker').textContent='Your sky neighborhood';$('location-title').textContent='A world of little wonders.';$('hint').textContent='Choose an island. Stay a little while.';$('mode-hint').textContent='Drag to look around · Scroll to zoom';$('overview').setAttribute('aria-pressed','true');$('walk').setAttribute('aria-pressed','false');keys.clear();}
 // The sky view may zoom out a little past the framing, never far enough to lose the world.
 const skyReach=()=>overviewPosition().distanceTo(new T.Vector3(0,2,0))*1.25;
 function overviewPosition(){
@@ -221,12 +233,16 @@ function walk(dt){
   }
   if(moved)player.stuck=0;else if((player.stuck+=dt)>.5){player.stuck=0;unstick();}
   if(moved){player.distance+=speed*dt;const turn=Math.atan2(dx,dz)-gardener.rotation.y;gardener.rotation.y+=Math.atan2(Math.sin(turn),Math.cos(turn))*(1-Math.exp(-12*dt));if(!player.hop)gardener.position.y=motion?Math.sin(player.distance*5)*.045:0;gardener.rotation.z=motion?Math.sin(player.distance*2.5)*.025:0;
-    if(player.surface.kind==='island'&&player.surface.id!==selected){selected=player.surface.id;const i=islands.find(i=>i.id===selected);$('location-title').textContent=i.name;syncPanel();notice(i.id===ME?'Welcome home.':`Welcome to ${i.name.toLowerCase()}.`);}
+    if(player.surface.kind==='island'&&player.surface.id!==selected){selected=player.surface.id;arrive(islands.find(i=>i.id===selected));syncPanel();}
   }
 }
 
 // module scope: frame() is top-level and reads this too
 const LITE=new URLSearchParams(location.search).has('lite');
+// ?skiplogin -> straight into the world (embedding, tests). The sign-in is
+// mock: it only waits for a click while the world loads behind it.
+if(new URLSearchParams(location.search).has('skiplogin'))$('login').hidden=true;
+else createLogin(()=>{canvas.focus({preventScroll:true});notice('Welcome back, Aisha. Your island kept growing while you were away.');});
 
 async function init(){
   // ?lite  -> low-stress dev mode: halves resolution, drops bloom + shadows,

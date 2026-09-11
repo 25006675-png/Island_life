@@ -107,16 +107,20 @@ void main(){vec2 p=vWorld.xz*.026+vec2(time*.002,0.);float n=fbm(p);float detail
     };
     g.scale.setScalar(size);scene.add(g);return g;
   }
-  // Their lanes lie across the view (turning with the camera), so the whales
-  // are always seen side-on, swimming left or right -- never heading at you.
-  // A mother and calf, one higher adult going the other way, one small far one.
-  // They swim far out near the horizon, softened by haze -- part of the sky,
-  // never beside the islands. (Offsets put every whale in view at load.)
-  const LANE=2400;
-  const pods=[{size:18,depth:650,y:80,speed:14,dir:1,off:1150},{size:9,depth:650,y:70,speed:14,dir:1,off:1080},
-              {size:15,depth:820,y:130,speed:11,dir:-1,off:1450},{size:11,depth:900,y:40,speed:9,dir:1,off:1500}]
-              .map(p=>({...p,w:whale(p.size)}));
-  const ahead=new T.Vector3(0,0,-1), across=new T.Vector3(1,0,0);
+  // The whales swim fixed lanes in the world: wide circles far out round the
+  // neighbourhood, softened by haze, so turning the camera shows them from a
+  // new angle, just like the distant isles. Swimming along a circle keeps them
+  // side-on from the islands. Five groups spread round the ring (two going the
+  // other way), so wherever you look one comes by every half minute or so.
+  // `a` start angle (radians; the sky view looks toward -pi/2, so the mother
+  // and calf are in view at load), `r` lane radius, `speed` units a second.
+  const pods=[
+    {size:18,r:650,y:80,speed:16,dir:1,a:-1.75},{size:9,r:650,y:70,speed:16,dir:1,a:-1.83},   // mother and calf
+    {size:15,r:820,y:130,speed:13,dir:-1,a:-.6},                                                  // a higher adult, the other way
+    {size:11,r:900,y:40,speed:11,dir:1,a:.9},                                                      // a small far one
+    {size:16,r:720,y:95,speed:15,dir:1,a:2.4},{size:8,r:720,y:86,speed:15,dir:1,a:2.33},        // a second pair
+    {size:13,r:780,y:60,speed:12,dir:-1,a:-2.9},                                                   // a lone one, the other way
+  ].map(p=>({...p,w:whale(p.size)}));
   for(let n=0;n<26;n++){
     const s=new T.Sprite(new T.SpriteMaterial({map:texture,color:'#fff3ea',transparent:true,depthWrite:false,opacity:.16+(n%4)*.04}));
     const a=n*2.399+.3,r=160+(n*37)%230;s.position.set(Math.cos(a)*r,24+(n*13)%46,Math.sin(a)*r);s.scale.set(60+(n%5)*14,14+(n%3)*5,1);haze.add(s);
@@ -129,16 +133,11 @@ void main(){vec2 p=vWorld.xz*.026+vec2(time*.002,0.);float n=fbm(p);float detail
     update(t,camera){
       uniforms.time.value=t;clouds.rotation.y=t*.001;haze.rotation.y=t*.0006;
       for(const g of isles.children)g.position.y=g.userData.y+Math.sin(t*.15+g.userData.p)*.8;
-      // each lane runs across the view, beyond the middle of the neighbourhood;
-      // whales wrap round far off-screen at the ends
-      if(camera&&Math.hypot(camera.position.x,camera.position.z)>1){
-        ahead.set(-camera.position.x,0,-camera.position.z).normalize();across.set(-ahead.z,0,ahead.x);
-      }
+      // each whale swims round its circle for good, heading along it
       pods.forEach((p,k)=>{
-        const s=((t*p.speed+p.off)%LANE+LANE)%LANE-LANE/2;
-        p.w.position.copy(ahead).multiplyScalar(p.depth).addScaledVector(across,s*p.dir);
-        p.w.position.y=p.y+Math.sin(t*.25+k)*3;
-        p.w.rotation.set(Math.sin(t*.25+k)*.03,Math.atan2(across.x*p.dir,across.z*p.dir),Math.sin(t*.2+k)*.04);
+        const th=p.a+p.dir*p.speed*t/p.r;
+        p.w.position.set(Math.cos(th)*p.r,p.y+Math.sin(t*.25+k)*3,Math.sin(th)*p.r);
+        p.w.rotation.set(Math.sin(t*.25+k)*.03,Math.atan2(-Math.sin(th)*p.dir,Math.cos(th)*p.dir),Math.sin(t*.2+k)*.04);
         p.w.userData.swim(t+k*.9);
       });
       for(let i=0;i<SP;i++){const a=i*2.399+t*.01*(i%3+1),r=20+(i*37)%120;spark.set([Math.cos(a)*r,-4+(i*7.3+t*.4)%34,Math.sin(a)*r],i*3);}

@@ -10,7 +10,8 @@ import { CATEGORIES, DAWN, NIGHT } from './data.js';
 
 // Torii centre and its inward axis, in member-island model units
 // (run2.py TORII_AT / TORII_FACING, mirrored into Three.js x/z).
-const ARCH={x:-5.4,z:-5.0}, INWARD=new T.Vector3(.743,0,.669).normalize();
+export const ARCH={x:-5.4,z:-5.0};
+const INWARD=new T.Vector3(.743,0,.669).normalize();
 const SAMPLES=480, LEG=40, WIDTH=1.25, HOVER=.09;
 const RADIUS=8, LEG_MIN=20;   // loop radius (world units); minutes spent on each arch leg
 const RIBBON={length:26,height:1.3,distance:21};
@@ -20,7 +21,9 @@ const clamp01=v=>Math.min(1,Math.max(0,v)), smooth=v=>v*v*(3-2*v);
 // curve parameter u: [0,UE] leaves the arch, [UE,UX] is the loop, [UX,1] heads home
 const UE=LEG/(SAMPLES-1), UX=1-UE;
 
-export const blockStatus=(b,now)=>b.skipped?'skipped':b.done||b.start+b.mins<=now?'done':b.start<=now?'now':'planned';
+// Only an explicit Done makes a block done; once its time has passed without
+// an answer it is 'waiting' (its ghost tree stays until you say Done or Let go).
+export const blockStatus=(b,now)=>b.skipped?'skipped':b.done?'done':b.start+b.mins<=now?'waiting':b.start<=now?'now':'planned';
 
 function timeToU(m){
   if(m<=DAWN)return 0;
@@ -58,8 +61,8 @@ export function createTimetable(island,{texture,own,blocks:initial}){
   const arrowGeo=new T.BufferGeometry();arrowGeo.setAttribute('position',new T.BufferAttribute(new Float32Array(9),3));
   const arrow=new T.Mesh(arrowGeo,new T.MeshBasicMaterial({color:NEUTRAL.clone().multiplyScalar(1.4),transparent:true,depthWrite:false,side:T.DoubleSide}));
   arrow.frustumCulled=false;arrow.renderOrder=2;group.add(arrow);
-  // Stations: one disc per block, midway along its arc -- where its detail card appears.
-  const stations=new T.Group(), disc=new T.CircleGeometry(.85,28).rotateX(-Math.PI/2);group.add(stations);
+  // Each block has a node midway along its arc -- where its detail card
+  // appears when you walk up. Nothing is drawn there: the arc itself is enough.
 
   // The loop opens toward the arch: out through the gate on one side,
   // clockwise round the middle, home on the other side.
@@ -103,12 +106,6 @@ export function createTimetable(island,{texture,own,blocks:initial}){
       const i=Math.round(timeToU(b.start+b.mins/2)*(SAMPLES-1));
       nodes.push({block:b,local:new T.Vector3(centres[i*3],centres[i*3+1],centres[i*3+2])});
     }
-    for(const c of stations.children)c.material.dispose();stations.clear();
-    for(const n of nodes){
-      n.station=null;if(!own&&n.block.vis==='hidden')continue;
-      n.station=new T.Mesh(disc,new T.MeshBasicMaterial({transparent:true,depthWrite:false}));
-      n.station.position.copy(n.local);n.station.position.y+=.012;n.station.renderOrder=3;stations.add(n.station);
-    }
     position.set(base);geometry.attributes.position.needsUpdate=true;morphed=false;painted=null;
   }
 
@@ -128,12 +125,6 @@ export function createTimetable(island,{texture,own,blocks:initial}){
       let k=glow?1.15:.8;
       if(glow&&motion)k*=1+.6*Math.pow(Math.max(0,Math.sin(u*70-t*1.4)),10);   // pulses travel toward the wisp
       for(const v of [0,1])color.set([tmp.r*k,tmp.g*k,tmp.b*k,a],(i*2+v)*4);
-    }
-    for(const n of nodes){
-      if(!n.station)continue;
-      const b=n.block, st=blockStatus(b,now), m=n.station.material;
-      m.color.copy(!own&&b.vis==='hidden'?HIDDEN:COLORS[b.cat]??HIDDEN).multiplyScalar(st==='planned'?.8:st==='skipped'?.4:1.2);
-      m.opacity=(st==='skipped'?.3:st==='planned'?.55:1)*(1-lift);
     }
     geometry.attributes.color.needsUpdate=true;
   }
@@ -169,6 +160,44 @@ export function createTimetable(island,{texture,own,blocks:initial}){
     get lifted(){return target===1;},
     get lift(){return lift;},
     get blocks(){return blocks;},
+    // Clear scenery sitting on the path (a shrub puff, a tuft, a rock) so the
+    // day stays readable. Whole pieces go at a time; everything beside the
+    // path stays. `root` is the island model, `names` its meshes to check.
+    clearPath(root,names){
+      island.group.updateMatrixWorld(true);
+      const toGroup=new T.Matrix4().copy(group.matrixWorld).invert(), m=new T.Matrix4(), p=new T.Vector3();
+      const reach=WIDTH/2+.15;
+      const near=(x,z,r)=>{for(let i=0;i<SAMPLES;i+=2){const dx=x-centres[i*3],dz=z-centres[i*3+2];if(dx*dx+dz*dz<r*r)return true;}return false;};
+      for(const name of names){
+        const mesh=root.getObjectByName(name);if(!mesh?.isMesh)continue;
+        const g=mesh.geometry, pos=g.attributes.position, n=pos.count;
+        m.multiplyMatrices(toGroup,mesh.matrixWorld);
+        // a piece = vertices joined by triangles, or sharing a position (flat-shaded seams)
+        const parent=Int32Array.from({length:n},(_,i)=>i);
+        const find=i=>{while(parent[i]!==i){parent[i]=parent[parent[i]];i=parent[i];}return i;};
+        const join=(a,b)=>{a=find(a);b=find(b);if(a!==b)parent[a]=b;};
+        const seen=new Map();
+        for(let i=0;i<n;i++){const k=`${pos.getX(i).toFixed(4)},${pos.getY(i).toFixed(4)},${pos.getZ(i).toFixed(4)}`,j=seen.get(k);if(j===undefined)seen.set(k,i);else join(i,j);}
+        const idx=g.index?Array.from(g.index.array):Array.from({length:n},(_,i)=>i);
+        for(let t=0;t<idx.length;t+=3){join(idx[t],idx[t+1]);join(idx[t],idx[t+2]);}
+        const world=new Float32Array(n*2), box=new Map();
+        for(let i=0;i<n;i++){
+          p.fromBufferAttribute(pos,i).applyMatrix4(m);world[i*2]=p.x;world[i*2+1]=p.z;
+          const r=find(i);let b=box.get(r);if(!b)box.set(r,b=[p.x,p.x,p.z,p.z]);
+          b[0]=Math.min(b[0],p.x);b[1]=Math.max(b[1],p.x);b[2]=Math.min(b[2],p.z);b[3]=Math.max(b[3],p.z);
+        }
+        // small pieces go whole when they touch the path; a large merged piece is tested triangle by triangle
+        const verdict=new Map();
+        for(const [r,b] of box){const size=Math.max(b[1]-b[0],b[3]-b[2])/2;if(size<1.5)verdict.set(r,near((b[0]+b[1])/2,(b[2]+b[3])/2,reach+size));}
+        const kept=[];let dropped=0;
+        for(let t=0;t<idx.length;t+=3){
+          const v=verdict.get(find(idx[t]));
+          const cut=v??near((world[idx[t]*2]+world[idx[t+1]*2]+world[idx[t+2]*2])/3,(world[idx[t]*2+1]+world[idx[t+1]*2+1]+world[idx[t+2]*2+1])/3,reach);
+          if(cut)dropped++;else kept.push(idx[t],idx[t+1],idx[t+2]);
+        }
+        if(dropped)g.setIndex(kept);
+      }
+    },
     // world point on the lifted ribbon, `drop` units below its lower edge
     ribbonPoint(minutes,drop,out){
       const x=(minutes-DAWN)/(NIGHT-DAWN)-.5;
@@ -179,7 +208,7 @@ export function createTimetable(island,{texture,own,blocks:initial}){
       for(const n of nodes){
         if(!own&&n.block.vis==='hidden')continue;
         const d=Math.hypot(world.x-gp.x-n.local.x,world.z-gp.z-n.local.z);
-        if(d<radius&&(!best||d<best.d))best={block:n.block,d};
+        if(d<radius&&(!best||d<best.d))best={block:n.block,d,at:n.local.clone().add(gp).add(new T.Vector3(0,.5,0))};
       }
       return best;
     },

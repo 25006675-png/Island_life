@@ -45,7 +45,7 @@ function freeRing(gaps){
   return {span,angleAt};
 }
 const ROOT_SECONDS=2.6, DRIFT_SECONDS=3;
-const STATUS={done:'done',now:'happening now',planned:'planned',skipped:'let go'};
+const STATUS={done:'done',now:'happening now',planned:'planned',skipped:'let go',waiting:'did it happen?'};
 const SUN=new T.Vector3(-45,65,25).normalize();   // main.js key light
 
 // Glass ghost of a tree. Unlit: faint in the body, a soft edge light
@@ -255,7 +255,8 @@ export function createForest({assets,islandSurface,speciesScale}){
         if(d<t.reach&&(!best||d<best.d))best={t,d};
       }
       if(!best)return null;
-      return best.t.block?blockCard(best.t.block,id===ME):treeCard(best.t.entry,id===ME);
+      const t=best.t, at=t.solid.getWorldPosition(new T.Vector3());at.y+=heightOf(t.key)*t.sc*.7;   // the card floats by the crown
+      return {...(t.block?blockCard(t.block,id===ME):treeCard(t.entry,id===ME)),at};
     },
   };
 }

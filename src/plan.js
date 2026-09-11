@@ -55,6 +55,7 @@ function createPlans(){
     },
     // finished early: the block counts as done now, and its ghost takes root
     markDone(id,occ){if(occ.series)occ.series.doneOn.push(occ.date);else occ.done=true;changed(id);},
+    unmarkDone(id,occ){if(occ.series){const d=occ.series.doneOn,i=d.indexOf(occ.date);if(i>=0)d.splice(i,1);}else occ.done=false;changed(id);},
     // Move one day's block `days` later; one occurrence of a series becomes a one-off.
     shift(id,occ,days){
       if(occ.series){

@@ -4,7 +4,7 @@
 <body>
   <main id="app">
     <canvas id="world" aria-label="Floating island world. Choose an island below to visit, then use WASD or arrow keys to walk." tabindex="0"></canvas>
-    <header><div class="brand"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M4 17 16 23 28 17 16 12Z M9 20 16 29 23 20 M16 13V6 M16 9C8 10 8 3 8 3s8-1 8 6Zm0-2c0-7 9-5 9-5s-1 7-9 7"/></svg><div>Island Life<span>A little closer to the sky</span></div></div><div class="header-actions"><span id="sky-label">Peach twilight</span><button id="mood-toggle" aria-expanded="false" aria-controls="mood-panel">How do you feel? <span aria-hidden="true">♡</span></button><button id="balance-toggle" aria-expanded="false" aria-controls="balance-sheet">Your balance <span aria-hidden="true">◐</span></button><button id="planner-toggle" aria-expanded="false" aria-controls="planner-sheet">Planner <span aria-hidden="true">◷</span></button><button id="settings-toggle" aria-expanded="false" aria-controls="settings">Tune the world <span aria-hidden="true">☷</span></button></div></header>
+    <header><div class="brand"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M4 17 16 23 28 17 16 12Z M9 20 16 29 23 20 M16 13V6 M16 9C8 10 8 3 8 3s8-1 8 6Zm0-2c0-7 9-5 9-5s-1 7-9 7"/></svg><div>Island Life<span>A little closer to the sky</span></div></div><div class="header-actions"><span id="sky-label">Peach twilight</span><button id="mood-toggle" aria-expanded="false" aria-controls="mood-panel">How do you feel? <span aria-hidden="true">♡</span></button><button id="balance-toggle" aria-expanded="false" aria-controls="balance-sheet">Your balance <span aria-hidden="true">◐</span></button><button id="planner-toggle" aria-expanded="false" aria-controls="planner-sheet">Planner <span aria-hidden="true">◷</span></button><button id="settings-toggle" class="icon-only" aria-expanded="false" aria-controls="settings" aria-label="Tune the world" title="Tune the world (demo controls)"><span aria-hidden="true">☷</span></button><div class="dew-capsule"><span id="dew-chip" class="dew-count" title="Your dewdrops">💧</span><button id="shop-toggle" aria-expanded="false" aria-controls="shop-sheet" aria-label="Open the dewdrop shop" title="Dewdrop shop"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8.5h14l-1.3 10.6a1.5 1.5 0 0 1-1.5 1.3H7.8a1.5 1.5 0 0 1-1.5-1.3L5 8.5Z"/><path d="M9 8.5V7a3 3 0 0 1 6 0v1.5"/></svg></button></div></div></header>
     <div id="island-labels" aria-label="Visit an island"></div>
     <div id="ribbon-labels"></div>
     <aside id="settings" hidden aria-label="World settings">
@@ -27,8 +27,13 @@
       <label class="file-line">Add a photo to your lantern first (optional)<input id="checkin-photo" type="file" accept="image/*"/></label>
       <div id="moods" class="moods" role="group" aria-labelledby="checkin-title"></div>
     </aside>
-    <footer><div class="place"><span id="location-kicker">Your sky neighborhood</span><h1 id="location-title">A world of little wonders.</h1><p id="hint">Choose an island. Stay a little while.</p><div class="place-chips"><button id="load" class="chip" hidden></button><button id="weather-chip" class="chip" hidden></button><button id="dew-chip" class="chip dew" hidden title="Your dewdrops: open your balance"></button></div></div><nav class="view-controls" aria-label="Camera view"><button id="overview" aria-pressed="true">↗ <span>Sky view</span></button><button id="walk" aria-pressed="false">♧ <span>Take a walk</span></button><button id="schedule" aria-pressed="false">☰ <span>Schedule</span></button></nav><div class="help"><span id="mode-hint">Drag to look around · Scroll to zoom</span><span>Somewhere above the everyday</span></div></footer>
-    <div id="reveal" hidden role="status"><span id="reveal-kicker"></span><strong id="reveal-title"></strong><span id="reveal-sub"></span><button id="reveal-action" hidden><span id="reveal-action-label">View photo</span> <kbd>E</kbd></button></div>
+    <footer><div class="place"><div class="place-title"><span id="location-kicker">Your sky neighborhood</span><h1 id="location-title">A world of little wonders.</h1></div><p id="hint">Choose an island. Stay a little while.</p><p id="status-head" class="status-head" hidden></p><ul id="island-status" class="island-status" aria-label="What this island shows"></ul></div><nav class="view-controls" aria-label="Camera view"><button id="overview" aria-pressed="true">↗ <span>Sky view</span></button><button id="walk" aria-pressed="false">♧ <span>Take a walk</span></button><button id="schedule" aria-pressed="false">☰ <span>Schedule</span></button></nav><div class="help"><span id="mode-hint">Drag to look around · Scroll to zoom</span><span>Somewhere above the everyday</span></div></footer>
+    <div id="reveal" hidden role="status"><span id="reveal-kicker"></span><strong id="reveal-title"></strong><span id="reveal-sub"></span><div class="reveal-actions"><button id="reveal-action" hidden><span id="reveal-action-label">View photo</span></button><button id="reveal-letgo" class="reveal-letgo" hidden>Let go</button></div></div>
+    <dialog id="letgo-dialog" aria-labelledby="letgo-title">
+      <h2 id="letgo-title">Let it go?</h2>
+      <p class="panel-note">Letting go is fine. Its ghost tree drifts off and it won’t count this week. You can bring it back from the planner any time.</p>
+      <div class="dialog-actions"><button id="letgo-yes" class="solid-small">Let it go</button><button id="letgo-no" class="text-button">Keep it</button></div>
+    </dialog>
     <div id="golden" hidden><span class="golden-spark" aria-hidden="true">✦</span><div><strong id="golden-title">The golden window is open</strong><span id="golden-time"></span></div><button id="golden-share">Share this moment</button><button id="golden-dismiss" aria-label="Hide the golden window">×</button></div>
     <dialog id="capture" aria-labelledby="capture-title">
       <h2 id="capture-title">Share this moment</h2>
@@ -37,6 +42,28 @@
       <div class="dialog-actions"><button id="capture-snap">Take photo</button><label class="file-button">Choose a photo<input id="capture-file" type="file" accept="image/*"/></label><button id="capture-send" disabled>Send to the lake</button><button id="capture-cancel" class="text-button">Not now</button></div>
     </dialog>
     <dialog id="viewer" aria-labelledby="viewer-title"><img id="viewer-img" alt=""/><strong id="viewer-title"></strong><p id="viewer-sub"></p><div class="dialog-actions"><button id="viewer-close">Close</button></div></dialog>
+    <dialog id="note-dialog" class="wood" aria-labelledby="note-title">
+      <form id="note-form">
+        <h2 id="note-title">A note for a friend</h2>
+        <label>For<select id="note-to"></select></label>
+        <div id="note-presets" class="note-presets"></div>
+        <label>Or in your own words<input id="note-text" type="text" maxlength="80" placeholder="A few words, written on wood" required/></label>
+        <div class="dialog-actions"><button type="submit" class="wood-button">Hang it at their gate</button><button id="note-cancel" type="button" class="text-button">Not now</button></div>
+      </form>
+    </dialog>
+    <dialog id="goals-dialog" class="wood" aria-labelledby="goals-title">
+      <h2 id="goals-title">Small things, together</h2>
+      <p class="wood-note">Anyone can post a small task for the week, and anyone can join. Everyone who finishes earns dewdrops, plus one for each friend who finishes too.</p>
+      <ul id="goals-list" class="notes-list task-list"></ul>
+      <form id="task-form" class="task-form"><input id="task-title" type="text" maxlength="48" placeholder="Post a task, like “Stretch for 10 minutes”" aria-label="New task" required/><select id="task-cat" aria-label="Kind of time"></select><button type="submit" class="wood-button">Post</button></form>
+      <input id="task-photo" type="file" accept="image/*" hidden/>
+      <div class="dialog-actions"><button id="goals-close" class="text-button" autofocus>Close</button></div>
+    </dialog>
+    <dialog id="notes-dialog" class="wood" aria-labelledby="notes-title">
+      <h2 id="notes-title">Notes at your gate</h2>
+      <ul id="notes-list" class="notes-list"></ul>
+      <div class="dialog-actions"><button id="notes-write" class="wood-button">Leave a note</button><button id="notes-close" class="text-button">Close</button></div>
+    </dialog>
     <div id="veil" hidden></div>
     <section id="planner-sheet" class="sheet" hidden role="dialog" aria-labelledby="planner-title">
       <div class="sheet-handle" aria-hidden="true"></div>
@@ -49,7 +76,7 @@
       </div>
       <p id="plan-load" class="plan-load"></p>
       <div class="sheet-body">
-        <div id="pane-day" class="pane"><ol id="plan-list" class="plan-list"></ol><button id="share-late" class="solid" hidden>Share today’s moment</button></div>
+        <div id="pane-day" class="pane"><div class="plan-tools"><button id="mark-all" type="button" class="solid-small" hidden>Mark all as done</button></div><ol id="plan-list" class="plan-list"></ol><button id="share-late" class="solid" hidden>Share today’s moment</button></div>
         <div id="pane-week" class="pane" hidden><p class="panel-note">Drag on empty time to add a block. Drag a block to move it, or its lower edge to resize.</p><div id="week-grid" class="week-grid"></div></div>
         <div id="pane-month" class="pane" hidden><div id="month-grid" class="month-grid"></div></div>
       </div>
@@ -59,16 +86,40 @@
       <button class="sheet-close" aria-label="Close your balance">×</button>
       <div class="balance">
         <div class="balance-body">
-          <h2 id="balance-title">Your week, in balance</h2>
-          <div class="load-head"><div><strong id="bal-load"></strong><span id="bal-band"></span></div><svg id="bal-trend" viewBox="0 0 132 36" role="img"></svg></div>
-          <h3>Where the week is going</h3>
-          <div id="bal-chart" class="bal-chart"></div>
-          <p id="bal-weather" class="bal-weather"></p>
-          <h3>Small changes that would help</h3>
-          <ul id="bal-suggest" class="bal-suggest"></ul>
-          <p id="bal-dew" class="bal-dew"></p>
+          <div class="bal-head"><h2 id="balance-title">Your week, in balance</h2><div class="tabs" role="tablist" aria-label="How far back to look"><button role="tab" data-span="week" aria-selected="true">Week</button><button role="tab" data-span="month" aria-selected="false">Month</button></div></div>
+          <div class="load-head"><div><strong id="bal-load"></strong><span class="fullness" aria-hidden="true"><i id="bal-fill"></i></span><span id="bal-band"></span></div><svg id="bal-trend" viewBox="0 0 132 36" role="img"></svg></div>
+          <section class="bal-panel" aria-labelledby="bal-mix-title">
+            <h3 id="bal-mix-title">Where your time goes</h3>
+            <div class="bal-mix"><svg id="bal-donut" viewBox="0 0 120 120" role="img"></svg><ul id="bal-legend" class="bal-legend"></ul></div>
+          </section>
+          <section class="bal-panel" aria-labelledby="bal-mood-title">
+            <h3 id="bal-mood-title">How you’ve felt</h3>
+            <div id="bal-moods" class="bal-moods"></div>
+            <div id="bal-moodmix" class="bal-moodmix" aria-hidden="true"></div>
+            <ul id="bal-moodkey" class="bal-moodkey"></ul>
+            <p id="bal-mood-note" class="bal-note-line"></p>
+            <p id="bal-weather" class="bal-weather"></p>
+          </section>
+          <section class="bal-panel" aria-labelledby="bal-done-title">
+            <h3 id="bal-done-title">Done so far</h3>
+            <p id="bal-progress" class="bal-progress-line"></p>
+            <div id="bal-days" class="bal-days"></div>
+            <p class="bal-days-key">Solid is done, pale is still planned.</p>
+          </section>
+          <section class="bal-panel" aria-labelledby="bal-suggest-title">
+            <h3 id="bal-suggest-title">Small changes that would help</h3>
+            <ul id="bal-suggest" class="bal-suggest"></ul>
+            <p id="bal-dew" class="bal-dew"></p>
+          </section>
         </div>
       </div>
+    </section>
+    <section id="shop-sheet" class="sheet" hidden role="dialog" aria-labelledby="shop-title">
+      <div class="sheet-handle" aria-hidden="true"></div>
+      <button class="sheet-close" aria-label="Close the shop">×</button>
+      <div class="sheet-head"><h2 id="shop-title">The dewdrop shop</h2><span id="shop-dew" class="shop-dew"></span></div>
+      <p class="panel-note shop-note">A slow drip from finished blocks, golden-window moments and notes between friends. Spent on your island, never on your workload. A preview for now.</p>
+      <div class="sheet-body"><div id="shop-grid" class="shop-grid"></div></div>
     </section>
     <dialog id="block-editor" aria-labelledby="editor-title">
       <form id="editor-form">
@@ -82,6 +133,58 @@
         <div class="dialog-actions"><button type="submit" class="solid-small">Save</button><button id="ed-delete" type="button" class="text-button">Remove</button><button id="ed-cancel" type="button" class="text-button">Cancel</button></div>
       </form>
     </dialog>
+    <section id="login" aria-labelledby="login-title">
+      <div class="login-brand"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M4 17 16 23 28 17 16 12Z M9 20 16 29 23 20 M16 13V6 M16 9C8 10 8 3 8 3s8-1 8 6Zm0-2c0-7 9-5 9-5s-1 7-9 7"/></svg><div>Island Life<span>A little closer to the sky</span></div></div>
+      <div class="login-hero">
+        <div class="login-pitch">
+          <h1 id="login-title" class="login-headline" style="--i:0">Your week, grown into an island in the sky.</h1>
+          <p class="login-lede" style="--i:1">Island Life turns your timetable and your feelings into a small floating world. A heavy week shows before it arrives, and friends see your weather, never your plans.</p>
+        </div>
+        <form id="login-form" class="login-card" aria-labelledby="login-form-title">
+          <h2 id="login-form-title">Visit your island</h2>
+          <p>Sign in to see what grew while you were away.</p>
+          <label>Email<input id="login-email" type="email" placeholder="you@example.com" autocomplete="username"/></label>
+          <label>Password<input id="login-password" type="password" placeholder="••••••••" autocomplete="current-password"/></label>
+          <button type="submit" class="solid">Sign in</button>
+          <button type="button" id="login-guest" class="text-button">Try the demo island</button>
+          <p class="login-demo">Demo only. No account is needed, and any details work.</p>
+        </form>
+      </div>
+      <p class="login-hint">← → walk to a sign · Space jump · Q E turn</p>
+      <img class="login-ground" src="/assets/ground.webp" alt="" aria-hidden="true"/>
+      <img class="login-tree login-sakura" src="/assets/tree-sakura.webp" alt="" aria-hidden="true"/>
+      <img class="login-tree login-willow" src="/assets/tree-willow.webp" alt="" aria-hidden="true"/>
+      <div class="login-sign" style="--at:18%">
+        <div class="sign-card" id="sign-island">
+          <ul class="sign-list">
+            <li><i style="--c:#7fc48d"></i><p><b>Activities grow trees</b>Every block you finish plants a tree, and each kind of activity has its own species.</p></li>
+            <li><i style="--c:#f3c55c"></i><p><b>Feelings become lanterns</b>One tap on how you feel sends a coloured lantern into your sky.</p></li>
+            <li><i style="--c:#8fa3c9"></i><p><b>Stress changes the weather</b>A few heavy days gather clouds and rain. Calmer days clear the sky.</p></li>
+            <li><i style="--c:#bba9e0"></i><p><b>A full week sinks your island</b>The busier your plan, the lower it floats toward the clouds.</p></li>
+          </ul>
+        </div>
+        <button type="button" class="sign-post" aria-expanded="false" aria-controls="sign-island"><span class="board">How your island works</span></button>
+      </div>
+      <div class="login-sign" style="--at:40%">
+        <div class="sign-card" id="sign-community">
+          <ul class="sign-list">
+            <li><i style="--c:#ffcf8a"></i><p><b>Share a daily moment</b>Once a day, a two-minute golden window opens by surprise. Everyone’s photos float over the pond.</p></li>
+            <li><i style="--c:#c9976a"></i><p><b>Leave notes on wood</b>Drop a few kind words at a friend’s gate.</p></li>
+            <li><i style="--c:#6fb6e6"></i><p><b>Do small things together</b>Join a small task, like a 30-minute walk. Everyone who finishes earns dewdrops.</p></li>
+            <li><i style="--c:#9fdcc8"></i><p><b>Your plans stay private</b>Friends see your weather and height, never your schedule.</p></li>
+          </ul>
+        </div>
+        <button type="button" class="sign-post" aria-expanded="false" aria-controls="sign-community"><span class="board">Engage with your community</span></button>
+      </div>
+      <i class="login-puff" style="--x:8%;--y:16%;--w:340px;--d:46s" aria-hidden="true"></i>
+      <i class="login-puff" style="--x:70%;--y:8%;--w:420px;--d:58s" aria-hidden="true"></i>
+      <i class="login-puff" style="--x:38%;--y:60%;--w:300px;--d:52s" aria-hidden="true"></i>
+      <i class="login-lantern" style="--x:12%;--c:#ffd580;--d:21s;--t:-4s" aria-hidden="true"></i>
+      <i class="login-lantern" style="--x:31%;--c:#9fdcc8;--d:26s;--t:-15s" aria-hidden="true"></i>
+      <i class="login-lantern" style="--x:52%;--c:#bba9e0;--d:23s;--t:-9s" aria-hidden="true"></i>
+      <i class="login-lantern" style="--x:71%;--c:#f39a7c;--d:28s;--t:-20s" aria-hidden="true"></i>
+      <i class="login-lantern" style="--x:88%;--c:#92aede;--d:24s;--t:-2s" aria-hidden="true"></i>
+    </section>
     <div id="loading" role="status"><div class="loading-leaf">♧</div><h2>Your islands are coming into view.</h2><p id="loading-text">Gathering the gardens…</p><progress id="load-progress" max="9" value="0"></progress></div>
     <div id="notice" role="status" aria-live="polite"></div>
   </main><script type="module" src="/src/main.js"></script>

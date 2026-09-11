@@ -32,9 +32,11 @@ spots_g = gs.collection('02 - Glowing cap spots')
 stems_g = gs.collection('03 - Stems and skirts')
 studio_g = gs.collection('04 - Camera and cream studio')
 
-# Cap and stem palettes are the mushroom cluster's, sampled off its reference.
-CAP_STOPS = [(253, 214, 140), (243, 180, 95), (224, 146, 66),
-             (196, 116, 54), (162, 92, 50), (128, 72, 45)]
+# Stem palette is the mushroom cluster's, sampled off its reference. The caps
+# carry the Errands teal (data.js CATEGORIES.errands, #3fb8a8) so the grove,
+# its ghosts and the path all agree: minty on the lit crown, deep at the rim.
+CAP_STOPS = [(216, 246, 236), (150, 226, 208), (92, 196, 178),
+             (58, 166, 150), (38, 126, 118), (26, 88, 86)]
 # Gills run lantern-pale at the stem to warm amber at the rim.
 GILL_STOPS = [(255, 238, 196), (252, 214, 150), (232, 170, 100), (178, 116, 72)]
 STEM_STOPS = [(252, 245, 230), (242, 224, 196), (222, 196, 164),

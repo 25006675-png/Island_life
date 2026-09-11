@@ -1,15 +1,27 @@
 @import url('');
 :root{font-family:'Segoe UI',sans-serif;color:oklch(.29 .035 295);background:oklch(.8 .055 295);font-synthesis:none;--ink:oklch(.29 .035 295);--surface:oklch(.97 .012 295);--muted:oklch(.43 .035 295);--accent:oklch(.53 .12 36)}
-*{box-sizing:border-box}body{margin:0}button,input,select{font:inherit}button{cursor:pointer;color:inherit}button:disabled{opacity:.5;cursor:wait}button:focus-visible,select:focus-visible,input:focus-visible,canvas:focus-visible{outline:3px solid var(--accent);outline-offset:4px}button{transition:background .2s,transform .2s}button:hover{background:oklch(.99 .006 295)}button:active{transform:translateY(1px)}[hidden]{display:none!important}#app{height:100svh;min-height:500px;overflow:hidden;position:relative}#world{display:block;width:100%;height:100%;outline:none}header{position:absolute;top:30px;left:36px;right:36px;display:flex;align-items:center;justify-content:space-between;pointer-events:none}.brand{display:flex;align-items:center;gap:12px;font-family:Georgia,serif;font-size:27px;letter-spacing:-.025em}.brand svg{width:38px;height:38px;fill:none;stroke:currentColor;stroke-width:1.3;stroke-linejoin:round;stroke-linecap:round}.brand span{display:block;font:11px 'Segoe UI',sans-serif;letter-spacing:.045em;margin-top:5px}.header-actions{display:flex;align-items:center;gap:22px;font-size:12px}.header-actions button{pointer-events:auto;border:0;background:var(--surface);padding:12px 17px;border-radius:24px}.header-actions button span{margin-left:12px;font-size:18px}footer{position:absolute;bottom:30px;left:36px;right:36px;display:flex;align-items:flex-end;justify-content:space-between;pointer-events:none;gap:20px}.place{max-width:390px}.place>span{font-size:11px;letter-spacing:.07em}.place h1{font:normal 32px/1.16 Georgia,serif;margin:9px 0;letter-spacing:-.025em;text-wrap:balance}.place p{font-size:12px;line-height:1.7;margin:0;color:var(--muted)}.view-controls{position:absolute;left:50%;transform:translateX(-50%);display:flex;padding:5px;gap:4px;background:var(--surface);border-radius:30px;pointer-events:auto;bottom:2px;white-space:nowrap}.view-controls button{border:0;border-radius:22px;padding:11px 17px;background:transparent;font-size:13px}.view-controls button[aria-pressed=true]{background:oklch(.89 .027 295)}.view-controls button span{margin-left:6px}.help{text-align:right;display:flex;flex-direction:column;gap:9px;font-size:11px;color:var(--muted)}.help span:last-child{font-family:Georgia,serif;font-style:italic;font-size:13px}#settings{position:absolute;top:90px;right:36px;width:290px;max-height:calc(100% - 120px);overflow:auto;padding:22px;background:var(--surface);border-radius:14px;z-index:3}.panel-heading{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:22px}.panel-heading h2{font:normal 20px Georgia,serif;margin:0}.panel-heading button{border:0;background:transparent;font-size:25px;padding:0 5px}label{display:block;font-size:12px;margin-bottom:20px}label output{float:right;color:var(--muted)}select{width:100%;margin-top:9px;background:oklch(1 0 0);border:1px solid oklch(.82 .02 295);color:var(--ink);padding:10px 8px;border-radius:7px;font-size:12px}input[type=range]{width:100%;margin:13px 0 0;accent-color:var(--accent)}input[type=checkbox]{accent-color:var(--accent)}.check{display:flex;align-items:center;gap:8px}hr{border:0;border-top:1px solid oklch(.85 .015 295);margin:20px 0}.text-button{padding:0;background:none;border:0;text-decoration:underline;font-size:12px}.island-label{position:absolute;transform:translate(-50%,-50%);border:0;border-radius:20px;padding:7px 12px;background:oklch(.98 .01 295 / .9);font-size:11px;white-space:nowrap;box-shadow:0 2px 6px oklch(.3 .04 295 / .08);pointer-events:auto}.island-label::before{content:'';display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--accent);vertical-align:2px;margin-right:7px}.island-label.selected{background:oklch(.96 .04 80)}#island-labels{position:absolute;inset:0;pointer-events:none}#loading{position:absolute;inset:0;background:linear-gradient(oklch(.79 .07 292),oklch(.9 .055 50));display:flex;align-items:center;justify-content:center;flex-direction:column;z-index:5}#loading h2{font:normal 26px Georgia,serif;text-align:center;padding:0 20px}#loading p{font-size:13px}.loading-leaf{font-size:50px}progress{width:210px;height:4px;accent-color:var(--accent);border:0;margin-top:12px}#notice{position:absolute;left:50%;top:100px;transform:translateX(-50%);padding:10px 16px;border-radius:20px;background:var(--surface);font-size:12px;opacity:0;pointer-events:none;transition:opacity .2s}#notice.visible{opacity:1}@media(max-width:950px){.help{display:none}.place{max-width:280px}.place h1{font-size:27px}.view-controls{left:auto;right:0;transform:none}}@media(max-width:600px){header{top:20px;left:20px;right:20px}.brand{font-size:22px}.brand svg{width:29px}.brand span{font-size:9px}.header-actions>span{display:none}.header-actions button{font-size:11px;padding:9px 12px}.header-actions button span{display:none}footer{bottom:20px;left:20px;right:20px;display:block}.place{max-width:100%;margin-bottom:70px}.place h1{font-size:25px}.view-controls{left:50%;right:auto;transform:translateX(-50%);bottom:0}#settings{right:15px;top:75px;width:min(290px,calc(100% - 30px))}.island-label{font-size:10px;padding:6px 9px}}@media(prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+*{box-sizing:border-box}body{margin:0}button,input,select{font:inherit}button{cursor:pointer;color:inherit}button:disabled{opacity:.5;cursor:wait}button:focus-visible,select:focus-visible,input:focus-visible,canvas:focus-visible{outline:3px solid var(--accent);outline-offset:4px}button{transition:background .2s,transform .2s}button:hover{background:oklch(.99 .006 295)}button:active{transform:translateY(1px)}[hidden]{display:none!important}#app{height:100svh;min-height:500px;overflow:hidden;position:relative}#world{display:block;width:100%;height:100%;outline:none}header{position:absolute;top:30px;left:36px;right:36px;display:flex;align-items:center;justify-content:space-between;pointer-events:none}.brand{display:flex;align-items:center;gap:12px;font-family:Georgia,serif;font-size:27px;letter-spacing:-.025em}.brand svg{width:38px;height:38px;fill:none;stroke:currentColor;stroke-width:1.3;stroke-linejoin:round;stroke-linecap:round}.brand span{display:block;font:11px 'Segoe UI',sans-serif;letter-spacing:.045em;margin-top:5px}.header-actions{display:flex;align-items:center;gap:22px;font-size:12px}.header-actions button{pointer-events:auto;border:0;background:var(--surface);padding:12px 17px;border-radius:24px}.header-actions button span{margin-left:12px;font-size:18px}footer{position:absolute;bottom:30px;left:36px;right:36px;display:flex;align-items:flex-end;justify-content:space-between;pointer-events:none;gap:20px}.place{max-width:390px}.place-title>span{font-size:11px;letter-spacing:.07em}.place h1{font:normal 32px/1.16 Georgia,serif;margin:9px 0;letter-spacing:-.025em;text-wrap:balance}.place p{font-size:12px;line-height:1.7;margin:0;color:var(--muted)}.view-controls{position:absolute;left:50%;transform:translateX(-50%);display:flex;padding:5px;gap:4px;background:var(--surface);border-radius:30px;pointer-events:auto;bottom:2px;white-space:nowrap}.view-controls button{border:0;border-radius:22px;padding:11px 17px;background:transparent;font-size:13px}.view-controls button[aria-pressed=true]{background:oklch(.89 .027 295)}.view-controls button span{margin-left:6px}.help{text-align:right;display:flex;flex-direction:column;gap:9px;font-size:11px;color:var(--muted)}.help span:last-child{font-family:Georgia,serif;font-style:italic;font-size:13px}#settings{position:absolute;top:90px;right:36px;width:290px;max-height:calc(100% - 120px);overflow:auto;padding:22px;background:var(--surface);border-radius:14px;z-index:3}.panel-heading{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:22px}.panel-heading h2{font:normal 20px Georgia,serif;margin:0}.panel-heading button{border:0;background:transparent;font-size:25px;padding:0 5px}label{display:block;font-size:12px;margin-bottom:20px}label output{float:right;color:var(--muted)}select{width:100%;margin-top:9px;background:oklch(1 0 0);border:1px solid oklch(.82 .02 295);color:var(--ink);padding:10px 8px;border-radius:7px;font-size:12px}input[type=range]{width:100%;margin:13px 0 0;accent-color:var(--accent)}input[type=checkbox]{accent-color:var(--accent)}.check{display:flex;align-items:center;gap:8px}hr{border:0;border-top:1px solid oklch(.85 .015 295);margin:20px 0}.text-button{padding:0;background:none;border:0;text-decoration:underline;font-size:12px}.island-label{position:absolute;transform:translate(-50%,-50%);border:0;border-radius:20px;padding:7px 12px;background:oklch(.98 .01 295 / .9);font-size:11px;white-space:nowrap;box-shadow:0 2px 6px oklch(.3 .04 295 / .08);pointer-events:auto}.island-label::before{content:'';display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--accent);vertical-align:2px;margin-right:7px}.island-label.selected{background:oklch(.96 .04 80)}#island-labels{position:absolute;inset:0;pointer-events:none}#loading{position:absolute;inset:0;background:linear-gradient(oklch(.79 .07 292),oklch(.9 .055 50));display:flex;align-items:center;justify-content:center;flex-direction:column;z-index:5}#loading h2{font:normal 26px Georgia,serif;text-align:center;padding:0 20px}#loading p{font-size:13px}.loading-leaf{font-size:50px}progress{width:210px;height:4px;accent-color:var(--accent);border:0;margin-top:12px}#notice{position:absolute;left:50%;top:100px;transform:translateX(-50%);padding:10px 16px;border-radius:20px;background:var(--surface);font-size:12px;opacity:0;pointer-events:none;transition:opacity .2s}#notice.visible{opacity:1}@media(max-width:950px){.help{display:none}.place{max-width:280px}.place h1{font-size:27px}.view-controls{left:auto;right:0;transform:none}}@media(max-width:600px){header{top:20px;left:20px;right:20px}.brand{font-size:22px}.brand svg{width:29px}.brand span{font-size:9px}.header-actions>span{display:none}.header-actions button{font-size:11px;padding:9px 12px}.header-actions button span{display:none}.header-actions .icon-only span{display:inline}footer{bottom:20px;left:20px;right:20px;display:block}.place{max-width:100%;margin-bottom:70px}.place h1{font-size:25px}.view-controls{left:50%;right:auto;transform:translateX(-50%);bottom:0}#settings{right:15px;top:75px;width:min(290px,calc(100% - 30px))}.island-label{font-size:10px;padding:6px 9px}}@media(prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
 /* plan-today panel */
 .header-actions button+button{margin-left:-12px}
 #mood-panel{position:absolute;top:90px;right:36px;width:320px;padding:22px;background:var(--surface);border-radius:14px;z-index:3}
 #mood-panel .moods{margin:0}
 .panel-note{font-size:12px;line-height:1.6;color:var(--muted);margin:-8px 0 14px}
-.plan-load{font-size:12px;margin:0 0 12px;padding:9px 12px;border-radius:9px;background:oklch(.94 .03 80)}
+.plan-load{display:flex;align-items:center;gap:14px;font-size:12px;margin:0 0 12px;padding:9px 12px;border-radius:9px;background:oklch(.94 .03 80)}
+/* how full a week is, as a bar (no hours shown) */
+.fullness{display:block;width:100%;max-width:260px;height:8px;border-radius:4px;background:oklch(.88 .03 80);overflow:hidden}
+.fullness i{display:block;height:100%;border-radius:4px;background:oklch(.72 .11 60);transition:width .4s cubic-bezier(.16,1,.3,1)}
+.load-head .fullness{margin:8px 0 7px}.plan-load .fullness{flex:0 1 160px}
 .plan-list{list-style:none;margin:0 0 20px;padding:0;display:flex;flex-direction:column;gap:8px}
 .plan-item{display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:10px;background:oklch(1 0 0);border-left:4px solid var(--cat);font-size:12px}
 .plan-item.done{opacity:.7}.plan-item.skipped{opacity:.5}.plan-item.skipped strong{text-decoration:line-through}
+/* answering blocks: Done grows the tree, Let go lets it drift; ended blocks wait */
+.plan-acts{display:flex;align-items:center;gap:12px}
+.plan-done{border:0;border-radius:14px;padding:5px 12px;background:oklch(.92 .06 150);color:var(--ink);font-size:12px}
+.plan-done:hover{background:oklch(.88 .08 150)}
+.plan-item.waiting{background:oklch(.985 .025 85);box-shadow:inset 0 0 0 1px oklch(.86 .06 85)}
+.plan-item.waiting .plan-what span{color:oklch(.42 .09 60)}
+.plan-tools{display:flex;justify-content:flex-end;margin:0 0 8px}.plan-tools:has([hidden]){display:none}
+.week-grid .wk-block.waiting{outline:1px dashed var(--cat);outline-offset:-3px}
 .plan-item.now{box-shadow:0 0 0 2px oklch(.86 .08 80)}
 .plan-when{font-variant-numeric:tabular-nums;color:var(--muted);white-space:nowrap}
 .plan-what{display:flex;flex-direction:column;gap:2px}.plan-what span{color:var(--muted);font-size:11px}
@@ -17,19 +29,149 @@
 .plan-open:hover{background:none}.plan-open:hover strong{text-decoration:underline}
 .plan-empty{color:var(--muted);font-size:13px;padding:12px 0}
 dialog .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-input[type=text],input[type=time],input[type=date]{display:block;width:100%;margin-top:9px;background:oklch(1 0 0);border:1px solid oklch(.82 .02 295);color:var(--ink);padding:10px 8px;border-radius:7px;font-size:12px}
+input[type=text],input[type=time],input[type=date],input[type=email],input[type=password]{display:block;width:100%;margin-top:9px;background:oklch(1 0 0);border:1px solid oklch(.82 .02 295);color:var(--ink);padding:10px 8px;border-radius:7px;font-size:12px}
 .solid{border:0;border-radius:22px;padding:11px 17px;background:var(--accent);color:oklch(.99 .01 60);font-size:13px;width:100%}.solid:hover{background:oklch(.48 .12 36)}
 .moods{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
 .mood{border:1px solid oklch(.85 .02 295);background:oklch(1 0 0);border-radius:18px;padding:8px 12px;font-size:12px}
 .mood::before{content:'';display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--mood);margin-right:7px;vertical-align:-1px}
 .file-line input{display:block;margin-top:8px;font-size:11px}
-.place-chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
-.chip{pointer-events:auto;border:0;border-radius:16px;padding:6px 12px;background:var(--surface);font-size:12px;color:var(--ink)}
-.chip:disabled{opacity:1;cursor:default;background:oklch(.97 .012 295 / .7)}
-/* dewdrops: a reward badge -- a glowing droplet that pulses when you earn some */
-.chip.dew{position:relative;font-weight:600;color:oklch(.36 .09 240);background:linear-gradient(135deg,oklch(.93 .06 225),oklch(.97 .035 190));box-shadow:0 0 0 1px oklch(.84 .07 225),0 4px 14px oklch(.72 .1 225 / .35)}
-.chip.dew:hover{background:linear-gradient(135deg,oklch(.9 .08 225),oklch(.96 .05 190))}
-.chip.dew.gain{animation:dew-pop .9s ease}
+/* bottom left: what anyone may see of the island you're on */
+.place .status-head{margin:12px 0 6px;font-size:11px;letter-spacing:.06em;color:var(--muted)}
+.island-status{list-style:none;margin:10px 0 0;padding:0;display:flex;flex-direction:column;align-items:flex-start;gap:6px;pointer-events:auto}
+.status-row{display:inline-flex;align-items:baseline;gap:8px;border:0;padding:5px 12px 5px 10px;border-radius:14px;background:oklch(.97 .012 295 / .8);font-size:12px;color:var(--ink);text-align:left}
+.status-row i{flex:none;align-self:center;width:8px;height:8px;border-radius:50%;background:var(--dot);box-shadow:0 0 6px var(--dot)}
+.status-row b{font-weight:600}
+button.status-row:hover{background:var(--surface)}
+.place p:empty{display:none}
+/* dewdrops: one glowing droplet at the right of the header; it pulses when you
+   earn some, and opens the shop */
+/* dewdrops and the shop share one capsule: the count is a readout, the shop half is the button */
+.dew-capsule{display:inline-flex;align-items:stretch;pointer-events:auto;border-radius:24px;background:linear-gradient(135deg,oklch(.93 .06 225),oklch(.97 .035 190));box-shadow:0 0 0 1px oklch(.84 .07 225),0 4px 14px oklch(.72 .1 225 / .35)}
+.dew-count{position:relative;display:inline-flex;align-items:center;padding:0 12px 0 15px;font-size:13px;font-weight:600;color:oklch(.36 .09 240);cursor:default;white-space:nowrap}
+.header-actions .dew-capsule button{margin:0;padding:11px 16px 11px 13px;border-radius:0 24px 24px 0;border-left:1px solid oklch(.82 .07 225);background:oklch(.87 .07 225 / .5);color:oklch(.3 .09 240);font-size:13px;font-weight:600}
+.header-actions .dew-capsule button:hover{background:oklch(.83 .09 225 / .75)}
+.header-actions .dew-capsule button{display:grid;place-items:center;padding-inline:13px 15px}
+.dew-capsule button svg{display:block;width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linejoin:round;stroke-linecap:round}
+/* the card's actions sit in a row; Let go is the quiet one */
+.reveal-actions{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+#reveal .reveal-letgo{background:transparent;text-decoration:underline;padding-inline:4px}
+#reveal .reveal-letgo:hover{background:oklch(.93 .02 295)}
+.plan-done:disabled,dialog.wood .wood-button:disabled{cursor:not-allowed}
+.dew-count.gain{animation:dew-pop .9s ease}
+.header-actions .icon-only{padding:10px 13px}.header-actions .icon-only span{margin-left:0}
+/* arriving: the title starts in the middle of the screen, then slides home */
+.place-title{width:max-content;max-width:100%;transition:transform .8s cubic-bezier(.2,.8,.2,1);transform-origin:50% 50%}
+.place p,.island-status{transition:opacity .35s}
+.place.arriving p,.place.arriving .island-status{opacity:0}
+/* the shop */
+.shop-dew{font-size:13px;font-weight:600;color:oklch(.36 .09 240)}
+#shop-sheet .shop-note{margin:0 26px 14px;max-width:640px}
+.shop-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px}
+.shop-card{position:relative;border:0;border-radius:14px;padding:18px 16px 16px;background:oklch(1 0 0);text-align:left;display:flex;flex-direction:column;gap:6px;font-size:12px;overflow:hidden}
+.shop-card .icon{font-size:30px;line-height:1}.shop-card strong{font:normal 17px Georgia,serif;margin-top:4px}.shop-card>span:not(.icon):not(.soon){color:var(--muted);line-height:1.5}
+.shop-card em{font-style:normal;margin-top:8px;font-weight:600;color:oklch(.36 .09 240)}
+.shop-card .soon{position:absolute;inset:0;display:grid;place-items:center;background:oklch(.97 .012 295 / .93);font:italic 17px Georgia,serif;color:var(--ink);opacity:0;transition:opacity .25s}
+.shop-card.soon-shown .soon{opacity:1}
+/* mock sign-in: a peach sky, three cards above a cloud line, and the gardener
+   walking in front of them */
+#login{position:absolute;inset:0;z-index:7;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:104px 24px 24px;background:linear-gradient(oklch(.79 .07 292 / .72),oklch(.9 .055 50 / .35) 55%,oklch(.96 .02 60 / .8));overflow:hidden;transition:opacity .45s}
+#login.leaving{opacity:0;pointer-events:none}
+/* the world drifts behind the sign-in once it has loaded; its own chrome waits */
+#app:has(#login:not([hidden])) :is(header,footer,#island-labels,#golden,#reveal){visibility:hidden}
+.login-puff{position:absolute;left:var(--x);top:var(--y);width:var(--w);height:calc(var(--w)*.38);border-radius:50%;background:oklch(.99 .01 60 / .55);filter:blur(28px);animation:puff-drift var(--d) ease-in-out infinite alternate;pointer-events:none}
+@keyframes puff-drift{to{translate:80px 12px}}
+/* before sign-in nothing personal shows: the world stays a soft blur behind */
+#app:has(#login:not([hidden])) #world{filter:blur(10px) saturate(.9)}
+/* hero: the pitch set straight on the open sky, the sign-in beside it.
+   Layers: trees 1, text and the sign-in card 2, gardener 3 (he ignores the mouse,
+   so clicks still reach the form under him), open sign cards 5 */
+.login-pitch,.login-card{position:relative;z-index:2}
+.login-hero{position:relative;   /* no layer of its own: the gardener walks in front of the text and the sign-in card */
+display:grid;grid-template-columns:minmax(0,1fr) minmax(300px,370px);gap:clamp(32px,6vw,96px);align-items:center;width:min(1120px,100%);margin-bottom:max(calc(8vh + 112px),calc(var(--gw)*.188))}
+.login-headline{font:normal clamp(2.3rem,1.3rem + 2.8vw,4rem)/1.04 Georgia,serif;letter-spacing:-.02em;margin:0 0 18px;max-width:15ch;text-wrap:balance;color:var(--ink)}
+.login-lede{margin:0 0 26px;max-width:48ch;font-size:15px;line-height:1.6;color:oklch(.32 .035 295);text-wrap:pretty}
+.login-card .login-demo{margin:12px 0 0;font-size:11px;text-align:center}
+/* a first-load rise that only moves things: everything is visible even if it never plays */
+.login-pitch>*{animation:login-rise .9s cubic-bezier(.16,1,.3,1) calc(var(--i,0)*90ms) both}
+.login-card{animation:login-rise 1s cubic-bezier(.16,1,.3,1) .25s both}
+@keyframes login-rise{from{transform:translateY(16px)}}
+.login-lantern{position:absolute;left:var(--x);bottom:-40px;z-index:1;width:14px;height:18px;border-radius:5px 5px 7px 7px;background:var(--c);opacity:0;pointer-events:none;
+  box-shadow:0 0 14px 4px color-mix(in oklch,var(--c) 70%,transparent),0 0 40px 12px color-mix(in oklch,var(--c) 28%,transparent);animation:lantern-rise var(--d) linear var(--t) infinite}
+@keyframes lantern-rise{10%{opacity:.85}85%{opacity:.7}to{translate:36px -112vh;opacity:0}}
+@media(prefers-reduced-motion:reduce){.login-lantern,.login-puff{animation:none}}
+/* the sky answers the mouse: a warm glow follows it, clouds and lanterns lean
+   away a little, and motes drift up from the pointer over open sky */
+#login::before{content:'';position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(460px circle at calc(50% + var(--mx,0)*100%) calc(50% + var(--my,0)*100%),oklch(.98 .05 80 / .38),transparent 62%)}
+.login-puff{transform:translate(calc(var(--mx,0)*-44px),calc(var(--my,0)*-20px));transition:transform 1.2s cubic-bezier(.16,1,.3,1)}
+.login-lantern{transform:translate(calc(var(--mx,0)*-26px),calc(var(--my,0)*-12px));transition:transform .9s cubic-bezier(.16,1,.3,1)}
+.login-mote{position:absolute;z-index:1;border-radius:50%;background:var(--c);pointer-events:none;translate:-50% -50%;
+  box-shadow:0 0 8px 2px color-mix(in oklch,var(--c) 70%,transparent);animation:mote-rise 1.7s cubic-bezier(.16,1,.3,1) forwards}
+@keyframes mote-rise{from{opacity:.95}to{opacity:0;transform:translate(var(--dx),-72px) scale(.3)}}
+@media(prefers-reduced-motion:reduce){#login::before{display:none}.login-puff,.login-lantern{transform:none}}
+.login-brand{position:absolute;top:30px;left:36px;display:flex;align-items:center;gap:12px;font-family:Georgia,serif;font-size:27px;letter-spacing:-.025em}
+.login-brand svg{width:38px;height:38px;fill:none;stroke:currentColor;stroke-width:1.3;stroke-linejoin:round;stroke-linecap:round}
+.login-brand span{display:block;font:11px 'Segoe UI',sans-serif;letter-spacing:.045em;margin-top:5px}
+.login-card{width:100%;padding:28px 28px 20px;background:var(--surface);border-radius:16px;box-shadow:0 2px 6px oklch(.3 .04 295 / .08),0 24px 48px -12px oklch(.3 .04 295 / .2)}
+.login-card h2{font:normal 26px Georgia,serif;margin:0 0 6px;letter-spacing:-.02em}.login-card p{margin:0 0 18px;font-size:12px;color:oklch(.4 .035 295);line-height:1.6}
+.login-card label{margin-bottom:14px}.login-card .solid{margin-top:6px}.login-card .text-button{display:block;margin:14px auto 0}
+/* the ground: the grassy edge of a real meadow island (tools/render_ground.py);
+   the gardener walks along its grass */
+/* It is drawn wider than the screen (--gw) so the island's ends stay
+   off-screen; its height is .2812 of its width (tools/render_ground.py
+   prints the lines below). It sits low: the underside's tip (79% down the
+   image) lands just above the screen's bottom edge. The near rim is 37% down,
+   so the gardener's feet, on the grass just behind it, are .131 of --gw up. */
+#login{--gw:max(100vw,1200px)}
+.login-ground{position:absolute;left:50%;bottom:calc(var(--gw)*-.0546);translate:-50% 0;width:var(--gw);max-width:none;height:auto;pointer-events:none;user-select:none}
+.login-hint{position:absolute;bottom:2vh;left:50%;transform:translateX(-50%);z-index:4;margin:0;padding:4px 12px;border-radius:12px;background:oklch(.97 .012 295 / .82);font-size:11px;color:var(--muted)}
+#login .buddy{bottom:calc(var(--gw)*.131);left:0;margin:0;z-index:3}
+/* a sakura on the left of the island and a willow on the right
+   (tools/render_landing_tree.py), planted on the grass just behind the rim;
+   behind the text and cards, in front of the ground */
+.login-tree{position:absolute;z-index:1;bottom:calc(var(--gw)*.128);width:calc(var(--gw)*.22);height:auto;max-width:none;translate:-50% 0;pointer-events:none;user-select:none}
+.login-sakura{left:4%}.login-willow{left:96%}
+/* signposts on the island: each opens into a wooden card when the gardener
+   walks up, or when clicked, tapped or focused (login.js). The post sits at
+   layer 2, so the gardener walks past in front of it; the card at 5, above
+   him. Both signs stand on the left half, so no card ever covers the sign-in. */
+.login-sign{position:absolute;left:var(--at);bottom:calc(var(--gw)*.14);width:0;display:flex;justify-content:center}
+.sign-post{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;border:0;padding:0;background:none;cursor:pointer}
+.sign-post:hover{background:none}
+.sign-post .board{display:block;width:max-content;max-width:10.5em;   /* the sign's anchor is zero-wide; without this the board shrinks to one word per line */
+padding:8px 14px 9px;border-radius:6px;background:linear-gradient(160deg,#caa276,#a97d55);box-shadow:inset 0 0 0 1px oklch(.35 .06 60 / .35),0 3px 6px oklch(.3 .05 60 / .25);font:15px/1.25 'Segoe Print','Bradley Hand',Georgia,serif;color:#2a1d12;text-align:center;transition:background .2s}
+.sign-post::after{content:'';width:9px;height:46px;margin-top:-1px;border-radius:0 0 2px 2px;background:linear-gradient(90deg,#6b4a33,#9b7350)}
+.sign-post:hover .board,.login-sign.open .board{background:linear-gradient(160deg,#d8b286,#b98a5e)}
+.sign-post:focus-visible{outline:3px solid var(--accent);outline-offset:4px;border-radius:8px}
+.sign-card{position:absolute;z-index:5;bottom:calc(100% + 12px);left:50%;translate:-50% 0;width:min(340px,86vw);padding:14px 16px;border-radius:12px;background:linear-gradient(160deg,#cfa87c,#ad8157);box-shadow:0 8px 8px -4px oklch(.3 .05 60 / .3);
+  visibility:hidden}
+/* open = fully visible at once; only a small rise plays, so a stalled animation never hides it */
+.login-sign.open .sign-card{visibility:visible;animation:sign-open .4s cubic-bezier(.16,1,.3,1)}
+@keyframes sign-open{from{transform:translateY(8px)}}
+.sign-card::after{content:'';position:absolute;left:50%;bottom:-6px;width:12px;height:12px;background:#b1845b;transform:translateX(-50%) rotate(45deg)}
+.sign-list{list-style:none;margin:0;padding:0;display:grid;gap:9px}
+.sign-list li{display:flex;align-items:flex-start;gap:10px}
+.sign-list i{flex:none;width:10px;height:10px;margin-top:6px;border-radius:50%;background:var(--c);box-shadow:0 0 8px var(--c)}
+.sign-list p{margin:0;font-size:13px;line-height:1.45;color:#3b2a1c}
+.sign-list b{display:block;font:normal 15px/1.3 'Segoe Print','Bradley Hand',Georgia,serif;color:#2a1d12}
+/* keep the text clear of the sakura's canopy: when the side margin is too
+   narrow for it, the text column steps right by just the difference */
+@media(min-width:1001px){.login-hero{padding-left:max(0px,calc(4vw + var(--gw)*.11 + 12px - max(24px,(100vw - 1120px)/2)))}}
+@media(max-width:1000px){.login-tree{display:none}}
+@media(max-height:760px){.login-headline{font-size:clamp(2rem,1rem + 2.4vw,3.2rem)}.login-lede{margin-bottom:18px}}
+@media(max-width:1000px){.login-hero{margin-bottom:14vh}}
+@media(max-width:900px){#login{justify-content:flex-start;overflow-y:auto;padding-top:96px}.login-hero{grid-template-columns:1fr;gap:28px;margin-bottom:34vh}.login-sign{display:none}.login-card{max-width:420px}}
+@media(max-width:760px){.login-brand{top:20px;left:20px;font-size:22px}}
+@media(prefers-reduced-motion:reduce){.login-pitch>*,.login-card,.login-sign.open .sign-card{animation:none}}
+/* reveal cards float beside the thing they describe, never lost in the middle */
+#reveal.anchored{left:var(--x);top:var(--y);bottom:auto;transform:translate(-50%,calc(-100% - 16px))}
+#reveal.anchored::after{content:'';position:absolute;left:50%;bottom:-6px;width:12px;height:12px;background:var(--surface);transform:translateX(-50%) rotate(45deg)}
+/* note and goals cards are written on wood, like the dialogs they open */
+#reveal.wood{background:repeating-linear-gradient(94deg,transparent 0 9px,oklch(.3 .05 60 / .07) 9px 11px),linear-gradient(160deg,#c9a074,#a97d55);color:#3b2a1c;border-left-color:#5a4330;box-shadow:0 4px 18px oklch(.3 .05 60 / .25)}
+#reveal.wood #reveal-kicker,#reveal.wood #reveal-sub{color:#4a3626}
+#reveal.wood strong{font:normal 19px 'Segoe Print','Bradley Hand',Georgia,serif;color:#2f2116}
+#reveal.wood button{background:#3b2a1c;color:#f3e4c8;font-family:'Segoe Print','Bradley Hand',Georgia,serif}
+#reveal.wood.anchored::after{background:#ab7f58}
 @keyframes dew-pop{30%{transform:scale(1.16);box-shadow:0 0 0 5px oklch(.86 .08 225 / .55),0 6px 24px oklch(.72 .13 225 / .6)}}
 .dew-float{position:absolute;left:50%;top:-6px;pointer-events:none;white-space:nowrap;font-size:13px;font-weight:700;color:oklch(.45 .13 235);text-shadow:0 1px 6px oklch(1 0 0 / .9);animation:dew-rise 1.4s ease-out forwards}
 @keyframes dew-rise{from{opacity:0;transform:translate(-50%,0)}20%{opacity:1}to{opacity:0;transform:translate(-50%,-44px)}}
@@ -41,7 +183,6 @@ input[type=text],input[type=time],input[type=date]{display:block;width:100%;marg
 #reveal{position:absolute;left:50%;bottom:108px;transform:translateX(-50%);min-width:230px;max-width:calc(100% - 40px);padding:12px 16px 12px 14px;border-radius:12px;background:var(--surface);border-left:4px solid var(--cat,var(--accent));display:flex;flex-direction:column;gap:3px;font-size:12px;box-shadow:0 4px 18px oklch(.3 .04 295 / .12)}
 #reveal-kicker{font-size:11px;color:var(--muted);letter-spacing:.04em;font-variant-numeric:tabular-nums}#reveal strong{font:normal 18px Georgia,serif}#reveal-sub{color:var(--muted)}
 #reveal button{margin-top:8px;align-self:flex-start;border:0;border-radius:16px;padding:7px 12px;background:oklch(.93 .03 80);font-size:12px}
-kbd{font:11px 'Segoe UI',sans-serif;border:1px solid oklch(.8 .02 295);border-radius:4px;padding:0 4px;margin-left:4px}
 /* golden window */
 #golden{position:absolute;left:50%;top:150px;transform:translateX(-50%);display:flex;align-items:center;gap:14px;padding:10px 12px 10px 18px;border-radius:30px;background:linear-gradient(90deg,oklch(.93 .07 85),oklch(.9 .07 60));box-shadow:0 6px 24px oklch(.6 .12 70 / .3);z-index:2;max-width:calc(100% - 40px)}
 #golden.closed{background:var(--surface);box-shadow:none}
@@ -60,10 +201,11 @@ dialog h2{font:normal 21px Georgia,serif;margin:0 0 14px}
 .dialog-actions button,.file-button{border:0;border-radius:20px;padding:9px 14px;background:oklch(.92 .02 295);font-size:12px}
 .file-button{display:inline-block;position:relative;margin:0;cursor:pointer}.file-button input{position:absolute;opacity:0;width:1px;height:1px}
 .file-button:focus-within{outline:3px solid var(--accent);outline-offset:3px}
-#capture-send{background:var(--accent);color:oklch(.99 .01 60)}#capture-cancel{background:none}
+#capture-send,#letgo-yes{background:var(--accent);color:oklch(.99 .01 60)}
+#letgo-yes:hover{background:oklch(.48 .12 36)}#capture-cancel{background:none}
 #viewer img{width:100%;border-radius:12px;display:block}
 #viewer strong{display:block;font:normal 20px Georgia,serif;margin-top:14px}#viewer p{margin:6px 0 0;font-size:12px;color:var(--muted)}
-@media(max-width:600px){#mood-panel{right:15px;top:75px;width:calc(100% - 30px)}#golden{top:120px}.header-actions button+button{margin-left:0}}
+@media(max-width:600px){#mood-panel{right:15px;top:75px;width:calc(100% - 30px)}#golden{top:120px}.header-actions button+button{margin-left:0}.header-actions .dew-capsule button{padding:9px 12px 9px 10px}}
 @media(max-width:1180px){.header-actions>span{display:none}}
 #notice{z-index:6}
 /* sheets: slide up over the living scene, which dims and blurs behind a veil */
@@ -120,7 +262,6 @@ dialog h2{font:normal 21px Georgia,serif;margin:0 0 14px}
 .buddy img{display:block;transform-origin:50% 100%;filter:drop-shadow(0 6px 8px oklch(.3 .04 295 / .25))}
 .buddy.walking img{animation:buddy-walk .38s ease-in-out infinite}
 @keyframes buddy-walk{0%,100%{translate:0 0;rotate:0deg}25%{translate:0 -5px;rotate:-2.5deg}75%{translate:0 -5px;rotate:2.5deg}}
-.ribbon-buddy{bottom:auto;margin:0}
 .ribbon-label.here{box-shadow:0 0 0 2px var(--cat);scale:1.1}
 .buddy-hint{position:absolute;top:8px;left:150px;font-size:11px;color:var(--muted);pointer-events:none}
 .balance-body{flex:1;min-width:0;max-width:720px}
@@ -130,13 +271,49 @@ dialog h2{font:normal 21px Georgia,serif;margin:0 0 14px}
 .load-head strong{display:block;font-size:17px;font-weight:600}.load-head span{font-size:12px;color:var(--muted)}
 #bal-trend{width:132px;height:36px;flex:none;overflow:visible}#bal-trend polyline{fill:none;stroke:var(--accent);stroke-width:2}
 #bal-trend circle{fill:var(--accent)}#bal-trend .cap{stroke:oklch(.7 .03 295);stroke-dasharray:3 3}
-.bal-chart{display:grid;gap:8px}
-.bal-row{display:grid;grid-template-columns:76px 1fr 104px;align-items:center;gap:10px;font-size:12px}
-.bal-track{position:relative;height:10px;border-radius:5px;background:oklch(.93 .012 295);overflow:hidden}
-.bal-track i{position:absolute;left:0;top:0;bottom:0;border-radius:5px}
-.bal-planned{background:color-mix(in oklch,var(--cat) 35%,white)}.bal-done{background:var(--cat)}
-.bal-note{color:var(--muted);text-align:right}
 .bal-weather{margin:16px 0 0;padding:12px 14px;border-radius:10px;background:oklch(.95 .02 250);font-size:13px;line-height:1.5}
+/* the analysis panels: time mix, feelings, progress, suggestions */
+.bal-panel{align-self:stretch;padding:16px 18px 18px;border-radius:14px;background:oklch(1 0 0 / .72);margin-top:16px}   /* panels in a row share one height */
+.balance-body .bal-panel h3{margin:0 0 12px}
+.bal-mix{display:flex;align-items:center;gap:22px}
+#bal-donut{width:140px;height:140px;flex:none}
+.donut-big{font:600 21px 'Segoe UI',sans-serif;fill:var(--ink)}.donut-small{font:11px 'Segoe UI',sans-serif;fill:oklch(.4 .035 295)}
+.bal-legend,.bal-moodkey{list-style:none;margin:0;padding:0;display:grid;gap:7px;font-size:12px}
+.bal-legend{flex:1;min-width:0}
+.bal-legend li,.bal-moodkey li{display:flex;align-items:center;gap:8px}
+.bal-legend i,.bal-moodkey i{flex:none;width:9px;height:9px;border-radius:50%;background:var(--c)}
+.bal-legend b,.bal-moodkey b{margin-left:auto;font-weight:600;font-variant-numeric:tabular-nums}
+.bal-moodkey{grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:6px 18px}
+.bal-moods{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;margin-bottom:14px}
+.mood-day{display:flex;flex-direction:column;align-items:center;gap:7px;font-size:11px;color:oklch(.4 .035 295)}
+.mood-day .lantern{width:18px;height:24px;border-radius:6px 6px 8px 8px;background:var(--c);box-shadow:0 0 12px 3px color-mix(in oklch,var(--c) 55%,transparent)}
+.mood-day .lantern.none{background:none;box-shadow:inset 0 0 0 1.5px oklch(.85 .02 295)}
+.mood-day.today small,.day-col.today small{color:var(--ink);font-weight:600}
+.bal-moodmix{display:flex;gap:2px;height:10px;border-radius:5px;overflow:hidden;margin-bottom:10px}
+.bal-moodmix i{background:var(--c)}
+.bal-note-line{margin:12px 0 0;font-size:13px;line-height:1.5}
+.bal-panel .bal-weather{margin-top:10px}
+.bal-progress-line{margin:0 0 14px;font-size:13px}
+.bal-days{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px}
+.day-col{display:flex;flex-direction:column;align-items:center;gap:6px;font-size:11px;color:oklch(.4 .035 295)}
+.day-bar{position:relative;width:100%;max-width:26px;height:84px;border-radius:6px;background:oklch(.95 .01 295);overflow:hidden}
+.day-bar i{position:absolute;left:0;right:0;bottom:0;border-radius:6px}
+.day-plan{height:calc(var(--plan) * 100%);background:oklch(.87 .05 60)}
+.day-done{height:calc(var(--done) * 100%);background:oklch(.66 .12 50)}
+.day-col.today .day-bar{box-shadow:0 0 0 2px oklch(.8 .08 60)}
+.bal-days-key{margin:12px 0 0;font-size:11px;color:oklch(.4 .035 295)}
+.bal-head{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:12px;padding-right:40px}   /* clear of the sheet's × */
+.balance-body .bal-head h2{margin:0}
+/* month view: a calendar of lanterns and week-by-week bars */
+.bal-moods.month{gap:7px 4px}
+.bal-moods .wk-letter{text-align:center;font-size:10px;color:oklch(.45 .035 295)}
+.mood-cell{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:9.5px;color:oklch(.45 .035 295)}
+.mood-cell .lantern{width:12px;height:15px;border-radius:4px 4px 5px 5px;background:var(--c);box-shadow:0 0 8px 2px color-mix(in oklch,var(--c) 50%,transparent)}
+.mood-cell .lantern.none{background:none;box-shadow:inset 0 0 0 1.2px oklch(.85 .02 295)}
+.mood-cell.future{opacity:.35}
+.mood-cell.today small{color:var(--ink);font-weight:700}
+.bal-days.weeks{grid-template-columns:repeat(5,minmax(0,1fr))}
+.bal-days.weeks .day-bar{max-width:40px}
 .bal-suggest{list-style:none;margin:0;padding:0;display:grid;gap:8px}
 .bal-suggest li{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:12px 14px;border-radius:12px;background:oklch(1 0 0)}
 .bal-suggest li div{display:flex;flex-direction:column;gap:3px;font-size:13px}.bal-suggest li span{font-size:12px;color:var(--muted)}
@@ -144,5 +321,53 @@ dialog h2{font:normal 21px Georgia,serif;margin:0 0 14px}
 .bal-apply:hover{background:oklch(.48 .12 36)}
 .bal-dew{margin:18px 0 0;font-size:12px;line-height:1.5;color:var(--muted)}
 .bal-suggest li.done .bal-apply{background:oklch(.9 .05 150);color:var(--ink);opacity:1}
-@media(max-width:700px){.bal-row{grid-template-columns:64px 1fr 84px}.sheet-head{padding-right:48px}}
+/* sheets fill their width: the balance in two columns (analysis left, changes
+   right), the planner narrower on its Day tab where the list is the whole view */
+.sheet{transition:width .3s}
+#planner-sheet:has(#pane-day:not([hidden])){width:min(760px,calc(100% - 32px))}
+.sheet .plan-list{max-width:none}
+.sheet .panel-note{margin:0 0 10px}
+.balance-body{max-width:none;display:grid;grid-template-columns:1fr 1fr;gap:0 36px;align-items:start}
+.balance-body>h2,.balance-body>.load-head{grid-column:1/-1}
+@media(max-width:900px){.balance-body{grid-template-columns:1fr}}
+/* notes: written on wood */
+dialog.wood{background:repeating-linear-gradient(94deg,transparent 0 9px,oklch(.3 .05 60 / .07) 9px 11px),linear-gradient(160deg,#c9a074,#a97d55);color:#3b2a1c;font-family:'Segoe Print','Bradley Hand',Georgia,serif}
+dialog.wood h2{color:#2f2116}
+dialog.wood label{font-size:13px}
+dialog.wood select,dialog.wood input[type=text]{background:oklch(.97 .03 80 / .55);border:1px solid oklch(.35 .06 60 / .35);color:#2f2116;font:inherit}
+dialog.wood input::placeholder{color:oklch(.45 .05 60)}
+.note-presets{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 16px}
+.note-preset{border:1px solid oklch(.35 .06 60 / .35);background:oklch(.97 .03 80 / .35);border-radius:16px;padding:7px 12px;font:inherit;font-size:13px}
+.note-preset:hover{background:oklch(.97 .03 80 / .6)}
+dialog.wood .dialog-actions .wood-button{background:#3b2a1c;color:#f3e4c8;font:inherit;font-size:13px}
+dialog.wood .dialog-actions .wood-button:hover{background:#503a28}
+dialog.wood .text-button{color:#2f2116;font:inherit;font-size:13px;text-decoration:underline}
+.notes-list{list-style:none;margin:0;padding:0;display:grid;gap:8px;max-height:50vh;overflow:auto}
+.notes-list li{display:flex;flex-direction:column;gap:3px;padding:10px 12px;border-radius:8px;background:oklch(.97 .03 80 / .28);border:1px solid oklch(.35 .06 60 / .25)}
+.notes-list li.mine{background:oklch(.97 .05 80 / .5)}
+.notes-list li span{font:12px Georgia,serif;color:#5a4330}.notes-list li strong{font-weight:normal;font-size:15px}
+.wood-note{margin:-6px 0 14px;font-size:13px;line-height:1.5;color:#4a3626}
+/* the task board dialog */
+#goals-dialog{width:min(540px,calc(100% - 32px))}
+.task-list{max-height:52vh}.task-list li{gap:6px;padding:12px 14px}
+.task-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+.task-list .task-head strong{font-size:16px}
+.task-head em{font:600 12.5px 'Segoe UI',sans-serif;font-style:normal;color:#2a5f7a;white-space:nowrap}
+.task-list .task-meta{font:12px Georgia,serif;color:#5a4330}
+.task-finishers{display:flex;flex-wrap:wrap;gap:6px}
+.task-list .finisher{display:inline-flex;align-items:center;gap:7px;padding:3px 10px;border:0;border-radius:999px;background:oklch(.95 .05 130 / .5);font:13px 'Segoe Print','Bradley Hand',Georgia,serif;color:#2f2116}
+.task-list .finisher img{width:28px;height:28px;border-radius:5px;object-fit:cover;margin-right:-6px}
+.task-list button.finisher:hover{background:oklch(.95 .06 130 / .8)}
+.task-actions{display:flex;align-items:center;flex-wrap:wrap;gap:12px}
+.task-list .task-status{font:12.5px Georgia,serif;color:#3b2a1c}
+dialog.wood .wood-button{border:0;border-radius:18px;padding:7px 14px;background:#3b2a1c;color:#f3e4c8;font:13px 'Segoe Print','Bradley Hand',Georgia,serif}
+dialog.wood .wood-button:hover{background:#503a28}
+.task-form{display:flex;align-items:center;gap:8px;margin-top:12px}
+dialog.wood .task-form input{flex:1;min-width:0;margin:0}dialog.wood .task-form select{width:auto;margin:0}
+/* island labels in the sky view: little wooden signs */
+.island-label{background:repeating-linear-gradient(94deg,transparent 0 6px,oklch(.3 .05 60 / .06) 6px 8px),linear-gradient(160deg,#e6c89f,#cfa87a);color:#2a1d12;font:14px/1.3 'Segoe Print','Bradley Hand',Georgia,serif;text-shadow:0 1px 0 oklch(.95 .03 80 / .55);border-radius:6px;padding:5px 14px 6px;box-shadow:inset 0 0 0 1px oklch(.35 .06 60 / .35),0 2px 6px oklch(.3 .04 295 / .18)}
+.island-label::before{display:none}
+.island-label:hover{background:repeating-linear-gradient(94deg,transparent 0 6px,oklch(.3 .05 60 / .06) 6px 8px),linear-gradient(160deg,#eed4ae,#d8b286)}
+.island-label.selected{background:repeating-linear-gradient(94deg,transparent 0 6px,oklch(.3 .05 60 / .06) 6px 8px),linear-gradient(160deg,#f0d8b4,#dab58a);box-shadow:inset 0 0 0 1px oklch(.35 .06 60 / .35),0 0 0 2px oklch(.96 .04 80)}
+@media(max-width:700px){.sheet-head{padding-right:48px}}
 @media(prefers-reduced-motion:reduce){.sheet{animation:none}}

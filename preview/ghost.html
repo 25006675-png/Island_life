@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ghost tree preview</title>
+  <style>
+    body{margin:0;overflow:hidden;font-family:'Segoe UI',sans-serif}
+    canvas{display:block}
+    .tag{position:fixed;transform:translate(-50%,0);padding:6px 14px;border-radius:999px;
+         background:#fffc;color:#3b3450;font-size:14px;white-space:nowrap;pointer-events:none}
+  </style>
+</head>
+<body>
+  <canvas></canvas>
+  <div class="tag" id="tag-solid">Done</div>
+  <div class="tag" id="tag-ghost">Planned (ghost)</div>
+  <script type="module" src="./ghost.js"></script>
+</body>
+</html>
