@@ -114,14 +114,15 @@ dialog h2{font:normal 21px Georgia,serif;margin:0 0 14px}
 .mo-dots{display:flex;flex-wrap:wrap;gap:3px}.mo-dots i{width:7px;height:7px;border-radius:50%}
 /* balance sheet */
 .balance{display:flex;gap:26px;padding:0 30px 26px;overflow:auto}
-/* your gardener stands on the sheet's top edge and walks to what you point at */
-.buddy{position:absolute;bottom:100%;left:60px;height:88px;margin-bottom:-8px;z-index:1;pointer-events:none;
-  transform:translateX(-50%) scaleX(var(--face,1));transform-origin:50% 100%;filter:drop-shadow(0 6px 8px oklch(.3 .04 295 / .25))}
-.buddy.walking{animation:buddy-walk .42s ease-in-out infinite}
-@keyframes buddy-walk{0%,100%{translate:0 0;rotate:0deg}25%{translate:0 -4px;rotate:-3deg}75%{translate:0 -4px;rotate:3deg}}
-.ribbon-buddy{bottom:auto;height:62px;margin:0;transform:translate(-50%,-96%) scaleX(var(--face,1))}
-.buddy.hop{animation:buddy-hop .6s cubic-bezier(.3,.7,.4,1)}
-@keyframes buddy-hop{40%{translate:0 -28px}}
+/* your gardener in 2D: waits at a home spot on an open sheet (or on the lifted
+   timetable) and is walked with the arrow keys; the frames are real 3D angles */
+.buddy{position:absolute;bottom:100%;left:80px;margin-bottom:-10px;z-index:1;pointer-events:none;translate:-50% 0}
+.buddy img{display:block;transform-origin:50% 100%;filter:drop-shadow(0 6px 8px oklch(.3 .04 295 / .25))}
+.buddy.walking img{animation:buddy-walk .38s ease-in-out infinite}
+@keyframes buddy-walk{0%,100%{translate:0 0;rotate:0deg}25%{translate:0 -5px;rotate:-2.5deg}75%{translate:0 -5px;rotate:2.5deg}}
+.ribbon-buddy{bottom:auto;margin:0}
+.ribbon-label.here{box-shadow:0 0 0 2px var(--cat);scale:1.1}
+.buddy-hint{position:absolute;top:8px;left:150px;font-size:11px;color:var(--muted);pointer-events:none}
 .balance-body{flex:1;min-width:0;max-width:720px}
 .balance-body h2{font:normal 24px Georgia,serif;margin:0 0 12px}
 .balance-body h3{font:normal 15px Georgia,serif;margin:18px 0 10px;color:var(--muted)}

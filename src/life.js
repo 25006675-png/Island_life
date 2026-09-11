@@ -78,9 +78,16 @@ export function initLife({islands,camera,texture,player,notice,visit,nearTree,ge
   const sheets=createSheets();
   const calendar=createCalendar({plans,owner:ME,clock,notice,sheets});
   const balance=createBalance({plans,me,friends:members.filter(i=>i.id!==ME),clock,checkins:checkins[ME],sheets,notice,dew,warm:id=>warm(id,.8)});
-  // your gardener walks along the top of whichever sheet is open
-  const avatar=`${import.meta.env.BASE_URL}assets/avatar.png`;
-  const buddies={planner:createBuddy($('planner-sheet'),avatar),balance:createBuddy($('balance-sheet'),avatar)};
+  // your gardener waits at the left end of an open sheet's top edge; walk it
+  // with ← →, jump with Space, turn it with Q E
+  const sheetBuddy=sheet=>{
+    sheet.append(Object.assign(document.createElement('span'),{className:'buddy-hint',textContent:'← → walk · Space jump · Q E turn'}));
+    return createBuddy(sheet,{height:132,speed:260,place:(el,x,lift,walking)=>{
+      x=Math.max(46,Math.min(sheet.clientWidth-46,x));
+      el.style.left=`${x}px`;el.style.translate=`-50% ${-lift}px`;el.classList.toggle('walking',walking);return x;
+    }});
+  };
+  const buddies={planner:sheetBuddy($('planner-sheet')),balance:sheetBuddy($('balance-sheet'))};
   // any plan edit re-draws that island's path, settles its altitude, refreshes the sheets
   plans.onChange(id=>{
     tables[id]?.setBlocks(plans.on(id,TODAY));settle(id);
@@ -112,8 +119,8 @@ export function initLife({islands,camera,texture,player,notice,visit,nearTree,ge
   }
   $('mood-toggle').onclick=()=>setMoodPanel($('mood-panel').hidden);$('mood-close').onclick=()=>setMoodPanel(false);
   $('settings-toggle').addEventListener('click',()=>{closeOthers('settings');sheets.hide();});
-  $('planner-toggle').onclick=()=>{closeOthers(null);calendar.open();buddies.planner.show();};
-  for(const id of ['balance-toggle','load','weather-chip','dew-chip'])$(id).onclick=()=>{closeOthers(null);balance.open($(id));buddies.balance.show();};
+  $('planner-toggle').onclick=()=>{closeOthers(null);calendar.open();buddies.planner.reset(80);};
+  for(const id of ['balance-toggle','load','weather-chip','dew-chip'])$(id).onclick=()=>{closeOthers(null);balance.open($(id));buddies.balance.reset(80);};
 
   // ---- demo controls: time of day, golden window ------------------------------
   const showClock=()=>{$('clock').value=Math.round(clock.minutes);$('clock-value').value=fmt(clock.minutes);$('clock-live').checked=clock.live;};
@@ -125,29 +132,27 @@ export function initLife({islands,camera,texture,player,notice,visit,nearTree,ge
   // ---- schedule: lift the path into a readable ribbon ----------------------------
   let lifted=null;
   const labels=[];
-  // on the lifted timetable your gardener stands on the ribbon at "now" and
-  // walks along it to whatever time you point at
-  const walker=Object.assign(document.createElement('img'),{src:avatar,alt:'',className:'buddy ribbon-buddy'});
-  let walkerMin=null, pointerX=null;
-  addEventListener('pointermove',e=>{pointerX=e.clientX;});
-  const w0=new T.Vector3(), w1=new T.Vector3();
-  function moveWalker(table,dt,motion){
-    table.ribbonPoint(DAWN,-1.3,w0).project(camera);table.ribbonPoint(NIGHT,-1.3,w1).project(camera);
-    const x0=(w0.x*.5+.5)*innerWidth, x1=(w1.x*.5+.5)*innerWidth;
-    const aimed=pointerX!==null&&pointerX>Math.min(x0,x1)&&pointerX<Math.max(x0,x1)?DAWN+(pointerX-x0)/(x1-x0)*(NIGHT-DAWN):clock.minutes;
-    walkerMin??=clock.minutes;
-    const d=aimed-walkerMin;walkerMin+=motion?Math.sign(d)*Math.min(Math.abs(d),300*dt):d;
-    table.ribbonPoint(walkerMin,-1.3,w0).project(camera);
-    walker.style.left=`${(w0.x*.5+.5)*innerWidth}px`;walker.style.top=`${(-w0.y*.5+.5)*innerHeight}px`;
-    if(Math.abs(d)>2)walker.style.setProperty('--face',d>0?1:-1);
-    walker.classList.toggle('walking',motion&&Math.abs(d)>2);
-  }
+  // on the lifted timetable your gardener starts at "now"; walk it through the
+  // day with ← →, and the block it stands on lights up
+  const w0=new T.Vector3();
+  let ribbonTable=null;
+  const ribbonBuddy=createBuddy($('ribbon-labels'),{height:84,speed:110,place:(el,m,lift,walking)=>{
+    m=Math.max(DAWN,Math.min(NIGHT,m));if(!ribbonTable)return m;
+    ribbonTable.ribbonPoint(m,-1.3,w0).project(camera);
+    el.style.left=`${(w0.x*.5+.5)*innerWidth}px`;el.style.top=`${(-w0.y*.5+.5)*innerHeight}px`;
+    el.style.translate=`-50% calc(-100% + 4px - ${lift}px)`;el.classList.toggle('walking',walking);return m;
+  }});
+  ribbonBuddy.el.classList.add('ribbon-buddy');
   function setLift(id){
     if(lifted&&lifted!==id)tables[lifted].setLift(false);
     lifted=id;if(id)tables[id].setLift(true);
     $('schedule').setAttribute('aria-pressed',String(!!id));
-    $('ribbon-labels').replaceChildren(walker);labels.length=0;walkerMin=null;
+    $('ribbon-labels').replaceChildren(ribbonBuddy.el);labels.length=0;
+    ribbonTable=id?tables[id]:null;
+    if(getMode()==='walk')$('mode-hint').textContent=id?'← → walk through your day · Space jump · Q E turn · Schedule to lower it'
+                                                        :'WASD to walk · Space to jump · Drag to look around · Esc for sky view';
     if(!id)return;
+    ribbonBuddy.reset(clock.minutes);
     const own=id===ME;
     for(const b of tables[id].blocks){
       if(!own&&b.vis==='hidden')continue;
@@ -157,6 +162,15 @@ export function initLife({islands,camera,texture,player,notice,visit,nearTree,ge
       $('ribbon-labels').append(el);labels.push({el,block:b});
     }
   }
+  // While a sheet or the lifted timetable is open, the movement keys drive the
+  // 2D gardener instead of the 3D one (Esc still closes; typing is untouched).
+  const activeBuddy=()=>!$('planner-sheet').hidden?buddies.planner:!$('balance-sheet').hidden?buddies.balance
+                       :lifted&&tables[lifted].lift>.75?ribbonBuddy:null;
+  for(const type of ['keydown','keyup'])document.addEventListener(type,e=>{
+    if(document.querySelector('dialog[open]')||['INPUT','SELECT','TEXTAREA'].includes(document.activeElement.tagName))return;
+    const b=activeBuddy();
+    if(b?.key(e.code,type==='keydown')){e.preventDefault();e.stopImmediatePropagation();}
+  },true);
   $('schedule').onclick=()=>{
     if(lifted)return setLift(null);
     if(getMode()!=='walk'){visit(ME);setTimeout(()=>setLift(ME),1300);return;}
@@ -247,8 +261,11 @@ export function initLife({islands,camera,texture,player,notice,visit,nearTree,ge
           table.ribbonPoint(block.start+block.mins/2,.35+(i%2)*1.1,v).project(camera);
           el.style.left=`${(v.x*.5+.5)*innerWidth}px`;el.style.top=`${(-v.y*.5+.5)*innerHeight}px`;
         });
-        moveWalker(table,dt,motion);
+        const at=ribbonBuddy.step(dt);
+        labels.forEach(({el,block})=>el.classList.toggle('here',at>=block.start&&at<block.start+block.mins));
       }
+      if(!$('planner-sheet').hidden)buddies.planner.step(dt);
+      if(!$('balance-sheet').hidden)buddies.balance.step(dt);
       reveal(lifted?null:nearest());
     },
     pick(raycaster){
@@ -265,8 +282,8 @@ export function initLife({islands,camera,texture,player,notice,visit,nearTree,ge
       ringGoldenWindow:()=>photos.ring(),
       checkIn,
       lift:id=>setLift(id??null),
-      openPlanner:tab=>{calendar.open(tab);buddies.planner.show();},
-      openBalance:()=>{balance.open();buddies.balance.show();},
+      openPlanner:tab=>{calendar.open(tab);buddies.planner.reset(80);},
+      openBalance:()=>{balance.open();buddies.balance.reset(80);},
       markDone:id=>{const b=tables[ME].blocks.find(b=>String(b.id)===String(id));if(b)finish(b);},
       // "Restore this evening": altitude and weather back to what the plan and check-ins say
       resettle:()=>{members.forEach(i=>{settle(i.id);weather(i);delete warmth[i.id];warm(i.id);});},

@@ -54,26 +54,58 @@ void main(){vec2 p=vWorld.xz*.026+vec2(time*.002,0.);float n=fbm(p);float detail
     }
     g.position.set(Math.cos(a)*r,-2+(i*17)%38,Math.sin(a)*r);g.rotation.y=a;g.userData={y:g.position.y,p:i};isles.add(g);
   }
-  // the whales circle behind the islands, above the tallest canopy
+  // A humpback, lofted along its spine (head at +z): a broad, flat-topped head,
+  // a pale grooved throat, long pectoral fins, a small dorsal fin, wide flukes.
+  // The back half undulates in a travelling wave, so the tail beats slowly.
+  const PROFILE=[[0,.05],[.1,.11],[.25,.3],[.45,.72],[.62,.92],[.8,.86],[.92,.62],[1,.16]];   // [along the body, radius]
+  const girth=f=>{
+    for(let i=1;i<PROFILE.length;i++)if(f<=PROFILE[i][0]){const [f0,r0]=PROFILE[i-1],[f1,r1]=PROFILE[i],u=(f-f0)/(f1-f0);return r0+(r1-r0)*u*u*(3-2*u);}
+    return PROFILE.at(-1)[1];
+  };
+  const blade=(pts,material)=>{const s=new T.Shape();s.moveTo(...pts[0]);for(const p of pts.slice(1))s.lineTo(...p);return new T.Mesh(new T.ShapeGeometry(s),material);};
   function whale(size){
-    const g=new T.Group();
-    const skin=new T.MeshStandardMaterial({color:'#b8c6ee',roughness:.8,emissive:'#8e9ddb',emissiveIntensity:.55,flatShading:true});   // self-lit, so backlight never greys it
-    const belly=new T.MeshStandardMaterial({color:'#ebe6f3',roughness:.9,flatShading:true});
-    const body=new T.Mesh(new T.SphereGeometry(1,16,10),skin);body.scale.set(1.1,.9,3.2);
-    const under=new T.Mesh(new T.SphereGeometry(1.01,16,10,0,Math.PI*2,Math.PI*.58,Math.PI*.42),belly);under.scale.set(1.1,.9,3.2);
-    const tail=new T.Group();tail.position.z=-2.9;
-    const stem=new T.Mesh(new T.ConeGeometry(.5,1.8,8),skin);stem.rotation.x=-Math.PI/2;stem.position.z=-.8;
-    const fluke=new T.Mesh(new T.BoxGeometry(2.6,.12,.9),skin);fluke.position.z=-1.75;
-    tail.add(stem,fluke);
-    g.add(body,under,tail);
-    for(const sd of [-1,1]){
-      const fin=new T.Mesh(new T.BoxGeometry(1.5,.1,.7),skin);fin.position.set(sd*1.25,-.35,.9);fin.rotation.z=sd*.35;
-      const eye=new T.Mesh(new T.SphereGeometry(.09,8,6),new T.MeshBasicMaterial({color:'#2f2a44'}));eye.position.set(sd*.66,.12,2.55);
-      g.add(fin,eye);
+    const g=new T.Group(), RINGS=30, SEG=20, LEN=6;
+    const back=new T.Color('#2c4a93'), flank=new T.Color('#4a6fc0'), throat=new T.Color('#d3daee'), groove=new T.Color('#aab7da');
+    const pos=[], col=[], rest=[], index=[];
+    for(let i=0;i<RINGS;i++){
+      const f=i/(RINGS-1), r=girth(f), z=(f-.5)*LEN;
+      for(let j=0;j<SEG;j++){
+        const a=j/SEG*Math.PI*2, up=Math.cos(a), y=up*r*(up>0&&f>.7?.62:.8);   // a flatter crown over the head
+        pos.push(Math.sin(a)*r,y,z);rest.push(y);
+        const c=up<-.25&&f>.42?(Math.sin(a*22)>0?throat:groove):back.clone().lerp(flank,(1-up)/2);
+        col.push(c.r,c.g,c.b);
+      }
     }
-    const glow=new T.MeshBasicMaterial({color:new T.Color(1.6,1.5,1.9)});   // bright enough to bloom
-    for(let k=0;k<7;k++){const d=new T.Mesh(new T.SphereGeometry(.09,6,5),glow);d.position.set(k%2?.3:-.3,.84-.035*k,1.6-k*.55);g.add(d);}
-    g.scale.setScalar(size);g.userData.tail=tail;scene.add(g);return g;
+    for(let i=0;i<RINGS-1;i++)for(let j=0;j<SEG;j++){const a=i*SEG+j,b=i*SEG+(j+1)%SEG;index.push(a,a+SEG,b,b,a+SEG,b+SEG);}
+    const tail=pos.length/3;pos.push(0,0,-LEN/2-.05);rest.push(0);col.push(back.r,back.g,back.b);
+    const nose=pos.length/3;pos.push(0,-.02,LEN/2+.12);rest.push(-.02);col.push(back.r,back.g,back.b);
+    for(let j=0;j<SEG;j++){index.push(tail,(j+1)%SEG,j);const o=(RINGS-1)*SEG;index.push(nose,o+j,o+(j+1)%SEG);}
+    const geo=new T.BufferGeometry();geo.setIndex(index);
+    geo.setAttribute('position',new T.Float32BufferAttribute(pos,3));geo.setAttribute('color',new T.Float32BufferAttribute(col,3));geo.computeVertexNormals();
+    // self-lit a little, so backlight and haze never turn it black
+    const skin=new T.MeshStandardMaterial({vertexColors:true,roughness:.65,emissive:'#22387a',emissiveIntensity:.5,side:T.DoubleSide});
+    const finMat=new T.MeshStandardMaterial({color:'#34549f',roughness:.7,emissive:'#22387a',emissiveIntensity:.5,side:T.DoubleSide});
+    g.add(new T.Mesh(geo,skin));
+    // long pectoral fins -- the humpback's signature -- laid flat, reaching out and back
+    const pecs=[-1,1].map(s=>{
+      const p=new T.Group();p.position.set(s*.7,-.42,1.1);p.scale.x=s;
+      const m=blade([[0,.2],[.9,.35],[1.8,.65],[2.35,.85],[2.4,.7],[1.7,.35],[.8,0],[0,-.22]],finMat);m.rotation.x=-Math.PI/2;
+      p.add(m);g.add(p);return p;
+    });
+    const dorsal=blade([[-.1,0],[.55,0],[.42,.2],[.3,.24]],finMat);dorsal.rotation.y=Math.PI/2;dorsal.position.set(0,girth(.32)*.8-.04,(.32-.5)*LEN);g.add(dorsal);
+    const flukes=new T.Group();
+    const half=[[0,-.1],[.4,.05],[1,.3],[1.4,.55],[1.45,.72],[1.1,.62],[.55,.5],[.12,.58],[0,.45]];
+    const fl=blade([...half,...half.slice(1,-1).reverse().map(([x,y])=>[-x,y])],finMat);fl.rotation.x=-Math.PI/2;flukes.add(fl);g.add(flukes);
+    for(const s of [-1,1]){const eye=new T.Mesh(new T.SphereGeometry(.05,8,6),new T.MeshBasicMaterial({color:'#101830'}));eye.position.set(s*.56,.02,(.9-.5)*LEN);g.add(eye);}
+    const attr=geo.attributes.position;
+    const heave=(f,t)=>(f<.62?((.62-f)/.62)**2*.55*Math.sin(t*1.25-f*4.5):0)+(f<.4?((.4-f)/.4)**2*.3:0);   // wave + the tail stock's upward sweep
+    g.userData.swim=t=>{
+      for(let i=0;i<RINGS;i++){const d=heave(i/(RINGS-1),t);for(let j=0;j<SEG;j++){const n=i*SEG+j;attr.setY(n,rest[n]+d);}}
+      const d0=heave(0,t);attr.setY(tail,d0);attr.needsUpdate=true;geo.computeVertexNormals();
+      flukes.position.set(0,d0,-LEN/2);flukes.rotation.x=-Math.atan((heave(.05,t)-d0)/(.05*LEN))*1.4;   // flukes tilt with the beat
+      pecs.forEach(p=>{p.rotation.z=-.45+Math.sin(t*.8)*.16;});
+    };
+    g.scale.setScalar(size);scene.add(g);return g;
   }
   const whales=[whale(12),whale(6)];
   for(let n=0;n<26;n++){
@@ -93,7 +125,7 @@ void main(){vec2 p=vWorld.xz*.026+vec2(time*.002,0.);float n=fbm(p);float detail
         const a=t*.012-k*.16, r=150+k*10;   // centred behind the gathering island, never over it
         w.position.set(Math.cos(a)*r,40+Math.sin(t*.25+k)*3-k*5,-200+Math.sin(a)*r);
         w.rotation.set(0,-a,Math.sin(t*.25+k)*.05);
-        w.userData.tail.rotation.x=Math.sin(t*1.1+k)*.28;
+        w.userData.swim(t+k*.9);
       });
       for(let i=0;i<SP;i++){const a=i*2.399+t*.01*(i%3+1),r=20+(i*37)%120;spark.set([Math.cos(a)*r,-4+(i*7.3+t*.4)%34,Math.sin(a)*r],i*3);}
       sparkGeo.attributes.position.needsUpdate=true;

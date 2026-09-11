@@ -1,27 +1,42 @@
-// The gardener, drawn small, stands on the top edge of a dashboard sheet and
-// walks to whatever you point at or focus -- the same character as in the
-// world behind, so opening a sheet never feels like leaving it. It hops when
-// the plan changes. It never speaks or advises.
-export function createBuddy(sheet,src){
-  const img=Object.assign(document.createElement('img'),{src,alt:'',className:'buddy'});
-  img.setAttribute('aria-hidden','true');sheet.append(img);
-  img.addEventListener('animationend',e=>{if(e.animationName==='buddy-hop')img.classList.remove('hop');});
-  const still=matchMedia('(prefers-reduced-motion: reduce)');
-  let x=60, target=60, face=1, last=0, raf=0;
-  const aim=clientX=>{const r=sheet.getBoundingClientRect();target=Math.max(44,Math.min(r.width-44,clientX-r.left));};
-  sheet.addEventListener('pointermove',e=>aim(e.clientX));
-  sheet.addEventListener('focusin',e=>{const r=e.target.getBoundingClientRect();aim(r.left+r.width/2);});
-  function step(t){
-    raf=0;if(sheet.hidden)return;
-    const dt=Math.min(.05,(t-(last||t))/1000), d=target-x;last=t;
-    if(still.matches)x=target;else x+=Math.sign(d)*Math.min(Math.abs(d),150*dt);
-    if(Math.abs(d)>3)face=d>0?1:-1;
-    img.style.left=`${x}px`;img.style.setProperty('--face',face);
-    img.classList.toggle('walking',Math.abs(d)>3&&!still.matches);
-    raf=requestAnimationFrame(step);
-  }
+// Your gardener in 2D, on the dashboard sheets and on the lifted timetable.
+// It waits at a home spot; while a sheet (or the timetable) is open you walk
+// it with ← → or A D, jump with Space / W / ↑, and turn it with Q E through
+// eight real angles rendered from the 3D model. It never speaks or advises.
+const FRAMES=[...Array(8)].map((_,i)=>`${import.meta.env.BASE_URL}assets/gardener_${i}.png`);
+for(const src of FRAMES)Object.assign(new Image(),{src});       // warm the cache so turning never flickers
+// frame i = the model turned 45°·i: 0 front, 2 right profile, 4 back, 6 left profile
+const RIGHT=2, LEFT=6, HOME=1;                                   // at home it looks three-quarter, toward the readout
+const KEYS={ArrowLeft:'L',KeyA:'L',ArrowRight:'R',KeyD:'R',Space:'J',KeyW:'J',ArrowUp:'J',KeyQ:'Q',KeyE:'E'};
+
+// `place(el, pos, lift, walking)` puts the figure on its host and returns the clamped position.
+export function createBuddy(parent,{height,speed,place}){
+  const el=document.createElement('div');el.className='buddy';el.setAttribute('aria-hidden','true');
+  const img=Object.assign(document.createElement('img'),{alt:'',src:FRAMES[HOME]});img.style.height=`${height}px`;
+  el.append(img);parent.append(el);
+  const held=new Set();
+  let pos=0, frame=HOME, lift=0, vy=0;
+  const show=f=>{if(f!==frame){frame=f;img.src=FRAMES[f];}};
   return {
-    show(){x=target=60;last=0;img.style.left=`${x}px`;if(!raf)raf=requestAnimationFrame(step);},
-    hop(){if(sheet.hidden||still.matches)return;img.classList.remove('hop');void img.offsetWidth;img.classList.add('hop');},
+    el,
+    reset(p){pos=p;lift=vy=0;held.clear();show(HOME);pos=place(el,pos,0,false);},
+    // returns true when the key is one of the gardener's
+    key(code,down){
+      const k=KEYS[code];if(!k)return false;
+      if(down&&!held.has(k)){
+        if(k==='J'&&!lift&&!vy)vy=560;
+        if(k==='Q')show((frame+7)%8);
+        if(k==='E')show((frame+1)%8);
+      }
+      if(down)held.add(k);else held.delete(k);
+      return true;
+    },
+    hop(){if(!lift&&!vy)vy=420;},
+    step(dt){
+      const dir=(held.has('R')?1:0)-(held.has('L')?1:0);
+      if(dir){pos+=dir*speed*dt;show(dir>0?RIGHT:LEFT);}
+      if(vy||lift){vy-=1600*dt;lift=Math.max(0,lift+vy*dt);if(!lift)vy=0;}
+      pos=place(el,pos,lift,!!dir);
+      return pos;
+    },
   };
 }
