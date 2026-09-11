@@ -24,17 +24,58 @@ void main(){vec2 p=vWorld.xz*.026+vec2(time*.002,0.);float n=fbm(p);float detail
   for(const y of [7,19,32]){const band=new T.Mesh(new T.CylinderGeometry(190,190,.13,100,1,true),new T.MeshBasicMaterial({color:'#fae5c1',transparent:true,opacity:.095,side:T.DoubleSide,depthWrite:false}));band.position.y=y;bands.add(band);}
   // .004 buried the islands in haze; .0009 keeps depth without the milk
   scene.fog=new T.FogExp2('#dec4d1',.0009);
-  // far scenery for the sky view: small islands adrift, and thin high cloud
+  // far scenery for the sky view: small rock islands adrift, thin high cloud,
+  // and a sky whale with her calf
   const isles=new T.Group(), haze=new T.Group();scene.add(isles,haze);
   const mat=c=>new T.MeshStandardMaterial({color:c,roughness:1,flatShading:true});
-  const grass=mat('#c3cf9c'), rock=mat('#c7b6ab'), leaves=[mat('#a9c08a'),mat('#e9bfcc'),mat('#c9b6e4')];
+  const leaves=[mat('#a9c08a'),mat('#e9bfcc'),mat('#c9b6e4')], bark=mat('#9a7a62');
+  // displacement comes from the vertex position, so shared corners stay joined
+  const hash=(x,y,z)=>{const s=Math.sin(x*127.1+y*311.7+z*74.7)*43758.5453;return s-Math.floor(s);};
+  const grassC=new T.Color('#b9cf8c'), rockC=new T.Color('#c6b3a6'), rockD=new T.Color('#a38e80');
+  function rockIsle(s,seed){
+    const geo=new T.IcosahedronGeometry(1,2), p=geo.attributes.position, col=new Float32Array(p.count*3), c=new T.Color();
+    for(let i=0;i<p.count;i++){
+      let x=p.getX(i),y=p.getY(i),z=p.getZ(i);const h=hash(x+seed,y,z), h2=hash(z,x+seed,y);
+      if(y>-.05){y=.16+y*.16+(h-.5)*.05;x*=1.08+(h2-.5)*.14;z*=1.08+(h-.5)*.14;c.copy(grassC).offsetHSL(0,0,(h-.5)*.06);}   // a softly domed grassy top
+      else{const k=-y,taper=1-k*.55;y=-k*(1.5+h*.9);x*=taper*(1+(h2-.5)*.35);z*=taper*(1+(h-.5)*.35);c.copy(rockC).lerp(rockD,h2);}  // a jagged keel
+      p.setXYZ(i,x*s,y*s,z*s);col.set([c.r,c.g,c.b],i*3);
+    }
+    geo.setAttribute('color',new T.BufferAttribute(col,3));geo.computeVertexNormals();
+    return new T.Mesh(geo,new T.MeshStandardMaterial({vertexColors:true,flatShading:true,roughness:1}));
+  }
   for(let i=0;i<9;i++){
     const a=i*2.399+.6, r=280+(i*53)%150, s=5+(i*7)%9, g=new T.Group();
-    const base=new T.Mesh(new T.ConeGeometry(s*.95,s*1.7,9),rock);base.rotation.x=Math.PI;base.position.y=-s*.95;
-    g.add(new T.Mesh(new T.CylinderGeometry(s,s*.92,s*.22,9),grass),base);
-    for(let k=0;k<1+i%3;k++){const t=new T.Mesh(new T.IcosahedronGeometry(s*(.28+.08*k),0),leaves[(i+k)%3]);t.position.set((k-1)*s*.35,s*.35,((k*5)%3-1)*s*.25);g.add(t);}
+    g.add(rockIsle(s,i*1.7));
+    for(let k=0;k<1+i%3;k++){
+      const x=(k-1)*s*.35, z=((k*5)%3-1)*s*.25;
+      const trunk=new T.Mesh(new T.CylinderGeometry(s*.05,s*.07,s*.45,5),bark);trunk.position.set(x,s*.4,z);
+      const crown=new T.Mesh(new T.IcosahedronGeometry(s*(.24+.06*k),0),leaves[(i+k)%3]);crown.position.set(x,s*(.72+.05*k),z);
+      g.add(trunk,crown);
+    }
     g.position.set(Math.cos(a)*r,-2+(i*17)%38,Math.sin(a)*r);g.rotation.y=a;g.userData={y:g.position.y,p:i};isles.add(g);
   }
+  // the whales circle behind the islands, above the tallest canopy
+  function whale(size){
+    const g=new T.Group();
+    const skin=new T.MeshStandardMaterial({color:'#b8c6ee',roughness:.8,emissive:'#8e9ddb',emissiveIntensity:.55,flatShading:true});   // self-lit, so backlight never greys it
+    const belly=new T.MeshStandardMaterial({color:'#ebe6f3',roughness:.9,flatShading:true});
+    const body=new T.Mesh(new T.SphereGeometry(1,16,10),skin);body.scale.set(1.1,.9,3.2);
+    const under=new T.Mesh(new T.SphereGeometry(1.01,16,10,0,Math.PI*2,Math.PI*.58,Math.PI*.42),belly);under.scale.set(1.1,.9,3.2);
+    const tail=new T.Group();tail.position.z=-2.9;
+    const stem=new T.Mesh(new T.ConeGeometry(.5,1.8,8),skin);stem.rotation.x=-Math.PI/2;stem.position.z=-.8;
+    const fluke=new T.Mesh(new T.BoxGeometry(2.6,.12,.9),skin);fluke.position.z=-1.75;
+    tail.add(stem,fluke);
+    g.add(body,under,tail);
+    for(const sd of [-1,1]){
+      const fin=new T.Mesh(new T.BoxGeometry(1.5,.1,.7),skin);fin.position.set(sd*1.25,-.35,.9);fin.rotation.z=sd*.35;
+      const eye=new T.Mesh(new T.SphereGeometry(.09,8,6),new T.MeshBasicMaterial({color:'#2f2a44'}));eye.position.set(sd*.66,.12,2.55);
+      g.add(fin,eye);
+    }
+    const glow=new T.MeshBasicMaterial({color:new T.Color(1.6,1.5,1.9)});   // bright enough to bloom
+    for(let k=0;k<7;k++){const d=new T.Mesh(new T.SphereGeometry(.09,6,5),glow);d.position.set(k%2?.3:-.3,.84-.035*k,1.6-k*.55);g.add(d);}
+    g.scale.setScalar(size);g.userData.tail=tail;scene.add(g);return g;
+  }
+  const whales=[whale(12),whale(6)];
   for(let n=0;n<26;n++){
     const s=new T.Sprite(new T.SpriteMaterial({map:texture,color:'#fff3ea',transparent:true,depthWrite:false,opacity:.16+(n%4)*.04}));
     const a=n*2.399+.3,r=160+(n*37)%230;s.position.set(Math.cos(a)*r,24+(n*13)%46,Math.sin(a)*r);s.scale.set(60+(n%5)*14,14+(n%3)*5,1);haze.add(s);
@@ -47,6 +88,13 @@ void main(){vec2 p=vWorld.xz*.026+vec2(time*.002,0.);float n=fbm(p);float detail
     update(t,camera){
       uniforms.time.value=t;clouds.rotation.y=t*.001;haze.rotation.y=t*.0006;
       for(const g of isles.children)g.position.y=g.userData.y+Math.sin(t*.15+g.userData.p)*.8;
+      // mother and calf swim a slow circle centred behind the islands; the calf trails a little
+      whales.forEach((w,k)=>{
+        const a=t*.012-k*.16, r=150+k*10;   // centred behind the gathering island, never over it
+        w.position.set(Math.cos(a)*r,40+Math.sin(t*.25+k)*3-k*5,-200+Math.sin(a)*r);
+        w.rotation.set(0,-a,Math.sin(t*.25+k)*.05);
+        w.userData.tail.rotation.x=Math.sin(t*1.1+k)*.28;
+      });
       for(let i=0;i<SP;i++){const a=i*2.399+t*.01*(i%3+1),r=20+(i*37)%120;spark.set([Math.cos(a)*r,-4+(i*7.3+t*.4)%34,Math.sin(a)*r],i*3);}
       sparkGeo.attributes.position.needsUpdate=true;
       if(camera)sky.position.copy(camera.position);   // the dome travels with the eye: no outside to see
