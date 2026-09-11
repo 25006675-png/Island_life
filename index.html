@@ -27,21 +27,37 @@
       <label class="file-line">Add a photo to your lantern first (optional)<input id="checkin-photo" type="file" accept="image/*"/></label>
       <div id="moods" class="moods" role="group" aria-labelledby="checkin-title"></div>
     </aside>
-    <footer><div class="place"><div class="place-title"><span id="location-kicker">Your sky neighborhood</span><h1 id="location-title">A world of little wonders.</h1></div><p id="hint">Choose an island. Stay a little while.</p><p id="status-head" class="status-head" hidden></p><ul id="island-status" class="island-status" aria-label="What this island shows"></ul></div><nav class="view-controls" aria-label="Camera view"><button id="overview" aria-pressed="true">↗ <span>Sky view</span></button><button id="walk" aria-pressed="false">♧ <span>Take a walk</span></button><button id="schedule" aria-pressed="false">☰ <span>Schedule</span></button></nav><div class="help"><span id="mode-hint">Drag to look around · Scroll to zoom</span><span>Somewhere above the everyday</span></div></footer>
-    <div id="reveal" hidden role="status"><span id="reveal-kicker"></span><strong id="reveal-title"></strong><span id="reveal-sub"></span><div class="reveal-actions"><button id="reveal-action" hidden><span id="reveal-action-label">View photo</span></button><button id="reveal-letgo" class="reveal-letgo" hidden>Let go</button></div></div>
+    <footer><div class="place"><div class="place-title"><span id="location-kicker">Your sky neighborhood</span><h1 id="location-title">A world of little wonders.</h1></div><p id="hint">Choose an island. Stay a little while.</p><p id="status-head" class="status-head" hidden></p><ul id="island-status" class="island-status" aria-label="What this island shows"></ul><details id="my-island" class="my-island" open hidden><summary><b>Your island</b><span id="mi-sum"></span></summary><div class="mi-body"><div class="mi-label">Trees on your island <span>· +n still glass</span></div><div id="mi-trees" class="mi-trees" role="list"></div><div class="mi-label">Activity capacity</div><div id="mi-full" class="mi-line"></div><div class="mi-label">Feelings this week</div><div id="mi-feel" class="mi-feel"></div><button id="mi-balance" class="text-button" type="button">Open your balance</button></div></details></div><nav class="view-controls" aria-label="Camera view"><button id="overview" aria-pressed="true">↗ <span>Sky view</span></button><button id="walk" aria-pressed="false">♧ <span>Take a walk</span></button><button id="schedule" aria-pressed="false">☰ <span>Schedule</span></button></nav><div class="help"><span id="mode-hint">Drag to look around · Scroll to zoom</span><span>Somewhere above the everyday</span></div></footer>
+    <div id="reveal" hidden role="status"><img id="reveal-icon" alt="" hidden/><span id="reveal-kicker"></span><strong id="reveal-title"></strong><span id="reveal-sub"></span><div class="reveal-actions"><button id="reveal-action" hidden><span id="reveal-action-label">View photo</span></button><button id="reveal-alt" class="reveal-letgo" hidden>Another idea</button><button id="reveal-letgo" class="reveal-letgo" hidden>Let go</button></div></div>
     <dialog id="letgo-dialog" aria-labelledby="letgo-title">
       <h2 id="letgo-title">Let it go?</h2>
       <p class="panel-note">Letting go is fine. Its ghost tree drifts off and it won’t count this week. You can bring it back from the planner any time.</p>
       <div class="dialog-actions"><button id="letgo-yes" class="solid-small">Let it go</button><button id="letgo-no" class="text-button">Keep it</button></div>
+    </dialog>
+    <dialog id="sync-dialog" aria-labelledby="sync-title">
+      <h2 id="sync-title">Sync your calendars</h2>
+      <p class="panel-note">Bring in classes, shifts and deadlines so your island carries the whole week. Synced events arrive as blocks you can move or let go.</p>
+      <ul id="sync-list" class="sync-list"></ul>
+      <p class="sync-demo">Demo only. Nothing leaves this page and no account is touched.</p>
+      <div class="dialog-actions"><button id="sync-done" class="solid-small">Done</button></div>
     </dialog>
     <div id="golden" hidden><span class="golden-spark" aria-hidden="true">✦</span><div><strong id="golden-title">The golden window is open</strong><span id="golden-time"></span></div><button id="golden-share">Share this moment</button><button id="golden-dismiss" aria-label="Hide the golden window">×</button></div>
     <dialog id="capture" aria-labelledby="capture-title">
       <h2 id="capture-title">Share this moment</h2>
       <div class="capture-frame"><video id="capture-video" playsinline muted></video><img id="capture-preview" hidden alt="Your photo, ready to send"/></div>
       <p id="capture-status"></p>
-      <div class="dialog-actions"><button id="capture-snap">Take photo</button><label class="file-button">Choose a photo<input id="capture-file" type="file" accept="image/*"/></label><button id="capture-send" disabled>Send to the lake</button><button id="capture-cancel" class="text-button">Not now</button></div>
+      <label class="capture-caption">A few words (optional)<input id="capture-caption" type="text" maxlength="60" placeholder="Just as it is"/></label>
+      <div class="dialog-actions"><button id="capture-snap">Take photo</button><label class="file-button">Choose a photo<input id="capture-file" type="file" accept="image/*"/></label><button id="capture-send" disabled>Hang it up</button><button id="capture-cancel" class="text-button">Not now</button></div>
     </dialog>
     <dialog id="viewer" aria-labelledby="viewer-title"><img id="viewer-img" alt=""/><strong id="viewer-title"></strong><p id="viewer-sub"></p><div class="dialog-actions"><button id="viewer-close">Close</button></div></dialog>
+    <dialog id="album" class="wood album" aria-labelledby="album-title">
+      <div class="album-head"><span class="album-kicker">The carousel</span><h2 id="album-title">Today’s album</h2><p id="album-count" class="wood-note"></p></div>
+      <div class="album-body">
+        <section class="album-golden" aria-labelledby="album-golden-title"><h3 id="album-golden-title"><span>✦ The golden window</span></h3><p id="album-golden-note" class="album-note"></p><ul id="album-golden" class="album-grid"></ul></section>
+        <section aria-labelledby="album-day-title"><h3 id="album-day-title"><span>Through the day</span></h3><p id="album-day-note" class="album-note">No photos yet today. Hang the first one.</p><ul id="album-day" class="album-grid"></ul></section>
+      </div>
+      <div class="dialog-actions"><button id="album-add" class="wood-button">Hang a photo</button><button id="album-close" class="text-button" autofocus>Close</button></div>
+    </dialog>
     <dialog id="note-dialog" class="wood" aria-labelledby="note-title">
       <form id="note-form">
         <h2 id="note-title">A note for a friend</h2>
@@ -72,6 +88,7 @@
         <h2 id="planner-title">Your plan</h2>
         <div class="tabs" role="tablist" aria-label="Planner view"><button role="tab" data-tab="day">Day</button><button role="tab" data-tab="week">Week</button><button role="tab" data-tab="month">Month</button></div>
         <div class="cal-nav"><button id="cal-prev" aria-label="Previous">‹</button><strong id="cal-range"></strong><button id="cal-next" aria-label="Next">›</button><button id="cal-today" class="text-button">Today</button></div>
+        <button id="cal-sync" class="sync-button" aria-haspopup="dialog" aria-controls="sync-dialog"><span class="sync-dot" aria-hidden="true"></span><span id="cal-sync-label">Sync calendars</span></button>
         <button id="cal-add" class="solid-small">+ Add a block</button>
       </div>
       <p id="plan-load" class="plan-load"></p>
@@ -88,6 +105,10 @@
         <div class="balance-body">
           <div class="bal-head"><h2 id="balance-title">Your week, in balance</h2><div class="tabs" role="tablist" aria-label="How far back to look"><button role="tab" data-span="week" aria-selected="true">Week</button><button role="tab" data-span="month" aria-selected="false">Month</button></div></div>
           <div class="load-head"><div><strong id="bal-load"></strong><span class="fullness" aria-hidden="true"><i id="bal-fill"></i></span><span id="bal-band"></span></div><svg id="bal-trend" viewBox="0 0 132 36" role="img"></svg></div>
+          <section id="bal-areas" class="bal-areas" aria-labelledby="bal-areas-title">
+            <h3 id="bal-areas-title">This week, by area</h3>
+            <ul id="bal-area-list" class="bal-area-list"></ul>
+          </section>
           <section class="bal-panel" aria-labelledby="bal-mix-title">
             <h3 id="bal-mix-title">Where your time goes</h3>
             <div class="bal-mix"><svg id="bal-donut" viewBox="0 0 120 120" role="img"></svg><ul id="bal-legend" class="bal-legend"></ul></div>
@@ -168,7 +189,7 @@
       <div class="login-sign" style="--at:40%">
         <div class="sign-card" id="sign-community">
           <ul class="sign-list">
-            <li><i style="--c:#ffcf8a"></i><p><b>Share a daily moment</b>Once a day, a two-minute golden window opens by surprise. Everyone’s photos float over the pond.</p></li>
+            <li><i style="--c:#ffcf8a"></i><p><b>Share your day</b>Hang photos on the carousel by the pond. Once a day, a two-minute golden window opens by surprise, and those photos hang in gold.</p></li>
             <li><i style="--c:#c9976a"></i><p><b>Leave notes on wood</b>Drop a few kind words at a friend’s gate.</p></li>
             <li><i style="--c:#6fb6e6"></i><p><b>Do small things together</b>Join a small task, like a 30-minute walk. Everyone who finishes earns dewdrops.</p></li>
             <li><i style="--c:#9fdcc8"></i><p><b>Your plans stay private</b>Friends see your weather and height, never your schedule.</p></li>

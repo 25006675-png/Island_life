@@ -57,6 +57,6 @@ const when=day=>day===0?'Today':day===1?'Yesterday':
 export function treeCard(e,own){
   const c=CATEGORIES[e.cat], vis=own?'open':e.vis, key=`t${e.id}`;
   if(vis==='hidden')return {key,kicker:when(e.day),title:'Kept private',sub:'Only its owner can see what this was.'};
-  if(vis==='open')return {key,color:c.color,kicker:when(e.day),title:e.title,sub:`${c.label} · ${hours(e.mins)}`};
-  return {key,color:c.color,kicker:when(e.day),title:c.label,sub:`${tier(e.mins).label} tree · details kept private`};
+  if(vis==='open')return {key,color:c.color,cat:e.cat,kicker:when(e.day),title:e.title,sub:`${c.label} · ${hours(e.mins)}`};
+  return {key,color:c.color,cat:e.cat,kicker:when(e.day),title:c.label,sub:`${tier(e.mins).label} tree · details kept private`};
 }

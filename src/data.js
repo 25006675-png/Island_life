@@ -73,8 +73,9 @@ export const SCHEDULES={};
 export const TRENDS={sakura:[21,19,18],purple:[16,15,15],oak:[24,27,29]};
 
 export const CHECKINS={
+  // three heavy days in the last five: the windmill sign is up when the demo opens
   sakura:[{day:6,mood:'happy'},{day:5,mood:'calm'},{day:4,mood:'tired'},{day:3,mood:'happy'},
-          {day:2,mood:'calm'},{day:1,mood:'happy'},{day:0,mood:'calm',time:toMin('08:10')}],
+          {day:2,mood:'tired'},{day:1,mood:'stressed'},{day:0,mood:'calm',time:toMin('08:10')}],
   purple:[{day:6,mood:'happy'},{day:5,mood:'happy'},{day:4,mood:'tired'},{day:3,mood:'stressed'},
           {day:2,mood:'calm'},{day:1,mood:'tired'},{day:0,mood:'low',time:toMin('09:40')}],
   oak:   [{day:6,mood:'tired'},{day:5,mood:'calm'},{day:4,mood:'stressed'},{day:3,mood:'tired'},
@@ -103,12 +104,18 @@ export const TASKS=[
   {id:'message',title:'Message someone you miss',cat:'social',mins:30,by:null,reward:2,joined:['sakura','oak'],done:{sakura:null}},
 ];
 
-// Weather = subjective strain, looking back: the last five days of check-ins,
-// nudged by a heavy week. One continuous 0..1 value -- cloud gathers, then
-// rain grows. It surfaces a trend; it never diagnoses.
-export function deriveStrain(checkins,load){
+// Weather = how your recent days have felt: the last five days of check-ins.
+// Only the heavier feelings (tired, stressed, low) gather cloud; calm and happy
+// days clear it. How full the week is shows in altitude, never in the weather.
+// One continuous 0..1 value -- cloud gathers, then rain grows. It surfaces a
+// trend; it never diagnoses.
+export function deriveStrain(checkins){
   const recent=checkins.filter(c=>c.day<=4);
-  const strain=recent.length?recent.reduce((a,c)=>a+MOODS[c.mood].strain,0)/recent.length:0;
-  return Math.min(1,strain*.75+Math.max(0,load-.6)*.6);
+  return recent.length?Math.min(1,recent.reduce((a,c)=>a+MOODS[c.mood].strain,0)/recent.length):0;
 }
 export const weatherLabel=s=>s<.2?'Clear':s<.35?'Light cloud':s<.55?'Cloudy':s<.75?'Drizzle':'Rain';
+
+// Species icons: one small render of each category's tree (tools/render_species_icon.py),
+// shown beside the category's name wherever it appears. Decorative: the name is always there too.
+export const catIcon=cat=>`${import.meta.env.BASE_URL}assets/icons/${cat}.webp`;
+export const catImg=(cat,cls='cat-icon')=>Object.assign(document.createElement('img'),{src:catIcon(cat),alt:'',className:cls,decoding:'async'});

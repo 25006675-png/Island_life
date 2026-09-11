@@ -7,19 +7,19 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.path.join(ROOT, 'public', 'assets')
 os.makedirs(OUT, exist_ok=True)
 SOURCES = {
-    'community': 'island1.blend', 'meadow': 'island2.blend',
-    'meadow_a': 'island2a.blend', 'meadow_b': 'island2b.blend',
-    'meadow_c': 'island2c.blend',
-    'purple': 'Ghibli/Purple tree/ghibli_purple_tree.blend',
-    'oak': 'Ghibli/Golden oak/ghibli_oak.blend',
-    'sakura': 'Ghibli/Sakura tree/ghibli_sakura.blend',
-    'palm': 'Ghibli/Coral palm/ghibli_palm.blend',
-    'mushrooms': 'Ghibli/Mushroom cluster/ghibli_mushrooms.blend',
-    'clover': 'Ghibli/Clover patch/ghibli_clover.blend',
-    'pale': 'Ghibli/Pale tree/ghibli_pale_tree.blend',
-    'willow': 'Ghibli/Blue willow/ghibli_willow.blend',
-    'magic_mushrooms': 'Ghibli/Magic mushrooms/ghibli_magic_mushrooms.blend',
-    'gardener': 'Character/leaf_gardener.blend',
+    'community': 'models/island/island1.blend',
+    'meadow_a': 'models/island/island2a.blend', 'meadow_b': 'models/island/island2b.blend',
+    'meadow_c': 'models/island/island2c.blend',
+    'purple': 'models/trees/Purple tree/ghibli_purple_tree.blend',
+    'oak': 'models/trees/Golden oak/ghibli_oak.blend',
+    'sakura': 'models/trees/Sakura tree/ghibli_sakura.blend',
+    'palm': 'models/trees/Coral palm/ghibli_palm.blend',
+    'mushrooms': 'models/trees/Mushroom cluster/ghibli_mushrooms.blend',
+    'clover': 'models/trees/Clover patch/ghibli_clover.blend',
+    'pale': 'models/trees/Pale tree/ghibli_pale_tree.blend',
+    'willow': 'models/trees/Blue willow/ghibli_willow.blend',
+    'magic_mushrooms': 'models/trees/Magic mushrooms/ghibli_magic_mushrooms.blend',
+    'gardener': 'models/character/leaf_gardener.blend',
 }
 # Faces with these materials glow in the renders. They are split out as a
 # separate 'Glow' mesh, which main.js draws unlit so the bloom pass picks it up.

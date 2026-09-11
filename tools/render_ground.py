@@ -12,7 +12,7 @@ Only for this picture (the blend file is never saved):
   * the island's underside is squashed so its whole taper fits the strip, and
     the small floating rocks are lifted (not squashed) to hang just below it.
 
-Run: blender -b island2a.blend --python tools/render_ground.py
+Run: blender -b models/island/island2a.blend --python tools/render_ground.py
 Writes public/assets/ground.webp (RGBA) and prints, as fractions of the image
 height from the top: RIM_LINE (the near rim, where the gardener stands) and
 TIP_LINE (the lowest point of the island's underside at the middle).
@@ -24,7 +24,7 @@ import bmesh
 import bpy
 from mathutils import Vector
 
-ROOT = pathlib.Path(bpy.data.filepath).resolve().parent
+ROOT = pathlib.Path(__file__).resolve().parent.parent
 OUT = ROOT / 'public' / 'assets' / 'ground.webp'
 W = 2400
 SQUASH = .32                        # underside depth kept

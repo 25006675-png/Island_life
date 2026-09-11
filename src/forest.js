@@ -101,14 +101,21 @@ function blockCard(b,own){
   const c=CATEGORIES[b.cat], vis=own?'open':b.vis, st=STATUS[b.status]??b.status;
   const key=`g${b.id}${b.status}`, kicker=`Today · ${fmt(b.start)}–${fmt(b.start+b.mins)}`;
   if(vis==='hidden')return {key,kicker,title:'Kept private',sub:st};
-  if(vis==='open')return {key,color:c.color,kicker,title:b.title,sub:`${c.label} · ${hours(b.mins)} · ${st}`};
-  return {key,color:c.color,kicker,title:c.label,sub:`${tier(b.mins).label} tree · ${st}`};
+  if(vis==='open')return {key,color:c.color,cat:b.cat,kicker,title:b.title,sub:`${c.label} · ${hours(b.mins)} · ${st}`};
+  return {key,color:c.color,cat:b.cat,kicker,title:c.label,sub:`${tier(b.mins).label} tree · ${st}`};
 }
+
+// Equal time should look equally big, and a tree is judged by the area of its
+// coloured parts (canopy, caps; the pale tree's whole wood), not its height.
+// These even that area out across species as the walk camera sees it; they are
+// the "scale-to-median" column of tools/measure_canopy.py. Re-run it after
+// changing a species model or SPECIES_SCALE.
+const CANOPY_MATCH={sakura:.87,magic_mushrooms:.96,willow:.98,oak:1,purple:1.04,palm:1.05,pale:1.27};
 
 export function createForest({assets,islandSurface,speciesScale}){
   const islands=[], byBlock=new Map(), animating=new Set(), heights={};
   const heightOf=k=>heights[k]??=new T.Box3().setFromObject(assets[k]).getSize(new T.Vector3()).y;
-  const scaleFor=(island,cat,mins)=>(speciesScale[SPECIES[cat]]??1)*tier(mins).scale*(.92+island.rnd()*.16);
+  const scaleFor=(island,cat,mins)=>(speciesScale[SPECIES[cat]]??1)*(CANOPY_MATCH[SPECIES[cat]]??1)*tier(mins).scale*(.92+island.rnd()*.16);
 
   // One wedge per category, widths weighted by tree count (+2 so a small
   // category still gets room). Wedges are laid out in "free angle" u, which

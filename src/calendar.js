@@ -1,4 +1,4 @@
-import { CATEGORIES, CAPACITY, DAWN, NIGHT, fmt, hours, toMin, fullness } from './data.js';
+import { CATEGORIES, CAPACITY, DAWN, NIGHT, fmt, hours, toMin, fullness, catImg } from './data.js';
 import { TODAY, iso, fromIso, addDays, dow, mondayOf } from './plan.js';
 import { blockStatus } from './timetable.js';
 import { confirmLetGo } from './confirm.js';
@@ -25,6 +25,8 @@ export function createCalendar({plans,owner,clock,notice,sheets}){
 
   // ---- editor (shared by every view) -------------------------------------------
   for(const [k,c] of Object.entries(CATEGORIES))$('ed-cat').append(option(k,c.label));
+  const edIcon=catImg('study','ed-cat-icon');$('ed-cat').before(edIcon);
+  const showKind=()=>{edIcon.src=catImg($('ed-cat').value).src;};$('ed-cat').onchange=showKind;
   for(const m of [30,60,90,120,150,180,240])$('ed-mins').append(option(m,hours(m)));
   $('ed-vis').append(option('silhouette','Kind and size only'),option('open','Everything'),option('hidden','Nothing'));
   function edit(occ,defaults={}){
@@ -34,7 +36,7 @@ export function createCalendar({plans,owner,clock,notice,sheets}){
     $('editor-title').textContent=occ?'Edit block':'New block';
     if(![...$('ed-mins').options].some(o=>+o.value===b.mins))$('ed-mins').append(option(b.mins,hours(b.mins)));
     $('ed-title').value=b.title;$('ed-date').value=b.date;$('ed-start').value=fmt(Math.min(b.start,NIGHT-SLOT));
-    $('ed-mins').value=b.mins;$('ed-cat').value=b.cat;$('ed-vis').value=b.vis;
+    $('ed-mins').value=b.mins;$('ed-cat').value=b.cat;showKind();$('ed-vis').value=b.vis;
     $('ed-repeat').checked=!!b.repeat;$('ed-low').checked=b.priority==='low';$('ed-delete').hidden=!occ;
     $('block-editor').showModal();$('ed-title').focus();
   }
@@ -48,6 +50,37 @@ export function createCalendar({plans,owner,clock,notice,sheets}){
   $('ed-delete').onclick=()=>{if(editing){plans.remove(owner,editing);notice(`${editing.title} removed.`);}$('block-editor').close();};
   $('ed-cancel').onclick=()=>$('block-editor').close();
   $('cal-add').onclick=()=>edit(null);
+  // Calendar sync -- demo only: the connect flow is real-looking, but nothing
+  // leaves the page. (Planned: Google Calendar API, Microsoft Graph, CalDAV, ICS.)
+  const SYNC=[
+    {id:'google',name:'Google Calendar',glyph:'G',color:'#4a7fd8',how:'Two-way: classes come in, your blocks go out'},
+    {id:'outlook',name:'Outlook or Microsoft 365',glyph:'O',color:'#2f6fb5',how:'Two-way, with your uni account'},
+    {id:'apple',name:'Apple iCloud Calendar',glyph:'A',color:'#55596a',how:'Your iPhone and Mac calendars'},
+    {id:'lms',name:'Canvas, Moodle or Blackboard',glyph:'C',color:'#c0613f',how:'Deadlines from your course calendar link',
+     link:'https://canvas.your-uni.edu/feeds/calendars/…ics'},
+  ];
+  const synced=new Set();
+  function renderSync(){
+    $('sync-list').replaceChildren(...SYNC.map(s=>{
+      const on=synced.has(s.id), link=s.link&&!on?el('input',{type:'url',placeholder:s.link,ariaLabel:`${s.name} calendar link`}):null;
+      const btn=el('button',{type:'button',className:on?'text-button':'solid-small',textContent:on?'Disconnect':'Connect'});
+      btn.onclick=()=>{
+        if(on){synced.delete(s.id);renderSync();notice(`${s.name} disconnected.`);return;}
+        if(link&&!link.value.trim()){link.focus();notice('Paste your course calendar link first.');return;}
+        btn.disabled=true;btn.textContent='Connecting…';
+        setTimeout(()=>{synced.add(s.id);renderSync();notice(`${s.name} connected. In the full app its events arrive as blocks.`);},900);
+      };
+      return el('li',{className:on?'on':''},
+        el('span',{className:'sync-glyph',style:`--c:${s.color}`,textContent:s.glyph,ariaHidden:'true'}),
+        el('span',{className:'sync-what'},el('strong',{textContent:s.name}),el('span',{textContent:on?'Connected · synced just now':s.how}),...(link?[link]:[])),
+        btn);
+    }));
+    const n=synced.size;
+    $('cal-sync-label').textContent=n?`Synced · ${n} calendar${n===1?'':'s'}`:'Sync calendars';
+    $('cal-sync').classList.toggle('on',n>0);
+  }
+  $('cal-sync').onclick=()=>{renderSync();$('sync-dialog').showModal();};
+  $('sync-done').onclick=()=>$('sync-dialog').close();
 
   // ---- Day -------------------------------------------------------------------------
   function renderDay(){
@@ -58,7 +91,7 @@ export function createCalendar({plans,owner,clock,notice,sheets}){
       const open=el('button',{type:'button',className:'plan-open'},
         el('span',{className:'plan-when',textContent:`${fmt(b.start)}–${fmt(b.start+b.mins)}`}),
         el('span',{className:'plan-what'},el('strong',{textContent:b.title}),
-          el('span',{textContent:`${CATEGORIES[b.cat].label} · ${hours(b.mins)} · ${STATUS[st]}${b.repeat?' · weekly':''}${b.priority==='low'?' · can wait':''}`})));
+          el('span',{},catImg(b.cat),`${CATEGORIES[b.cat].label} · ${hours(b.mins)} · ${STATUS[st]}${b.repeat?' · weekly':''}${b.priority==='low'?' · can wait':''}`)));
       open.onclick=()=>edit(b);
       const li=el('li',{className:`plan-item ${st}`},open);li.style.setProperty('--cat',CATEGORIES[b.cat].color);
       // every block can be answered: Done grows its tree, Let go lets it drift away
@@ -92,7 +125,7 @@ export function createCalendar({plans,owner,clock,notice,sheets}){
     const st=statusOn(b), c=el('button',{type:'button',className:`wk-block ${st}${b.mins<=SLOT?' short':''}`});
     c.style.cssText=`--cat:${CATEGORIES[b.cat].color};top:${(b.start-DAWN)/SLOT*ROW}px;height:${Math.max(ROW,b.mins/SLOT*ROW)-2}px;`+
                     `left:calc(${lane/of*100}% + 2px);width:calc(${100/of}% - 4px)`;
-    c.append(el('strong',{textContent:b.title}),el('span',{textContent:`${fmt(b.start)}–${fmt(b.start+b.mins)}${b.repeat?' · weekly':''}`}));
+    c.append(el('strong',{},catImg(b.cat),b.title),el('span',{textContent:`${fmt(b.start)}–${fmt(b.start+b.mins)}${b.repeat?' · weekly':''}`}));
     const grip=el('i',{className:'grip'});grip.setAttribute('aria-hidden','true');c.append(grip);
     c.setAttribute('aria-label',`${b.title}, ${DAYS[dow(b.date)-1]} ${fmt(b.start)} to ${fmt(b.start+b.mins)}, ${CATEGORIES[b.cat].label}, ${STATUS[st]}`);
     c.occ=b;return c;

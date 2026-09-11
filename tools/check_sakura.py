@@ -1,6 +1,6 @@
 """Check that sakura blossoms sit outside and face away from their lobed cores.
 
-Run: blender -b "Ghibli/Sakura tree/ghibli_sakura.blend" --python tools/check_sakura.py
+Run: blender -b "models/trees/Sakura tree/ghibli_sakura.blend" --python tools/check_sakura.py
 """
 import ast
 from pathlib import Path
@@ -8,7 +8,7 @@ from pathlib import Path
 import bpy
 from mathutils import Vector
 
-source = Path(__file__).resolve().parents[1] / 'Ghibli/Sakura tree/create_sakura.py'
+source = Path(__file__).resolve().parents[1] / 'models/trees/Sakura tree/create_sakura.py'
 tree = ast.parse(source.read_text())
 clusters = next(ast.literal_eval(node.value) for node in tree.body
                 if isinstance(node, ast.Assign)

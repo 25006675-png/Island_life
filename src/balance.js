@@ -1,4 +1,4 @@
-import { CATEGORIES, CAPACITY, TRENDS, MOODS, hours, weatherLabel, fullness } from './data.js';
+import { CATEGORIES, CAPACITY, TRENDS, MOODS, hours, weatherLabel, fullness, catImg } from './data.js';
 import { TODAY, addDays, mondayOf, dow, fromIso, daysBetween } from './plan.js';
 
 // The balance sheet: analysis plus solutions for your own week. Your gardener
@@ -70,8 +70,10 @@ export function createBalance({plans,me,friends,clock,checkins,sheets,notice,dew
     $('bal-donut').innerHTML=`<circle r="${R}" cx="60" cy="60" fill="none" stroke="oklch(.93 .01 295)" stroke-width="15"/>${arcs}`+
       (top?`<text x="60" y="58" text-anchor="middle" class="donut-big">${pct(top.m,total)}%</text><text x="60" y="74" text-anchor="middle" class="donut-small">${CATEGORIES[top.c].label.toLowerCase()}</text>`:'');
     $('bal-donut').setAttribute('aria-label',`Share of ${span==='week'?'this week':'the last five weeks'} by kind: `+rows.map(r=>`${CATEGORIES[r.c].label} ${pct(r.m,total)}%`).join(', '));
-    $('bal-legend').replaceChildren(...rows.map(r=>{
-      const li=el('li',{},el('i'),el('span',{textContent:CATEGORIES[r.c].label}),el('b',{textContent:`${pct(r.m,total)}%`}));
+    // every kind is listed, so a missing one reads as "none this week" instead of vanishing
+    const none=Object.keys(CATEGORIES).filter(c=>!byCat[c]).map(c=>({c,m:0}));
+    $('bal-legend').replaceChildren(...rows.concat(none).map(r=>{
+      const li=el('li',{className:r.m?'':'none'},catImg(r.c),el('span',{textContent:CATEGORIES[r.c].label}),el('b',{textContent:`${pct(r.m,total)}%`}));
       li.style.setProperty('--c',CATEGORIES[r.c].color);return li;
     }));
   }
@@ -188,15 +190,34 @@ export function createBalance({plans,me,friends,clock,checkins,sheets,notice,dew
       col.style.setProperty('--plan',b.plan/max);col.style.setProperty('--done',b.done/max);return col;
     }));
   }
-  function weatherLine(week,load){
+  // ---- This week, by area: the five the brief names, read back in words ----
+  // Each gets a status dot: steady, worth watching, or heavy. Physical reads
+  // movement planned and late nights (blocks ending at 22:00 or later).
+  const STATUS_DOT={ok:'oklch(.74 .12 150)',watch:'oklch(.8 .13 80)',high:'oklch(.68 .15 35)'};
+  const cap1=t=>t[0].toUpperCase()+t.slice(1);
+  function areas(week,load){
+    const live=week.filter(b=>!b.skipped), mins=c=>live.filter(b=>b.cat===c).reduce((a,b)=>a+b.mins,0);
+    const heavy=checkins.filter(c=>c.day<=4&&MOODS[c.mood].strain>=.55).length;
+    const late=live.filter(b=>b.start+b.mins>=22*60).length, move=mins('exercise'), social=mins('social');
+    const todo=live.filter(b=>b.cat==='errands'&&!b.done).length;
+    const rows=[
+      ['Time',cap1(fullness(load)),load<.65?'ok':load<.85?'watch':'high'],
+      ['Mental',heavy===0?'Steady days':heavy===1?'One heavier day':heavy<4?'A few heavy days':'A heavy run of days',heavy<2?'ok':heavy<4?'watch':'high'],
+      ['Physical',(move>=120?'Moving well':move>0?'A little movement':'No movement planned')+(late>=2?` · ${late} late nights`:''),
+        move===0&&late>=2?'high':move<120||late>=2?'watch':'ok'],
+      ['Social',social>=180?'Plenty of time with people':social>=60?'Some time with people':'Quiet this week',social>=60?'ok':'watch'],
+      ['Errands',todo===0?'All clear':todo<=2?`${todo} to do`:`${todo} piling up`,todo<=2?'ok':todo<=4?'watch':'high'],
+    ];
+    $('bal-area-list').replaceChildren(...rows.map(([name,text,st])=>{
+      const li=el('li',{},el('b',{textContent:name}),el('span',{textContent:text}));
+      li.style.setProperty('--s',STATUS_DOT[st]);li.title=`${name}: ${st==='ok'?'steady':st==='watch'?'worth watching':'heavy'}`;return li;
+    }));
+  }
+  // Weather is feelings only (data.js deriveStrain); how full the week is lives in altitude.
+  function weatherLine(){
     const heavy=checkins.filter(c=>c.day<=4&&MOODS[c.mood].strain>0).length;
-    const late=week.filter(b=>!b.skipped&&b.start+b.mins>=21*60+30).length;
-    const bits=[];
-    if(heavy)bits.push(heavy===1?'one heavier day':heavy<4?'a few low-mood days':'a run of low-mood days');
-    if(late)bits.push(late===1?'one late night':late===2?'two late nights':'several late nights');
-    if(load>.8)bits.push('a very full week');
     const label=weatherLabel(me.strain??0);
-    return bits.length?`${label}: ${list(bits)} this week.`:`${label}: steady days, and room to breathe.`;
+    return heavy?`${label}: ${heavy===1?'one heavier day':heavy<4?'a few heavier days':'a run of heavier days'} lately.`:`${label}: calm, steady days lately.`;
   }
   function renderList(){
     $('bal-suggest').replaceChildren(...current.map(s=>{
@@ -213,13 +234,14 @@ export function createBalance({plans,me,friends,clock,checkins,sheets,notice,dew
     $('balance-title').textContent=span==='week'?'Your week, in balance':'Your month, in balance';
     $('bal-done-title').textContent=span==='week'?'Done so far':'Week by week';
     trend(TRENDS[owner].concat(Math.round(h)));
+    $('bal-areas').hidden=span!=='week';
     if(span==='week'){
       $('bal-load').textContent=`Your week is ${fullness(load)}`;
       $('bal-fill').style.width=`${Math.min(100,load*100)}%`;
-      $('bal-band').textContent=load<.35?'Floating high: plenty of open sky':load<.7?'Mid-sky: full, but breathing':'Low, close to the cloud sea';
-      mix(byCatOf(week));moods();progress(week);
+      $('bal-band').textContent=load<.35?'Floating high: plenty of open sky':load<.65?'Mid-sky: room to breathe':load<.85?'Lower in the sky: a full week':'Low, close to the cloud sea';
+      mix(byCatOf(week));moods();progress(week);areas(week,load);
     }else{const m=monthData();monthHead(m);mix(m.byCat,'month');moodMonth(m);weeksBars(m);}
-    $('bal-weather').textContent=weatherLine(week,load);
+    $('bal-weather').textContent=weatherLine();
     renderList();
     $('bal-dew').textContent=`💧 ${dew()} dewdrops, a slow drip from finished blocks, golden-window moments and notes between friends. They grew the windmill in the middle of your island.`;
   }
