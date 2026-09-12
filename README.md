@@ -332,45 +332,24 @@ Asset pipeline: Blender + Python + GLB/glTF
 
 ## 5.2 System Architecture
 ![system-archicture](docs/images/System_architecture.png)
-## 5.3 Future Plan
+## 5.3 Build Plan for the Final
 
-The technology behind these, and why each was chosen, is listed in the tech stack above. This section covers what each one changes for the student.
+Three things we can finish and show, in this order. Each one builds on parts the prototype already has.
 
-### 1. Calendar Sync
+| What we build | What it changes for the student | What it needs | Rough cost |
+|---|---|---|---|
+| **Timetable import from a calendar link** | Paste the calendar link a university already publishes, and the week arrives as blocks: classes, deadlines, shifts. The island fills without typing anything. | An ICS parser, a mapping from events to blocks and categories, and somewhere to keep the link. No OAuth consent screen, so nothing waits on approval. | ~2 days |
+| **Accounts and saved plans** | Sign in, and the plan, check-ins and trees are still there tomorrow and on another device. Two people can be signed in at once during a demo. | Supabase Auth and PostgreSQL behind the existing plan store, with row-level security so friends read only what was shared with them. | ~4 days |
+| **A phone pass** | The world and the planner work with one thumb, which is where a student actually keeps them open. | Layout work on the sheets and header, larger touch targets, and compressed models for a faster first load. | ~3 days |
 
-Classes, shifts, and deadlines would appear on the island automatically, so a week is full before the student has typed anything. Synced events arrive as ordinary blocks that can be moved, finished, or let go, and the planner already shows the connect flow as a demo. Google Calendar and Outlook would sync both ways; Apple iCloud, Canvas, Moodle, Blackboard, and Google Classroom would be imported.
+The order matters. Import proves the idea on a judge's own timetable, accounts make the demo survive a refresh, and the phone pass widens who can try it.
 
-### 2. Mobile Version 
-Develop a mobile-optimized version featuring: 
-- A lighter 3D island 
-- Compressed models 
-- One-thumb controls
-- Mobile-friendly interactions   
-  
-The goal is to make the entire Island Life experience accessible **from a user's pocket**. 
-### 3. Real Accounts & Friends
-The demo runs on mock members. With accounts in place, students would sign in, invite real friends, and keep
-those islands over time. A friend's weather and altitude would update live, notes and shared tasks would
-persist, and private plans would stay private, enforced by the database rather than by the interface.
+## 5.4 Beyond the Final
 
-### 4. Gentle Milestones 
-Introduce positive milestones that celebrate sustainable balance rather than productivity streaks. Examples include: 
-- **First week in balance** 
-- **First slow evening**   
-- **Other wellness-focused achievements**
-
-The objective is to reinforce sustainable habits without introducing guilt or pressure.
-
-### 5. Island Decorations and Gardener Costumes
-
-Allow users to personalize their island and gardener using Dewdrops earned through healthy, balanced activities. Customization options could include:
-
-- Island decorations such as benches, lanterns, windmills, ponds, flowers, paths, and seasonal items
-- Gardener costumes, hats, accessories, and colour themes
-- Themed decoration and costume collections that students can unlock over time
-- A preview mode that lets students try an item before spending Dewdrops
-
-Customization will remain cosmetic and will not increase productivity scores or reward overworking. Rest, social activities, and healthy routines will contribute equally toward earning customization rewards.
+- **Two-way calendar sync** with Google Calendar and Microsoft Graph, so a slow evening added on the island travels back to the calendar it came from.
+- **Live weather between friends**, updating as check-ins land rather than at the next reload.
+- **Gentle milestones**, such as a first week in balance or a first slow evening.
+- **Island decorations and gardener costumes**, bought with dewdrops, cosmetic only, and earned as easily by resting as by studying.
 
 # Summary
 
