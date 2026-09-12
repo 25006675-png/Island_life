@@ -394,16 +394,50 @@ Asset pipeline: Blender + Python + GLB/glTF
 ![system-archicture](docs/images/System_architecture.png)
 ## 5.3 Build Plan for the Final
 
-The plan follows the competition's own phases, and the order is deliberate: import proves the idea on a judge's own timetable, accounts make a demo survive a refresh, and the phone is where a student would actually keep it open.
+The plan follows the competition's own phases. The order is deliberate: import proves the idea on a judge's own timetable, accounts make a demo survive a refresh, and the phone is where a student would actually keep it open.
 
-| Window | Focus | What lands |
+| Window | Focus |
+|---|---|
+| **21 Sep to 11 Oct** | Building: turn the prototype into something a stranger can use with their own week |
+| **12 Oct to 31 Oct** | Deploy: make it fast, reachable, and tested by people who are not us |
+| **1 Nov to 14 Nov** | Rehearse: fix what the pilot found and make the demo dependable |
+| **15 Nov** | Grand final |
+
+### Building, 21 September to 11 October
+
+| Week | What we build | Done when |
 |---|---|---|
-| **21 Sep to 11 Oct** · Building | Turn the prototype into something a stranger can use with their own week | **Timetable import** from the calendar link a university already publishes, so classes, deadlines and shifts arrive as blocks. **Accounts and saved plans** on Supabase, so a plan survives a refresh and two people can be signed in at once. **A phone pass**: one-thumb controls, lighter models, layout work on the sheets. |
-| **12 Oct to 31 Oct** · Deploy | Make it fast, reachable and tested by people who are not us | The build live on Vercel with Supabase behind it, compressed models for a quick first load, an accessibility and browser pass, and a small pilot with students outside the team. |
-| **1 Nov to 14 Nov** · Rehearse | Fix what the pilot found, and make the demo dependable | Changes driven by the pilot, a demo that runs from a judge's own calendar link, and a fallback path that works without a network. |
-| **15 Nov** · Grand final | Show it, not slides | A five-minute run: import a real timetable, watch the island sink, and let the gardener catch it. |
+| **21 to 27 Sep** | **Timetable import.** Parse an ICS feed, turn each event into a block, expand weekly repeats, and guess a category from the event title with a manual override. Store the link so it can be refreshed. | A pasted Canvas, Moodle or Google link fills a week on the island, and re-importing does not create duplicates. |
+| | **Database and accounts.** Supabase project, schema for profiles, blocks, check-ins, notes, tasks and moments, row-level security, email and Google sign-in. | A signed-in student reads and writes only their own rows, proven by a failing query from another account. |
+| **28 Sep to 4 Oct** | **Plans move to the database.** The existing plan store reads and writes Postgres instead of mock data, with the interface updating immediately and reconciling after. | Add, move, finish and let go survive a refresh and appear on a second device. |
+| | **Friends for real.** Invite by link, a friendship table, and friend-facing values derived on the server so hours and titles never leave the owner's account. | A friend sees weather and altitude in words, and a direct query for anything else returns nothing. |
+| | **Import in the planner.** The sync panel stops being a demo: paste a link, preview what will arrive, choose which calendars to keep. | A student can import, see what changed, and undo it. |
+| **5 to 11 Oct** | **Phone pass.** One-thumb movement, larger touch targets, sheets and the island card laid out for a narrow screen, and a lighter quality tier for weaker devices. | The full flow works on a mid-range Android phone at a steady frame rate. |
+| | **Lighter world.** Compressed meshes and textures, and islands loaded as they are needed rather than all at once. | First meaningful view under five seconds on a normal connection. |
+| | **Tests.** Unit tests for load, altitude, weather and recurrence; Playwright for sign-in, import, planner and the nudge. | The suite runs on every push and blocks a broken merge. |
 
-Rough cost of the three building items: import about two days, accounts about four, the phone pass about three. They are independent, so they can run in parallel across the team.
+### Deploy, 12 October to 31 October
+
+| Week | What we do | Done when |
+|---|---|---|
+| **12 to 18 Oct** | **Production deploy.** Vercel with the Supabase production project behind it, environment separation, backups, and error reporting. | A clean install from the public URL works with no local setup. |
+| | **Performance and accessibility.** First-load budget, keyboard path through every screen, visible focus, contrast, reduced motion, and Safari, Firefox and Chrome on desktop and phone. | Every task can be completed without a mouse, and the world holds a steady frame rate on the phones we have. |
+| **19 to 25 Oct** | **Pilot with students outside the team.** Around ten of them for a week: import a timetable, check in daily, meet one nudge. We watch the first five minutes without explaining anything. | We can say what people misunderstood, and how many imported, marked something done, and accepted a suggestion. |
+| **26 to 31 Oct** | **Fix what the pilot found**, then harden the edges: first run with nothing on the plan, an import that fails, a friend who never checks in, and an offline start. | The top issues from the pilot are closed, and no empty state is a blank screen. |
+| | **Feature freeze** on 31 October. | Only fixes after this date. |
+
+### Rehearse, 1 to 14 November
+
+A demo that runs from a judge's own calendar link, a recorded fallback in case the network fails, and a five-minute script: import a real timetable, watch the island sink, let the gardener catch it.
+
+### Risks we are planning around
+
+| Risk | What we do about it |
+|---|---|
+| Google and Microsoft sign-in approval takes weeks | The final depends on ICS links, which need no approval. Two-way sync stays after the final. |
+| A 3D world is heavy on cheap phones | A lighter quality tier and compressed assets in the building phase, tested on a mid-range device rather than ours. |
+| Nobody outside the team has used it | The pilot is scheduled inside the deploy window, not left until the end. |
+| A live demo depends on the venue network | The fallback runs on local data with no network at all. |
 
 ## 5.4 Beyond the Final
 
