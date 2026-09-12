@@ -1,191 +1,288 @@
+
 # Island Life
 
-**Your week, grown into an island in the sky.**
+<p align="center">
+  <img src="docs/images/Banner.png" alt="Banner" width="100%" />
+</p>
 
-![The sky view, with your island, your friends' islands and The gathering Island joined by bridges above a sea of clouds](docs/images/sky.jpg)
+**Team:** Codenected  
+**Team Member:** Lee Kai Hong, Leow Shen En, Choong Zhuo Lin, Chung Jun  
+**Problem Statement:** Stress & Workload Manager
 
-> **Live demo:** _add the Vercel link here_ · **Team:** _add names here_ · Made for the *Beating the Burnout* track.
+## Project Links
 
-Burnout rarely comes from one big thing. It comes from everything piling up until you're running on empty, and nobody noticed, including you.
+- **Video Presentation:** _To be added_
+- **Presentation Slides:** _To be added_
+- **Prototype:** [Island Life Prototype](https://island-life-one.vercel.app/)
 
-Island Life turns your week into a small floating island, so you can see the pile before it gets heavy. You can read your whole week in one glance, without a single chart. And it doesn't wait for you to look. It reads your plan and your check-ins, and speaks up with suggestions made for your week.
+
+
+# 1. Project Overview
+
+## 1.1 Problem
+
+Today’s university students live in a state of continuous overcommitment, constantly striving to balance:
+
+- Demanding academics
+- Co-curricular leadership
+- Sports
+- Part-time jobs
+- Vibrant social lives
+
+By defaulting to saying **"yes" to every opportunity**, students inevitably trigger severe burnout and emotional vacancy—ending up with a sense of doing everything, yet feeling empty and accomplishing nothing.
+
+This issue stems from a fundamental flaw in current productivity solutions:
+
+- Traditional tools such as standard **Pomodoro timers** rely on rigid countdowns and flat, 2D interfaces that treat users like machines, completely unable to sense mental fatigue or burnout states.
+- Energy-tracking apps such as **Pensus** capture biological energy metrics but deliver them through clinical, uninspired interfaces that lack creativity and personal engagement.
+
+These limitations leave three core stakeholder groups underserved:
+
+1. **Gen Z university students**
+   - Need aesthetic, visual-first tools to express themselves.
+   - Need better ways to manage their mental bandwidth.
+
+2. **Peer groups**
+   - Lack collaborative spaces for shared accountability and study sessions.
+
+3. **University support networks**
+   - Bear the cost of student mental health crises.
+
+**Island Life** directly addresses this gap by transforming routine focus management into an immersive, customizable **3D island-building experience** that inherently understands burnout and empowers friends to build healthy study habits together.
+
+
+
+## 1.2 Our Solution
+
+Island Life translates a student's week into an immersive, floating **3D island in the sky** that makes mental load visible before burnout hits.
+
+Built with **Three.js** and custom **Blender assets**, the platform:
+
+- Converts scheduled commitments across **seven activity categories** into growing trees.
+- Uses the island’s physical **altitude** to represent weekly workload density.
+- Transforms real-time **weather** based on emotional check-ins.
+- Uses an ambient **AI Gardener** to monitor fatigue trends.
+- Suggests pre-scheduled, **single-tap rest activities** rather than enforcing rigid study marathons.
+- Provides a daily **2-minute "Golden Window"** photo prompt for friends to share authentic BeReal-style study moments.
+- Connects peer islands through **privacy-first bridges** that display emotional weather rather than private calendars.
+- Replaces streak penalties with a guilt-free **"Let Go"** mechanic.
+- Values and rewards **rest equally with work**.
+
+Island Life turns daily focus into a shared, supportive journey toward **sustainable mental balance**.
+
+
+
+# 2. Ideation & Process
+
+## 2.1 Ideas We Considered
+
+The following table summarizes the ideas explored during ideation and explains why each concept was either **chosen** or **dropped**.
+
+| Idea | Decision / Reason |
+|---|---|
+| **Personalized 3D Island World (3D Sky Island)** — **Chosen** | Replaces flat 2D dashboards with an interactive Three.js 3D sanctuary. Translates weekly load into physical island altitude and emotions into dynamic weather, making burnout instantly visible without charts. |
+| **1-Tap Photo Check-Ins ("The Golden Window")** — **Chosen** | Inspired by BeReal, a daily 2-minute dual-camera check-in captures authentic, unfiltered study moments. Photos are displayed on The Gathering Island carousel, offering real social proof without fake timers. |
+| **Shared Peer Bridges & Gathering Island** — **Chosen** | Connects friends through physical bridges and shared hubs. Friends can see emotional weather and altitude, leave gate notes, and complete group wellness tasks while keeping private plans **100% confidential**. |
+| **Empathic AI Gardener & Rest Nudge** — **Chosen** | Monitors emotional check-ins and workload density. Automatically suggests personalized, pre-scheduled rest activities such as tea breaks, walks, or early sleep that can be applied in one tap to prevent burnout before it happens. |
+| **Guilt-Free "Let Go" & Balanced Rewards** — **Chosen** | Eliminates anxiety-inducing streak counters. Letting go of a task causes its glass tree to quietly drift away without penalty, while resting earns the same reward—**Dewdrops 💧**—as studying. |
+| **Visual Activity Trees & Timetable Clock Path** — **Chosen** | Classifies seven activity types into distinct tree species, using glass trees for upcoming tasks and solid trees for completed tasks. Today's schedule is rendered as a glowing clock-face path walked by a light in real time. |
+| **Blender MCP Server Pipeline** — **Chosen** | Uses a **Model Context Protocol (MCP)** server running Python scripts to control Blender, automating 3D asset generation and scene creation to dramatically speed up development. |
+| **Forest-Style Single-Player Tree Planting** — **Dropped** | Forest is an isolating 2D experience that relies on passive timers, which can easily be faked, and punishes users with dead trees when stopping early. This can induce guilt rather than encourage healthy balance. |
+| **Crypto-Reward / Tokenomics Concept** — **Dropped** | Mentor Zach advised dropping the concept because Web3/crypto rewards are overused in hackathon pitches, create unnecessary transaction friction, and distract from the core wellness and mental-health goals. |
+| **Traditional Virtual Garden Concept** — **Dropped** | Mentor Zach advised dropping the concept because standard 2D/3D garden plots are saturated and generic. It was replaced by the floating 3D sky island, where altitude, weather, and trees directly represent mental-health metrics. |
+| **Audio Analysis & Automated AI Pathfinder** — **Dropped** | Audio tracking is invasive to user privacy. Automated pathfinders may also present schedule adjustments with false confidence, potentially leading users through inaccurate sequences if fatigue or priorities are misinterpreted. |
 
 ---
 
-## Your week, as an island
+## 2.2 Ideation Boards
 
-<table>
-<tr>
-<td width="50%"><img src="docs/images/trees.jpg" alt="Your island up close, with solid trees for what you've done and glass trees for what's coming up"/></td>
-<td width="50%"><img src="docs/images/altitude.jpg" alt="Two islands side by side, one floating high and one sitting low near the clouds"/></td>
-</tr>
-<tr>
-<td valign="top"><h3>Everything you do grows into a tree</h3>
-Seven kinds of activity, seven kinds of tree. What's coming up stands as a glass tree. Mark it done, and it takes root in full colour. Let it go, and the glass tree drifts away quietly.</td>
-<td valign="top"><h3>A full week sinks your island</h3>
-Your island floats high when your week has room, and sinks toward the clouds as you take more on. You feel it's too much before you've said yes to one more thing.</td>
-</tr>
-<tr>
-<td><img src="docs/images/weather.jpg" alt="Rain over an island, with feeling lanterns hanging in its sky"/></td>
-<td><img src="docs/images/friends.jpg" alt="Your island, The gathering Island and your friends' islands, joined by glowing bridges"/></td>
-</tr>
-<tr>
-<td valign="top"><h3>Your feelings become the weather</h3>
-Tell your island how you feel, and a coloured lantern rises into its sky. A few tired, stressed or low days gather cloud, then rain. Calm and happy days clear it again.</td>
-<td valign="top"><h3>Your friends are a bridge away</h3>
-Friends' islands connect to yours through The gathering Island. You see their weather and how high they float, never their hours or plans. A rainy island is your cue to leave a note at their gate.</td>
-</tr>
-</table>
+![Ideation Board](docs/images/Island_Life_Ideation_Board-1.png)
 
-| <img src="public/assets/icons/study.webp" width="44" alt=""/> | <img src="public/assets/icons/work.webp" width="44" alt=""/> | <img src="public/assets/icons/errands.webp" width="44" alt=""/> | <img src="public/assets/icons/social.webp" width="44" alt=""/> | <img src="public/assets/icons/exercise.webp" width="44" alt=""/> | <img src="public/assets/icons/rest.webp" width="44" alt=""/> | <img src="public/assets/icons/other.webp" width="44" alt=""/> |
-|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| Study | Work | Errands | Social | Exercise | Rest | Other |
+### This is explanation
+---
 
-The same little trees mark each kind of activity everywhere in the app, so you can spot a study-heavy week from across the sky.
+## 2.3 Mentor Consultation
+
+| Date | Mentor | Feedback Received | What Was Changed |
+|---|---|---|---|
+| **5 Sept 2026** | **Zach Khong** | During our design review, mentor Zach advised us to discard generic **"virtual garden"** and **"crypto-reward"** mechanics because they are overused and lack differentiation. Instead, he validated our strongest visual and social features: the **1-tap BeReal-style photo check-ins** and our **interactive 3D island model**. Architecturally, he recommended using an **MCP server connected to Blender** for streamlined 3D asset generation, paired with **Three.js** to render dynamic, customizable 3D web environments. We also refined the product by synthesizing feature sets from leading focus and energy tools such as **Opal** for focus enforcement and **Uplift / Operator** for smart energy and session tracking. | We completely eliminated generic virtual-garden and crypto-reward mechanics and focused on our two strongest innovations: **interactive 3D environments** and **1-tap BeReal-style photo check-ins**. Rather than creating an isolating single-player task manager, we designed **George Island** as a community-driven ecosystem where users coexist in shared visual spaces while retaining deep personal aesthetic customization. To build this vision under hackathon constraints, we deployed an **MCP server** to programmatically control Blender for automated asset generation and paired it with **Three.js** for animated web environments. We also benchmarked leading productivity applications, combining **Opal’s focus enforcement**, **Operator/Uplift’s ambient energy tracking**, **Pensus’s energy awareness**, and **traditional Pomodoro intervals** into a cohesive wellness platform aimed at combating burnout. |
+
+
+
+
+
+# 3. Design & Prototype
+
+## Prototype
+
+**Live Prototype:**  
+[https://island-life-one.vercel.app/](https://island-life-one.vercel.app/)
+
+
+
+
+### Recommended Screens
+
+Embed or link approximately **4–8 key screens** and provide a short caption explaining the interaction shown in each.
+
+Suggested examples:
+
+1. Personal 3D Island
+2. Weekly workload visualization
+3. Emotional weather system
+4. AI Gardener rest suggestion
+5. Golden Window photo check-in
+6. Gathering Island
+7. Peer bridge interaction
+8. "Let Go" task interaction
+
+
+
+# 4. What Makes It Different
+
+Island Life differentiates itself by combining an expressive **3D environment**, real-world focus verification, burnout-aware mechanics, privacy-preserving social interaction, and procedural customization.
+
+## Competitive Comparison
+
+| Feature | **Island Life** | **Forest** | **Pensus** | **Pomodoro** | **Operator / Uplift** |
+|---|---|---|---|---|---|
+| **Core Visual & World Experience** | **Interactive 3D Web Environment** built with Three.js, featuring dynamic altitude, lighting, camera control, and weather. | Static, top-down 2D grid/forest layout with minimal visual depth. | Clinical 2D administrative dashboards with numbers, progress rings, and charts. | Minimalist 2D timers, numerical countdowns, or basic progress bars. | Agent OS / workspace dashboards with task logs, lists, and workflow UI. |
+| **Proof of Focus Verification** | **1-Tap BeReal-Style Photo Check-Ins.** Dual-camera snapshots confirm real study setups and post to a shared carousel. | Passive countdown timer. Trees grow even if the phone sits idle on a desk while the user watches TV or sleeps. | Mechanical background timer with zero real-world activity verification. | Mechanical background timer with zero real-world activity verification. | Mechanical background timer with zero real-world activity verification. |
+| **Burnout Prevention & Mental Wellness** | **Empathic Rest & Energy Loops.** The AI Gardener monitors fatigue, prompts single-tap rest, and rewards rest equally with **Dewdrops 💧**. | **Punitive design.** Stopping early kills a tree, potentially inducing guilt and encouraging continuous, draining study marathons. | **Analytical logging.** Tracks energy metrics but presents them as dry administrative logs. | **Rigid mechanics.** Enforces strict 25/5-minute intervals regardless of mental bandwidth or flow state. | **Predictive execution.** Optimizes task scheduling and agent workflows but lacks emotional or visual wellness mechanics. |
+| **Social Co-Presence & Community** | **Privacy-Preserving 3D Bridges.** Users can visit peer islands, view emotional weather, leave gate notes, and complete group tasks together. | Primarily single-player focus. Shared study rooms only synchronize a timer number across users. | Solitary utility tool with no social or community mechanics. | Solitary utility tool with no social or community mechanics. | Team workspace feeds, command centers, or collaborative task-sharing pools. |
+| **Asset & Environment Customization** | **Automated 3D Procedural Engine.** Uses Python scripts and Blender through an MCP server to generate dynamic 3D island assets. | Fixed, unlockable 2D virtual trees that lack personal identity or deep expression. | Basic UI theme changes such as light/dark mode and accent colors. | Basic UI theme changes such as light/dark mode and accent colors. | Basic UI theme changes such as light/dark mode and accent colors. |
+
+
+
+# 5. Technical Architecture & Feasibility
+
+## 5.1 Tech Stack
+
+Document the project's:
+
+- **Frontend**
+- **Backend**
+- **Database**
+- **APIs**
+- **External services**
+- **Hosting infrastructure**
+
+For each technology, explain:
+
+1. **Why it was selected**
+2. **What role it performs**
+3. **What limitations or constraints are expected**
+
+For example, if a service such as Supabase is selected because it offers a free tier, also document any technical constraints such as the need for a proxy or service limits.
+
+### Current Technologies Mentioned
+
+| Technology | Purpose |
+|---|---|
+| **Three.js** | Renders the interactive 3D island environment directly in the browser. |
+| **Blender** | Creates and manages custom 3D assets. |
+| **Python** | Controls automated asset-generation scripts. |
+| **Model Context Protocol (MCP) Server** | Connects programmatic workflows with Blender to accelerate asset and scene generation. |
+| **Vercel** | Hosts the current prototype. |
 
 ---
 
-## A nudge before you burn out
+## 5.2 System Architecture
 
-Burnout creeps up, so Island Life watches for it. When your check-ins keep coming back tired, stressed or low, or your week gets too full, it nudges you on its own, with a way to unwind picked from your own week.
-
-<table>
-<tr>
-<td width="50%"><img src="docs/images/nudge.jpg" alt="Your gardener's speech bubble, noticing a run of heavy days and suggesting a way to unwind"/></td>
-<td width="50%"><img src="docs/images/balance.jpg" alt="The balance page, with the week by area and small changes that would help"/></td>
-</tr>
-<tr>
-<td valign="top"><b>Your gardener speaks up.</b> After a run of tired, stressed or low days, your gardener notices the moment you get home and suggests a way to unwind: tea with the friend you've seen least, a walk if you've barely moved, an early night after late ones, or a slow evening. It has already found a free time. One tap puts it on your plan, or ask for another idea.</td>
-<td valign="top"><b>Your week, in balance.</b> Time, mental, physical, social and errands, each read from your week and put in plain words. Next to them are changes made for you, like pushing the two blocks you marked "can wait" to next week. Each one applies in one tap.</td>
-</tr>
-</table>
 
 ---
 
-## And the little moments
+## 5.3 Future Plan
 
-<table>
-<tr>
-<td><img src="docs/images/golden.jpg" alt="The carousel on The gathering Island, and today's album with the golden window photos"/></td>
-<td><img src="docs/images/tasks.jpg" alt="The shared task board, with a walk outside, a proper dinner and an evening with no screens"/></td>
-</tr>
-<tr>
-<td valign="top"><b>The golden window.</b> Once a day, everyone gets two minutes to share one photo of right now. The photos hang on the carousel on The gathering Island, and the day's album keeps them all.</td>
-<td valign="top"><b>Small things, together.</b> Anyone can post a small task, like a walk outside or an evening with no screens. You earn more when friends finish too.</td>
-</tr>
-</table>
+### 1. Calendar Sync
 
-- **Today is a path.** Your day is a glowing path laid out like a clock face, and a little light walks it in real time.
-- **Notes wait at your gate.** Friends leave a few words on a wooden sign, and you read them when you get home.
-- **A planner that feels normal.** Day, week and month views, with drag to add and move, Done, and a guilt-free Let go.
-- **Dewdrops.** Small rewards for finishing things, resting and showing up for friends. You spend them on garden props and lanterns.
+Classes, shifts, and deadlines would automatically appear on the user's island without requiring manual re-entry.
 
----
+The planner already demonstrates the connection flow. Production integrations would include:
 
-## Design choices
-
-- **No streaks, no guilt.** Letting go of a plan is fine. Its glass tree drifts away and stops counting this week. You can bring it back any time.
-- **It rewards balance, not hustle.** A finished rest block earns the same as a finished study block.
-- **Private by default.** Friends see your weather and how high you float, in words. Your hours, plans and check-ins stay yours. For each block, you choose whether friends see the whole thing, only its kind and size, or nothing.
-
----
-
-## How it works
-
-One element means one thing, always.
-
-| In the world | What it means | What drives it |
+| Platform | Integration Method | Planned Capability |
 |---|---|---|
-| **Altitude** | How full your week is | Planned hours this week against what you can give. Very full weeks sit just above the cloud sea. |
-| **Weather** | How you've been feeling | Your last five days of check-ins. Tired, stressed and low bring cloud and rain. Calm and happy clear it. |
-| **Glass trees** | What's coming up | Future blocks, one species per kind of activity |
-| **Solid trees** | What you did | A block you marked Done. Nothing grows on its own. |
-| **Glowing path** | Today's timetable | Your blocks from 07:00 to 22:00, laid out like a clock face |
-| **The light on the path** | Right now | It walks the path in real time |
-| **Lanterns in your sky** | Your feelings | Each check-in you make this week |
-| **Bridge glow** | Warmth with your friends | Notes, shared moments and time together |
-| **Carousel photos** | The day's shared moments | One photo per person from the golden window, plus moments through the day |
-| **Dewdrops** 💧 | A gentle reward | Done blocks, notes, moments and group tasks |
+| **Google Calendar** | Google Calendar API | Two-way synchronization |
+| **Outlook / Microsoft 365** | Microsoft Graph | Two-way synchronization covering most university accounts |
+| **Apple iCloud Calendar** | CalDAV | Calendar synchronization |
+| **Canvas** | ICS calendar feed | Import coursework and calendar events |
+| **Moodle** | ICS calendar feed | Import coursework and calendar events |
+| **Blackboard** | ICS calendar feed | Import coursework and calendar events |
+| **Google Classroom** | Google Classroom API | Import coursework due dates |
 
-**Rebalancing** happens in three places:
-- **The planner**, where you move, resize, finish or let go of blocks.
-- **The balance page**, which suggests small changes you apply in one tap.
-- **Your gardener**, who spots a run of heavy days or a very full week and suggests a way to unwind that fits it, with a sign by the windmill keeping the offer.
+### 2. Mobile Version
 
----
+Develop a mobile-optimized version featuring:
 
-## Plans for the next stage
+- A lighter 3D island
+- Compressed models
+- One-thumb controls
+- Mobile-friendly interactions
 
-- **Calendar sync.** Your classes, shifts and deadlines would land on your island without retyping. The planner already shows the connect flow as a demo. The real connections would use:
-  - **Google Calendar** through the Google Calendar API, two-way;
-  - **Outlook and Microsoft 365** through Microsoft Graph, two-way, which covers most university accounts;
-  - **Apple iCloud Calendar** through CalDAV;
-  - **Canvas, Moodle and Blackboard** through the calendar feed link (ICS) each one already exports;
-  - **Google Classroom** through the Classroom API, for coursework due dates.
+The goal is to make the entire Island Life experience accessible **from a user's pocket**.
 
-  <img src="docs/images/sync.jpg" alt="The planner's demo calendar sync, with Google Calendar connected"/>
-- **Adding a mobile version.** A lighter island, compressed models and one-thumb controls, so your island fits in your pocket.
-- **Real accounts and friends.** A backend, invites and live weather between friends.
-- **Gentle milestones.** Your island would celebrate things like a first week in balance or a first slow evening.
+### 3. Real Accounts & Friends
 
----
+Introduce a proper backend supporting:
 
-## Try it
+- User accounts
+- Friend invitations
+- Persistent relationships
+- Live emotional weather between friends
+- Shared social interactions
 
-**Online:** _add the Vercel link here_. There's no account to create: press **Try the demo island**, or use any email.
+### 4. Gentle Milestones
 
-| Do this | How |
-|---|---|
-| Walk | <kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> or the arrow keys |
-| Jump | <kbd>Space</kbd> |
-| Use what's in front of you | <kbd>E</kbd>, or click the card |
-| Back to the sky view | <kbd>Esc</kbd> |
-| Look around | Drag, and scroll to zoom |
-| See the sinking and the rain | Open **Tune the world** (☷) and drag an island's altitude or weather |
-| Hear from your gardener | Visit your island. The demo has had a few heavy days, so your gardener speaks up on arrival, and the sign by the windmill keeps the offer. |
+Introduce positive milestones that celebrate sustainable balance rather than productivity streaks.
 
-**Handy links for demos:** add `?skiplogin` to skip the landing page. Add `?island=sakura` to land straight on your island, or use `oak` for Chen's and `purple` for Ben's.
+Examples include:
 
-Everything works from the keyboard, focus is always visible, controls are labelled, and motion follows your reduced-motion setting.
+- **First week in balance**
+- **First slow evening**
+- Other wellness-focused achievements
 
-**Run it locally:**
+The objective is to reinforce sustainable habits without introducing guilt or pressure.
 
-```bash
-npm install
-npm run dev      # http://127.0.0.1:5173
-npm run build    # production build in dist/
-```
 
-**Deploy on Vercel:** use the Vite preset, the build command `npm run build`, and the output folder `dist`.
+
+# Core Product Principles
+
+Island Life is designed around several core principles:
+
+- **Make workload visible instead of abstract.**
+- **Prevent burnout rather than merely measure productivity.**
+- **Reward rest as much as work.**
+- **Provide social accountability without exposing private schedules.**
+- **Use visual and emotional feedback instead of clinical dashboards.**
+- **Avoid punishment-based streak mechanics.**
+- **Create authentic proof of focus through real-world interactions.**
+- **Make productivity feel expressive, social, and personally meaningful.**
 
 ---
 
-## Built with
+# Summary
 
-- **[Three.js](https://threejs.org/)** for the world, and **[Vite](https://vite.dev/)** for the build.
-- **Blender**, driven by Python scripts, for every island, tree, character, icon and the landing art. The generators are in `models/` and `tools/`.
-- **Playwright** for headless checks of the scene.
-- Plain JavaScript and CSS, with no UI framework.
+**Island Life** reimagines student productivity as an immersive social wellness experience.
 
-<details>
-<summary>Where things live</summary>
+Instead of presenting students with another timer, checklist, or administrative dashboard, it transforms their schedule, workload, emotional state, focus sessions, and rest into a living **3D island ecosystem**.
 
-| File | What it does |
-|---|---|
-| `src/main.js` | The scene, camera, islands, bridges and walking |
-| `src/life.js` | Connects the world to the app: gates, notes, check-ins, the gardener's nudge |
-| `src/data.js` | Mock members, categories, moods, and how load and weather are worked out |
-| `src/plan.js` | The plan store for blocks, done, let go and moving |
-| `src/calendar.js` | The planner, including the demo calendar sync |
-| `src/balance.js` | The balance page: areas, mix, feelings, progress and suggestions |
-| `src/timetable.js` | The clock-face path and its stops |
-| `src/mood.js`, `src/photos.js` | Feeling lanterns and the photo carousel |
-| `src/login.js` | The landing page with its walkable signposts |
+Its key differentiators include:
 
-</details>
+- 🌴 **Interactive 3D Sky Island**
+- 🌦️ **Emotion-Driven Weather**
+- 🌳 **Activity-Based Trees**
+- 🤖 **Empathic AI Gardener**
+- 📸 **Golden Window Photo Check-Ins**
+- 🌉 **Privacy-Preserving Peer Bridges**
+- 💧 **Balanced Dewdrop Rewards**
+- 🍃 **Guilt-Free "Let Go" Mechanic**
+- 🧑‍🤝‍🧑 **Shared Gathering Island**
+- 🛠️ **Blender + MCP Procedural Asset Pipeline**
 
-## Credits
-
-- **Photos** in the shared moments are from [Unsplash](https://unsplash.com/), used under the Unsplash licence.
-- **3D models, icons and the character** were made by the team in Blender.
-- **Fonts** are Georgia and Segoe UI, from the system. The handwritten signs use the system's handwriting font.
+The central goal is not simply to help students **do more**, but to help them recognize when they are doing **too much**—and build healthier, more sustainable habits together.
+  
+<div align="center">
+  <strong>Made by Team Codenected</strong>
+  <br>
+  <strong><em>© Codenection 2026<em>
+</div>
