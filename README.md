@@ -152,19 +152,15 @@ The mapping we chose that day is still the one in the product: **altitude is loa
 
 ### 9 to 12 September, building: the decisions that shaped it
 
-Thirty-six commits over three days. The ones below changed what the product is, not how it looks.
+Thirty-six commits over three days. These five changed what the product is, not how it looks.
 
 | Decision | Why we made it | What we turned down |
 |---|---|---|
-| **Generate the world with scripts, not by hand** | Seven tree species, four islands, a character and every prop had to exist in three days and still look like one place. Python driving Blender means any of them can be regenerated after a change. | Buying an asset pack, which would have looked like everyone else's, or modelling by hand, which we could not have finished. |
-| **Islands are sized and cleared for walking** | The first islands looked good and were miserable to walk: planting blocked the routes and the ground was too small to move on. We enlarged them, made the outlines irregular, and cleared greenery off the paths. | Keeping the prettier, denser islands, and letting the world be something you only look at. |
-| **The camera never takes control** | It stays exactly where the player puts it, with no pulling in when a tree is in the way, and it can be zoomed out while walking. Earlier versions fought the player and got stuck on scenery. | Automatic framing, which felt smoother in a demo and awful the moment someone wanted to look somewhere else. |
-| **Nothing grows unless you say it happened** | A tree takes root only when you press Done. This is the whole difference from a timer that rewards a phone left face-down on a desk. | Growth on a schedule, which would have made the island fill itself and mean nothing. |
-| **Feelings are one continuous value, not a mood picker** | Weather runs on a single 0 to 1 number, so the sky shades gradually across a week instead of jumping between happy and sad states, and it covers the whole island rather than a cloud over the middle. | Discrete moods, which are easier to code and would have made the sky flicker between extremes. |
-| **Ambient life stays in the background** | The sky whales were rebuilt three times, ending far out near the horizon, because anything moving near the islands pulled attention off the data. | Whales close and impressive, which tested well for five seconds and then became a distraction. |
-| **Teach the world without a tutorial** | The landing page is the world with signposts you walk up to, so the first thing a student does is move around rather than dismiss an overlay. | A tour or tooltip sequence, which most people skip anyway. |
-| **The nudge comes to you** | The rest suggestion first lived on a sign by the windmill, and a nudge that waits to be found is not a nudge. Your gardener now speaks when you get home, and the sign keeps the offer. | Leaving discovery to the player, which would have made the feature invisible in a two-minute demo. |
-| **The app asks before it books** | Taking a suggestion used to put a slow evening on your plan at a time we chose. Now it offers free times, or hands you the planner. | Deciding someone's evening for them, which is exactly the behaviour students already resent in productivity apps. |
+| **Generate the world with scripts, not by hand** | Seven tree species, four islands, a character and every prop had to exist in three days and still look like one place. Python driving Blender means any of them can be regenerated after a change. | An asset pack, which would have looked like everyone else's, or modelling by hand, which we could not have finished. |
+| **Nothing grows unless you say it happened** | A tree takes root only when you press Done. This is the whole difference from a timer that rewards a phone left face-down on a desk. | Growth on a schedule, which would have filled the island by itself and meant nothing. |
+| **Teach the world without a tutorial** | The landing page is the world itself, with signposts you walk up to, so the first thing a student does is move rather than dismiss an overlay. | A tour or tooltip sequence, which most people skip anyway. |
+| **The nudge comes to you** | The rest suggestion first sat on a sign by the windmill, and a nudge that waits to be found is not a nudge. Your gardener now speaks when you get home, and the sign keeps the offer. | Leaving discovery to the player, which made the feature invisible in a short demo. |
+| **The app asks before it books** | Taking a suggestion used to put a slow evening on your plan at a time we chose. Now it offers free times, or hands you the planner. | Deciding someone's evening for them, which is the behaviour students already resent in productivity apps. |
 
 ## 2.4 Mentor Consultation
 
@@ -398,15 +394,16 @@ Asset pipeline: Blender + Python + GLB/glTF
 ![system-archicture](docs/images/System_architecture.png)
 ## 5.3 Build Plan for the Final
 
-Three things we can finish and show, in this order. Each one builds on parts the prototype already has.
+The plan follows the competition's own phases, and the order is deliberate: import proves the idea on a judge's own timetable, accounts make a demo survive a refresh, and the phone is where a student would actually keep it open.
 
-| What we build | What it changes for the student | What it needs | Rough cost |
-|---|---|---|---|
-| **Timetable import from a calendar link** | Paste the calendar link a university already publishes, and the week arrives as blocks: classes, deadlines, shifts. The island fills without typing anything. | An ICS parser, a mapping from events to blocks and categories, and somewhere to keep the link. No OAuth consent screen, so nothing waits on approval. | ~2 days |
-| **Accounts and saved plans** | Sign in, and the plan, check-ins and trees are still there tomorrow and on another device. Two people can be signed in at once during a demo. | Supabase Auth and PostgreSQL behind the existing plan store, with row-level security so friends read only what was shared with them. | ~4 days |
-| **A phone pass** | The world and the planner work with one thumb, which is where a student actually keeps them open. | Layout work on the sheets and header, larger touch targets, and compressed models for a faster first load. | ~3 days |
+| Window | Focus | What lands |
+|---|---|---|
+| **21 Sep to 11 Oct** · Building | Turn the prototype into something a stranger can use with their own week | **Timetable import** from the calendar link a university already publishes, so classes, deadlines and shifts arrive as blocks. **Accounts and saved plans** on Supabase, so a plan survives a refresh and two people can be signed in at once. **A phone pass**: one-thumb controls, lighter models, layout work on the sheets. |
+| **12 Oct to 31 Oct** · Deploy | Make it fast, reachable and tested by people who are not us | The build live on Vercel with Supabase behind it, compressed models for a quick first load, an accessibility and browser pass, and a small pilot with students outside the team. |
+| **1 Nov to 14 Nov** · Rehearse | Fix what the pilot found, and make the demo dependable | Changes driven by the pilot, a demo that runs from a judge's own calendar link, and a fallback path that works without a network. |
+| **15 Nov** · Grand final | Show it, not slides | A five-minute run: import a real timetable, watch the island sink, and let the gardener catch it. |
 
-The order matters. Import proves the idea on a judge's own timetable, accounts make the demo survive a refresh, and the phone pass widens who can try it.
+Rough cost of the three building items: import about two days, accounts about four, the phone pass about three. They are independent, so they can run in parallel across the team.
 
 ## 5.4 Beyond the Final
 
