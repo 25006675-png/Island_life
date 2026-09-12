@@ -92,6 +92,8 @@ The following table summarizes the ideas explored during ideation and explains w
 | **Guilt-Free "Let Go" & Balanced Rewards** | **Chosen** | Eliminates anxiety-inducing streak counters. Letting go of a task causes its glass tree to quietly drift away without penalty, while resting earns the same reward as studying: **Dewdrops 💧**. |
 | **Visual Activity Trees & Timetable Clock Path** | **Chosen** | Classifies seven activity types into distinct tree species, using glass trees for upcoming tasks and solid trees for completed tasks. Today's schedule is rendered as a glowing clock-face path walked by a light in real time. |
 | **Blender MCP Server Pipeline** | **Chosen** | Uses a **Model Context Protocol (MCP)** server running Python scripts to control Blender, automating 3D asset generation and scene creation to dramatically speed up development. |
+| **Bee Colony & Honeycomb World** | **Dropped** | An alternative way to draw the same data: a honeycomb whose cells fill as the week fills, and nectar earned by turning up for the group. It mapped cleanly, but the team found it busier and more industrious than the floating island, and the calmer world suited an app about not overworking. |
+| **One Mascot Per Member** | **Reshaped** | Early idea of a personal creature for each student. It became the single leaf gardener who tends your island, with costumes kept back as a reward in the long-term plan, so the world stays readable rather than crowded. |
 | **Forest-Style Single-Player Tree Planting** | **Dropped** | Forest is an isolating 2D experience that relies on passive timers, which can easily be faked, and punishes users with dead trees when stopping early. This can induce guilt rather than encourage healthy balance. |
 | **Crypto-Reward / Tokenomics Concept** | **Dropped** | Mentor Zach advised dropping the concept because Web3/crypto rewards are overused in hackathon pitches, create unnecessary transaction friction, and distract from the core wellness and mental-health goals. |
 | **Traditional Virtual Garden Concept** | **Dropped** | Mentor Zach advised dropping the concept because standard 2D/3D garden plots are saturated and generic. It was replaced by the floating 3D sky island, where altitude, weather, and trees directly represent mental-health metrics. |
@@ -107,7 +109,56 @@ The following table summarizes the ideas explored during ideation and explains w
 Our ideation process turns hidden workload into something students can see and act on. Island altitude, weather, trees, and bridges show workload, feelings, activities, and social support. Students notice overload early, while small changes still fix it.
 
 
-## 2.3 Mentor Consultation
+## 2.3 How the Idea Evolved
+
+The concept did not arrive whole. It moved through three stages, and the turning point in each was someone disagreeing with where we had got to.
+
+### 1 September, first meeting: from a dashboard to a community
+
+We began by pulling the problem statement apart, and our first ideas were ordinary: a timetable, a workload dashboard, a chart of hours. It answered the brief and inspired nobody, including us.
+
+The meeting turned when **Chung Jun** suggested a BeReal-style check-in, where each member shares a photo showing what they are actually doing. It was a small idea with a large consequence. A photo is only worth taking if somebody sees it, so the tool stopped being a single-player tracker and became something a group is in together.
+
+From there the discussion opened up: tasks a group takes on together for a shared reward, a mascot for each member, rituals that happen at the same time for everyone. By the end we had two mechanisms we were unwilling to give up:
+
+- **Community support**, because friends notice burnout before an app does.
+- **A 3D world**, because a week you can look at is easier to judge than a week you have to read.
+
+### 5 September, mentorship: cutting what was generic
+
+We took both mechanisms to the mentor session, which is recorded in detail in 2.4. The value of it was subtraction. The virtual-garden and crypto-reward ideas were generic, so they went. The BeReal check-in and the 3D world were the parts worth keeping, and the advice to drive Blender from an MCP server made a custom world affordable in the time we had.
+
+That left a sharper question rather than an answer: if a 3D world is the medium, what exactly does it show? Forest had already proven that a single tree growing on a timer says very little.
+
+### 7 September, second meeting: two worlds, one vote
+
+**Choong Zhuo Lin** brought two candidates, both of which carried real data rather than decoration.
+
+| | **Floating island** | **Bee colony** |
+|---|---|---|
+| Time and load | The island rises and sinks with the week | Honeycomb cells fill as the week fills |
+| Activities | One tree species per kind of activity | Cells grouped by kind of work |
+| Feelings | Weather over your own island | Colour of the hive |
+| Community | Bridges to friends' islands | Nectar earned by showing up for the group |
+
+Both worked as data. The island won on feeling: a hive is a picture of industry, and an app about doing too much should not look like a machine for doing more. The island is quiet, it belongs to one person, and a group of them naturally forms a neighbourhood.
+
+The mapping we chose that day is still the one in the product: **altitude is load, weather is feeling, trees are activities, bridges are friends.**
+
+### 9 to 12 September, building: what testing changed
+
+Once the world existed, our own use of it moved several decisions. Each of these is a commit in the repository.
+
+| We tried | What went wrong | What it is now |
+|---|---|---|
+| Routing the day's path through the groves | The path could not be traced, and trees had to mean two things at once | A clock-face path for the day, with trees carrying only the kind of activity |
+| Weather mixed feelings with workload | One element carried two meanings, so neither was readable | Weather comes from check-ins alone; altitude carries the load |
+| A sign by the windmill holding the rest suggestion | It waited to be found, and a nudge nobody finds is not a nudge | The gardener speaks up when you get home; the sign keeps the offer |
+| Booking the rest slot for you | Deciding someone's evening for them felt presumptuous | It offers free times, or hands you the planner |
+| Always suggesting a slow evening | The same answer to every kind of tiredness | The suggestion is chosen from your week, and leads with something you can do alone |
+| "Activity capacity, 49% used" in the corner | Dashboard language inside a world that had worked hard to avoid it | One island card: altitude in metres, and a plain sentence when the week turns heavy |
+
+## 2.4 Mentor Consultation
 
 | Date | Mentor | Feedback Received | What Was Changed |
 |---|---|---|---|
