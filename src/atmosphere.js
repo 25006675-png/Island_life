@@ -237,24 +237,25 @@ export function createSinkBank(radius=26){
   // own tint, darkened. Both follow the sky tone, so the bank never goes cold.
   const lit=new T.Color(1,.92,.84), shade=new T.Color();
   let tone=-1;
-  const mk=(a,r,y,sx,sy,up,o,order)=>{
+  const mk=(a,r,y,sx,sy,up,o,order,from)=>{
     const s=new T.Sprite(new T.SpriteMaterial({map,transparent:true,opacity:0,depthWrite:false}));
-    s.position.set(Math.cos(a)*r,y,Math.sin(a)*r);s.scale.set(sx,sy,1);s.userData={o,up};s.renderOrder=order;
+    s.position.set(Math.cos(a)*r,y,Math.sin(a)*r);s.scale.set(sx,sy,1);s.userData={o,up,from};s.renderOrder=order;
     group.add(s);puffs.push(s);
   };
   const recolour=()=>{
     tone=cloudTint.getHex();shade.copy(cloudTint).multiplyScalar(.88);
     for(const s of puffs)s.material.color.copy(s.userData.up?lit:shade);
   };
-  for(let i=0;i<16;i++){const a=i/16*Math.PI*2;mk(a,radius*1.18,-.6+(i%3)*.8,radius*.95,radius*.5,1,1,6+i);}     // lit tops, sitting proud of the rim
-  for(let i=0;i<12;i++){const a=(i+.5)/12*Math.PI*2;mk(a,radius*1.34,-3.4+(i%2)*1.2,radius*1.15,radius*.58,0,.75,2+i);}   // the bank below, in shadow
+  for(let i=0;i<14;i++){const a=(i+.5)/14*Math.PI*2;mk(a,radius*1.25,-9.5+(i%2)*1.1,radius*1.05,radius*.34,0,.8,2+i,.02);}   // the deep bank, in shadow
+  for(let i=0;i<16;i++){const a=i/16*Math.PI*2;mk(a,radius*1.06,-5.4+(i%3)*.9,radius*.9,radius*.32,1,1,6+i,.34+(i%4)*.12);}  // lit tops, rising to the rim
   group.visible=false;
   return {group,
     // nothing until the island dips below -2; full cover by the floor at -10
     set(altitude){
       const t=Math.min(1,Math.max(0,(-2-altitude)/8));
       group.visible=t>.02;if(tone!==cloudTint.getHex())recolour();
-      for(const s of puffs)s.material.opacity=t*s.userData.o;
+      // each puff waits its turn, so the bank rises from below rather than all at once
+      for(const s of puffs){const {o,from}=s.userData;s.material.opacity=Math.max(0,Math.min(1,(t-from)/(1-from)))*o;}
     },
     update(elapsed){if(!group.visible)return;if(tone!==cloudTint.getHex())recolour();group.rotation.y=elapsed*.02;}};
 }

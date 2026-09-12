@@ -125,3 +125,7 @@ export const weatherLabel=s=>s<.2?'Clear':s<.35?'Light cloud':s<.55?'Cloudy':s<.
 // shown beside the category's name wherever it appears. Decorative: the name is always there too.
 export const catIcon=cat=>`${import.meta.env.BASE_URL}assets/icons/${cat}.webp`;
 export const catImg=(cat,cls='cat-icon')=>Object.assign(document.createElement('img'),{src:catIcon(cat),alt:'',className:cls,decoding:'async'});
+// Small drawn symbols for feelings and weather (tools/make_symbol_icons.py),
+// shown beside their names the way the tree icons are.
+export const symbolImg=(name,cls='sym-icon')=>Object.assign(document.createElement('img'),
+  {src:`${import.meta.env.BASE_URL}assets/icons/${name}.webp`,alt:'',className:cls,decoding:'async'});

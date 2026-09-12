@@ -1,6 +1,6 @@
 import * as T from 'three';
 import { ME, DAWN, NIGHT, CATEGORIES, MOODS, CHECKINS, CAPACITY, WARMTH, NOTES, NOTE_PRESETS, TASKS, fmt, hours, toMin,
-         deriveStrain, weatherLabel, loadFromAltitude, altitudeFromLoad, catImg, fullness, WEEK } from './data.js';
+         deriveStrain, weatherLabel, loadFromAltitude, altitudeFromLoad, catImg, fullness, WEEK, symbolImg } from './data.js';
 import { plans, TODAY, addDays, dow, mondayOf } from './plan.js';
 import { HISTORY } from './groves.js';
 import { confirmLetGo } from './confirm.js';
@@ -283,22 +283,27 @@ export function initLife({islands,camera,texture,player,notice,visit,nearTree,ge
     for(const c of checkins[ME].filter(c=>c.day<=6))feel[c.mood]=(feel[c.mood]??0)+1;
     return {trees:Object.keys(CATEGORIES).map(c=>({c,done:past.filter(e=>e.cat===c).length+today.filter(b=>b.cat===c&&b.done).length,
                                                    glass:today.filter(b=>b.cat===c&&!b.done).length})),
-            load:Math.round(loadFromAltitude(me.altitude)*100)/100,weather:me.weather,feel};
+            load:Math.round(loadFromAltitude(me.altitude)*100)/100,altitude:Math.round(me.altitude*10)/10,
+            weather:me.weather,strain:Math.round((me.strain??0)*100)/100,feel};
   }
   function renderPanel(d){
-    const grown=d.trees.reduce((a,t)=>a+t.done,0), coming=d.trees.reduce((a,t)=>a+t.glass,0);
-    $('mi-sum').textContent=`${grown} grown · ${coming} to come`;
+    const grown=d.trees.reduce((a,t)=>a+t.done,0), full=Math.min(100,Math.round(d.load*100));
+    $('mi-sum').replaceChildren(mk('span',{className:'mi-chip',textContent:`${full}% full`}),
+                               mk('span',{className:'mi-chip',textContent:`${grown} grown`}));
     $('mi-trees').replaceChildren(...d.trees.map(t=>{
       const name=CATEGORIES[t.c].label, it=mk('div',{className:`mi-tree${t.done+t.glass?'':' none'}`,title:`${name}: ${t.done} grown, ${t.glass} still glass`},
         catImg(t.c,'mi-icon'),mk('b',{textContent:String(t.done)}),mk('small',{textContent:t.glass?`+${t.glass}`:''}));
       it.setAttribute('role','listitem');it.setAttribute('aria-label',it.title);return it;
     }));
     const bar=mk('span',{className:'mi-bar'},mk('i'));bar.firstChild.style.width=`${Math.min(100,d.load*100)}%`;bar.setAttribute('aria-hidden','true');
-    const pct=Math.min(100,Math.round(d.load*100));
-    $('mi-full').replaceChildren(mk('b',{textContent:`${pct}% used`}),bar,mk('span',{className:'mi-words',textContent:fullness(d.load)}));
+    const l=d.load;
+    $('mi-full').replaceChildren(bar,mk('b',{textContent:`${full}% full`}),mk('span',{className:'mi-metres',textContent:`${d.altitude} m`}));
+    // one line of meaning, and only while it is worth saying
+    $('mi-state').textContent=l<.65?'':l<.85?'Your island is sinking as the week fills up.':'Riding just above the cloud sea.';
     const moods=Object.keys(MOODS).filter(m=>d.feel[m]);
-    $('mi-feel').replaceChildren(...(moods.length?moods.map(m=>{const s=mk('span',{},mk('i'),`${d.feel[m]} ${MOODS[m].label.toLowerCase()}`);s.firstChild.style.background=MOODS[m].color;return s;})
-                    :[mk('span',{textContent:'no lanterns yet'})]));
+    $('mi-feel').replaceChildren(...(moods.length
+      ?moods.map(m=>mk('span',{},symbolImg(`lantern-${m}`,'mi-lantern'),`${d.feel[m]} ${MOODS[m].label.toLowerCase()}`))
+      :[mk('span',{textContent:'no lanterns yet'})]));
   }
   $('mi-balance').onclick=()=>openBalance($('mi-balance'));
 
