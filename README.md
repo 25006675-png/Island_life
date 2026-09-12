@@ -313,7 +313,7 @@ Asset pipeline: Blender + Python + GLB/glTF
 ---
 
 ## 5.2 System Architecture
-
+![system-archicture](docs/images/System_architecture.png)
 ## 5.3 Future Plan
 
 ### 1. Calendar Sync
