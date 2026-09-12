@@ -97,7 +97,7 @@ One element means one thing, always.
 | In the world | What it means | What drives it |
 |---|---|---|
 | **Altitude** | How full your week is | Planned hours this week against what you can give. Very full weeks sit just above the cloud sea. |
-| **Weather** | How you've been feeling | Your last five days of check-ins. Tired, stressed and low bring cloud and rain. Calm and happy clear it. |
+| **Weather** | How you've been feeling | Your check-ins this week, with recent days counting for more. Tired, stressed and low bring cloud and rain. Calm and happy clear it. |
 | **Glass trees** | What's coming up | Future blocks, one species per kind of activity |
 | **Solid trees** | What you did | A block you marked Done. Nothing grows on its own. |
 | **Glowing path** | Today's timetable | Your blocks from 07:00 to 22:00, laid out like a clock face |

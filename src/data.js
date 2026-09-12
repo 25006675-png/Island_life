@@ -24,9 +24,9 @@ export const MOODS={
   low:     {label:'Low',     color:'#92aede',strain:.8},
 };
 
-// Altitude = load. An empty week floats at 16 m; a full one sits at -7 m,
+// Altitude = load. An empty week floats at 16 m; a full one sits at -10 m,
 // down by the cloud sea.
-const HIGH=16, LOW=-7;
+const HIGH=16, LOW=-10;
 export const loadFromAltitude=a=>Math.min(1,Math.max(0,(HIGH-a)/(HIGH-LOW)));
 export const altitudeFromLoad=l=>HIGH-Math.min(1,Math.max(0,l))*(HIGH-LOW);
 export const CAPACITY={sakura:35,purple:36,oak:35};   // hours a week each member can give
@@ -78,8 +78,9 @@ export const CHECKINS={
           {day:2,mood:'tired'},{day:1,mood:'stressed'},{day:0,mood:'calm',time:toMin('08:10')}],
   purple:[{day:6,mood:'happy'},{day:5,mood:'happy'},{day:4,mood:'tired'},{day:3,mood:'stressed'},
           {day:2,mood:'calm'},{day:1,mood:'tired'},{day:0,mood:'low',time:toMin('09:40')}],
+  // Chen is mid hard week, so his sky stays rainy
   oak:   [{day:6,mood:'tired'},{day:5,mood:'calm'},{day:4,mood:'stressed'},{day:3,mood:'tired'},
-          {day:2,mood:'stressed'},{day:1,mood:'low'},{day:0,mood:'tired',time:toMin('07:15')}],
+          {day:2,mood:'stressed'},{day:1,mood:'low'},{day:0,mood:'stressed',time:toMin('07:15')}],
 };
 
 // Notes = support. A few words left for a friend, written on a wooden plaque
@@ -104,14 +105,19 @@ export const TASKS=[
   {id:'message',title:'Message someone you miss',cat:'social',mins:30,by:null,reward:2,joined:['sakura','oak'],done:{sakura:null}},
 ];
 
-// Weather = how your recent days have felt: the last five days of check-ins.
+// Weather = how your week has felt: this week's check-ins, with the most recent
+// days weighing most, so a hard yesterday shows while a hard last Sunday fades.
 // Only the heavier feelings (tired, stressed, low) gather cloud; calm and happy
 // days clear it. How full the week is shows in altitude, never in the weather.
 // One continuous 0..1 value -- cloud gathers, then rain grows. It surfaces a
 // trend; it never diagnoses.
+export const WEEK=6;                       // days back: today plus the six before it
+const recency=day=>1-day*.13;              // 1 today ... .22 a week ago
 export function deriveStrain(checkins){
-  const recent=checkins.filter(c=>c.day<=4);
-  return recent.length?Math.min(1,recent.reduce((a,c)=>a+MOODS[c.mood].strain,0)/recent.length):0;
+  const recent=checkins.filter(c=>c.day<=WEEK);
+  if(!recent.length)return 0;
+  const weight=recent.reduce((a,c)=>a+recency(c.day),0);
+  return Math.min(1,recent.reduce((a,c)=>a+MOODS[c.mood].strain*recency(c.day),0)/weight);
 }
 export const weatherLabel=s=>s<.2?'Clear':s<.35?'Light cloud':s<.55?'Cloudy':s<.75?'Drizzle':'Rain';
 

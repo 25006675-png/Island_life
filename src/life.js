@@ -1,6 +1,6 @@
 import * as T from 'three';
 import { ME, DAWN, NIGHT, CATEGORIES, MOODS, CHECKINS, CAPACITY, WARMTH, NOTES, NOTE_PRESETS, TASKS, fmt, hours, toMin,
-         deriveStrain, weatherLabel, loadFromAltitude, altitudeFromLoad, catImg, fullness } from './data.js';
+         deriveStrain, weatherLabel, loadFromAltitude, altitudeFromLoad, catImg, fullness, WEEK } from './data.js';
 import { plans, TODAY, addDays, dow, mondayOf } from './plan.js';
 import { HISTORY } from './groves.js';
 import { confirmLetGo } from './confirm.js';
@@ -204,7 +204,7 @@ export function initLife({islands,camera,texture,player,notice,visit,nearTree,ge
   let nudgeOn=false, nudgeTaken=false, nudgeWhy='full', ideaAt=0;
   const nudgeTitle=()=>{
     if(nudgeWhy==='full')return 'Your week is very full';
-    const felt=HEAVY.filter(m=>checkins[ME].some(c=>c.day<=4&&c.mood===m)).map(m=>MOODS[m].label.toLowerCase());
+    const felt=HEAVY.filter(m=>checkins[ME].some(c=>c.day<=WEEK&&c.mood===m)).map(m=>MOODS[m].label.toLowerCase());
     return `You’ve felt ${felt.length>1?felt.slice(0,-1).join(', ')+' and '+felt.at(-1):felt[0]??'heavy'} lately`;
   };
   function freeSlot(starts,mins){
@@ -237,7 +237,7 @@ export function initLife({islands,camera,texture,player,notice,visit,nearTree,ge
   const whenText=s=>`${s.date===TODAY?'today':s.date===addDays(TODAY,1)?'tomorrow':dayName(s.date)} at ${fmt(s.start)}`;
   const idea=()=>{const l=ideas();return l.length?l[ideaAt%l.length]:null;};
   function checkNudge(){
-    const heavy=checkins[ME].filter(c=>c.day<=4&&MOODS[c.mood].strain>=.55).length, full=loadFromAltitude(me.altitude)>=.85;
+    const heavy=checkins[ME].filter(c=>c.day<=WEEK&&MOODS[c.mood].strain>=.55).length, full=loadFromAltitude(me.altitude)>=.85;
     const on=!nudgeTaken&&(full||heavy>=3), why=full?'full':'heavy', was=nudgeOn;
     if(on===nudgeOn&&why===nudgeWhy)return;nudgeOn=on;nudgeWhy=why;
     nudgeSign.set(on?{head:'From your island',body:`${nudgeTitle()}. Here’s a way to unwind.`,foot:'walk up for an idea'}:null);
