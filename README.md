@@ -113,6 +113,11 @@ Our ideation process turns hidden workload into something students can see and a
 
 The concept did not arrive whole. It moved through three stages, and the turning point in each was someone disagreeing with where we had got to.
 
+<p align="left">
+  <img src="docs/images/meetings/team-meeting.jpg" alt="The four of us on a team call" width="380"/>
+  <br/><sub>Leow Shen En, Lee Kai Hong, Chung Jun and Choong Zhuo Lin, on one of the working calls</sub>
+</p>
+
 ### 1 September, first meeting: from a dashboard to a community
 
 We began by pulling the problem statement apart, and our first ideas were ordinary: a timetable, a workload dashboard, a chart of hours. It answered the brief and inspired nobody, including us.
@@ -159,6 +164,11 @@ Once the world existed, our own use of it moved several decisions. Each of these
 | "Activity capacity, 49% used" in the corner | Dashboard language inside a world that had worked hard to avoid it | One island card: altitude in metres, and a plain sentence when the week turns heavy |
 
 ## 2.4 Mentor Consultation
+
+<p align="left">
+  <img src="docs/images/meetings/mentorship-session.jpg" alt="The mentorship call with Zach Khong" width="150"/>
+  <br/><sub>The session with Zach Khong, 5 September</sub>
+</p>
 
 | Date | Mentor | Feedback Received | What Was Changed |
 |---|---|---|---|
