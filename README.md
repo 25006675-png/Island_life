@@ -150,18 +150,21 @@ Both worked as data. The island won on feeling: a hive is a picture of industry,
 
 The mapping we chose that day is still the one in the product: **altitude is load, weather is feeling, trees are activities, bridges are friends.**
 
-### 9 to 12 September, building: what testing changed
+### 9 to 12 September, building: the decisions that shaped it
 
-Once the world existed, our own use of it moved several decisions. Each of these is a commit in the repository.
+Thirty-six commits over three days. The ones below changed what the product is, not how it looks.
 
-| We tried | What went wrong | What it is now |
+| Decision | Why we made it | What we turned down |
 |---|---|---|
-| Routing the day's path through the groves | The path could not be traced, and trees had to mean two things at once | A clock-face path for the day, with trees carrying only the kind of activity |
-| Weather mixed feelings with workload | One element carried two meanings, so neither was readable | Weather comes from check-ins alone; altitude carries the load |
-| A sign by the windmill holding the rest suggestion | It waited to be found, and a nudge nobody finds is not a nudge | The gardener speaks up when you get home; the sign keeps the offer |
-| Booking the rest slot for you | Deciding someone's evening for them felt presumptuous | It offers free times, or hands you the planner |
-| Always suggesting a slow evening | The same answer to every kind of tiredness | The suggestion is chosen from your week, and leads with something you can do alone |
-| "Activity capacity, 49% used" in the corner | Dashboard language inside a world that had worked hard to avoid it | One island card: altitude in metres, and a plain sentence when the week turns heavy |
+| **Generate the world with scripts, not by hand** | Seven tree species, four islands, a character and every prop had to exist in three days and still look like one place. Python driving Blender means any of them can be regenerated after a change. | Buying an asset pack, which would have looked like everyone else's, or modelling by hand, which we could not have finished. |
+| **Islands are sized and cleared for walking** | The first islands looked good and were miserable to walk: planting blocked the routes and the ground was too small to move on. We enlarged them, made the outlines irregular, and cleared greenery off the paths. | Keeping the prettier, denser islands, and letting the world be something you only look at. |
+| **The camera never takes control** | It stays exactly where the player puts it, with no pulling in when a tree is in the way, and it can be zoomed out while walking. Earlier versions fought the player and got stuck on scenery. | Automatic framing, which felt smoother in a demo and awful the moment someone wanted to look somewhere else. |
+| **Nothing grows unless you say it happened** | A tree takes root only when you press Done. This is the whole difference from a timer that rewards a phone left face-down on a desk. | Growth on a schedule, which would have made the island fill itself and mean nothing. |
+| **Feelings are one continuous value, not a mood picker** | Weather runs on a single 0 to 1 number, so the sky shades gradually across a week instead of jumping between happy and sad states, and it covers the whole island rather than a cloud over the middle. | Discrete moods, which are easier to code and would have made the sky flicker between extremes. |
+| **Ambient life stays in the background** | The sky whales were rebuilt three times, ending far out near the horizon, because anything moving near the islands pulled attention off the data. | Whales close and impressive, which tested well for five seconds and then became a distraction. |
+| **Teach the world without a tutorial** | The landing page is the world with signposts you walk up to, so the first thing a student does is move around rather than dismiss an overlay. | A tour or tooltip sequence, which most people skip anyway. |
+| **The nudge comes to you** | The rest suggestion first lived on a sign by the windmill, and a nudge that waits to be found is not a nudge. Your gardener now speaks when you get home, and the sign keeps the offer. | Leaving discovery to the player, which would have made the feature invisible in a two-minute demo. |
+| **The app asks before it books** | Taking a suggestion used to put a slow evening on your plan at a time we chose. Now it offers free times, or hands you the planner. | Deciding someone's evening for them, which is exactly the behaviour students already resent in productivity apps. |
 
 ## 2.4 Mentor Consultation
 
