@@ -31,8 +31,8 @@ export function createCalendar({plans,owner,clock,notice,sheets}){
   $('ed-vis').append(option('silhouette','Kind and size only'),option('open','Everything'),option('hidden','Nothing'));
   function edit(occ,defaults={}){
     editing=occ;
-    const b=occ??{title:'',date:defaults.date??date,start:defaults.start??Math.max(DAWN,Math.ceil(clock.minutes/SLOT)*SLOT),
-                  mins:defaults.mins??60,cat:'study',vis:'silhouette',priority:'normal',repeat:false};
+    const b=occ??{title:defaults.title??'',date:defaults.date??date,start:defaults.start??Math.max(DAWN,Math.ceil(clock.minutes/SLOT)*SLOT),
+                  mins:defaults.mins??60,cat:defaults.cat??'study',vis:defaults.vis??'silhouette',priority:'normal',repeat:false};
     $('editor-title').textContent=occ?'Edit block':'New block';
     if(![...$('ed-mins').options].some(o=>+o.value===b.mins))$('ed-mins').append(option(b.mins,hours(b.mins)));
     $('ed-title').value=b.title;$('ed-date').value=b.date;$('ed-start').value=fmt(Math.min(b.start,NIGHT-SLOT));
@@ -225,6 +225,7 @@ export function createCalendar({plans,owner,clock,notice,sheets}){
   }
   return {
     open(which){if(which)tab=which;sheets.show(sheet,$('planner-toggle'));render();},
+    edit,
     render,
   };
 }

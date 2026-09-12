@@ -207,6 +207,18 @@ export function initLife({islands,camera,texture,player,notice,visit,nearTree,ge
     const felt=HEAVY.filter(m=>checkins[ME].some(c=>c.day<=WEEK&&c.mood===m)).map(m=>MOODS[m].label.toLowerCase());
     return `You’ve felt ${felt.length>1?felt.slice(0,-1).join(', ')+' and '+felt.at(-1):felt[0]??'heavy'} lately`;
   };
+  function freeSlots(starts,mins,count){
+    const out=[];
+    for(let d=0;d<=7&&out.length<count;d++){
+      const date=addDays(TODAY,d);
+      for(const start of starts){
+        if(d===0&&start<clock.minutes+30)continue;
+        if(plans.on(ME,date).some(b=>!b.skipped&&b.start<start+mins&&b.start+b.mins>start))continue;
+        out.push({date,start});if(out.length>=count)break;
+      }
+    }
+    return out;
+  }
   function freeSlot(starts,mins){
     for(let d=0;d<=7;d++){
       const date=addDays(TODAY,d);
@@ -224,9 +236,9 @@ export function initLife({islands,camera,texture,player,notice,visit,nearTree,ge
     const all=[
       {fit:late>=2?3:0,title:'Early night',cat:'rest',mins:60,starts:[21*60+30],vis:'hidden',label:'an early night',button:'Plan an early night',
        why:late>=2?`${late} late nights this week.`:'Sleep is the quickest reset.'},
-      {fit:moved<90?2.5:nudgeWhy==='heavy'?2:0,title:'A walk outside',cat:'exercise',mins:30,starts:[17*60+30,12*60+30,8*60],vis:'open',label:'a walk outside',button:'Add a walk',
+      {fit:moved<90?2.6:nudgeWhy==='heavy'?2.3:0,title:'A walk outside',cat:'exercise',mins:30,starts:[17*60+30,12*60+30,8*60],vis:'open',label:'a walk outside',button:'Add a walk',
        why:moved<90?'You’ve hardly moved this week.':'Fresh air helps after heavy days.'},
-      friend&&{fit:mins('social')<120?2.2:1,title:`Tea with ${friend.owner}`,cat:'social',mins:60,starts:[18*60,12*60+30],vis:'open',label:`tea with ${friend.owner}`,
+      friend&&{fit:mins('social')<120?1.2:.8,title:`Tea with ${friend.owner}`,cat:'social',mins:60,starts:[18*60,12*60+30],vis:'open',label:`tea with ${friend.owner}`,
        button:`Invite ${friend.owner}`,why:`It’s been a while since you and ${friend.owner} caught up.`,friend},
       {fit:1.5,title:'Slow evening',cat:'rest',mins:60,starts:[20*60+30],vis:'hidden',label:'a slow evening',button:'Add a slow evening',
        why:'Nothing planned, nothing to finish.'},
@@ -235,6 +247,7 @@ export function initLife({islands,camera,texture,player,notice,visit,nearTree,ge
     return all.filter(i=>i.slot);
   }
   const whenText=s=>`${s.date===TODAY?'today':s.date===addDays(TODAY,1)?'tomorrow':dayName(s.date)} at ${fmt(s.start)}`;
+  const slotLabel=s=>`${s.date===TODAY?'Today':s.date===addDays(TODAY,1)?'Tomorrow':dayName(s.date)} ${fmt(s.start)}`;
   const idea=()=>{const l=ideas();return l.length?l[ideaAt%l.length]:null;};
   function checkNudge(){
     const heavy=checkins[ME].filter(c=>c.day<=WEEK&&MOODS[c.mood].strain>=.55).length, full=loadFromAltitude(me.altitude)>=.85;
@@ -243,16 +256,32 @@ export function initLife({islands,camera,texture,player,notice,visit,nearTree,ge
     nudgeSign.set(on?{head:'From your island',body:`${nudgeTitle()}. Here’s a way to unwind.`,foot:'walk up for an idea'}:null);
     if(on&&!was)notice(`${nudgeTitle()}. Your gardener has an idea to help you unwind.`);
   }
-  function takeIdea(i){
-    plans.add(ME,{date:i.slot.date,start:i.slot.start,mins:i.mins,cat:i.cat,title:i.title,vis:i.vis});
+  function takeIdea(i,slot=i.slot){
+    plans.add(ME,{date:slot.date,start:slot.start,mins:i.mins,cat:i.cat,title:i.title,vis:i.vis});
     if(i.friend){warm(i.friend.id,.8);warm(ME,.8);}
     nudgeTaken=true;checkNudge();
-    notice(`${i.title} is on your plan for ${whenText(i.slot)}.`);
+    notice(`${i.title} is on your plan for ${whenText(slot)}.`);
   }
-  function nudgeCard(key,kicker,at){
+  // Saying yes opens a second step: which free time suits you, or pick your own
+  // in the planner. Nothing lands on the plan until you choose.
+  let asking=false;
+  function pickOwnTime(i,slot){
+    nudgeTaken=true;checkNudge();
+    calendar.edit(null,{date:slot.date,start:slot.start,mins:i.mins,cat:i.cat,title:i.title,vis:i.vis});
+  }
+  function nudgeCard(key,kicker,at,dismiss){
     const i=idea();if(!i)return null;
-    return {key:`${key}${ideaAt}`,wood:true,kicker,title:nudgeTitle(),sub:`${i.why} How about ${i.label} ${whenText(i.slot)}?`,
-            action:()=>takeIdea(i),actionLabel:i.button,alt:()=>{ideaAt++;},altLabel:'Another idea',at};
+    if(asking){
+      const slots=freeSlots(i.starts,i.mins,2);
+      if(slots.length)return {key:`${key}when${ideaAt}`,wood:true,kicker,title:i.title,sub:'When suits you?',
+        action:()=>{asking=false;takeIdea(i,slots[0]);},actionLabel:slotLabel(slots[0]),
+        ...(slots[1]?{alt:()=>{asking=false;takeIdea(i,slots[1]);},altLabel:slotLabel(slots[1])}:{}),
+        letGo:()=>{asking=false;pickOwnTime(i,slots[0]);},letGoLabel:'Pick a time',at};
+      asking=false;
+    }
+    return {key:`${key}${ideaAt}`,wood:true,kicker,title:nudgeTitle(),sub:`${i.why} How about ${i.label}?`,
+            action:()=>{asking=true;},actionLabel:i.button,alt:()=>{ideaAt++;},altLabel:'Another idea',
+            ...(dismiss?{letGo:dismiss,letGoLabel:'Not now'}:{}),at};
   }
   const dew=()=>36+plans.week(ME).filter(b=>!b.skipped&&b.done).length   // explicit Done only
                   +(photos.items.some(i=>i.golden&&i.member.id===ME)?3:0)
@@ -261,19 +290,6 @@ export function initLife({islands,camera,texture,player,notice,visit,nearTree,ge
   // altitude, in words -- never hours, and never what's on the plan.
   const band=l=>l<.35?'Floating high, a light week':l<.7?'Mid-sky, a steady week':'Low, near the clouds, a full week';
   const trend=s=>s<.2?'clear days lately':s<.35?'mostly clear':s<.55?'a heavier few days':s<.75?'a tiring stretch':'a hard week';
-  function statusRows(i){
-    if(!i?.owner){   // the gathering island: only what the group shares
-      const n=photos.items.length, f=TASKS.reduce((a,t)=>a+finishers(t).length,0);
-      return {head:'',rows:[{label:'The carousel',text:`${n} moment${n===1?'':'s'} today`,color:'#ffcf8a'},
-                            {label:'Task board',text:`${f} ${f===1?'finish':'finishes'} this week`,color:'#b98a5e'}]};
-    }
-    const rows=[
-      {label:'Weather',text:`${i.weather}, ${trend(i.strain??0)}`,color:'#9fb7d6'},
-      {label:'Altitude',text:band(loadFromAltitude(i.altitude)),color:'#c9b8e8'},
-    ];
-    return {head:i.id===ME?'What friends see':'',rows};
-  }
-
   // Your island, at a glance (only ever your own; friends see the rows above):
   // the trees standing on it by kind, activity capacity, and this week's feelings.
   // Trees = what the island shows: last week's grown trees (groves.js HISTORY) plus
@@ -286,25 +302,67 @@ export function initLife({islands,camera,texture,player,notice,visit,nearTree,ge
             load:Math.round(loadFromAltitude(me.altitude)*100)/100,altitude:Math.round(me.altitude*10)/10,
             weather:me.weather,strain:Math.round((me.strain??0)*100)/100,feel};
   }
-  function renderPanel(d){
-    const grown=d.trees.reduce((a,t)=>a+t.done,0), full=Math.min(100,Math.round(d.load*100));
-    $('mi-sum').replaceChildren(mk('span',{className:'mi-chip',textContent:`${full}% full`}),
-                               mk('span',{className:'mi-chip',textContent:`${grown} grown`}));
-    $('mi-trees').replaceChildren(...d.trees.map(t=>{
-      const name=CATEGORIES[t.c].label, it=mk('div',{className:`mi-tree${t.done+t.glass?'':' none'}`,title:`${name}: ${t.done} grown, ${t.glass} still glass`},
-        catImg(t.c,'mi-icon'),mk('b',{textContent:String(t.done)}),mk('small',{textContent:t.glass?`+${t.glass}`:''}));
-      it.setAttribute('role','listitem');it.setAttribute('aria-label',it.title);return it;
-    }));
-    const bar=mk('span',{className:'mi-bar'},mk('i'));bar.firstChild.style.width=`${Math.min(100,d.load*100)}%`;bar.setAttribute('aria-hidden','true');
-    const l=d.load;
-    $('mi-full').replaceChildren(bar,mk('b',{textContent:`${full}% full`}),mk('span',{className:'mi-metres',textContent:`${d.altitude} m`}));
-    // one line of meaning, and only while it is worth saying
-    $('mi-state').textContent=l<.65?'':l<.85?'Your island is sinking as the week fills up.':'Riding just above the cloud sea.';
+  // One card for whichever island you are looking at. The rows friends can see
+  // carry an eye; the private rows below them only ever appear on your own island.
+  const SKY={'Clear':'clear','Light cloud':'light-cloud','Cloudy':'cloudy','Drizzle':'drizzle','Rain':'rain'};
+  const pctOf=l=>Math.min(100,Math.round(l*100));
+  const shortBand=l=>l<.35?'Floating high':l<.65?'Mid-sky':l<.85?'Sinking low':'Low';
+  const barOf=l=>{const b=mk('span',{className:'mi-bar'},mk('i'));b.firstChild.style.width=`${Math.min(100,l*100)}%`;b.setAttribute('aria-hidden','true');return b;};
+  const feelNodes=d=>{
     const moods=Object.keys(MOODS).filter(m=>d.feel[m]);
-    $('mi-feel').replaceChildren(...(moods.length
-      ?moods.map(m=>mk('span',{},symbolImg(`lantern-${m}`,'mi-lantern'),`${d.feel[m]} ${MOODS[m].label.toLowerCase()}`))
-      :[mk('span',{textContent:'no lanterns yet'})]));
+    return moods.length?moods.map(m=>mk('span',{},symbolImg(`lantern-${m}`,'mi-lantern'),`${d.feel[m]} ${MOODS[m].label.toLowerCase()}`))
+                       :[mk('span',{textContent:'no lanterns yet'})];
+  };
+  const treeNodes=d=>d.trees.map(t=>{
+    const name=CATEGORIES[t.c].label, it=mk('div',{className:`mi-tree${t.done+t.glass?'':' none'}`,title:`${name}: ${t.done} grown, ${t.glass} still glass`},
+      catImg(t.c,'mi-icon'),mk('b',{textContent:String(t.done)}),mk('small',{textContent:t.glass?`+${t.glass}`:''}));
+    it.setAttribute('role','listitem');it.setAttribute('aria-label',it.title);return it;
+  });
+  function cardRows(i,d){
+    if(!i?.owner){                                   // the gathering island: what the group shares
+      const n=photos.items.length, f=TASKS.reduce((a,t)=>a+finishers(t).length,0);
+      return [{name:'Carousel',val:[`${n} moment${n===1?'':'s'} today`]},
+              {name:'Task board',val:[`${f} ${f===1?'finish':'finishes'} this week`]}];
+    }
+    const own=i.id===ME, l=own?d.load:0;
+    const note=l<.65?null:mk('span',{className:'ic-note',textContent:l<.85?'Sinking as the week fills up.':'Riding just above the cloud sea.'});
+    const rows=[
+      {name:'Altitude',eye:own,val:own?[mk('b',{textContent:`${d.altitude} m`}),barOf(d.load),
+                                        mk('span',{className:'ic-right',textContent:`${pctOf(d.load)}% full`}),...(note?[note]:[])]
+                                     :[band(loadFromAltitude(i.altitude))]},
+      {name:'Sky',eye:own,val:[mk('b',{textContent:i.weather}),mk('span',{className:'ic-dim',textContent:trend(i.strain??0)})]},
+    ];
+    if(own)rows.push({sep:true},{name:'Feelings',val:feelNodes(d)},{name:'Trees',val:treeNodes(d),list:true});
+    return rows;
   }
+  function renderCard(i,d){
+    const own=i?.id===ME;
+    $('ic-title').textContent='At a glance';
+    const glance=(icon,text)=>mk('span',{className:'ic-glance'},icon,mk('span',{textContent:text}));
+    const sky=w=>symbolImg(`sky-${SKY[w]??'clear'}`,'ic-mini');
+    let strip=[];
+    if(own){
+      const top=Object.entries(d.feel).sort((a,b)=>b[1]-a[1])[0];
+      strip=[glance(sky(i.weather),i.weather),
+             glance(symbolImg('altitude','ic-mini'),`${d.altitude} m`),
+             top?glance(symbolImg(`lantern-${top[0]}`,'ic-mini'),MOODS[top[0]].label.toLowerCase()):null,
+             glance(symbolImg('trees','ic-mini'),`${d.trees.reduce((a,t)=>a+t.done,0)} grown`)].filter(Boolean);
+    }else if(i?.owner){
+      strip=[glance(sky(i.weather),i.weather),
+             glance(symbolImg('altitude','ic-mini'),shortBand(loadFromAltitude(i.altitude)))];
+    }
+    $('ic-chips').replaceChildren(...strip);
+    $('ic-rows').replaceChildren(...cardRows(i,d).map(r=>{
+      if(r.sep)return mk('div',{className:'ic-sep'});   // a breath between what friends see and what only you see
+      const val=mk('div',{className:'ic-val'},...r.val);
+      if(r.list)val.setAttribute('role','list');
+      const eye=mk('span',{className:'ic-eye',textContent:r.eye?'👁':''});
+      if(r.eye)eye.title='Friends can see this';else eye.setAttribute('aria-hidden','true');
+      return mk('div',{className:'ic-row'},eye,mk('span',{className:'ic-name',textContent:r.name}),val);
+    }));
+    $('mi-balance').hidden=!own;$('ic-foot').hidden=!own;
+  }
+
   $('mi-balance').onclick=()=>openBalance($('mi-balance'));
 
   // ---- viewer (carousel photos and emotion lanterns) ------------------------
@@ -417,7 +475,12 @@ export function initLife({islands,camera,texture,player,notice,visit,nearTree,ge
     $('reveal').hidden=!next;if(!next)return;
     $('reveal').classList.toggle('wood',!!next.wood);   // notes and the goals board: written on wood, like their dialogs
     $('reveal').style.setProperty('--cat',next.color??'');
-    $('reveal-icon').hidden=!next.cat;if(next.cat)$('reveal-icon').src=catImg(next.cat).src;$('reveal-kicker').textContent=next.kicker;$('reveal-title').textContent=next.title;$('reveal-sub').textContent=next.sub;
+    $('reveal-icon').hidden=!next.cat;if(next.cat)$('reveal-icon').src=catImg(next.cat).src;
+    $('reveal-kicker').textContent=(next.kicker??'').replace(/ · /g,'  ');$('reveal-title').textContent=next.title;
+    // a line like "Social · 1.5 h · done" reads better as small chips
+    const bits=String(next.sub??'').split(' · ').filter(Boolean);
+    $('reveal-sub').replaceChildren(...(bits.length>1?bits.map(t=>mk('span',{className:'rv-chip',textContent:t}))
+                                                    :[document.createTextNode(next.sub??'')]));
     $('reveal-action').hidden=!next.action;$('reveal-action-label').textContent=next.actionLabel??'View photo';
     $('reveal-alt').hidden=!next.alt;if(next.alt)$('reveal-alt').textContent=next.altLabel;
     $('reveal-letgo').hidden=!next.letGo;$('reveal-letgo').textContent=next.letGoLabel??'Let go';
@@ -430,7 +493,7 @@ export function initLife({islands,camera,texture,player,notice,visit,nearTree,ge
     const st=blockStatus(b,clock.minutes);if(!['planned','now','waiting'].includes(st))return card;
     return {...card,...(st==='waiting'?{action:()=>finish(b),actionLabel:'Done'}:{}),letGo:()=>letGo(b)};
   };
-  $('reveal-action').onclick=()=>card?.action?.();
+  $('reveal-action').onclick=()=>{card?.action?.();reveal(nearest());};
   $('reveal-letgo').onclick=()=>card?.letGo?.();
   $('reveal-alt').onclick=()=>{card?.alt?.();reveal(nearest());};   // redraw now, so the button always matches the idea shown
   window.addEventListener('keydown',e=>{
@@ -461,8 +524,8 @@ export function initLife({islands,camera,texture,player,notice,visit,nearTree,ge
     if(!bubbleSeen){bubbleSeen=true;bubble=player.position.clone();}
     if(bubble&&Math.hypot(player.position.x-bubble.x,player.position.z-bubble.z)>4)bubble=null;
     if(!bubble)return null;
-    const c=nudgeCard('bubble','Your gardener',new T.Vector3(player.position.x,player.position.y+1.7,player.position.z));
-    return c&&{...c,action:()=>{bubble=null;c.action();},letGo:()=>{bubble=null;notice('It’ll wait on the sign by the windmill.');},letGoLabel:'Not now'};
+    return nudgeCard('bubble','Your gardener',new T.Vector3(player.position.x,player.position.y+1.7,player.position.z),
+                     ()=>{bubble=null;asking=false;notice('It’ll wait on the sign by the windmill.');});
   }
   function nearest(){
     const said=gardenerBubble();if(said)return said;
@@ -528,18 +591,12 @@ export function initLife({islands,camera,texture,player,notice,visit,nearTree,ge
       // bottom left: what friends can see of the island you're on; from the sky
       // and at home it's your own, and each row opens your balance
       const shown=mode==='walk'?islands.find(i=>i.id===selected):me, drops=dew();
-      const panel=shown===me?islandPanel():null, status=statusRows(shown), key=`${JSON.stringify(status)}|${JSON.stringify(panel)}|${drops}`;
+      const panel=shown===me?islandPanel():null;
+      const key=`${shown?.id}|${shown?.weather}|${Math.round((shown?.strain??0)*60)}|${Math.round(shown?.altitude??0)}`
+        +`|${JSON.stringify(panel)}|${drops}|${photos.items.length}|${TASKS.reduce((a,t)=>a+finishers(t).length,0)}`;
       if(key!==chips){
         chips=key;
-        const own=shown===me;
-        $('status-head').hidden=!status.head;$('status-head').textContent=status.head;
-        $('my-island').hidden=!own;if(own)renderPanel(panel);
-        $('island-status').replaceChildren(...status.rows.map(r=>{
-          const item=mk(own?'button':'span',{className:'status-row'},mk('i'),mk('b',{textContent:r.label}),r.text);
-          item.style.setProperty('--dot',r.color);item.firstChild.setAttribute('aria-hidden','true');
-          if(own){item.type='button';item.title='Open your balance';item.onclick=()=>openBalance(item);}
-          return mk('li',{},item);
-        }));
+        renderCard(shown,panel);
         $('dew-chip').textContent=`💧 ${drops}`;$('dew-chip').title=`${drops} dewdrops`;
         shop.render();
       }

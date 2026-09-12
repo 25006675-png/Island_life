@@ -83,3 +83,32 @@ for name, colour in MOODS.items():
     save(lantern(colour), f'lantern-{name}')
 for name in ('clear', 'light-cloud', 'cloudy', 'drizzle', 'rain'):
     save(sky(name), f'sky-{name}')
+
+def altitude():
+    """A small island with an up-and-down arrow beside it: how high you float."""
+    im = Image.new('RGBA', (S, S), (0, 0, 0, 0))
+    d = ImageDraw.Draw(im)
+    d.polygon([(72, 150), (184, 150), (128, 226)], fill=(185, 167, 155, 255))      # the keel
+    d.ellipse((62, 116, 194, 166), fill=(169, 192, 138, 255))                      # the grassy top
+    d.ellipse((96, 92, 128, 124), fill=(233, 191, 204, 255))                       # a blossom on it
+    x = 212
+    d.line((x, 74, x, 202), fill=(150, 136, 168, 255), width=9)                    # the arrow
+    d.polygon([(x, 56), (x - 18, 84), (x + 18, 84)], fill=(150, 136, 168, 255))
+    d.polygon([(x, 220), (x - 18, 192), (x + 18, 192)], fill=(150, 136, 168, 255))
+    return im
+
+
+def trees():
+    """A little stand of trees: what has grown this week."""
+    im = Image.new('RGBA', (S, S), (0, 0, 0, 0))
+    d = ImageDraw.Draw(im)
+    for cx, cy, r, crown, trunk in ((88, 150, 44, (169, 192, 138), (154, 122, 98)),
+                                    (170, 136, 52, (146, 178, 126), (154, 122, 98)),
+                                    (130, 168, 38, (233, 191, 204), (154, 122, 98))):
+        d.rounded_rectangle((cx - 7, cy, cx + 7, cy + 58), radius=6, fill=trunk + (255,))
+        d.ellipse((cx - r, cy - r, cx + r, cy + r * .7), fill=crown + (255,))
+    return im
+
+
+save(altitude(), 'altitude')
+save(trees(), 'trees')

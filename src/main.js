@@ -160,11 +160,25 @@ function arrive(island){
   clearTimeout(arriveTimer);
   arriveTimer=setTimeout(()=>{title.style.transform='';place.classList.remove('arriving');$('location-kicker').textContent=kicker;},motion?1600:300);
 }
+// Camera on the keyboard: Q/E turn, R/F tilt, Z/X zoom. A held key moves the
+// camera at a steady rate, which records far more smoothly than dragging.
+const CAM_TURN=.85, CAM_TILT=.5, CAM_ZOOM=1.25, sph=new T.Spherical(), off=new T.Vector3();
+function turnCamera(dt){
+  const turn=(keys.has('KeyE')?1:0)-(keys.has('KeyQ')?1:0);
+  const tilt=(keys.has('KeyF')?1:0)-(keys.has('KeyR')?1:0);
+  const zoom=(keys.has('KeyX')?1:0)-(keys.has('KeyZ')?1:0);
+  if(!turn&&!tilt&&!zoom)return;
+  off.subVectors(camera.position,controls.target);sph.setFromVector3(off);
+  sph.theta-=turn*CAM_TURN*dt;
+  sph.phi=T.MathUtils.clamp(sph.phi+tilt*CAM_TILT*dt,controls.minPolarAngle+.05,controls.maxPolarAngle-.05);
+  sph.radius=T.MathUtils.clamp(sph.radius*(1+zoom*CAM_ZOOM*dt),controls.minDistance,controls.maxDistance);
+  camera.position.copy(controls.target).add(off.setFromSpherical(sph));
+}
 function visit(id){if(!ready)return;selected=id;mode='walk';const island=islands.find(i=>i.id===id);spawnOn(island);controls.enabled=true;controls.minDistance=6;controls.maxDistance=skyReach();cameraOffset.set(...(island.cam??[0,10,16]));
   transition={from:camera.position.clone(),targetFrom:controls.target.clone(),time:0};
   arrive(island);
   $('hint').textContent='';   // the island's status shows below instead (life.js)
-$('mode-hint').textContent='WASD to walk · Space to jump · Drag to look around · Esc for sky view';$('overview').setAttribute('aria-pressed','false');$('walk').setAttribute('aria-pressed','true');syncPanel();canvas.focus({preventScroll:true});}
+$('mode-hint').textContent='WASD to walk · Space to jump · Q E turn · R F tilt · Z X zoom · Esc for sky view';$('overview').setAttribute('aria-pressed','false');$('walk').setAttribute('aria-pressed','true');syncPanel();canvas.focus({preventScroll:true});}
 function overview(){if(!ready)return;mode='overview';controls.enabled=true;controls.minDistance=14;controls.maxDistance=skyReach();transition={from:camera.position.clone(),targetFrom:controls.target.clone(),time:0};clearTimeout(arriveTimer);document.querySelector('.place').classList.remove('arriving');document.querySelector('.place-title').style.transform='';$('location-kicker').textContent='Your sky neighborhood';$('location-title').textContent='A world of little wonders.';$('hint').textContent='Choose an island. Stay a little while.';$('mode-hint').textContent='Drag to look around · Scroll to zoom';$('overview').setAttribute('aria-pressed','true');$('walk').setAttribute('aria-pressed','false');keys.clear();}
 // The sky view may zoom out a little past the framing, never far enough to lose the world.
 const skyReach=()=>overviewPosition().distanceTo(new T.Vector3(0,2,0))*1.25;
@@ -306,7 +320,7 @@ function frame(time){
   if(LITE){ if(time-_last<33) return; _last=time; }   // cap ~30fps
 
   const dt=Math.min((time-last)/1000,.04);last=time;if(document.hidden)return;if(motion)elapsed+=dt;
-  walk(dt);player.root.position.copy(player.position);atmosphere.update(elapsed,camera);for(const i of islands){i.weatherFx.update(elapsed,camera);i.sink.update(elapsed);}
+  turnCamera(dt);walk(dt);player.root.position.copy(player.position);atmosphere.update(elapsed,camera);for(const i of islands){i.weatherFx.update(elapsed,camera);i.sink.update(elapsed);}
   if(transition){transition.time+=dt;const a=motion?Math.min(transition.time/1.2,1):1,e=1-Math.pow(1-a,4);look.copy(mode==='walk'?player.position:new T.Vector3(0,2,0));if(mode==='walk')look.y+=1;targetPosition.copy(mode==='walk'?player.position.clone().add(cameraOffset):overviewPosition());camera.position.lerpVectors(transition.from,targetPosition,e);controls.target.lerpVectors(transition.targetFrom,look,e);camera.lookAt(controls.target);if(a===1)transition=null;}
   // walk: orbit controls around the gardener -- drag to turn, scroll to zoom -- carried along as they move
   // (no collision pull-in: the camera stays exactly where the user put it)
@@ -321,7 +335,7 @@ function frame(time){
 let down=null;
 canvas.addEventListener('pointerdown',e=>{down=[e.clientX,e.clientY];});
 canvas.addEventListener('pointerup',e=>{if(!ready||!down||Math.hypot(e.clientX-down[0],e.clientY-down[1])>5)return;down=null;pointer.set(e.clientX/innerWidth*2-1,-e.clientY/innerHeight*2+1);raycaster.setFromCamera(pointer,camera);if(life.pick(raycaster))return;if(mode!=='overview')return;const hit=raycaster.intersectObjects(islands.map(i=>i.group),true).find(h=>h.object.userData.islandId);if(hit)visit(hit.object.userData.islandId);});
-window.addEventListener('keydown',e=>{if(['INPUT','SELECT','TEXTAREA','BUTTON'].includes(document.activeElement.tagName))return;if(e.code==='Escape'){overview();return;}if(e.code==='Space'&&mode==='walk'){e.preventDefault();jump();return;}if(/^(Key[WASD]|Arrow(Up|Down|Left|Right))$/.test(e.code)){if(mode==='walk')e.preventDefault();keys.add(e.code);}});
+window.addEventListener('keydown',e=>{if(['INPUT','SELECT','TEXTAREA','BUTTON'].includes(document.activeElement.tagName))return;if(e.code==='Escape'){overview();return;}if(e.code==='Space'&&mode==='walk'){e.preventDefault();jump();return;}if(/^(Key[WASDQERFZX]|Arrow(Up|Down|Left|Right))$/.test(e.code)){if(mode==='walk'||/^Key[QERFZX]$/.test(e.code))e.preventDefault();keys.add(e.code);}});
 window.addEventListener('keyup',e=>keys.delete(e.code));window.addEventListener('blur',()=>keys.clear());document.addEventListener('visibilitychange',()=>keys.clear());
 $('overview').onclick=overview;$('walk').onclick=()=>visit(selected);
 function setPanel(open){$('settings').hidden=!open;$('settings-toggle').setAttribute('aria-expanded',String(open));if(open)$('sky-tone').focus();else $('settings-toggle').focus();}

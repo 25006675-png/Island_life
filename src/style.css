@@ -36,12 +36,12 @@ input[type=text],input[type=time],input[type=date],input[type=email],input[type=
 .mood::before{content:'';display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--mood);margin-right:7px;vertical-align:-1px}
 .file-line input{display:block;margin-top:8px;font-size:11px}
 /* bottom left: what anyone may see of the island you're on */
-.place .status-head{margin:12px 0 6px;font-size:11px;letter-spacing:.06em;color:var(--muted)}
-.island-status{list-style:none;margin:10px 0 0;padding:0;display:flex;flex-direction:column;align-items:flex-start;gap:6px;pointer-events:auto}
-.status-row{display:inline-flex;align-items:baseline;gap:8px;border:0;padding:5px 12px 5px 10px;border-radius:14px;background:oklch(.97 .012 295 / .8);font-size:12px;color:var(--ink);text-align:left}
-.status-row i{flex:none;align-self:center;width:8px;height:8px;border-radius:50%;background:var(--dot);box-shadow:0 0 6px var(--dot)}
-.status-row b{font-weight:600}
-button.status-row:hover{background:var(--surface)}
+
+
+
+
+
+
 .place p:empty{display:none}
 /* dewdrops: one glowing droplet at the right of the header; it pulses when you
    earn some, and opens the shop */
@@ -61,8 +61,8 @@ button.status-row:hover{background:var(--surface)}
 .header-actions .icon-only{padding:10px 13px}.header-actions .icon-only span{margin-left:0}
 /* arriving: the title starts in the middle of the screen, then slides home */
 .place-title{width:max-content;max-width:100%;transition:transform .8s cubic-bezier(.2,.8,.2,1);transform-origin:50% 50%}
-.place p,.island-status{transition:opacity .35s}
-.place.arriving p,.place.arriving .island-status{opacity:0}
+.place p,.island-card{transition:opacity .35s}
+.place.arriving p,.place.arriving .island-card{opacity:0}
 /* the shop */
 .shop-dew{font-size:13px;font-weight:600;color:oklch(.36 .09 240)}
 #shop-sheet .shop-note{margin:0 26px 14px;max-width:640px}
@@ -446,15 +446,14 @@ label:has(> .ed-cat-icon){position:relative}
 .ed-cat-icon{position:absolute;right:26px;bottom:6px;width:24px;height:24px;object-fit:contain;pointer-events:none}
 .bal-legend li.none{opacity:.5}
 /* 'Your island' panel, bottom left, own island only */
-.my-island{margin-top:8px;width:max-content;max-width:min(360px,100%);background:oklch(.97 .012 295 / .85);border-radius:14px;font-size:12px;color:var(--ink);pointer-events:auto;transition:opacity .35s}
-.place.arriving .my-island{opacity:0}
-.my-island summary{cursor:pointer;list-style:none;display:flex;align-items:baseline;gap:8px;padding:6px 12px 6px 10px;border-radius:14px}
-.my-island summary::-webkit-details-marker{display:none}
-.my-island summary::before{content:'▸';color:var(--muted);transition:transform .2s}
-.my-island[open] summary::before{transform:rotate(90deg)}
-.my-island summary b{font-weight:600}.my-island summary span{color:var(--muted)}
-.my-island summary:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
-.mi-body{display:grid;gap:5px;padding:2px 14px 12px}
+.island-card{margin-top:8px;width:max-content;max-width:min(360px,100%);background:oklch(.97 .012 295 / .85);border-radius:14px;font-size:12px;color:var(--ink);pointer-events:auto;transition:opacity .35s}
+.island-card summary{cursor:pointer;list-style:none;display:flex;align-items:baseline;gap:8px;padding:6px 12px 6px 10px;border-radius:14px}
+.island-card summary::-webkit-details-marker{display:none}
+.island-card summary::before{content:'▸';color:var(--muted);transition:transform .2s}
+.island-card[open] summary::before{transform:rotate(90deg)}
+.island-card summary b{font-weight:600}.island-card summary span{color:var(--muted)}
+.island-card summary:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.ic-body{display:grid;gap:5px;padding:2px 14px 12px}
 .mi-label{margin-top:4px;font-size:11px;color:var(--muted)}.mi-label span{opacity:.8}
 .mi-trees{display:flex;gap:4px}
 .mi-tree{display:flex;flex-direction:column;align-items:center;min-width:38px;font-variant-numeric:tabular-nums;line-height:1.2}
@@ -467,7 +466,7 @@ label:has(> .ed-cat-icon){position:relative}
 .mi-bar{width:110px;height:5px;border-radius:3px;background:oklch(.9 .02 295);overflow:hidden}.mi-bar i{display:block;height:100%;background:var(--accent)}
 .mi-feel{display:flex;flex-wrap:wrap;gap:4px 12px;align-items:center}.mi-feel span{display:inline-flex;align-items:center;gap:5px}
 .mi-feel i{width:8px;height:8px;border-radius:50%}.mi-weather{font-weight:600}
-.mi-body .text-button{justify-self:start;margin-top:4px}
+.ic-body .text-button{justify-self:start;margin-top:4px}
 @media(max-width:600px){.mi-tree{min-width:32px}.mi-tree .mi-icon{width:22px;height:22px}}
 .mi-words{color:var(--muted)}
 .mi-sky-icon{width:24px;height:24px;object-fit:contain;align-self:center}
@@ -479,13 +478,46 @@ label:has(> .ed-cat-icon){position:relative}
 @media(max-width:950px){.brand-logo{height:62px}.login-brand .brand-logo{height:52px}}
 @media(max-width:600px){.brand-logo{height:36px}.login-brand .brand-logo{height:40px}}
 /* the panel reads as separate sections, not one run-on list */
-.my-island summary{gap:10px}
+.island-card summary{gap:10px}
 .mi-chip{border-radius:11px;padding:3px 9px;background:oklch(.93 .02 295);font-size:11px;color:var(--ink);white-space:nowrap}
-.my-island summary #mi-sum{display:inline-flex;gap:6px}
+.island-card summary #mi-sum{display:inline-flex;gap:6px}
 .mi-sec{display:grid;gap:6px;padding:11px 0}
 .mi-sec+.mi-sec{border-top:1px solid oklch(.88 .015 295)}
 .mi-sec .mi-label{margin:0}
 .mi-line{display:flex;align-items:center;gap:10px;flex-wrap:nowrap}
 .mi-line .mi-bar{width:96px;margin:0}
 .mi-state{margin:0}.mi-state:empty{display:none}
-.mi-body{gap:0;padding-bottom:10px}
+.ic-body{gap:0;padding-bottom:10px}
+/* the island card: a stat row per line, values aligned down one column */
+.ic-rows{display:grid;grid-template-columns:14px 62px minmax(0,1fr);gap:13px 9px;align-items:center}
+.ic-row{display:contents}
+.ic-eye{font-size:10px;line-height:1;opacity:.55;text-align:center}
+.ic-name{font-size:11px;color:var(--muted)}
+.ic-val{display:flex;align-items:center;flex-wrap:wrap;gap:4px 9px;min-width:0}
+.ic-val b{font-weight:600}.ic-dim{color:var(--muted)}
+.ic-val .mi-bar{width:86px;margin:0}
+.ic-actions{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-top:10px}
+.ic-foot{font-size:10px;color:var(--muted);margin:0}
+.ic-body{display:block;padding:9px 16px 14px}
+/* every row fits on one line: smaller symbols, tighter gaps, a wider card */
+.island-card{max-width:min(400px,100%)}
+.ic-val{gap:3px 8px}
+.ic-val .mi-tree{min-width:28px}
+.ic-val .mi-tree .mi-icon{width:21px;height:21px}
+.ic-val .mi-lantern{width:15px;height:15px}
+.ic-val .mi-feel span,.ic-val>span{white-space:nowrap}
+.ic-note{flex-basis:100%;font-size:11px;line-height:1.4;color:var(--muted);white-space:normal}
+.ic-sep{grid-column:1/-1;height:1px;background:oklch(.89 .015 295);margin:1px 0}
+.island-card summary{padding:9px 14px 9px 11px}
+.ic-actions{margin-top:14px}
+.ic-val[role="list"]{gap:2px 6px}
+/* the collapsed card: a strip of symbols with small words */
+.ic-chips{display:inline-flex;flex-wrap:wrap;align-items:center;gap:4px 12px;font-size:11px;color:var(--muted)}
+.ic-glance{display:inline-flex;align-items:center;gap:4px;white-space:nowrap}
+.ic-mini{width:17px;height:17px;object-fit:contain}
+.ic-val .mi-bar{flex:1;min-width:54px;max-width:120px}
+.ic-right{margin-left:auto;font-weight:600}
+/* the walk-up card: chips instead of dotted lists */
+#reveal-sub{display:flex;flex-wrap:wrap;align-items:center;gap:5px}
+.rv-chip{padding:2px 8px;border-radius:10px;background:oklch(.92 .02 295);color:var(--ink);font-size:11px;white-space:nowrap}
+#reveal.wood .rv-chip{background:oklch(.36 .05 60 / .16);color:#3b2a1c}
