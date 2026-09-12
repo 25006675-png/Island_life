@@ -4,7 +4,7 @@
 <p align="center">
   <a href="docs/videos/hero.mp4"><img src="docs/images/Banner.png" alt="Banner" width="100%" /></a>
   <br/><br/>
-  <a href="docs/videos/hero.mp4"><img src="docs/images/clips/hero.webp" alt="The sky neighbourhood, turning a full circle" width="85%"/></a>
+  <a href="docs/videos/hero.mp4"><img src="docs/images/clips/hero.webp" alt="The sky neighbourhood, turning a full circle" width="100%"/></a>
   <br/><sub>Your sky neighbourhood, a full turn &nbsp;·&nbsp; <a href="docs/videos/hero.mp4">full clip</a> &nbsp;·&nbsp; <a href="docs/videos/character.mp4">walking the bridge (10s)</a></sub>
 </p>
 
