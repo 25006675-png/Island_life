@@ -3,13 +3,15 @@ const noise = `
 float hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
 float noise(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(hash(i),hash(i+vec2(1,0)),f.x),mix(hash(i+vec2(0,1)),hash(i+vec2(1)),f.x),f.y);}
 float fbm(vec2 p){float v=0.,a=.5;for(int i=0;i<5;i++){v+=a*noise(p);p=p*2.03+11.4;a*=.5;}return v;}`;
+// the cloud sea's own tint, shared so anything cloudy can match it
+export const cloudTint=new T.Color('#f5cfbf');
 const palettes={peach:['#787da9','#c0afd0','#ffd7b2','#f5cfbf'],lavender:['#666b9b','#ae9bcb','#eec7d5','#cdbbd9'],mint:['#77a8b8','#b3d2c9','#ffe0b8','#c5dcd2']};
 export function createAtmosphere(scene) {
   const uniforms={top:{value:new T.Color()},mid:{value:new T.Color()},bottom:{value:new T.Color()},time:{value:0}};
   const sky=new T.Mesh(new T.SphereGeometry(450,32,16),new T.ShaderMaterial({side:T.BackSide,depthWrite:false,uniforms,vertexShader:`varying vec3 vWorld;void main(){vWorld=position;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}`,fragmentShader:`varying vec3 vWorld;uniform vec3 top,mid,bottom;uniform float time;${noise}
 void main(){vec3 d=normalize(vWorld);float h=d.y;vec3 col=mix(bottom,mid,smoothstep(-.2,.28,h));col=mix(col,top,smoothstep(.15,.8,h));float sun=pow(max(0.,dot(d,normalize(vec3(-.8,.13,-1.)))),18.);col+=vec3(.17,.10,.025)*sun;float clouds=fbm(d.xz*5./max(.25,abs(d.y)+.3)+time*.002);float veil=smoothstep(.48,.77,clouds)*(1.-smoothstep(.08,.6,h));col=mix(col,bottom*1.07,veil*.38);float stars=step(.9978,hash(floor(d.xz/max(.16,h)*340.)))*smoothstep(.28,.75,h);col+=stars*.38;gl_FragColor=vec4(col,1.);#include <tonemapping_fragment>\n#include <colorspace_fragment>}`.replace(';#include',';\n#include')}));
   scene.add(sky);
-  const cloudUniforms={time:uniforms.time,tint:{value:new T.Color()}};
+  const cloudUniforms={time:uniforms.time,tint:{value:cloudTint}};
   // the cloud sea is far wider than any view and fades out, so no edge ever shows
   const sea=new T.Mesh(new T.PlaneGeometry(4000,4000),new T.ShaderMaterial({uniforms:cloudUniforms,transparent:true,depthWrite:false,side:T.DoubleSide,vertexShader:`varying vec3 vWorld;void main(){vWorld=(modelMatrix*vec4(position,1.)).xyz;gl_Position=projectionMatrix*viewMatrix*vec4(vWorld,1.);}`,fragmentShader:`varying vec3 vWorld;uniform float time;uniform vec3 tint;${noise}
 void main(){vec2 p=vWorld.xz*.026+vec2(time*.002,0.);float n=fbm(p);float detail=fbm(p*3.);vec3 col=mix(tint*.83,vec3(1.,.9,.81),smoothstep(.22,.8,n));col+=pow(detail,3.)*.14;gl_FragColor=vec4(col,.98*(1.-smoothstep(700.,1800.,length(vWorld.xz))));#include <tonemapping_fragment>\n#include <colorspace_fragment>}`.replace(';#include',';\n#include')}));
@@ -209,4 +211,50 @@ export function createWeather(texture,radius=26) {
       mist.rotation.y=Math.sin(t*.05)*.2;
       glow.material.opacity=(1-ramp(.1,.3,strain))*(.72+Math.sin(t*.6)*.08);
     }};
+}
+
+// A cloud bank that gathers around an island as its week fills up: the lower it
+// sinks, the thicker the clouds hugging its rim. Billboards only, and drawn
+// solely while the island is low, so a light week costs nothing. The puff is
+// drawn as a row of lobes, so its silhouette reads as billows, not as haze.
+let puff=null;
+const puffTexture=()=>{
+  if(puff)return puff;
+  const c=document.createElement('canvas');c.width=c.height=256;const x=c.getContext('2d');
+  const blob=(cx,cy,r,a)=>{
+    const g=x.createRadialGradient(cx,cy,r*.15,cx,cy,r);
+    g.addColorStop(0,`rgba(255,255,255,${a})`);g.addColorStop(.55,`rgba(255,255,255,${a*.5})`);g.addColorStop(1,'rgba(255,255,255,0)');
+    x.fillStyle=g;x.beginPath();x.arc(cx,cy,r,0,Math.PI*2);x.fill();
+  };
+  blob(128,158,112,.5);                                   // the body of the cloud
+  for(const [cx,cy,r,a] of [[128,104,74,.95],[68,134,58,.85],[188,140,56,.85],[98,166,54,.7],[162,170,52,.7]])blob(cx,cy,r,a);
+  puff=new T.CanvasTexture(c);return puff;
+};
+
+export function createSinkBank(radius=26){
+  const group=new T.Group(), puffs=[], map=puffTexture();
+  // lit: the same cream the cloud sea catches the light with. shade: the sea's
+  // own tint, darkened. Both follow the sky tone, so the bank never goes cold.
+  const lit=new T.Color(1,.92,.84), shade=new T.Color();
+  let tone=-1;
+  const mk=(a,r,y,sx,sy,up,o,order)=>{
+    const s=new T.Sprite(new T.SpriteMaterial({map,transparent:true,opacity:0,depthWrite:false}));
+    s.position.set(Math.cos(a)*r,y,Math.sin(a)*r);s.scale.set(sx,sy,1);s.userData={o,up};s.renderOrder=order;
+    group.add(s);puffs.push(s);
+  };
+  const recolour=()=>{
+    tone=cloudTint.getHex();shade.copy(cloudTint).multiplyScalar(.88);
+    for(const s of puffs)s.material.color.copy(s.userData.up?lit:shade);
+  };
+  for(let i=0;i<16;i++){const a=i/16*Math.PI*2;mk(a,radius*1.18,-.6+(i%3)*.8,radius*.95,radius*.5,1,1,6+i);}     // lit tops, sitting proud of the rim
+  for(let i=0;i<12;i++){const a=(i+.5)/12*Math.PI*2;mk(a,radius*1.34,-3.4+(i%2)*1.2,radius*1.15,radius*.58,0,.75,2+i);}   // the bank below, in shadow
+  group.visible=false;
+  return {group,
+    // nothing until the island dips below -2; full cover by the floor at -10
+    set(altitude){
+      const t=Math.min(1,Math.max(0,(-2-altitude)/8));
+      group.visible=t>.02;if(tone!==cloudTint.getHex())recolour();
+      for(const s of puffs)s.material.opacity=t*s.userData.o;
+    },
+    update(elapsed){if(!group.visible)return;if(tone!==cloudTint.getHex())recolour();group.rotation.y=elapsed*.02;}};
 }
