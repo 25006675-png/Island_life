@@ -54,14 +54,13 @@ These limitations leave three core stakeholder groups underserved:
 
 ## 1.2 Our Solution
 
-Island Life translates a student's week into an immersive, floating **3D island in the sky** that makes mental load visible before burnout hits.
+Island Life translates a student's week into an immersive, floating **3D island in the sky** that makes mental load visible before burnout hits.  
 
-Built with **Three.js** and custom **Blender assets**, the platform:
+Island Life
 
 - Converts scheduled commitments across **seven activity categories** into growing trees.
 - Uses the island’s physical **altitude** to represent weekly workload density.
 - Transforms real-time **weather** based on emotional check-ins.
-- Uses an ambient **AI Gardener** to monitor fatigue trends.
 - Suggests pre-scheduled, **single-tap rest activities** rather than enforcing rigid study marathons.
 - Provides a daily **2-minute "Golden Window"** photo prompt for friends to share authentic BeReal-style study moments.
 - Connects peer islands through **privacy-first bridges** that display emotional weather rather than private calendars.
@@ -92,14 +91,15 @@ The following table summarizes the ideas explored during ideation and explains w
 | **Traditional Virtual Garden Concept** — **Dropped** | Mentor Zach advised dropping the concept because standard 2D/3D garden plots are saturated and generic. It was replaced by the floating 3D sky island, where altitude, weather, and trees directly represent mental-health metrics. |
 | **Audio Analysis & Automated AI Pathfinder** — **Dropped** | Audio tracking is invasive to user privacy. Automated pathfinders may also present schedule adjustments with false confidence, potentially leading users through inaccurate sequences if fatigue or priorities are misinterpreted. |
 
----
+
 
 ## 2.2 Ideation Boards
 
 ![Ideation Board](docs/images/Island_Life_Ideation_Board-1.png)
 
-### This is explanation
----
+
+Our ideation process turns hidden workload into something students can see and act on. Island altitude, weather, trees, and bridges visualize workload, feelings, activities, and social support—helping students notice overload and make small changes before burnout builds up.
+
 
 ## 2.3 Mentor Consultation
 
@@ -229,7 +229,7 @@ Island Life differentiates itself by combining an expressive **3D environment**,
 
 ## Competitive Comparison
 
-| Feature | **Island Life** | **Forest** | **Pensus** | **Pomodoro** | **Operator / Uplift** |
+| Feature | **Island Life** | **Forest** | **Pensus** | **Pomodoro** | **Operator Uplift** |
 |---|---|---|---|---|---|
 | **Core Visual & World Experience** | **Interactive 3D Web Environment** built with Three.js, featuring dynamic altitude, lighting, camera control, and weather. | Static, top-down 2D grid/forest layout with minimal visual depth. | Clinical 2D administrative dashboards with numbers, progress rings, and charts. | Minimalist 2D timers, numerical countdowns, or basic progress bars. | Agent OS / workspace dashboards with task logs, lists, and workflow UI. |
 | **Proof of Focus Verification** | **1-Tap BeReal-Style Photo Check-Ins.** Dual-camera snapshots confirm real study setups and post to a shared carousel. | Passive countdown timer. Trees grow even if the phone sits idle on a desk while the user watches TV or sleeps. | Mechanical background timer with zero real-world activity verification. | Mechanical background timer with zero real-world activity verification. | Mechanical background timer with zero real-world activity verification. |
@@ -241,25 +241,24 @@ Island Life differentiates itself by combining an expressive **3D environment**,
 
 # 5. Technical Architecture & Feasibility
 
-## 5.1 Tech Stack
 
 ## 5.1 Tech Stack
 
-Island Life currently operates as a browser-based visual prototype. Its frontend renders the 3D world and manages demo data locally, while the proposed production stack uses Supabase to provide authentication, persistent storage, real-time social features, and secure server-side processing.
+Island Life currently operates as a **browser-based visual prototype**. Its frontend renders the 3D world and manages demo data locally, while the proposed production stack uses Supabase to provide authentication, persistent storage, real-time social features, and secure server-side processing.
 
 ### Frontend
 
-| Technology | Role | Reason for Selection | Limitations and Constraints |
-|---|---|---|---|
-| **HTML5** | Defines the application's interface, including the navigation controls, planner sheets, forms, dialogs, and accessibility labels. | It is supported by all modern browsers and works directly with the project's framework-free architecture. | Complex interfaces require careful manual management because the project does not use a component framework. |
-| **CSS3** | Controls the responsive layout, visual theme, transitions, animations, and reduced-motion behaviour. | Native CSS keeps the application lightweight and provides sufficient control for the painterly interface surrounding the 3D world. | Large stylesheets can become difficult to maintain without a naming convention or component-based organization. |
-| **JavaScript with ES Modules** | Implements the planner, mood check-ins, balance calculations, social interactions, rewards, and communication with the Three.js scene. | It runs natively in the browser and allows features to be separated into focused modules without introducing a UI framework. | JavaScript does not provide compile-time type safety. Migrating the application modules to TypeScript is recommended as the data model grows. |
-| **Three.js** | Renders the floating islands, trees, bridges, weather, timetable path, character, lighting, and post-processing effects. | It provides mature WebGL abstractions and supports the GLB assets produced by Blender. | Detailed models, transparency, shadows, bloom, and weather effects can be demanding on low-powered devices. Model compression and adaptive quality settings will be necessary for mobile support. |
-| **GLTFLoader** | Loads the island, tree, character, and decoration models into the Three.js scene. | GLB/glTF is compact, web-friendly, and preserves model geometry, materials, and textures. | Large model files increase initial loading time and GPU memory usage. |
-| **OrbitControls** | Provides camera rotation and zooming around the islands and player. | It supplies familiar mouse and touch camera controls with minimal custom code. | Additional constraints are required to prevent clipping and disorientation in walk mode. |
-| **EffectComposer and UnrealBloomPass** | Adds bloom and other post-processing effects to paths, bridges, lanterns, and atmospheric lighting. | These effects support the warm, magical visual direction of the project. | Post-processing adds extra rendering passes and may need to be reduced or disabled on slower devices. |
-| **Browser Media APIs** | Access the user's camera or uploaded images for mood lanterns and community moments. | Native browser APIs avoid requiring an additional capture library. | Camera access requires HTTPS and explicit user permission, and browser support can vary. |
-| **Vite** | Provides the local development server, ES module handling, asset bundling, and optimized production builds. | Vite is lightweight, fast, and works well with a plain JavaScript and Three.js project. | It is a frontend build tool and does not provide authentication, persistent storage, or backend business logic. |
+| Technology | Role | Reason for Selection |
+|---|---|---|
+| **HTML5** | Defines the application's interface, including the navigation controls, planner sheets, forms, dialogs, and accessibility labels. | It is supported by all modern browsers and works directly with the project's framework-free architecture. | 
+| **CSS3** | Controls the responsive layout, visual theme, transitions, animations, and reduced-motion behaviour. | Native CSS keeps the application lightweight and provides sufficient control for the painterly interface surrounding the 3D world. | 
+| **JavaScript with ES Modules** | Implements the planner, mood check-ins, balance calculations, social interactions, rewards, and communication with the Three.js scene. | It runs natively in the browser and allows features to be separated into focused modules without introducing a UI framework. | 
+| **Three.js** | Renders the floating islands, trees, bridges, weather, timetable path, character, lighting, and post-processing effects. | It provides mature WebGL abstractions and supports the GLB assets produced by Blender. | 
+| **GLTFLoader** | Loads the island, tree, character, and decoration models into the Three.js scene. | GLB/glTF is compact, web-friendly, and preserves model geometry, materials, and textures. | 
+| **OrbitControls** | Provides camera rotation and zooming around the islands and player. | It supplies familiar mouse and touch camera controls with minimal custom code. | 
+| **EffectComposer and UnrealBloomPass** | Adds bloom and other post-processing effects to paths, bridges, lanterns, and atmospheric lighting. | These effects support the warm, magical visual direction of the project. | 
+| **Browser Media APIs** | Access the user's camera or uploaded images for mood lanterns and community moments. | Native browser APIs avoid requiring an additional capture library. | 
+| **Vite** | Provides the local development server, ES module handling, asset bundling, and optimized production builds. | Vite is lightweight, fast, and works well with a plain JavaScript and Three.js project. | 
 
 ### 3D Asset Production
 
