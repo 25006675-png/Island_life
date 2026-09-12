@@ -262,43 +262,43 @@ Island Life currently operates as a **browser-based visual prototype**. Its fron
 
 ### 3D Asset Production
 
-| Technology | Role | Reason for Selection | Limitations and Constraints |
-|---|---|---|---|
-| **Blender** | Creates the islands, trees, gardener character, decorations, and rendered interface artwork. | It provides a complete modelling, material, lighting, and animation workflow and supports GLB export. | Source `.blend` files are unsuitable for direct browser delivery and must be optimized and exported before use. |
-| **Python** | Automates Blender model generation, rendering, inspection, and asset export. | Scripted generation makes visual assets repeatable and helps maintain a consistent art style. | The scripts depend on Blender's Python environment and are part of the development pipeline rather than the runtime application. |
-| **GLB/glTF, WebP, PNG, and JPEG** | Deliver optimized 3D models, icons, character sprites, artwork, and photographs. | These formats are widely supported by browsers and provide an appropriate balance between quality and file size. | Assets must be compressed and cached carefully to control page load time, particularly on mobile networks. |
+| Technology | Role | Reason for Selection |
+|---|---|---|
+| **Blender** | Creates the islands, trees, gardener character, decorations, and rendered interface artwork. | It provides a complete modelling, material, lighting, and animation workflow and supports GLB export. |
+| **Python** | Automates Blender model generation, rendering, inspection, and asset export. | Scripted generation makes visual assets repeatable and helps maintain a consistent art style. |
+| **GLB/glTF, WebP, PNG, and JPEG** | Deliver optimized 3D models, icons, character sprites, artwork, and photographs. | These formats are widely supported by browsers and provide an appropriate balance between quality and file size. |
 
 ### Proposed Backend and Database
 
-| Technology | Role | Reason for Selection | Limitations and Constraints |
-|---|---|---|---|
-| **Supabase** | Acts as the managed backend platform for the production version of Island Life. | It combines PostgreSQL, authentication, storage, real-time communication, generated APIs, and serverless functions, reducing the number of independent services the team must maintain. | Usage is subject to plan quotas and service limits. The application must also be designed so it is not tightly coupled to provider-specific features. |
-| **PostgreSQL** | Stores profiles, friendships, activity blocks, recurrences, mood check-ins, notes, shared tasks, rewards, moments, and calendar metadata. | Island Life contains strongly related data, making a relational database suitable for consistency, privacy rules, and weekly workload queries. | A clear schema and migrations are required. Complex recurrence and calendar-conflict queries must be designed and indexed carefully. |
-| **Supabase Auth** | Provides real registration, login, password recovery, session management, and Google OAuth. | It integrates with PostgreSQL records and Row-Level Security, allowing an authenticated identity to control access to user data. | OAuth providers require external configuration, approved redirect URLs, and secure production environment settings. |
-| **Row-Level Security (RLS)** | Ensures users can access their own private schedules and mood records while friends receive only permitted information. | Database-level policies reduce the risk of sensitive data being exposed by a frontend programming mistake. | Incorrect or incomplete policies may either expose private data or block valid requests, so every table and storage bucket requires policy testing. |
-| **Supabase Data API and `@supabase/supabase-js`** | Connect the browser application to authorized database operations. | The client library fits the current JavaScript architecture and removes the need to build a separate CRUD API for the first production version. | Only the public project key may be placed in the frontend. Administrative keys and privileged operations must remain on the server. |
-| **Supabase Realtime** | Synchronizes friend status, notes, shared tasks, community photographs, and derived island changes between connected users. | Real-time database events match the project's social island concept and allow changes to appear without manually refreshing the page. | Subscriptions must be scoped by friendship and group membership. High-frequency player movement should not be stored or broadcast as database changes. |
-| **Supabase Storage** | Stores profile images, mood photographs, and golden-window submissions. | It provides managed object storage that integrates with authenticated access policies. | Upload size, image type, retention, and privacy policies must be enforced. Private media should be served using time-limited signed URLs. |
-| **Supabase Edge Functions** | Handles secure calendar OAuth exchanges, calendar API requests, notification logic, and other privileged operations. | Server-side TypeScript keeps API credentials and refresh tokens out of browser code. | Edge functions should remain short-lived and idempotent. Long-running synchronization work may require queues or multiple smaller jobs. |
-| **Supabase Cron** | Triggers scheduled calendar synchronization, recovery nudges, and the daily golden window. | It allows recurring jobs to run without maintaining a dedicated application server. | Jobs must account for user timezones, retries, duplicate execution, and provider rate limits. |
+| Technology | Role | Reason for Selection |
+|---|---|---|
+| **Supabase** | Acts as the managed backend platform for the production version of Island Life. | It combines PostgreSQL, authentication, storage, real-time communication, generated APIs, and serverless functions, reducing the number of independent services the team must maintain. |
+| **PostgreSQL** | Stores profiles, friendships, activity blocks, recurrences, mood check-ins, notes, shared tasks, rewards, moments, and calendar metadata. | Island Life contains strongly related data, making a relational database suitable for consistency, privacy rules, and weekly workload queries. |
+| **Supabase Auth** | Provides real registration, login, password recovery, session management, and Google OAuth. | It integrates with PostgreSQL records and Row-Level Security, allowing an authenticated identity to control access to user data. |
+| **Row-Level Security (RLS)** | Ensures users can access their own private schedules and mood records while friends receive only permitted information. | Database-level policies reduce the risk of sensitive data being exposed by a frontend programming mistake. |
+| **Supabase Data API and `@supabase/supabase-js`** | Connect the browser application to authorized database operations. | The client library fits the current JavaScript architecture and removes the need to build a separate CRUD API for the first production version. |
+| **Supabase Realtime** | Synchronizes friend status, notes, shared tasks, community photographs, and derived island changes between connected users. | Real-time database events match the project's social island concept and allow changes to appear without manually refreshing the page. |
+| **Supabase Storage** | Stores profile images, mood photographs, and golden-window submissions. | It provides managed object storage that integrates with authenticated access policies. |
+| **Supabase Edge Functions** | Handles secure calendar OAuth exchanges, calendar API requests, notification logic, and other privileged operations. | Server-side TypeScript keeps API credentials and refresh tokens out of browser code. |
+| **Supabase Cron** | Triggers scheduled calendar synchronization, recovery nudges, and the daily golden window. | It allows recurring jobs to run without maintaining a dedicated application server. |
 
 ### APIs and External Services
 
-| Technology | Role | Reason for Selection | Limitations and Constraints |
-|---|---|---|---|
-| **Google Calendar API** | Imports and, in a later phase, updates Google Calendar events. | Google Calendar is widely used by students and exposes individual and recurring events through an official API. | It requires OAuth consent, careful token storage, quota handling, and conflict resolution for two-way synchronization. |
-| **Microsoft Graph Calendar API** | Connects Outlook, Microsoft 365, and supported university calendars. | Many universities use Microsoft 365, so this integration covers an important part of the target audience. | Tenant policies may restrict student consent, and two-way synchronization must handle recurring-event exceptions and deleted events. |
-| **ICS Calendar Feeds** | Imports classes, coursework, and deadlines from Canvas, Moodle, Blackboard, and other systems that publish calendar feeds. | ICS offers broad compatibility without requiring a custom integration for every learning platform. | Most ICS feeds are read-only and may refresh slowly, so they cannot guarantee immediate two-way updates. |
-| **CalDAV** | Provides possible future synchronization with Apple iCloud Calendar and compatible calendar servers. | It is an established open calendar protocol. | Provider-specific authentication and behaviour make it more difficult to support than Google or Microsoft APIs. |
+| Technology | Role | Reason for Selection |
+|---|---|---|
+| **Google Calendar API** | Imports and, in a later phase, updates Google Calendar events. | Google Calendar is widely used by students and exposes individual and recurring events through an official API. |
+| **Microsoft Graph Calendar API** | Connects Outlook, Microsoft 365, and supported university calendars. | Many universities use Microsoft 365, so this integration covers an important part of the target audience. |
+| **ICS Calendar Feeds** | Imports classes, coursework, and deadlines from Canvas, Moodle, Blackboard, and other systems that publish calendar feeds. | ICS offers broad compatibility without requiring a custom integration for every learning platform. |
+| **CalDAV** | Provides possible future synchronization with Apple iCloud Calendar and compatible calendar servers. | It is an established open calendar protocol. |
 
 ### Hosting, Testing, and Delivery
 
-| Technology | Role | Reason for Selection | Limitations and Constraints |
-|---|---|---|---|
-| **Vercel** | Hosts the Vite frontend and provides preview deployments. | Static Vite output can be deployed with minimal configuration and delivered through a global content delivery network. | Backend secrets and calendar token exchanges cannot be implemented in publicly delivered frontend code. These operations will run through Supabase Edge Functions. |
-| **Playwright** | Tests login flows, planner interactions, keyboard controls, dialogs, and browser rendering behaviour. | It automates real browsers and is appropriate for the application's interaction-heavy interface. | Visual and WebGL tests may vary between machines and require stable fixtures and tolerances. |
-| **Node.js Test Runner** | Runs unit tests for workload, altitude, weather, recurrence, and reward calculations. | It is built into Node.js and avoids adding another unit-testing framework. | The project must separate calculation logic from DOM and Three.js code so that it can be tested independently. |
-| **GitHub and GitHub Actions** | Provide source control and automated build and test workflows. | They support collaboration and allow every change to be checked before deployment. | Continuous integration workflows and protected branch rules still need to be configured. |
+| Technology | Role | Reason for Selection |
+|---|---|---|
+| **Vercel** | Hosts the Vite frontend and provides preview deployments. | Static Vite output can be deployed with minimal configuration and delivered through a global content delivery network. |
+| **Playwright** | Tests login flows, planner interactions, keyboard controls, dialogs, and browser rendering behaviour. | It automates real browsers and is appropriate for the application's interaction-heavy interface. |
+| **Node.js Test Runner** | Runs unit tests for workload, altitude, weather, recurrence, and reward calculations. | It is built into Node.js and avoids adding another unit-testing framework. |
+| **GitHub and GitHub Actions** | Provide source control and automated build and test workflows. | They support collaboration and allow every change to be checked before deployment. |
 
 The recommended production stack can therefore be summarized as follows:
 
