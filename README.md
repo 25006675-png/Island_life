@@ -5,7 +5,10 @@
   <a href="docs/videos/hero.mp4"><img src="docs/images/Banner.png" alt="Banner" width="100%" /></a>
   <br/><br/>
   <a href="docs/videos/hero.mp4"><img src="docs/images/clips/hero.webp" alt="The sky neighbourhood, turning a full circle" width="100%"/></a>
-  <br/><sub>Your sky neighbourhood, a full turn &nbsp;·&nbsp; <a href="docs/videos/hero.mp4">full clip</a> &nbsp;·&nbsp; <a href="docs/videos/character.mp4">walking the bridge (10s)</a></sub>
+  <br/><sub>Your sky neighbourhood, a full turn &nbsp;·&nbsp; <a href="docs/videos/hero.mp4">full clip</a></sub>
+  <br/><br/>
+  <a href="docs/videos/character.mp4"><img src="docs/images/clips/character.webp" alt="Walking the bridge, pulling back to the whole gathering island" width="100%"/></a>
+  <br/><sub>Crossing to The gathering Island &nbsp;·&nbsp; <a href="docs/videos/character.mp4">full clip</a></sub>
 </p>
 
 **Team:** Codenected  
@@ -139,7 +142,7 @@ Seven kinds of activity, seven kinds of tree. What's coming up stands as a glass
 Your island floats high when your week has room, and sinks toward the clouds as you take more on. You feel it's too much before you've said yes to one more thing.</td>
 </tr>
 <tr>
-<td><img src="docs/images/weather.jpg" alt="Rain over an island, with feeling lanterns hanging in its sky"/></td>
+<td><a href="docs/videos/weather.mp4"><img src="docs/images/clips/weather.webp" alt="An island's sky turning from clear to rain"/></a><br/><sub>Heavy days gather cloud, then rain &nbsp;·&nbsp; <a href="docs/videos/weather.mp4">full clip</a></sub></td>
 <td><a href="docs/videos/visiting_friend.mp4"><img src="docs/images/clips/visiting_friend.webp" alt="Crossing the glowing bridge to a friend's island"/></a><br/><sub>Cross a bridge to a friend's island &nbsp;·&nbsp; <a href="docs/videos/visiting_friend.mp4">full clip</a></sub></td>
 </tr>
 <tr>
