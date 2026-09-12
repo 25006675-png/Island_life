@@ -357,6 +357,18 @@ Introduce positive milestones that celebrate sustainable balance rather than pro
 - **Other wellness-focused achievements**
 
 The objective is to reinforce sustainable habits without introducing guilt or pressure.
+
+### 5. Island Decorations and Gardener Costumes
+
+Allow students to personalize their island and gardener using Dewdrops earned through healthy, balanced activities. Customization options could include:
+
+- Island decorations such as benches, lanterns, windmills, ponds, flowers, paths, and seasonal items
+- Gardener costumes, hats, accessories, colour themes, and animation styles
+- Themed decoration and costume collections that students can unlock over time
+- A preview mode that lets students try an item before spending Dewdrops
+
+Customization will remain cosmetic and will not increase productivity scores or reward overworking. Rest, social activities, and healthy routines will contribute equally toward earning customization rewards.
+
 # Core Product Principles
 
 Island Life is designed around several core principles:
