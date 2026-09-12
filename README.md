@@ -245,7 +245,16 @@ Island Life differentiates itself by combining an expressive **3D environment**,
 ## 5.1 Tech Stack
 
 Island Life currently operates as a **browser-based visual prototype**. Its frontend renders the 3D world and manages demo data locally, while the proposed production stack uses Supabase to provide authentication, persistent storage, real-time social features, and secure server-side processing.
-
+```
+Frontend: HTML5 + CSS3 + TypeScript + Three.js + Vite
+Backend: Supabase Auth + Data API + Realtime + Edge Functions + Cron
+Database: PostgreSQL with Row-Level Security
+Storage: Supabase Storage
+Integrations: Google Calendar API + Microsoft Graph + ICS + CalDAV
+Deployment: Vercel + Supabase
+Testing: Playwright + Node.js Test Runner
+Asset pipeline: Blender + Python + GLB/glTF
+```
 ### Frontend
 
 | Technology | Role | Reason for Selection |
@@ -276,7 +285,7 @@ Island Life currently operates as a **browser-based visual prototype**. Its fron
 | **PostgreSQL** | Stores profiles, friendships, activity blocks, recurrences, mood check-ins, notes, shared tasks, rewards, moments, and calendar metadata. | Island Life contains strongly related data, making a relational database suitable for consistency, privacy rules, and weekly workload queries. |
 | **Supabase Auth** | Provides real registration, login, password recovery, session management, and Google OAuth. | It integrates with PostgreSQL records and Row-Level Security, allowing an authenticated identity to control access to user data. |
 | **Row-Level Security (RLS)** | Ensures users can access their own private schedules and mood records while friends receive only permitted information. | Database-level policies reduce the risk of sensitive data being exposed by a frontend programming mistake. |
-| **Supabase Data API and `@supabase/supabase-js`** | Connect the browser application to authorized database operations. | The client library fits the current JavaScript architecture and removes the need to build a separate CRUD API for the first production version. |
+| **Supabase Data API** | Connect the browser application to authorized database operations. | The client library fits the current JavaScript architecture and removes the need to build a separate CRUD API for the first production version. |
 | **Supabase Realtime** | Synchronizes friend status, notes, shared tasks, community photographs, and derived island changes between connected users. | Real-time database events match the project's social island concept and allow changes to appear without manually refreshing the page. |
 | **Supabase Storage** | Stores profile images, mood photographs, and golden-window submissions. | It provides managed object storage that integrates with authenticated access policies. |
 | **Supabase Edge Functions** | Handles secure calendar OAuth exchanges, calendar API requests, notification logic, and other privileged operations. | Server-side TypeScript keeps API credentials and refresh tokens out of browser code. |
@@ -300,18 +309,6 @@ Island Life currently operates as a **browser-based visual prototype**. Its fron
 | **Node.js Test Runner** | Runs unit tests for workload, altitude, weather, recurrence, and reward calculations. | It is built into Node.js and avoids adding another unit-testing framework. |
 | **GitHub and GitHub Actions** | Provide source control and automated build and test workflows. | They support collaboration and allow every change to be checked before deployment. |
 
-The recommended production stack can therefore be summarized as follows:
-
-```text
-Frontend: HTML5 + CSS3 + TypeScript + Three.js + Vite
-Backend: Supabase Auth + Data API + Realtime + Edge Functions + Cron
-Database: PostgreSQL with Row-Level Security
-Storage: Supabase Storage
-Integrations: Google Calendar API + Microsoft Graph + ICS + CalDAV
-Deployment: Vercel + Supabase
-Testing: Playwright + Node.js Test Runner
-Asset pipeline: Blender + Python + GLB/glTF
-```
 
 ---
 
@@ -360,48 +357,20 @@ The objective is to reinforce sustainable habits without introducing guilt or pr
 
 ### 5. Island Decorations and Gardener Costumes
 
-Allow students to personalize their island and gardener using Dewdrops earned through healthy, balanced activities. Customization options could include:
+Allow users to personalize their island and gardener using Dewdrops earned through healthy, balanced activities. Customization options could include:
 
 - Island decorations such as benches, lanterns, windmills, ponds, flowers, paths, and seasonal items
-- Gardener costumes, hats, accessories, colour themes, and animation styles
+- Gardener costumes, hats, accessories, and colour themes
 - Themed decoration and costume collections that students can unlock over time
 - A preview mode that lets students try an item before spending Dewdrops
 
 Customization will remain cosmetic and will not increase productivity scores or reward overworking. Rest, social activities, and healthy routines will contribute equally toward earning customization rewards.
-
-# Core Product Principles
-
-Island Life is designed around several core principles:
-
-- **Make workload visible instead of abstract.**
-- **Prevent burnout rather than merely measure productivity.**
-- **Reward rest as much as work.**
-- **Provide social accountability without exposing private schedules.**
-- **Use visual and emotional feedback instead of clinical dashboards.**
-- **Avoid punishment-based streak mechanics.**
-- **Create authentic proof of focus through real-world interactions.**
-- **Make productivity feel expressive, social, and personally meaningful.**
-
----
 
 # Summary
 
 **Island Life** reimagines student productivity as an immersive social wellness experience.
 
 Instead of presenting students with another timer, checklist, or administrative dashboard, it transforms their schedule, workload, emotional state, focus sessions, and rest into a living **3D island ecosystem**.
-
-Its key differentiators include:
-
-- 🌴 **Interactive 3D Sky Island**
-- 🌦️ **Emotion-Driven Weather**
-- 🌳 **Activity-Based Trees**
-- 🤖 **Empathic AI Gardener**
-- 📸 **Golden Window Photo Check-Ins**
-- 🌉 **Privacy-Preserving Peer Bridges**
-- 💧 **Balanced Dewdrop Rewards**
-- 🍃 **Guilt-Free "Let Go" Mechanic**
-- 🧑‍🤝‍🧑 **Shared Gathering Island**
-- 🛠️ **Blender + MCP Procedural Asset Pipeline**
 
 The central goal is not simply to help students **do more**, but to help them recognize when they are doing **too much**—and build healthier, more sustainable habits together.
 
