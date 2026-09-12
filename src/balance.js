@@ -1,4 +1,4 @@
-import { CATEGORIES, CAPACITY, TRENDS, MOODS, hours, weatherLabel, fullness, catImg } from './data.js';
+import { CATEGORIES, CAPACITY, TRENDS, MOODS, hours, weatherLabel, fullness, catImg, WEEK } from './data.js';
 import { TODAY, addDays, mondayOf, dow, fromIso, daysBetween } from './plan.js';
 
 // The balance sheet: analysis plus solutions for your own week. Your gardener
@@ -197,7 +197,7 @@ export function createBalance({plans,me,friends,clock,checkins,sheets,notice,dew
   const cap1=t=>t[0].toUpperCase()+t.slice(1);
   function areas(week,load){
     const live=week.filter(b=>!b.skipped), mins=c=>live.filter(b=>b.cat===c).reduce((a,b)=>a+b.mins,0);
-    const heavy=checkins.filter(c=>c.day<=4&&MOODS[c.mood].strain>=.55).length;
+    const heavy=checkins.filter(c=>c.day<=WEEK&&MOODS[c.mood].strain>=.55).length;
     const late=live.filter(b=>b.start+b.mins>=22*60).length, move=mins('exercise'), social=mins('social');
     const todo=live.filter(b=>b.cat==='errands'&&!b.done).length;
     const rows=[
@@ -215,9 +215,9 @@ export function createBalance({plans,me,friends,clock,checkins,sheets,notice,dew
   }
   // Weather is feelings only (data.js deriveStrain); how full the week is lives in altitude.
   function weatherLine(){
-    const heavy=checkins.filter(c=>c.day<=4&&MOODS[c.mood].strain>0).length;
+    const heavy=checkins.filter(c=>c.day<=WEEK&&MOODS[c.mood].strain>0).length;
     const label=weatherLabel(me.strain??0);
-    return heavy?`${label}: ${heavy===1?'one heavier day':heavy<4?'a few heavier days':'a run of heavier days'} lately.`:`${label}: calm, steady days lately.`;
+    return heavy?`${label}: ${heavy===1?'one heavier day':heavy<4?'a few heavier days':'a run of heavier days'} this week.`:`${label}: calm, steady days this week.`;
   }
   function renderList(){
     $('bal-suggest').replaceChildren(...current.map(s=>{

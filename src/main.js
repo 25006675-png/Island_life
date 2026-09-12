@@ -7,7 +7,7 @@ import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { HeightField, bridgePoint, surfaceAt, islandSurface } from './navigation.js';
-import { createAtmosphere, createWeather } from './atmosphere.js';
+import { createAtmosphere, createWeather, createSinkBank } from './atmosphere.js';
 import { initLife, setStrain } from './life.js';
 import { ME } from './data.js';
 import { createForest } from './forest.js';
@@ -129,6 +129,7 @@ function buildBridge(island){
 
 function updateAltitude(island,altitude){
   const old=island.altitude;island.altitude=altitude;island.group.position.y=altitude;island.weatherFx.group.position.y=altitude;
+  island.sink.group.position.y=altitude;island.sink.set(altitude);
   if(island.id==='community')for(const i of islands.slice(1))buildBridge(i);else buildBridge(island);
   if(player.surface?.kind==='island'&&player.surface.id===island.id)player.position.y+=altitude-old;
   const surface=surfaceAt(islands,bridges,player.position.x,player.position.z);if(surface){player.position.y=surface.y;player.surface=surface;}
@@ -280,6 +281,7 @@ renderer=new T.WebGLRenderer({canvas,antialias:true,powerPreference:'high-perfor
     forest??=createForest({assets,islandSurface,speciesScale:SPECIES_SCALE});
     if(def.owner)forest.plant(island);
     island.weatherFx=createWeather(atmosphere.texture);island.weatherFx.group.position.copy(group.position);scene.add(island.weatherFx.group);
+    island.sink=createSinkBank();island.sink.group.position.copy(group.position);island.sink.set(def.altitude);scene.add(island.sink.group);
     const label=document.createElement('button');label.className='island-label';label.textContent=def.name;label.dataset.island=def.id;label.addEventListener('click',()=>visit(def.id));$('island-labels').append(label);island.label=label;
     const option=document.createElement('option');option.value=def.id;option.textContent=def.name;$('island-select').append(option);islands.push(island);
   }
@@ -288,7 +290,7 @@ renderer=new T.WebGLRenderer({canvas,antialias:true,powerPreference:'high-perfor
   const shadow=new T.Mesh(new T.CircleGeometry(.43,24),new T.MeshBasicMaterial({color:'#35492f',transparent:true,opacity:.22,depthWrite:false}));shadow.rotation.x=-Math.PI/2;shadow.position.y=.035;playerRoot.add(shadow);
   spawnOn(islands[0]);
   life=initLife({islands,camera,texture:atmosphere.texture,player,notice,visit,nearTree:forest.near,getMode:()=>mode,getSelected:()=>selected,
-    setAltitude:(id,h)=>{updateAltitude(islands.find(i=>i.id===id),T.MathUtils.clamp(h,-7,16));syncPanel();},
+    setAltitude:(id,h)=>{updateAltitude(islands.find(i=>i.id===id),T.MathUtils.clamp(h,-10,16));syncPanel();},
     setGlow:(id,g)=>{const b=bridges.find(b=>b.id===id);if(!b)return;b.glow=T.MathUtils.clamp(g,.15,3);b.glowMaterial.emissiveIntensity=b.glow*2.2;b.deckMaterial.emissiveIntensity=b.glow*.16;syncPanel();}});
   ready=true;
   const want=new URLSearchParams(location.search).get('island');
@@ -296,7 +298,7 @@ renderer=new T.WebGLRenderer({canvas,antialias:true,powerPreference:'high-perfor
 $('loading').hidden=true;$('motion').checked=motion;syncPanel();
   renderer.setAnimationLoop(frame);
   // A small inspection API also exposes meaningful world state for embedding.
-  window.islandLife={visit,overview,setAltitude:(id,h)=>{if(!Number.isFinite(h))return;updateAltitude(islands.find(i=>i.id===id),T.MathUtils.clamp(h,-7,16));syncPanel();},setWeather:(id,s)=>{const i=islands.find(i=>i.id===id),v=typeof s==='number'?s:{clear:.05,cloudy:.45,mist:.45,rain:.85}[s];if(!i||v==null)return;setStrain(i,v);syncPanel();},getState:()=>({ready,mode,selected,gpu,player:{x:player.position.x,y:player.position.y,z:player.position.z,surface:player.surface},islands:islands.map(({id,altitude,weather,strain})=>({id,altitude,weather,strain})),bridges:bridges.map(({id,start,end,width,arch,glow})=>({id,start,end,width,arch,glow})),render:renderer.info.render}),surfaceAt:(x,z)=>surfaceAt(islands,bridges,x,z),life:life.api};
+  window.islandLife={visit,overview,setAltitude:(id,h)=>{if(!Number.isFinite(h))return;updateAltitude(islands.find(i=>i.id===id),T.MathUtils.clamp(h,-10,16));syncPanel();},setWeather:(id,s)=>{const i=islands.find(i=>i.id===id),v=typeof s==='number'?s:{clear:.05,cloudy:.45,mist:.45,rain:.85}[s];if(!i||v==null)return;setStrain(i,v);syncPanel();},getState:()=>({ready,mode,selected,gpu,player:{x:player.position.x,y:player.position.y,z:player.position.z,surface:player.surface},islands:islands.map(({id,altitude,weather,strain})=>({id,altitude,weather,strain})),bridges:bridges.map(({id,start,end,width,arch,glow})=>({id,start,end,width,arch,glow})),render:renderer.info.render}),surfaceAt:(x,z)=>surfaceAt(islands,bridges,x,z),life:life.api};
 }
 
 let _last=0;
@@ -304,7 +306,7 @@ function frame(time){
   if(LITE){ if(time-_last<33) return; _last=time; }   // cap ~30fps
 
   const dt=Math.min((time-last)/1000,.04);last=time;if(document.hidden)return;if(motion)elapsed+=dt;
-  walk(dt);player.root.position.copy(player.position);atmosphere.update(elapsed,camera);for(const i of islands)i.weatherFx.update(elapsed,camera);
+  walk(dt);player.root.position.copy(player.position);atmosphere.update(elapsed,camera);for(const i of islands){i.weatherFx.update(elapsed,camera);i.sink.update(elapsed);}
   if(transition){transition.time+=dt;const a=motion?Math.min(transition.time/1.2,1):1,e=1-Math.pow(1-a,4);look.copy(mode==='walk'?player.position:new T.Vector3(0,2,0));if(mode==='walk')look.y+=1;targetPosition.copy(mode==='walk'?player.position.clone().add(cameraOffset):overviewPosition());camera.position.lerpVectors(transition.from,targetPosition,e);controls.target.lerpVectors(transition.targetFrom,look,e);camera.lookAt(controls.target);if(a===1)transition=null;}
   // walk: orbit controls around the gardener -- drag to turn, scroll to zoom -- carried along as they move
   // (no collision pull-in: the camera stays exactly where the user put it)

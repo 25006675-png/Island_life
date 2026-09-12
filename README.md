@@ -189,62 +189,38 @@ For example, if a service such as Supabase is selected because it offers a free 
 
 ## 5.2 System Architecture
 
-
----
-
 ## 5.3 Future Plan
 
 ### 1. Calendar Sync
 
 Classes, shifts, and deadlines would automatically appear on the user's island without requiring manual re-entry.
 
-The planner already demonstrates the connection flow. Production integrations would include:
+| Platform | Integration Method | Planned Capability | 
+|---|---|---| 
+| **Google Calendar** | Google Calendar API | Two-way synchronization | | **Outlook / Microsoft 365** | Microsoft Graph | Two-way synchronization covering most university accounts | | **Apple iCloud Calendar** | CalDAV | Calendar synchronization | | **Canvas** | ICS calendar feed | Import coursework and calendar events | | **Moodle** | ICS calendar feed | Import coursework and calendar events | | **Blackboard** | ICS calendar feed | Import coursework and calendar events | | **Google Classroom** | Google Classroom API | Import coursework due dates | ### 2. Mobile Version Develop a mobile-optimized version featuring: - A lighter 3D island - Compressed models - One-thumb controls - Mobile-friendly interactions The goal is to make the entire Island Life experience accessible **from a user's pocket**. ### 3. Real Accounts & Friends Introduce a proper backend supporting: - User accounts - Friend invitations - Persistent relationships - Live emotional weather between friends - Shared social interactions ### 4. Gentle Milestones Introduce positive milestones that celebrate sustainable balance rather than productivity streaks. Examples include: - **First week in balance** - **First slow evening** - Other wellness-focused achievements The objective is to reinforce sustainable habits without introducing guilt or pressure. 
 
-| Platform | Integration Method | Planned Capability |
-|---|---|---|
-| **Google Calendar** | Google Calendar API | Two-way synchronization |
-| **Outlook / Microsoft 365** | Microsoft Graph | Two-way synchronization covering most university accounts |
-| **Apple iCloud Calendar** | CalDAV | Calendar synchronization |
-| **Canvas** | ICS calendar feed | Import coursework and calendar events |
-| **Moodle** | ICS calendar feed | Import coursework and calendar events |
-| **Blackboard** | ICS calendar feed | Import coursework and calendar events |
-| **Google Classroom** | Google Classroom API | Import coursework due dates |
-
-### 2. Mobile Version
-
-Develop a mobile-optimized version featuring:
-
-- A lighter 3D island
-- Compressed models
+### 2. Mobile Version 
+Develop a mobile-optimized version featuring: 
+- A lighter 3D island 
+- Compressed models 
 - One-thumb controls
-- Mobile-friendly interactions
-
-The goal is to make the entire Island Life experience accessible **from a user's pocket**.
-
-### 3. Real Accounts & Friends
-
-Introduce a proper backend supporting:
-
-- User accounts
-- Friend invitations
+- Mobile-friendly interactions 
+The goal is to make the entire Island Life experience accessible **from a user's pocket**. 
+### 3. Real Accounts & Friends 
+Introduce a proper backend supporting: 
+- User accounts 
+- Friend invitations 
 - Persistent relationships
-- Live emotional weather between friends
-- Shared social interactions
-
-### 4. Gentle Milestones
-
-Introduce positive milestones that celebrate sustainable balance rather than productivity streaks.
-
-Examples include:
-
-- **First week in balance**
-- **First slow evening**
-- Other wellness-focused achievements
+- Live emotional weather between friends 
+- Shared social interactions 
+  
+### 4. Gentle Milestones 
+Introduce positive milestones that celebrate sustainable balance rather than productivity streaks. Examples include: 
+- **First week in balance** 
+- **First slow evening**   
+- **Other wellness-focused achievements**
 
 The objective is to reinforce sustainable habits without introducing guilt or pressure.
-
-
-
 # Core Product Principles
 
 Island Life is designed around several core principles:
@@ -280,7 +256,7 @@ Its key differentiators include:
 - 🛠️ **Blender + MCP Procedural Asset Pipeline**
 
 The central goal is not simply to help students **do more**, but to help them recognize when they are doing **too much**—and build healthier, more sustainable habits together.
-  
+
 <div align="center">
   <strong>Made by Team Codenected</strong>
   <br>
