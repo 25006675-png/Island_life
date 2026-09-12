@@ -3,7 +3,9 @@
 
 <p align="center">
   <a href="docs/videos/hero.mp4"><img src="docs/images/Banner.png" alt="Banner" width="100%" /></a>
-  <br/><sub>▶ Clips: <a href="docs/videos/hero.mp4">the sky neighbourhood, a full turn (9s)</a> &nbsp;·&nbsp; <a href="docs/videos/character.mp4">walking the bridge, pulling back to the whole island (10s)</a></sub>
+  <br/><br/>
+  <a href="docs/videos/hero.mp4"><img src="docs/images/clips/hero.webp" alt="The sky neighbourhood, turning a full circle" width="85%"/></a>
+  <br/><sub>Your sky neighbourhood, a full turn &nbsp;·&nbsp; <a href="docs/videos/hero.mp4">full clip</a> &nbsp;·&nbsp; <a href="docs/videos/character.mp4">walking the bridge (10s)</a></sub>
 </p>
 
 **Team:** Codenected  
@@ -127,8 +129,8 @@ Our ideation process turns hidden workload into something students can see and a
 
 <table>
 <tr>
-<td width="50%"><a href="docs/videos/trees.mp4"><img src="docs/images/trees.jpg" alt="Your island up close, with solid trees for what you've done and glass trees for what's coming up"/></a><br/><sub>&#9654; Clip: marking a block done, and its tree takes root (4s)</sub></td>
-<td width="50%"><a href="docs/videos/sinking.mp4"><img src="docs/images/altitude.jpg" alt="Two islands side by side, one floating high and one sitting low near the clouds"/></a><br/><sub>▶ Clip: an island sinking as the week fills (6s)</sub></td>
+<td width="50%"><a href="docs/videos/trees.mp4"><img src="docs/images/clips/trees.webp" alt="Marking a block done, and its glass tree taking root"/></a><br/><sub>Mark it done, and the glass tree takes root &nbsp;·&nbsp; <a href="docs/videos/trees.mp4">full clip</a></sub></td>
+<td width="50%"><a href="docs/videos/sinking.mp4"><img src="docs/images/clips/sinking.webp" alt="An island sinking toward the clouds as the week fills up"/></a><br/><sub>The island sinks as the week fills up &nbsp;·&nbsp; <a href="docs/videos/sinking.mp4">full clip</a></sub></td>
 </tr>
 <tr>
 <td valign="top"><h3>Everything you do grows into a tree</h3>
@@ -138,7 +140,7 @@ Your island floats high when your week has room, and sinks toward the clouds as 
 </tr>
 <tr>
 <td><img src="docs/images/weather.jpg" alt="Rain over an island, with feeling lanterns hanging in its sky"/></td>
-<td><a href="docs/videos/visiting_friend.mp4"><img src="docs/images/friends.jpg" alt="Your island, The gathering Island and your friends' islands, joined by glowing bridges"/></a><br/><sub>▶ Clip: crossing the bridge to a friend (7s)</sub></td>
+<td><a href="docs/videos/visiting_friend.mp4"><img src="docs/images/clips/visiting_friend.webp" alt="Crossing the glowing bridge to a friend's island"/></a><br/><sub>Cross a bridge to a friend's island &nbsp;·&nbsp; <a href="docs/videos/visiting_friend.mp4">full clip</a></sub></td>
 </tr>
 <tr>
 <td valign="top"><h3>Your feelings become the weather</h3>
@@ -174,7 +176,7 @@ Burnout creeps up, so Island Life watches for it. When your check-ins keep comin
 
 <table>
 <tr>
-<td width="50%"><a href="docs/videos/nudge.mp4"><img src="docs/images/nudge.jpg" alt="Your gardener's speech bubble, noticing a run of heavy days and suggesting a way to unwind"/></a><br/><sub>▶ Clip: the gardener speaks up, and you pick a time (8s)</sub></td>
+<td width="50%"><a href="docs/videos/nudge.mp4"><img src="docs/images/clips/nudge.webp" alt="The gardener noticing a run of heavy days and suggesting a way to unwind"/></a><br/><sub>Your gardener speaks up, and you pick a time &nbsp;·&nbsp; <a href="docs/videos/nudge.mp4">full clip</a></sub></td>
 <td width="50%"><img src="docs/images/balance.jpg" alt="The balance page, with the week by area and small changes that would help"/></td>
 </tr>
 <tr>
