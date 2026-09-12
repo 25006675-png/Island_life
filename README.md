@@ -3,7 +3,6 @@
 
 <p align="center">
   <a href="docs/videos/hero.mp4"><img src="docs/images/Banner.png" alt="Banner" width="100%" /></a>
-  <br/><video src="https://raw.githubusercontent.com/25006675-png/Island_life/main/docs/videos/hero.mp4" controls muted loop playsinline width="100%"></video>
   <br/><sub>▶ Clips: <a href="docs/videos/hero.mp4">the sky neighbourhood, a full turn (9s)</a> &nbsp;·&nbsp; <a href="docs/videos/character.mp4">walking the bridge, pulling back to the whole island (10s)</a></sub>
 </p>
 
