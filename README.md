@@ -113,28 +113,113 @@ The following table summarizes the ideas explored during ideation and explains w
 
 # 3. Design & Prototype
 
-## Prototype
+## 3.1 Prototype
 
 **Live Prototype:**  
 [https://island-life-one.vercel.app/](https://island-life-one.vercel.app/)
 
 
 
+---
 
-### Recommended Screens
+### Your week, as an island
 
-Embed or link approximately **4–8 key screens** and provide a short caption explaining the interaction shown in each.
+<table>
+<tr>
+<td width="50%"><img src="docs/images/trees.jpg" alt="Your island up close, with solid trees for what you've done and glass trees for what's coming up"/></td>
+<td width="50%"><img src="docs/images/altitude.jpg" alt="Two islands side by side, one floating high and one sitting low near the clouds"/></td>
+</tr>
+<tr>
+<td valign="top"><h3>Everything you do grows into a tree</h3>
+Seven kinds of activity, seven kinds of tree. What's coming up stands as a glass tree. Mark it done, and it takes root in full colour. Let it go, and the glass tree drifts away quietly.</td>
+<td valign="top"><h3>A full week sinks your island</h3>
+Your island floats high when your week has room, and sinks toward the clouds as you take more on. You feel it's too much before you've said yes to one more thing.</td>
+</tr>
+<tr>
+<td><img src="docs/images/weather.jpg" alt="Rain over an island, with feeling lanterns hanging in its sky"/></td>
+<td><img src="docs/images/friends.jpg" alt="Your island, The gathering Island and your friends' islands, joined by glowing bridges"/></td>
+</tr>
+<tr>
+<td valign="top"><h3>Your feelings become the weather</h3>
+Tell your island how you feel, and a coloured lantern rises into its sky. A few tired, stressed or low days gather cloud, then rain. Calm and happy days clear it again.</td>
+<td valign="top"><h3>Your friends are a bridge away</h3>
+Friends' islands connect to yours through The gathering Island. You see their weather and how high they float, never their hours or plans. A rainy island is your cue to leave a note at their gate.</td>
+</tr>
+</table>
 
-Suggested examples:
+| <img src="public/assets/icons/study.webp" width="44" alt=""/> | <img src="public/assets/icons/work.webp" width="44" alt=""/> | <img src="public/assets/icons/errands.webp" width="44" alt=""/> | <img src="public/assets/icons/social.webp" width="44" alt=""/> | <img src="public/assets/icons/exercise.webp" width="44" alt=""/> | <img src="public/assets/icons/rest.webp" width="44" alt=""/> | <img src="public/assets/icons/other.webp" width="44" alt=""/> |
+|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| Study | Work | Errands | Social | Exercise | Rest | Other |
 
-1. Personal 3D Island
-2. Weekly workload visualization
-3. Emotional weather system
-4. AI Gardener rest suggestion
-5. Golden Window photo check-in
-6. Gathering Island
-7. Peer bridge interaction
-8. "Let Go" task interaction
+The same little trees mark each kind of activity everywhere in the app, so you can spot a study-heavy week from across the sky.
+
+---
+
+### A nudge before you burn out
+
+Burnout creeps up, so Island Life watches for it. When your check-ins keep coming back tired, stressed or low, or your week gets too full, it nudges you on its own, with a way to unwind picked from your own week.
+
+<table>
+<tr>
+<td width="50%"><img src="docs/images/nudge.jpg" alt="Your gardener's speech bubble, noticing a run of heavy days and suggesting a way to unwind"/></td>
+<td width="50%"><img src="docs/images/balance.jpg" alt="The balance page, with the week by area and small changes that would help"/></td>
+</tr>
+<tr>
+<td valign="top"><b>Your gardener speaks up.</b> After a run of tired, stressed or low days, your gardener notices the moment you get home and suggests a way to unwind: tea with the friend you've seen least, a walk if you've barely moved, an early night after late ones, or a slow evening. It has already found a free time. One tap puts it on your plan, or ask for another idea.</td>
+<td valign="top"><b>Your week, in balance.</b> Time, mental, physical, social and errands, each read from your week and put in plain words. Next to them are changes made for you, like pushing the two blocks you marked "can wait" to next week. Each one applies in one tap.</td>
+</tr>
+</table>
+
+---
+
+### And the little moments
+
+<table>
+<tr>
+<td><img src="docs/images/golden.jpg" alt="The carousel on The gathering Island, and today's album with the golden window photos"/></td>
+<td><img src="docs/images/tasks.jpg" alt="The shared task board, with a walk outside, a proper dinner and an evening with no screens"/></td>
+</tr>
+<tr>
+<td valign="top"><b>The golden window.</b> Once a day, everyone gets two minutes to share one photo of right now. The photos hang on the carousel on The gathering Island, and the day's album keeps them all.</td>
+<td valign="top"><b>Small things, together.</b> Anyone can post a small task, like a walk outside or an evening with no screens. You earn more when friends finish too.</td>
+</tr>
+</table>
+
+- **Today is a path.** Your day is a glowing path laid out like a clock face, and a little light walks it in real time.
+- **Notes wait at your gate.** Friends leave a few words on a wooden sign, and you read them when you get home.
+- **A planner that feels normal.** Day, week and month views, with drag to add and move, Done, and a guilt-free Let go.
+- **Dewdrops.** Small rewards for finishing things, resting and showing up for friends. You spend them on garden props and lanterns.
+
+
+
+### Design choices
+
+- **No streaks, no guilt.** Letting go of a plan is fine. Its glass tree drifts away and stops counting this week. You can bring it back any time.
+- **It rewards balance, not hustle.** A finished rest block earns the same as a finished study block.
+- **Private by default.** Friends see your weather and how high you float, in words. Your hours, plans and check-ins stay yours. For each block, you choose whether friends see the whole thing, only its kind and size, or nothing.
+
+
+## 3.2 How it works
+
+
+| In the world | What it means | What drives it |
+|---|---|---|
+| **Altitude** | How full your week is | Planned hours this week against what you can give. Very full weeks sit just above the cloud sea. |
+| **Weather** | How you've been feeling | Your last five days of check-ins. Tired, stressed and low bring cloud and rain. Calm and happy clear it. |
+| **Glass trees** | What's coming up | Future blocks, one species per kind of activity |
+| **Solid trees** | What you did | A block you marked Done. Nothing grows on its own. |
+| **Glowing path** | Today's timetable | Your blocks from 07:00 to 22:00, laid out like a clock face |
+| **The light on the path** | Right now | It walks the path in real time |
+| **Lanterns in your sky** | Your feelings | Each check-in you make this week |
+| **Bridge glow** | Warmth with your friends | Notes, shared moments and time together |
+| **Carousel photos** | The day's shared moments | One photo per person from the golden window, plus moments through the day |
+| **Dewdrops** 💧 | A gentle reward | Done blocks, notes, moments and group tasks |
+
+**Rebalancing** happens in three places:
+- **The planner**, where you move, resize, finish or let go of blocks.
+- **The balance page**, which suggests small changes you apply in one tap.
+- **Your gardener**, who spots a run of heavy days or a very full week and suggests a way to unwind that fits it, with a sign by the windmill keeping the offer.
+
 
 
 
@@ -158,32 +243,76 @@ Island Life differentiates itself by combining an expressive **3D environment**,
 
 ## 5.1 Tech Stack
 
-Document the project's:
+## 5.1 Tech Stack
 
-- **Frontend**
-- **Backend**
-- **Database**
-- **APIs**
-- **External services**
-- **Hosting infrastructure**
+Island Life currently operates as a browser-based visual prototype. Its frontend renders the 3D world and manages demo data locally, while the proposed production stack uses Supabase to provide authentication, persistent storage, real-time social features, and secure server-side processing.
 
-For each technology, explain:
+### Frontend
 
-1. **Why it was selected**
-2. **What role it performs**
-3. **What limitations or constraints are expected**
+| Technology | Role | Reason for Selection | Limitations and Constraints |
+|---|---|---|---|
+| **HTML5** | Defines the application's interface, including the navigation controls, planner sheets, forms, dialogs, and accessibility labels. | It is supported by all modern browsers and works directly with the project's framework-free architecture. | Complex interfaces require careful manual management because the project does not use a component framework. |
+| **CSS3** | Controls the responsive layout, visual theme, transitions, animations, and reduced-motion behaviour. | Native CSS keeps the application lightweight and provides sufficient control for the painterly interface surrounding the 3D world. | Large stylesheets can become difficult to maintain without a naming convention or component-based organization. |
+| **JavaScript with ES Modules** | Implements the planner, mood check-ins, balance calculations, social interactions, rewards, and communication with the Three.js scene. | It runs natively in the browser and allows features to be separated into focused modules without introducing a UI framework. | JavaScript does not provide compile-time type safety. Migrating the application modules to TypeScript is recommended as the data model grows. |
+| **Three.js** | Renders the floating islands, trees, bridges, weather, timetable path, character, lighting, and post-processing effects. | It provides mature WebGL abstractions and supports the GLB assets produced by Blender. | Detailed models, transparency, shadows, bloom, and weather effects can be demanding on low-powered devices. Model compression and adaptive quality settings will be necessary for mobile support. |
+| **GLTFLoader** | Loads the island, tree, character, and decoration models into the Three.js scene. | GLB/glTF is compact, web-friendly, and preserves model geometry, materials, and textures. | Large model files increase initial loading time and GPU memory usage. |
+| **OrbitControls** | Provides camera rotation and zooming around the islands and player. | It supplies familiar mouse and touch camera controls with minimal custom code. | Additional constraints are required to prevent clipping and disorientation in walk mode. |
+| **EffectComposer and UnrealBloomPass** | Adds bloom and other post-processing effects to paths, bridges, lanterns, and atmospheric lighting. | These effects support the warm, magical visual direction of the project. | Post-processing adds extra rendering passes and may need to be reduced or disabled on slower devices. |
+| **Browser Media APIs** | Access the user's camera or uploaded images for mood lanterns and community moments. | Native browser APIs avoid requiring an additional capture library. | Camera access requires HTTPS and explicit user permission, and browser support can vary. |
+| **Vite** | Provides the local development server, ES module handling, asset bundling, and optimized production builds. | Vite is lightweight, fast, and works well with a plain JavaScript and Three.js project. | It is a frontend build tool and does not provide authentication, persistent storage, or backend business logic. |
 
-For example, if a service such as Supabase is selected because it offers a free tier, also document any technical constraints such as the need for a proxy or service limits.
+### 3D Asset Production
 
-### Current Technologies Mentioned
+| Technology | Role | Reason for Selection | Limitations and Constraints |
+|---|---|---|---|
+| **Blender** | Creates the islands, trees, gardener character, decorations, and rendered interface artwork. | It provides a complete modelling, material, lighting, and animation workflow and supports GLB export. | Source `.blend` files are unsuitable for direct browser delivery and must be optimized and exported before use. |
+| **Python** | Automates Blender model generation, rendering, inspection, and asset export. | Scripted generation makes visual assets repeatable and helps maintain a consistent art style. | The scripts depend on Blender's Python environment and are part of the development pipeline rather than the runtime application. |
+| **GLB/glTF, WebP, PNG, and JPEG** | Deliver optimized 3D models, icons, character sprites, artwork, and photographs. | These formats are widely supported by browsers and provide an appropriate balance between quality and file size. | Assets must be compressed and cached carefully to control page load time, particularly on mobile networks. |
 
-| Technology | Purpose |
-|---|---|
-| **Three.js** | Renders the interactive 3D island environment directly in the browser. |
-| **Blender** | Creates and manages custom 3D assets. |
-| **Python** | Controls automated asset-generation scripts. |
-| **Model Context Protocol (MCP) Server** | Connects programmatic workflows with Blender to accelerate asset and scene generation. |
-| **Vercel** | Hosts the current prototype. |
+### Proposed Backend and Database
+
+| Technology | Role | Reason for Selection | Limitations and Constraints |
+|---|---|---|---|
+| **Supabase** | Acts as the managed backend platform for the production version of Island Life. | It combines PostgreSQL, authentication, storage, real-time communication, generated APIs, and serverless functions, reducing the number of independent services the team must maintain. | Usage is subject to plan quotas and service limits. The application must also be designed so it is not tightly coupled to provider-specific features. |
+| **PostgreSQL** | Stores profiles, friendships, activity blocks, recurrences, mood check-ins, notes, shared tasks, rewards, moments, and calendar metadata. | Island Life contains strongly related data, making a relational database suitable for consistency, privacy rules, and weekly workload queries. | A clear schema and migrations are required. Complex recurrence and calendar-conflict queries must be designed and indexed carefully. |
+| **Supabase Auth** | Provides real registration, login, password recovery, session management, and Google OAuth. | It integrates with PostgreSQL records and Row-Level Security, allowing an authenticated identity to control access to user data. | OAuth providers require external configuration, approved redirect URLs, and secure production environment settings. |
+| **Row-Level Security (RLS)** | Ensures users can access their own private schedules and mood records while friends receive only permitted information. | Database-level policies reduce the risk of sensitive data being exposed by a frontend programming mistake. | Incorrect or incomplete policies may either expose private data or block valid requests, so every table and storage bucket requires policy testing. |
+| **Supabase Data API and `@supabase/supabase-js`** | Connect the browser application to authorized database operations. | The client library fits the current JavaScript architecture and removes the need to build a separate CRUD API for the first production version. | Only the public project key may be placed in the frontend. Administrative keys and privileged operations must remain on the server. |
+| **Supabase Realtime** | Synchronizes friend status, notes, shared tasks, community photographs, and derived island changes between connected users. | Real-time database events match the project's social island concept and allow changes to appear without manually refreshing the page. | Subscriptions must be scoped by friendship and group membership. High-frequency player movement should not be stored or broadcast as database changes. |
+| **Supabase Storage** | Stores profile images, mood photographs, and golden-window submissions. | It provides managed object storage that integrates with authenticated access policies. | Upload size, image type, retention, and privacy policies must be enforced. Private media should be served using time-limited signed URLs. |
+| **Supabase Edge Functions** | Handles secure calendar OAuth exchanges, calendar API requests, notification logic, and other privileged operations. | Server-side TypeScript keeps API credentials and refresh tokens out of browser code. | Edge functions should remain short-lived and idempotent. Long-running synchronization work may require queues or multiple smaller jobs. |
+| **Supabase Cron** | Triggers scheduled calendar synchronization, recovery nudges, and the daily golden window. | It allows recurring jobs to run without maintaining a dedicated application server. | Jobs must account for user timezones, retries, duplicate execution, and provider rate limits. |
+
+### APIs and External Services
+
+| Technology | Role | Reason for Selection | Limitations and Constraints |
+|---|---|---|---|
+| **Google Calendar API** | Imports and, in a later phase, updates Google Calendar events. | Google Calendar is widely used by students and exposes individual and recurring events through an official API. | It requires OAuth consent, careful token storage, quota handling, and conflict resolution for two-way synchronization. |
+| **Microsoft Graph Calendar API** | Connects Outlook, Microsoft 365, and supported university calendars. | Many universities use Microsoft 365, so this integration covers an important part of the target audience. | Tenant policies may restrict student consent, and two-way synchronization must handle recurring-event exceptions and deleted events. |
+| **ICS Calendar Feeds** | Imports classes, coursework, and deadlines from Canvas, Moodle, Blackboard, and other systems that publish calendar feeds. | ICS offers broad compatibility without requiring a custom integration for every learning platform. | Most ICS feeds are read-only and may refresh slowly, so they cannot guarantee immediate two-way updates. |
+| **CalDAV** | Provides possible future synchronization with Apple iCloud Calendar and compatible calendar servers. | It is an established open calendar protocol. | Provider-specific authentication and behaviour make it more difficult to support than Google or Microsoft APIs. |
+
+### Hosting, Testing, and Delivery
+
+| Technology | Role | Reason for Selection | Limitations and Constraints |
+|---|---|---|---|
+| **Vercel** | Hosts the Vite frontend and provides preview deployments. | Static Vite output can be deployed with minimal configuration and delivered through a global content delivery network. | Backend secrets and calendar token exchanges cannot be implemented in publicly delivered frontend code. These operations will run through Supabase Edge Functions. |
+| **Playwright** | Tests login flows, planner interactions, keyboard controls, dialogs, and browser rendering behaviour. | It automates real browsers and is appropriate for the application's interaction-heavy interface. | Visual and WebGL tests may vary between machines and require stable fixtures and tolerances. |
+| **Node.js Test Runner** | Runs unit tests for workload, altitude, weather, recurrence, and reward calculations. | It is built into Node.js and avoids adding another unit-testing framework. | The project must separate calculation logic from DOM and Three.js code so that it can be tested independently. |
+| **GitHub and GitHub Actions** | Provide source control and automated build and test workflows. | They support collaboration and allow every change to be checked before deployment. | Continuous integration workflows and protected branch rules still need to be configured. |
+
+The recommended production stack can therefore be summarized as follows:
+
+```text
+Frontend: HTML5 + CSS3 + TypeScript + Three.js + Vite
+Backend: Supabase Auth + Data API + Realtime + Edge Functions + Cron
+Database: PostgreSQL with Row-Level Security
+Storage: Supabase Storage
+Integrations: Google Calendar API + Microsoft Graph + ICS + CalDAV
+Deployment: Vercel + Supabase
+Testing: Playwright + Node.js Test Runner
+Asset pipeline: Blender + Python + GLB/glTF
+```
 
 ---
 
@@ -197,14 +326,22 @@ Classes, shifts, and deadlines would automatically appear on the user's island w
 
 | Platform | Integration Method | Planned Capability | 
 |---|---|---| 
-| **Google Calendar** | Google Calendar API | Two-way synchronization | | **Outlook / Microsoft 365** | Microsoft Graph | Two-way synchronization covering most university accounts | | **Apple iCloud Calendar** | CalDAV | Calendar synchronization | | **Canvas** | ICS calendar feed | Import coursework and calendar events | | **Moodle** | ICS calendar feed | Import coursework and calendar events | | **Blackboard** | ICS calendar feed | Import coursework and calendar events | | **Google Classroom** | Google Classroom API | Import coursework due dates | ### 2. Mobile Version Develop a mobile-optimized version featuring: - A lighter 3D island - Compressed models - One-thumb controls - Mobile-friendly interactions The goal is to make the entire Island Life experience accessible **from a user's pocket**. ### 3. Real Accounts & Friends Introduce a proper backend supporting: - User accounts - Friend invitations - Persistent relationships - Live emotional weather between friends - Shared social interactions ### 4. Gentle Milestones Introduce positive milestones that celebrate sustainable balance rather than productivity streaks. Examples include: - **First week in balance** - **First slow evening** - Other wellness-focused achievements The objective is to reinforce sustainable habits without introducing guilt or pressure. 
+| **Google Calendar** | Google Calendar API | Two-way synchronization |
+|**Outlook / Microsoft 365** | Microsoft Graph | Two-way synchronization covering most university accounts | 
+| **Apple iCloud Calendar** | CalDAV | Calendar synchronization |
+| **Canvas** | ICS calendar feed | Import coursework and calendar events |
+| **Moodle** | ICS calendar feed | Import coursework and calendar events |
+| **Blackboard** | ICS calendar feed | Import coursework and calendar events | 
+| **Google Classroom** | Google Classroom API | Import coursework due dates |
+
 
 ### 2. Mobile Version 
 Develop a mobile-optimized version featuring: 
 - A lighter 3D island 
 - Compressed models 
 - One-thumb controls
-- Mobile-friendly interactions 
+- Mobile-friendly interactions   
+  
 The goal is to make the entire Island Life experience accessible **from a user's pocket**. 
 ### 3. Real Accounts & Friends 
 Introduce a proper backend supporting: 
