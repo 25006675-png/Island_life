@@ -27,7 +27,7 @@
 
 ## 1.1 Problem
 
-Today’s university students live in a state of continuous overcommitment, constantly striving to balance:
+Today’s university students are often overcommitted. A normal week can include:
 
 - Demanding academics
 - Co-curricular leadership
@@ -37,22 +37,22 @@ Today’s university students live in a state of continuous overcommitment, cons
 
 Saying **yes to everything** is how it starts. Students end up busy from morning to night, and still feel they have got nothing done.
 
-This issue stems from a fundamental flaw in current productivity solutions:
+Most productivity tools do not show that load very well:
 
-- Traditional tools such as standard **Pomodoro timers** rely on rigid countdowns and flat, 2D interfaces that treat users like machines, completely unable to sense mental fatigue or burnout states.
-- Energy-tracking apps such as **Pensus** capture biological energy metrics but deliver them through clinical, uninspired interfaces that lack creativity and personal engagement.
+- Standard **Pomodoro timers** count down time, but they do not know whether the student is tired, overloaded, or close to burning out.
+- Energy-tracking apps such as **Pensus** track useful signals, but the result often feels clinical: numbers, logs, and charts instead of something a student wants to return to.
 
-These limitations leave three core stakeholder groups underserved:
+That leaves three groups with a problem:
 
 1. **Gen Z university students**
-   - Need aesthetic, visual-first tools to express themselves.
+   - Need visual tools that feel personal.
    - Need better ways to manage their mental bandwidth.
 
 2. **Peer groups**
-   - Lack collaborative spaces for shared accountability and study sessions.
+   - Need a way to notice when a friend is struggling, without reading that friend's private schedule.
 
 3. **University support networks**
-   - Bear the cost of student mental health crises.
+   - Deal with the fallout when stress becomes a crisis.
 
 **Island Life** shows that load instead. A student's week becomes a small floating island they can read in one glance, and friends can tell when someone is struggling without seeing a single entry in their calendar.
 
@@ -81,23 +81,23 @@ Island Life makes a heavy week visible early, and makes doing something about it
 
 ## 2.1 Ideas We Considered
 
-The following table summarizes the ideas explored during ideation and explains why each concept was either **chosen** or **dropped**.
+These were the main ideas we tested, kept, changed, or dropped.
 
 | Idea | Decision | Why |
 |---|:---:|---|
-| **Personalized 3D Island World (3D Sky Island)** | **Chosen** | Replaces flat 2D dashboards with an interactive Three.js 3D sanctuary. Translates weekly load into physical island altitude and emotions into dynamic weather, making burnout instantly visible without charts. |
-| **1-Tap Photo Check-Ins ("The Golden Window")** | **Chosen** | Inspired by BeReal, a daily 2-minute dual-camera check-in captures authentic, unfiltered study moments. Photos are displayed on The Gathering Island carousel, offering real social proof without fake timers. |
-| **Shared Peer Bridges & Gathering Island** | **Chosen** | Connects friends through physical bridges and shared hubs. Friends can see emotional weather and altitude, leave gate notes, and complete group wellness tasks while keeping private plans **100% confidential**. |
-| **Empathic AI Gardener & Rest Nudge** | **Chosen** | Monitors emotional check-ins and workload density. Automatically suggests personalized, pre-scheduled rest activities such as tea breaks, walks, or early sleep that can be applied in one tap to prevent burnout before it happens. |
-| **Guilt-Free "Let Go" & Balanced Rewards** | **Chosen** | Eliminates anxiety-inducing streak counters. Letting go of a task causes its glass tree to quietly drift away without penalty, while resting earns the same reward as studying: **Dewdrops 💧**. |
-| **Visual Activity Trees & Timetable Clock Path** | **Chosen** | Classifies seven activity types into distinct tree species, using glass trees for upcoming tasks and solid trees for completed tasks. Today's schedule is rendered as a glowing clock-face path walked by a light in real time. |
-| **Blender MCP Server Pipeline** | **Chosen** | Uses a **Model Context Protocol (MCP)** server running Python scripts to control Blender, automating 3D asset generation and scene creation to dramatically speed up development. |
+| **Personalized 3D Island World (3D Sky Island)** | **Chosen** | A dashboard made the week feel like homework. A floating island let us show the same data physically: height for load, weather for mood, trees for planned time. |
+| **1-Tap Photo Check-Ins ("The Golden Window")** | **Chosen** | We liked the honesty of BeReal: one quick photo of what is happening now. The photos sit on The Gathering Island carousel, so the group sees real moments instead of fake focus timers. |
+| **Shared Peer Bridges & Gathering Island** | **Chosen** | Bridges gave the social part a shape. Friends can see weather, altitude, notes, and shared tasks, but not the private details of someone else's plan. |
+| **Empathic AI Gardener & Rest Nudge** | **Chosen** | The gardener watches mood check-ins and weekly load. If the week looks heavy, it suggests something small and already schedulable: tea, a walk, early sleep, or a slow evening. |
+| **Guilt-Free "Let Go" & Balanced Rewards** | **Chosen** | We did not want streaks or dead trees. If you let go of a task, its glass tree drifts away. Rest earns the same reward as studying: **Dewdrops 💧**. |
+| **Visual Activity Trees & Timetable Clock Path** | **Chosen** | Each activity type became its own tree, so a study-heavy week looks different from a social-heavy one. Today's plan became a clock-face path with a light walking through it. |
+| **Blender MCP Server Pipeline** | **Chosen** | We needed a lot of matching 3D assets quickly. Python scripts controlling Blender let us regenerate islands, trees, props, and renders after changes. |
 | **Bee Colony & Honeycomb World** | **Dropped** | An alternative way to draw the same data: a honeycomb whose cells fill as the week fills, and nectar earned by turning up for the group. It mapped cleanly, but the team found it busier and more industrious than the floating island, and the calmer world suited an app about not overworking. |
 | **One Mascot Per Member** | **Reshaped** | Early idea of a personal creature for each student. It became the single leaf gardener who tends your island, with costumes kept back as a reward in the long-term plan, so the world stays readable rather than crowded. |
-| **Forest-Style Single-Player Tree Planting** | **Dropped** | Forest is an isolating 2D experience that relies on passive timers, which can easily be faked, and punishes users with dead trees when stopping early. This can induce guilt rather than encourage healthy balance. |
-| **Crypto-Reward / Tokenomics Concept** | **Dropped** | Mentor Zach advised dropping the concept because Web3/crypto rewards are overused in hackathon pitches, create unnecessary transaction friction, and distract from the core wellness and mental-health goals. |
-| **Traditional Virtual Garden Concept** | **Dropped** | Mentor Zach advised dropping the concept because standard 2D/3D garden plots are saturated and generic. It was replaced by the floating 3D sky island, where altitude, weather, and trees directly represent mental-health metrics. |
-| **Audio Analysis & Automated AI Pathfinder** | **Dropped** | Audio tracking is invasive to user privacy. Automated pathfinders may also present schedule adjustments with false confidence, potentially leading users through inaccurate sequences if fatigue or priorities are misinterpreted. |
+| **Forest-Style Single-Player Tree Planting** | **Dropped** | Forest depends on a timer, and a timer can reward someone for leaving a phone alone while doing nothing. Killing trees for stopping early also felt wrong for a burnout project. |
+| **Crypto-Reward / Tokenomics Concept** | **Dropped** | Zach pushed us to drop it. Crypto rewards are common in hackathon pitches, add friction, and pull attention away from the wellness idea. |
+| **Traditional Virtual Garden Concept** | **Dropped** | Zach also challenged the garden idea because it felt too familiar. The sky island kept the calm feeling but made the data clearer: altitude, weather, trees, and bridges each mean something. |
+| **Audio Analysis & Automated AI Pathfinder** | **Dropped** | Audio tracking felt too invasive. We also did not want the app to pretend it knew the perfect schedule when mood and priority are easy to misread. |
 
 
 
@@ -111,7 +111,7 @@ Our ideation process turns hidden workload into something students can see and a
 
 ## 2.3 How the Idea Evolved
 
-The concept did not arrive whole. It moved through three stages, and the turning point in each was someone disagreeing with where we had got to.
+The idea changed in stages. Each meeting helped us remove something, keep something, or make the product clearer.
 
 <p align="left">
   <img src="docs/images/meetings/team-meeting.jpg" alt="The four of us on a team call" width="380"/>
@@ -120,24 +120,26 @@ The concept did not arrive whole. It moved through three stages, and the turning
 
 ### 1 September, first meeting: from a dashboard to a community
 
-We began by pulling the problem statement apart, and our first ideas were ordinary: a timetable, a workload dashboard, a chart of hours. It answered the brief and inspired nobody, including us.
+We started by breaking down the problem statement. The first ideas were simple: a timetable, a workload dashboard, and a chart of hours. They answered the brief, but felt too close to tools students already know.
 
-The meeting turned when **Chung Jun** suggested a BeReal-style check-in, where each member shares a photo showing what they are actually doing. It was a small idea with a large consequence. A photo is only worth taking if somebody sees it, so the tool stopped being a single-player tracker and became something a group is in together.
+The direction changed when **Chung Jun** suggested a BeReal-style check-in, where each member shares one photo of what they are actually doing. That made the product feel less like a private tracker and more like something a group could use together.
 
-From there the discussion opened up: tasks a group takes on together for a shared reward, a mascot for each member, rituals that happen at the same time for everyone. By the end we had two mechanisms we were unwilling to give up:
+From there, we discussed group tasks, shared rewards, guide characters, and small rituals that happen at the same time for everyone. By the end of the meeting, two ideas were worth testing further:
 
-- **Community support**, because friends notice burnout before an app does.
-- **A 3D world**, because a week you can look at is easier to judge than a week you have to read.
+- **Community support**, because friends can notice stress early.
+- **A 3D world**, because workload is easier to understand when it has a visible shape.
 
 ### 5 September, mentorship: cutting what was generic
 
-We took both mechanisms to the mentor session, which is recorded in detail in 2.4. The value of it was subtraction. The virtual-garden and crypto-reward ideas were generic, so they went. The BeReal check-in and the 3D world were the parts worth keeping, and the advice to drive Blender from an MCP server made a custom world affordable in the time we had.
+We took those ideas to the mentor session, which is recorded in 2.4. The main value of that session was narrowing the idea down. The virtual-garden and crypto-reward concepts felt too familiar, so we dropped them.
 
-That left a sharper question rather than an answer: if a 3D world is the medium, what exactly does it show? Forest had already proven that a single tree growing on a timer says very little.
+The BeReal-style check-in and the 3D world stayed. Zach also suggested using an MCP server to control Blender, which made custom 3D assets possible within the time we had.
+
+That left one main question: if the product is a 3D world, what should the world show? A single tree growing on a timer was not enough.
 
 ### 7 September, second meeting: two worlds, one vote
 
-**Choong Zhuo Lin** brought two candidates, both of which carried real data rather than decoration.
+**Choong Zhuo Lin** brought two possible world models. Both could carry real workload and mood data.
 
 | | **Floating island** | **Bee colony** |
 |---|---|---|
@@ -146,21 +148,21 @@ That left a sharper question rather than an answer: if a 3D world is the medium,
 | Feelings | Weather over your own island | Colour of the hive |
 | Community | Bridges to friends' islands | Nectar earned by showing up for the group |
 
-Both worked as data. The island won on feeling: a hive is a picture of industry, and an app about doing too much should not look like a machine for doing more. The island is quiet, it belongs to one person, and a group of them naturally forms a neighbourhood.
+Both models worked, but the island fit the product better. The bee colony felt too busy for an app about overwork. The island felt calmer, belonged clearly to one person, and still worked socially because separate islands can connect into a neighbourhood.
 
 The mapping we chose that day is still the one in the product: **altitude is load, weather is feeling, trees are activities, bridges are friends.**
 
 ### 9 to 12 September, building: the decisions that shaped it
 
-Thirty-six commits over three days. These five changed what the product is, not how it looks.
+Thirty-six commits over three days. These were the main product decisions during the build.
 
 | Decision | Why we made it | What we turned down |
 |---|---|---|
-| **Generate the world with scripts, not by hand** | Seven tree species, four islands, a character and every prop had to exist in three days and still look like one place. Python driving Blender means any of them can be regenerated after a change. | An asset pack, which would have looked like everyone else's, or modelling by hand, which we could not have finished. |
-| **Nothing grows unless you say it happened** | A tree takes root only when you press Done. This is the whole difference from a timer that rewards a phone left face-down on a desk. | Growth on a schedule, which would have filled the island by itself and meant nothing. |
-| **Teach the world without a tutorial** | The landing page is the world itself, with signposts you walk up to, so the first thing a student does is move rather than dismiss an overlay. | A tour or tooltip sequence, which most people skip anyway. |
-| **The nudge comes to you** | The rest suggestion first sat on a sign by the windmill, and a nudge that waits to be found is not a nudge. Your gardener now speaks when you get home, and the sign keeps the offer. | Leaving discovery to the player, which made the feature invisible in a short demo. |
-| **The app asks before it books** | Taking a suggestion used to put a slow evening on your plan at a time we chose. Now it offers free times, or hands you the planner. | Deciding someone's evening for them, which is the behaviour students already resent in productivity apps. |
+| **Scripted asset generation** | Seven tree species, four islands, a character and every prop had to exist in three days and still look like one place. Python driving Blender means any of them can be regenerated after a change. | An asset pack, which would have looked like everyone else's, or modelling by hand, which we could not have finished. |
+| **Manual completion** | A tree takes root only when you press Done. This is the whole difference from a timer that rewards a phone left face-down on a desk. | Growth on a schedule, which would have filled the island by itself and meant nothing. |
+| **World-based onboarding** | The landing page is the world itself, with signposts you walk up to, so the first thing a student does is move rather than dismiss an overlay. | A tour or tooltip sequence, which most people skip anyway. |
+| **Active rest reminder** | The rest suggestion first sat on a sign by the windmill, and a nudge that waits to be found is not a nudge. Your gardener now speaks when you get home, and the sign keeps the offer. | A passive signpost, which would make the reminder too easy to miss when someone is already tired. |
+| **User-confirmed scheduling** | Taking a suggestion used to put a slow evening on your plan at a time we chose. Now it offers free times, or hands you the planner. | Deciding someone's evening for them, which is the behaviour students already resent in productivity apps. |
 
 ## 2.4 Mentor Consultation
 
@@ -171,7 +173,7 @@ Thirty-six commits over three days. These five changed what the product is, not 
 
 | Date | Mentor | Feedback Received | What Was Changed |
 |---|---|---|---|
-| **5 Sept 2026** | **Zach Khong** | During our design review, mentor Zach advised us to discard generic **"virtual garden"** and **"crypto-reward"** mechanics because they are overused and lack differentiation. Instead, he validated our strongest visual and social features: the **1-tap BeReal-style photo check-ins** and our **interactive 3D island model**. Architecturally, he recommended using an **MCP server connected to Blender** for streamlined 3D asset generation, paired with **Three.js** to render dynamic, customizable 3D web environments. We also refined the product by synthesizing feature sets from leading focus and energy tools such as **Opal** for focus enforcement and **Uplift / Operator** for smart energy and session tracking. | We completely eliminated generic virtual-garden and crypto-reward mechanics and focused on our two strongest innovations: **interactive 3D environments** and **1-tap BeReal-style photo check-ins**. Rather than creating an isolating single-player task manager, we designed **George Island** as a community-driven ecosystem where users coexist in shared visual spaces while retaining deep personal aesthetic customization. To build this vision under hackathon constraints, we deployed an **MCP server** to programmatically control Blender for automated asset generation and paired it with **Three.js** for animated web environments. We also benchmarked leading productivity applications, combining **Opal’s focus enforcement**, **Operator/Uplift’s ambient energy tracking**, **Pensus’s energy awareness**, and **traditional Pomodoro intervals** into a cohesive wellness platform aimed at combating burnout. |
+| **5 Sept 2026** | **Zach Khong** | Zach told us the virtual garden and crypto reward ideas sounded too familiar. The parts he pushed us to keep were the BeReal-style photo check-in and the 3D island, because those gave the project a clearer social and visual identity. He also suggested driving Blender through an **MCP server**, then rendering the result in **Three.js**, so we could make custom assets without modelling everything by hand. | We dropped the crypto and generic garden directions. The product became a set of connected sky islands instead of a single-player task garden. We used Blender scripts for the island, trees, gardener, props, and renders, then used **Three.js** in the browser. We also studied **Opal**, **Operator/Uplift**, **Pensus**, and Pomodoro tools, mainly to decide what to avoid: fake timers, guilt loops, dry logs, and schedules that pretend to know too much. |
 
 
 
@@ -294,6 +296,21 @@ Burnout creeps up, so Island Life watches for it. When your check-ins keep comin
 | **Dewdrops** 💧 | A gentle reward | Done blocks, notes, moments and group tasks |
 
 **Rebalancing** happens in three places:
+
+```mermaid
+flowchart LR
+    Island["Island shows the week<br/>altitude, weather, trees"]
+    Gardener["Gardener nudge<br/>spots heavy weeks"]
+    Balance["Balance page<br/>suggests small changes"]
+    Planner["Planner<br/>move, resize, Done, Let go"]
+
+    Island --> Gardener
+    Island --> Balance
+    Gardener --> Planner
+    Balance --> Planner
+    Planner --> Island
+```
+
 - **The planner**, where you move, resize, finish or let go of blocks.
 - **The balance page**, which suggests small changes you apply in one tap.
 - **Your gardener**, who spots a run of heavy days or a very full week and suggests a way to unwind that fits it, with a sign by the windmill keeping the offer.
@@ -309,10 +326,10 @@ Island Life differs in three ways: the week is read as a **3D place** rather tha
 
 | Feature | **Island Life** | **Forest** | **Pensus** | **Pomodoro** | **Operator Uplift** |
 |---|---|---|---|---|---|
-| **Core Visual & World Experience** | **Interactive 3D Web Environment** built with Three.js, featuring dynamic altitude, lighting, camera control, and weather. | Static, top-down 2D grid/forest layout with minimal visual depth. | Clinical 2D administrative dashboards with numbers, progress rings, and charts. | Minimalist 2D timers, numerical countdowns, or basic progress bars. | Agent OS / workspace dashboards with task logs, lists, and workflow UI. |
+| **World and visuals** | A 3D island in Three.js. Its height, light, trees, bridges, and weather change with the week. | A top-down 2D forest grid. | Dashboards with numbers, rings, and charts. | A timer, usually with a countdown or progress bar. | Workspace screens with task logs, lists, and feeds. |
 | **Optional Photo Check-In** | **1-Tap Photo Check-In.** Share a photo of any moment on the group's carousel, whenever you like. Once a day, BeReal-style, a two-minute golden window opens for everyone at once. Sharing is optional. | Passive countdown timer. Trees grow even if the phone sits idle on a desk while the user watches TV or sleeps. | Mechanical background timer, with nothing shared with anyone. | Mechanical background timer, with nothing shared with anyone. | Mechanical background timer, with nothing shared with anyone. |
-| **Burnout Prevention & Mental Wellness** | **Empathic Rest & Energy Loops.** The AI Gardener monitors fatigue, prompts single-tap rest, and rewards rest equally with **Dewdrops 💧**. | **Punitive design.** Stopping early kills a tree, potentially inducing guilt and encouraging continuous, draining study marathons. | **Analytical logging.** Tracks energy metrics but presents them as dry administrative logs. | **Rigid mechanics.** Enforces strict 25/5-minute intervals regardless of mental bandwidth or flow state. | **Predictive execution.** Optimizes task scheduling and agent workflows but lacks emotional or visual wellness mechanics. |
-| **Social Co-Presence & Community** | **Privacy-Preserving 3D Bridges.** Users can visit peer islands, view emotional weather, leave gate notes, and complete group tasks together. | Primarily single-player focus. Shared study rooms only synchronize a timer number across users. | Solitary utility tool with no social or community mechanics. | Solitary utility tool with no social or community mechanics. | Team workspace feeds, command centers, or collaborative task-sharing pools. |
+| **Burnout and rest** | The gardener watches for heavy weeks or repeated tired, stressed, and low check-ins. Rest can be added in one tap and earns **Dewdrops 💧** too. | Stopping early can kill a tree, which can make a bad study day feel worse. | Tracks energy, but mostly shows it as logs and metrics. | Uses fixed 25/5-minute intervals, even when the student needs a different rhythm. | Focuses on task execution and planning, not emotional load. |
+| **Friends** | Friends visit through bridges, see weather and altitude, leave gate notes, and finish small group tasks together. Private calendar details stay hidden. | Mostly single-player. Shared rooms mainly synchronize a timer. | No built-in social space. | No built-in social space. | Team feeds and shared workspaces, built more for work than student wellbeing. |
 
 
 
@@ -321,7 +338,7 @@ Island Life differs in three ways: the week is read as a **3D place** rather tha
 
 ## 5.1 Tech Stack
 
-Island Life currently operates as a **browser-based visual prototype**. Its frontend renders the 3D world and manages demo data locally, while the proposed production stack uses Supabase to provide authentication, persistent storage, real-time social features, and secure server-side processing.
+Island Life is currently a **browser-based visual prototype**. The frontend renders the 3D world and keeps demo data locally. For production, Supabase would handle accounts, storage, real-time friend updates, and server-side work that should not run in the browser.
 ```
 Frontend: HTML5 + CSS3 + TypeScript + Three.js + Vite
 Backend: Supabase Auth + Data API + Realtime + Edge Functions + Cron
@@ -336,56 +353,56 @@ Asset pipeline: Blender + Python + GLB/glTF
 
 | Technology | Role | Reason for Selection | Status |
 |---|---|---|---|
-| **HTML5** | Defines the application's interface, including the navigation controls, planner sheets, forms, dialogs, and accessibility labels. | It is supported by all modern browsers and works directly with the project's framework-free architecture. | In the demo |
-| **CSS3** | Controls the responsive layout, visual theme, transitions, animations, and reduced-motion behaviour. | Native CSS keeps the application lightweight and provides sufficient control for the painterly interface surrounding the 3D world. | In the demo |
-| **JavaScript with ES Modules** | Implements the planner, mood check-ins, balance calculations, social interactions, rewards, and communication with the Three.js scene. | It runs natively in the browser and allows features to be separated into focused modules without introducing a UI framework. | In the demo |
-| **Three.js** | Renders the floating islands, trees, bridges, weather, timetable path, character, lighting, and post-processing effects. | It provides mature WebGL abstractions and supports the GLB assets produced by Blender. | In the demo |
-| **GLTFLoader** | Loads the island, tree, character, and decoration models into the Three.js scene. | GLB/glTF is compact, web-friendly, and preserves model geometry, materials, and textures. | In the demo |
-| **OrbitControls** | Provides camera rotation and zooming around the islands and player. | It supplies familiar mouse and touch camera controls with minimal custom code. | In the demo |
-| **EffectComposer and UnrealBloomPass** | Adds bloom and other post-processing effects to paths, bridges, lanterns, and atmospheric lighting. | These effects support the warm, magical visual direction of the project. | In the demo |
-| **Browser Media APIs** | Access the user's camera or uploaded images for mood lanterns and community moments. | Native browser APIs avoid requiring an additional capture library. | In the demo |
-| **Vite** | Provides the local development server, ES module handling, asset bundling, and optimized production builds. | Vite is lightweight, fast, and works well with a plain JavaScript and Three.js project. | In the demo |
+| **HTML5** | Defines the interface: navigation, planner sheets, forms, dialogs, and accessibility labels. | The project does not need a UI framework for the demo, and plain HTML keeps the screens easy to inspect. | In the demo |
+| **CSS3** | Handles responsive layout, visual styling, transitions, animations, and reduced-motion behaviour. | Native CSS gives us enough control for the painterly interface around the 3D world. | In the demo |
+| **JavaScript with ES Modules** | Runs the planner, mood check-ins, balance calculations, social actions, rewards, and Three.js scene updates. | ES modules let us split the prototype into focused files while still running directly in the browser. | In the demo |
+| **Three.js** | Renders the islands, trees, bridges, weather, timetable path, character, lighting, and post-processing. | Three.js handles the WebGL work for us, and it can load the GLB files we export from Blender. | In the demo |
+| **GLTFLoader** | Loads the island, tree, character, and decoration models into the scene. | GLB/glTF keeps the models compact and carries across the geometry, materials, and textures we need. | In the demo |
+| **OrbitControls** | Lets users rotate and zoom the camera around the islands and player. | The controls already feel familiar on mouse and touch, so we did not have to build that layer ourselves. | In the demo |
+| **EffectComposer and UnrealBloomPass** | Adds bloom to paths, bridges, lanterns, and atmospheric lighting. | The glow is part of the visual language, especially for the bridge and timetable path. | In the demo |
+| **Browser Media APIs** | Opens the user's camera or uploaded images for mood lanterns and community moments. | The browser already has the capture tools we need for the prototype. | In the demo |
+| **Vite** | Runs the local dev server, handles ES modules, and builds the production bundle. | It starts quickly and fits a plain JavaScript and Three.js project. | In the demo |
 
 ### 3D Asset Production
 
 | Technology | Role | Reason for Selection | Status |
 |---|---|---|---|
-| **Blender** | Creates the islands, trees, gardener character, decorations, and rendered interface artwork. | It provides a complete modelling, material, lighting, and animation workflow and supports GLB export. | In the demo |
-| **Python** | Automates Blender model generation, rendering, inspection, and asset export. | Scripted generation makes visual assets repeatable and helps maintain a consistent art style. | In the demo |
-| **GLB/glTF, WebP, PNG, and JPEG** | Deliver optimized 3D models, icons, character sprites, artwork, and photographs. | These formats are widely supported by browsers and provide an appropriate balance between quality and file size. | In the demo |
+| **Blender** | Creates the islands, trees, gardener character, decorations, and rendered interface artwork. | It gives us modelling, materials, lighting, animation, and GLB export in one tool. | In the demo |
+| **Python** | Generates Blender models, renders, inspections, and exports. | Scripts keep the assets repeatable. If a tree shape changes, we can rebuild the set instead of fixing each file by hand. | In the demo |
+| **GLB/glTF, WebP, PNG, and JPEG** | Deliver 3D models, icons, character sprites, artwork, and photographs. | These formats work across modern browsers and keep file sizes reasonable for the demo. | In the demo |
 
 ### Proposed Backend and Database
 
 | Technology | Role | Reason for Selection | Status |
 |---|---|---|---|
-| **Supabase** | Acts as the managed backend platform for the production version of Island Life. | It combines PostgreSQL, authentication, storage, real-time communication, generated APIs, and serverless functions, reducing the number of independent services the team must maintain. | Planned |
-| **PostgreSQL** | Stores profiles, friendships, activity blocks, recurrences, mood check-ins, notes, shared tasks, rewards, moments, and calendar metadata. | Island Life contains strongly related data, making a relational database suitable for consistency, privacy rules, and weekly workload queries. | Planned |
-| **Supabase Auth** | Provides real registration, login, password recovery, session management, and Google OAuth. | It integrates with PostgreSQL records and Row-Level Security, allowing an authenticated identity to control access to user data. | Planned |
-| **Row-Level Security (RLS)** | Ensures users can access their own private schedules and mood records while friends receive only permitted information. | Database-level policies reduce the risk of sensitive data being exposed by a frontend programming mistake. | Planned |
-| **Supabase Data API** | Connect the browser application to authorized database operations. | The client library fits the current JavaScript architecture and removes the need to build a separate CRUD API for the first production version. | Planned |
-| **Supabase Realtime** | Synchronizes friend status, notes, shared tasks, community photographs, and derived island changes between connected users. | Real-time database events match the project's social island concept and allow changes to appear without manually refreshing the page. | Planned |
-| **Supabase Storage** | Stores profile images, mood photographs, and golden-window submissions. | It provides managed object storage that integrates with authenticated access policies. | Planned |
-| **Supabase Edge Functions** | Handles secure calendar OAuth exchanges, calendar API requests, notification logic, and other privileged operations. | Server-side TypeScript keeps API credentials and refresh tokens out of browser code. | Planned |
-| **Supabase Cron** | Triggers scheduled calendar synchronization, recovery nudges, and the daily golden window. | It allows recurring jobs to run without maintaining a dedicated application server. | Planned |
+| **Supabase** | Backend platform for the production version. | It gives the team Postgres, auth, storage, realtime, APIs, and edge functions without running separate services for each one. | Planned |
+| **PostgreSQL** | Stores profiles, friendships, blocks, recurrences, check-ins, notes, shared tasks, rewards, moments, and calendar metadata. | The data is relational: friends connect to profiles, blocks create weekly load, and privacy rules depend on who is asking. | Planned |
+| **Supabase Auth** | Handles registration, login, password recovery, sessions, and Google OAuth. | Auth records can link directly to profile rows and database policies. | Planned |
+| **Row-Level Security (RLS)** | Keeps private schedules and mood records visible only to the owner. | Friend views should come from permitted summary values, not accidental access to raw calendar rows. | Planned |
+| **Supabase Data API** | Lets the browser read and write approved database rows. | The client library fits the current JavaScript code and avoids a separate CRUD API at the first production stage. | Planned |
+| **Supabase Realtime** | Updates friend status, notes, shared tasks, community photos, and derived island changes between users. | Friend islands should change while people are using the app, without asking them to refresh. | Planned |
+| **Supabase Storage** | Stores profile images, mood photos, and golden-window submissions. | These files need the same account-based privacy as the rest of the product. | Planned |
+| **Supabase Edge Functions** | Runs calendar OAuth, calendar API calls, notifications, and other privileged work. | API secrets and refresh tokens should stay on the server. | Planned |
+| **Supabase Cron** | Runs scheduled calendar sync, recovery nudges, and the daily golden window. | Those jobs need to happen even when nobody has the app open. | Planned |
 
 ### APIs and External Services
 
 | Technology | Role | Reason for Selection | Status |
 |---|---|---|---|
-| **Google Calendar API** | Imports and, in a later phase, updates Google Calendar events. | Google Calendar is widely used by students and exposes individual and recurring events through an official API. | Planned |
-| **Microsoft Graph Calendar API** | Connects Outlook, Microsoft 365, and supported university calendars. | Many universities use Microsoft 365, so this integration covers an important part of the target audience. | Planned |
-| **ICS Calendar Feeds** | Imports classes, coursework, and deadlines from Canvas, Moodle, Blackboard, and other systems that publish calendar feeds. | ICS offers broad compatibility without requiring a custom integration for every learning platform. | Planned |
-| **CalDAV** | Provides possible future synchronization with Apple iCloud Calendar and compatible calendar servers. | It is an established open calendar protocol. | Planned |
-| **Google Classroom API** | Imports coursework due dates for classes that run through Google Classroom. | It reaches coursework that never appears in a student's own calendar. | Planned |
+| **Google Calendar API** | Imports Google Calendar events, with updates planned later. | Many students already keep classes and deadlines there, including repeating events. | Planned |
+| **Microsoft Graph Calendar API** | Connects Outlook, Microsoft 365, and supported university calendars. | This matters for schools that run on Microsoft 365. | Planned |
+| **ICS Calendar Feeds** | Imports classes, coursework, and deadlines from Canvas, Moodle, Blackboard, and similar systems. | ICS links are common and do not require app approval, which makes them a practical first import path. | Planned |
+| **CalDAV** | Leaves room for iCloud Calendar and other compatible calendars later. | It is useful for broader calendar support after the final. | Planned |
+| **Google Classroom API** | Imports coursework due dates from Google Classroom. | Some coursework never reaches the student's personal calendar. | Planned |
 
 ### Hosting, Testing, and Delivery
 
 | Technology | Role | Reason for Selection | Status |
 |---|---|---|---|
-| **Vercel** | Hosts the Vite frontend and provides preview deployments. | Static Vite output can be deployed with minimal configuration and delivered through a global content delivery network. | In the demo |
-| **Playwright** | Tests login flows, planner interactions, keyboard controls, dialogs, and browser rendering behaviour. | It automates real browsers and is appropriate for the application's interaction-heavy interface. | In the demo |
-| **Node.js Test Runner** | Runs unit tests for workload, altitude, weather, recurrence, and reward calculations. | It is built into Node.js and avoids adding another unit-testing framework. | Planned |
-| **GitHub and GitHub Actions** | Provide source control and automated build and test workflows. | They support collaboration and allow every change to be checked before deployment. | GitHub in use, Actions planned |
+| **Vercel** | Hosts the Vite frontend and preview deployments. | The built site is static, so Vercel is a simple fit for the demo and final deployment. | In the demo |
+| **Playwright** | Tests login flows, planner interactions, keyboard controls, dialogs, and browser rendering. | It runs the same flows a judge or student would click through in a real browser. | In the demo |
+| **Node.js Test Runner** | Runs unit tests for workload, altitude, weather, recurrence, and reward calculations. | Node already includes it, so we can test the core logic without adding another framework. | Planned |
+| **GitHub and GitHub Actions** | Handles source control, builds, and test runs. | The repo is already on GitHub; Actions would let every push run the same checks. | GitHub in use, Actions planned |
 
 
 ---
@@ -395,6 +412,20 @@ Asset pipeline: Blender + Python + GLB/glTF
 ## 5.3 Build Plan for the Final
 
 The plan follows the competition's own phases. The order is deliberate: import proves the idea on a judge's own timetable, accounts make a demo survive a refresh, and the phone is where a student would actually keep it open.
+
+```mermaid
+flowchart LR
+    A["21-27 Sep<br/>Import + accounts"]
+    B["28 Sep-4 Oct<br/>Database + friends"]
+    C["5-11 Oct<br/>Phone + tests"]
+    D["12-18 Oct<br/>Deploy + accessibility"]
+    E["19-25 Oct<br/>Student pilot"]
+    F["26-31 Oct<br/>Fixes + feature freeze"]
+    G["1-14 Nov<br/>Rehearse demo"]
+    H["15 Nov<br/>Grand final"]
+
+    A --> B --> C --> D --> E --> F --> G --> H
+```
 
 | Window | Focus |
 |---|---|

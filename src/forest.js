@@ -2,7 +2,7 @@ import * as T from 'three';
 import { CATEGORIES, SCHEDULES, ME, fmt, hours } from './data.js';
 import { SPECIES, HISTORY, tier, treeCard } from './groves.js';
 
-// The forest on each member island (PRODUCT.md "trees = activities"):
+// The forest on each member island (README.md "trees = activities"):
 // a solid tree for everything done this past week, and one tree for each of
 // today's blocks -- a glass ghost while it is planned, which "takes root"
 // (fills with colour from the roots up, a band of light riding the front)

@@ -22,7 +22,7 @@ const SPECIES_SCALE={sakura:1.05,purple:1.2,oak:.85,palm:1.0,mushrooms:.5,clover
 // NOTE: owner names are placeholders -- swap them for your real members.
 // Torii pillars, in member-island model units (same for every variant).
 const TORII_POSTS=[{x:-6.44,z:-3.85,r:.42},{x:-4.36,z:-6.15,r:.42}];
-// Everyone arrives just inside their own torii (PRODUCT.md: the arch is the
+// Everyone arrives just inside their own torii (README.md: the arch is the
 // spawn point), the camera out beyond the gate looking in across the island.
 const ARCH_SPAWN=[-4.1,-3.8], ARCH_CAM=[-11.9,10,-10.7];
 

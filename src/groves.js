@@ -9,7 +9,7 @@ import { CATEGORIES, hours } from './data.js';
 export const SPECIES={study:'purple',work:'oak',errands:'magic_mushrooms',social:'sakura',
                       exercise:'palm',rest:'willow',other:'pale'};
 
-// PRODUCT.md duration tiers: small up to 30 min, medium ~1-1.5 h, large 2 h+.
+// README.md duration tiers: small up to 30 min, medium ~1-1.5 h, large 2 h+.
 export const tier=mins=>mins<=30?{scale:.72,label:'Small'}:mins<=90?{scale:1,label:'Medium'}:{scale:1.3,label:'Large'};
 
 // Mock past week. `day` counts days before today; `vis` works as in data.js:

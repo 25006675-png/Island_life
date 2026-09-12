@@ -122,7 +122,7 @@ detail, wrapping well under the ball. Rosette size is the balance point: at
 .22-.33 of the cluster radius the canopy read sparse, and at .28-.40 the
 clusters squared off again. It's set at .25-.36.
 
-The last three are the PRODUCT.md species for Other, Rest and Errands. Their
+The last three are the README.md species for Other, Rest and Errands. Their
 positions are laid out in the reference's pixel space at 150 px per unit, so
 all three use ortho scale 8.36.
 

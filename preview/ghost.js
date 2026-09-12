@@ -10,7 +10,7 @@ import { CATEGORIES } from '../src/data.js';
 import { SPECIES } from '../src/groves.js';
 import { ghostMaterial } from '../src/forest.js';
 
-// Preview for ghost trees (PRODUCT.md): a planned activity stands as a
+// Preview for ghost trees (README.md): a planned activity stands as a
 // translucent glass version of its species. Left: the tree as it is when
 // done; right: its ghost. ?tree=purple (or oak, palm, willow, pale,
 // magic_mushrooms) previews another species.

@@ -14,7 +14,7 @@ import { createGoalsBoard, createWindmill, createGateSign } from './decor.js';
 import { createShop } from './shop.js';
 import { createBuddy } from './buddy.js';
 
-// Everything PRODUCT.md asks the world to *mean*: the timetable path and wisp,
+// Everything README.md says the world should show: the timetable path and wisp,
 // emotion lanterns, weather and altitude from the plan, the shared photo
 // carousel, proximity reveal, and the planner and balance sheets. main.js calls
 // initLife() once the islands exist, then life.update() every frame.
@@ -286,7 +286,7 @@ export function initLife({islands,camera,texture,player,notice,visit,nearTree,ge
   const dew=()=>36+plans.week(ME).filter(b=>!b.skipped&&b.done).length   // explicit Done only
                   +(photos.items.some(i=>i.golden&&i.member.id===ME)?3:0)
                   +NOTES.filter(n=>n.to===ME&&n.read).length+given.size+taskDew();
-  // What anyone may see of an island (PRODUCT.md privacy): its weather and its
+  // What anyone may see of an island (README.md privacy): its weather and its
   // altitude, in words -- never hours, and never what's on the plan.
   const band=l=>l<.35?'Floating high, a light week':l<.7?'Mid-sky, a steady week':'Low, near the clouds, a full week';
   const trend=s=>s<.2?'clear days lately':s<.35?'mostly clear':s<.55?'a heavier few days':s<.75?'a tiring stretch':'a hard week';
