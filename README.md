@@ -321,7 +321,7 @@ flowchart LR
     Island -- "the week is filling up" --> Gardener
     Island -- "the student wants detail" --> Balance
     Gardener -- "suggests something restful<br/>at a time that is free" --> Planner
-    Balance -- "moves something<br/>that can wait to next week" --> Planner
+    Balance -- "suggests a change<br/><i>e.g. move something<br/>that can wait to next week</i>" --> Planner
     Planner -- "the week is lighter,<br/>so the island rises" --> Island
 ```
 
