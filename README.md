@@ -289,6 +289,10 @@ Burnout creeps up, so Island Life watches for it. When your check-ins keep comin
 
 ## 3.2 How it works
 
+Every part of the world is driven by something the student did, not by decoration.
+
+<details>
+<summary><b>The full mapping, element by element</b></summary>
 
 | In the world | What it means | What drives it |
 |---|---|---|
@@ -302,6 +306,8 @@ Burnout creeps up, so Island Life watches for it. When your check-ins keep comin
 | **Bridge glow** | Warmth with your friends | Notes, shared moments and time together |
 | **Carousel photos** | The day's shared moments | One photo per person from the golden window, plus moments through the day |
 | **Dewdrops** 💧 | A gentle reward | Done blocks, notes, moments and group tasks |
+
+</details>
 
 **Rebalancing** happens in three places:
 
