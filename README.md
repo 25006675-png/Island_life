@@ -320,7 +320,7 @@ flowchart LR
 
     Island -- "the week is filling up" --> Gardener
     Island -- "the student wants detail" --> Balance
-    Gardener -- "suggests a walk, tea with a friend,<br/>or an early night, at a free time" --> Planner
+    Gardener -- "suggests something restful<br/>at a time that is free" --> Planner
     Balance -- "moves something<br/>that can wait to next week" --> Planner
     Planner -- "the week is lighter,<br/>so the island rises" --> Island
 ```
