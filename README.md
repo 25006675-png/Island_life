@@ -7,12 +7,12 @@
   <a href="docs/videos/hero.mp4"><img src="docs/images/clips/hero.webp" alt="The sky neighbourhood, turning a full circle" width="100%"/></a>
   <br/><sub>Your sky neighbourhood, a full turn &nbsp;·&nbsp; <a href="docs/videos/hero.mp4">full clip</a></sub>
   <br/><br/>
-  <a href="docs/videos/character.mp4"><img src="docs/images/clips/character.webp" alt="Walking the bridge, pulling back to the whole gathering island" width="100%"/></a>
-  <br/><sub>Crossing to The gathering Island &nbsp;·&nbsp; <a href="docs/videos/character.mp4">full clip</a></sub>
+  <a href="docs/videos/character.mp4"><img src="docs/images/clips/character.webp" alt="Walking the bridge, pulling back to The Gathering Island" width="100%"/></a>
+  <br/><sub>Crossing to The Gathering Island &nbsp;·&nbsp; <a href="docs/videos/character.mp4">full clip</a></sub>
 </p>
 
 **Team:** Codenected  
-**Team Member:** Lee Kai Hong, Leow Shen En, Choong Zhuo Lin, Chung Jun  
+**Team Members:** Lee Kai Hong, Leow Shen En, Choong Zhuo Lin, Chung Jun  
 **Problem Statement:** Stress & Workload Manager
 
 ## Project Links
@@ -20,6 +20,14 @@
 - **Video Presentation:** _To be added_
 - **Presentation Slides:** _To be added_
 - **Prototype:** [Island Life Prototype](https://island-life-one.vercel.app/)
+
+## Island Life in 30 seconds
+
+**Your week becomes an island.** The product turns a student's schedule, mood, and social support into a small 3D world that can be understood quickly.
+
+| <img src="public/assets/icons/social.webp" width="52" alt="A blossom tree"/> | <img src="public/assets/icons/sky-rain.webp" width="52" alt="A rain cloud"/> | <img src="public/assets/icons/island.webp" width="52" alt="A floating island"/> | <img src="public/assets/icons/bridge.webp" width="52" alt="A light bridge"/> | <img src="public/assets/icons/gardener.webp" width="52" alt="The leaf gardener"/> |
+|:---:|:---:|:---:|:---:|:---:|
+| Activities become trees | Mood becomes weather | Workload controls altitude | Friends connect without seeing your calendar | Your gardener avatar suggests rest when the week looks heavy |
 
 
 
@@ -39,7 +47,7 @@ Saying **yes to everything** is how it starts. Students end up busy from morning
 
 Most productivity tools do not show that load very well:
 
-- Standard **Pomodoro timers** count down time, but they do not know whether the student is tired, overloaded, or close to burning out.
+- Standard **Pomodoro timers** count down time, but they do not know whether the student is tired, overloaded, or running out of room.
 - Energy-tracking apps such as **Pensus** track useful signals, but the result often feels clinical: numbers, logs, and charts instead of something a student wants to return to.
 
 That leaves three groups with a problem:
@@ -49,25 +57,25 @@ That leaves three groups with a problem:
    - Need better ways to manage their mental bandwidth.
 
 2. **Peer groups**
-   - Need a way to notice when a friend is struggling, without reading that friend's private schedule.
+   - Need a way to notice when a friend may be having a heavy week, without reading that friend's private schedule.
 
 3. **University support networks**
    - Deal with the fallout when stress becomes a crisis.
 
-**Island Life** shows that load instead. A student's week becomes a small floating island they can read in one glance, and friends can tell when someone is struggling without seeing a single entry in their calendar.
+**Island Life** shows that load instead. A student's week becomes a small floating island they can read in one glance, and friends can see when someone may need support without seeing a single entry in their calendar.
 
 
 
 ## 1.2 Our Solution
 
-Island Life turns a student's week into a floating **3D island** that makes mental load visible before burnout hits.  
+Island Life turns a student's week into a floating **3D island** that makes overload visible earlier.  
 
 Island Life
 
 - Converts scheduled commitments across **seven activity categories** into growing trees.
 - Uses the island’s physical **altitude** to represent weekly workload density.
 - Turns emotional check-ins into the island's **weather**.
-- Suggests pre-scheduled, **single-tap rest activities** rather than enforcing rigid study marathons.
+- Uses a **gardener avatar** to suggest pre-scheduled, single-tap rest activities rather than enforcing rigid study marathons.
 - Opens a daily **2-minute "Golden Window"** where friends share one unedited photo of what they are doing.
 - Connects peer islands through **privacy-first bridges** that display emotional weather rather than private calendars.
 - Replaces streak penalties with a guilt-free **"Let Go"** mechanic.
@@ -88,12 +96,12 @@ These were the main ideas we tested, kept, changed, or dropped.
 | **Personalized 3D Island World (3D Sky Island)** | **Chosen** | A dashboard made the week feel like homework. A floating island let us show the same data physically: height for load, weather for mood, trees for planned time. |
 | **1-Tap Photo Check-Ins ("The Golden Window")** | **Chosen** | We liked the honesty of BeReal: one quick photo of what is happening now. The photos sit on The Gathering Island carousel, so the group sees real moments instead of fake focus timers. |
 | **Shared Peer Bridges & Gathering Island** | **Chosen** | Bridges gave the social part a shape. Friends can see weather, altitude, notes, and shared tasks, but not the private details of someone else's plan. |
-| **Empathic AI Gardener & Rest Nudge** | **Chosen** | The gardener watches mood check-ins and weekly load. If the week looks heavy, it suggests something small and already schedulable: tea, a walk, early sleep, or a slow evening. |
+| **AI-assisted gardener avatar** | **Chosen** | The gardener avatar watches mood check-ins and weekly load. In the prototype, it uses clear rules to suggest something small and already schedulable: tea, a walk, early sleep, or a slow evening. In a fuller version, AI would help classify calendar events and rank better activity ideas. |
 | **Guilt-Free "Let Go" & Balanced Rewards** | **Chosen** | We did not want streaks or dead trees. If you let go of a task, its glass tree drifts away. Rest earns the same reward as studying: **Dewdrops 💧**. |
 | **Visual Activity Trees & Timetable Clock Path** | **Chosen** | Each activity type became its own tree, so a study-heavy week looks different from a social-heavy one. Today's plan became a clock-face path with a light walking through it. |
 | **Blender MCP Server Pipeline** | **Chosen** | We needed a lot of matching 3D assets quickly. Python scripts controlling Blender let us regenerate islands, trees, props, and renders after changes. |
 | **Bee Colony & Honeycomb World** | **Dropped** | An alternative way to draw the same data: a honeycomb whose cells fill as the week fills, and nectar earned by turning up for the group. It mapped cleanly, but the team found it busier and more industrious than the floating island, and the calmer world suited an app about not overworking. |
-| **One Mascot Per Member** | **Reshaped** | Early idea of a personal creature for each student. It became the single leaf gardener who tends your island, with costumes kept back as a reward in the long-term plan, so the world stays readable rather than crowded. |
+| **One Mascot Per Member** | **Reshaped** | Early idea of a personal creature for each student. It became one gardener avatar who tends your island, with costumes kept back as a reward in the long-term plan, so the world stays readable rather than crowded. |
 | **Forest-Style Single-Player Tree Planting** | **Dropped** | Forest depends on a timer, and a timer can reward someone for leaving a phone alone while doing nothing. Killing trees for stopping early also felt wrong for a burnout project. |
 | **Crypto-Reward / Tokenomics Concept** | **Dropped** | Zach pushed us to drop it. Crypto rewards are common in hackathon pitches, add friction, and pull attention away from the wellness idea. |
 | **Traditional Virtual Garden Concept** | **Dropped** | Zach also challenged the garden idea because it felt too familiar. The sky island kept the calm feeling but made the data clearer: altitude, weather, trees, and bridges each mean something. |
@@ -161,7 +169,7 @@ Thirty-six commits over three days. These were the main product decisions during
 | **Scripted asset generation** | Seven tree species, four islands, a character and every prop had to exist in three days and still look like one place. Python driving Blender means any of them can be regenerated after a change. | An asset pack, which would have looked like everyone else's, or modelling by hand, which we could not have finished. |
 | **Manual completion** | A tree takes root only when you press Done. This is the whole difference from a timer that rewards a phone left face-down on a desk. | Growth on a schedule, which would have filled the island by itself and meant nothing. |
 | **World-based onboarding** | The landing page is the world itself, with signposts you walk up to, so the first thing a student does is move rather than dismiss an overlay. | A tour or tooltip sequence, which most people skip anyway. |
-| **Active rest reminder** | The rest suggestion first sat on a sign by the windmill, and a nudge that waits to be found is not a nudge. Your gardener now speaks when you get home, and the sign keeps the offer. | A passive signpost, which would make the reminder too easy to miss when someone is already tired. |
+| **Active rest reminder** | The rest suggestion first sat on a sign by the windmill, and a nudge that waits to be found is not a nudge. Your gardener avatar now speaks when you get home, and the sign keeps the offer. | A passive signpost, which would make the reminder too easy to miss when someone is already tired. |
 | **User-confirmed scheduling** | Taking a suggestion used to put a slow evening on your plan at a time we chose. Now it offers free times, or hands you the planner. | Deciding someone's evening for them, which is the behaviour students already resent in productivity apps. |
 
 ## 2.4 Mentor Consultation
@@ -211,7 +219,7 @@ Your island floats high when your week has room, and sinks toward the clouds as 
 <td valign="top"><h3>Your feelings become the weather</h3>
 Tell your island how you feel, and a coloured lantern rises into its sky. A few tired, stressed or low days gather cloud, then rain. Calm and happy days clear it again.</td>
 <td valign="top"><h3>Your friends are a bridge away</h3>
-Friends' islands connect to yours through The gathering Island. You see their weather and how high they float, never their hours or plans. A rainy island is your cue to leave a note at their gate.</td>
+Friends' islands connect to yours through The Gathering Island. You see their weather and how high they float, never their hours or plans. A rainy island is your cue to leave a note at their gate.</td>
 </tr>
 </table>
 
@@ -241,11 +249,11 @@ Burnout creeps up, so Island Life watches for it. When your check-ins keep comin
 
 <table>
 <tr>
-<td width="50%"><a href="docs/videos/nudge.mp4"><img src="docs/images/clips/nudge.webp" alt="The gardener noticing a run of heavy days and suggesting a way to unwind"/></a><br/><sub>Your gardener speaks up, and you pick a time &nbsp;·&nbsp; <a href="docs/videos/nudge.mp4">full clip</a></sub></td>
+<td width="50%"><a href="docs/videos/nudge.mp4"><img src="docs/images/clips/nudge.webp" alt="The gardener avatar noticing a run of heavy days and suggesting a way to unwind"/></a><br/><sub>Your gardener avatar speaks up, and you pick a time &nbsp;·&nbsp; <a href="docs/videos/nudge.mp4">full clip</a></sub></td>
 <td width="50%"><img src="docs/images/balance.jpg" alt="The balance page, with the week by area and small changes that would help"/></td>
 </tr>
 <tr>
-<td valign="top"><b>Your gardener speaks up.</b> After a run of tired, stressed or low days, your gardener notices the moment you get home and suggests a way to unwind: tea with the friend you've seen least, a walk if you've barely moved, an early night after late ones, or a slow evening. It has already found a free time. One tap puts it on your plan, or ask for another idea.</td>
+<td valign="top"><b>Your gardener avatar speaks up.</b> After a run of tired, stressed or low days, your gardener notices the moment you get home and suggests a way to unwind: tea with the friend you've seen least, a walk if you've barely moved, an early night after late ones, or a slow evening. It has already found a free time. One tap puts it on your plan, or ask for another idea.</td>
 <td valign="top"><b>Your week, in balance.</b> Time, mental, physical, social and errands, each read from your week and put in plain words. Next to them are changes made for you, like pushing the two blocks you marked "can wait" to next week. Each one applies in one tap.</td>
 </tr>
 </table>
@@ -256,11 +264,11 @@ Burnout creeps up, so Island Life watches for it. When your check-ins keep comin
 
 <table>
 <tr>
-<td><img src="docs/images/golden.jpg" alt="The carousel on The gathering Island, and today's album with the golden window photos"/></td>
+<td><img src="docs/images/golden.jpg" alt="The carousel on The Gathering Island, and today's album with the golden window photos"/></td>
 <td><img src="docs/images/tasks.jpg" alt="The shared task board, with a walk outside, a proper dinner and an evening with no screens"/></td>
 </tr>
 <tr>
-<td valign="top"><b>The golden window.</b> Once a day, everyone gets two minutes to share one photo of right now. The photos hang on the carousel on The gathering Island, and the day's album keeps them all.</td>
+<td valign="top"><b>The golden window.</b> Once a day, everyone gets two minutes to share one photo of right now. The photos hang on the carousel on The Gathering Island, and the day's album keeps them all.</td>
 <td valign="top"><b>Small things, together.</b> Anyone can post a small task, like a walk outside or an evening with no screens. You earn more when friends finish too.</td>
 </tr>
 </table>
@@ -313,14 +321,14 @@ flowchart LR
 
 - **The planner**, where you move, resize, finish or let go of blocks.
 - **The balance page**, which suggests small changes you apply in one tap.
-- **Your gardener**, who spots a run of heavy days or a very full week and suggests a way to unwind that fits it, with a sign by the windmill keeping the offer.
+- **Your gardener avatar**, who spots a run of heavy days or a very full week and suggests a way to unwind that fits it, with a sign by the windmill keeping the offer.
 
 
 
 
 # 4. What Makes It Different
 
-Island Life differs in three ways: the week is read as a **3D place** rather than a chart, the island **speaks up before burnout**, and friends see **how you are without seeing your calendar**.
+Island Life differs in three ways: the week is read as a **3D place** rather than a chart, the island **speaks up when the week looks heavy**, and friends see **how you are without seeing your calendar**.
 
 ## Competitive Comparison
 
@@ -328,7 +336,7 @@ Island Life differs in three ways: the week is read as a **3D place** rather tha
 |---|---|---|---|---|---|
 | **World and visuals** | A 3D island in Three.js. Its height, light, trees, bridges, and weather change with the week. | A top-down 2D forest grid. | Dashboards with numbers, rings, and charts. | A timer, usually with a countdown or progress bar. | Workspace screens with task logs, lists, and feeds. |
 | **Optional Photo Check-In** | **1-Tap Photo Check-In.** Share a photo of any moment on the group's carousel, whenever you like. Once a day, BeReal-style, a two-minute golden window opens for everyone at once. Sharing is optional. | Passive countdown timer. Trees grow even if the phone sits idle on a desk while the user watches TV or sleeps. | Mechanical background timer, with nothing shared with anyone. | Mechanical background timer, with nothing shared with anyone. | Mechanical background timer, with nothing shared with anyone. |
-| **Burnout and rest** | The gardener watches for heavy weeks or repeated tired, stressed, and low check-ins. Rest can be added in one tap and earns **Dewdrops 💧** too. | Stopping early can kill a tree, which can make a bad study day feel worse. | Tracks energy, but mostly shows it as logs and metrics. | Uses fixed 25/5-minute intervals, even when the student needs a different rhythm. | Focuses on task execution and planning, not emotional load. |
+| **Burnout and rest** | The gardener avatar watches for heavy weeks or repeated tired, stressed, and low check-ins. Rest can be added in one tap and earns **Dewdrops 💧** too. | Stopping early can kill a tree, which can make a bad study day feel worse. | Tracks energy, but mostly shows it as logs and metrics. | Uses fixed 25/5-minute intervals, even when the student needs a different rhythm. | Focuses on task execution and planning, not emotional load. |
 | **Friends** | Friends visit through bridges, see weather and altitude, leave gate notes, and finish small group tasks together. Private calendar details stay hidden. | Mostly single-player. Shared rooms mainly synchronize a timer. | No built-in social space. | No built-in social space. | Team feeds and shared workspaces, built more for work than student wellbeing. |
 
 
@@ -340,7 +348,7 @@ Island Life differs in three ways: the week is read as a **3D place** rather tha
 
 Island Life is currently a **browser-based visual prototype**. The frontend renders the 3D world and keeps demo data locally. For production, Supabase would handle accounts, storage, real-time friend updates, and server-side work that should not run in the browser.
 ```
-Frontend: HTML5 + CSS3 + TypeScript + Three.js + Vite
+Frontend: HTML5 + CSS3 + JavaScript + Three.js + Vite
 Backend: Supabase Auth + Data API + Realtime + Edge Functions + Cron
 Database: PostgreSQL with Row-Level Security
 Storage: Supabase Storage
@@ -349,6 +357,7 @@ Deployment: Vercel + Supabase
 Testing: Playwright + Node.js Test Runner
 Asset pipeline: Blender + Python + GLB/glTF
 ```
+
 ### Frontend
 
 | Technology | Role | Reason for Selection | Status |
@@ -407,9 +416,65 @@ Asset pipeline: Blender + Python + GLB/glTF
 
 ---
 
-## 5.2 System Architecture
-![system-archicture](docs/images/System_architecture.png)
-## 5.3 Build Plan for the Final
+## 5.2 Signals, Rules, and Where AI Fits
+
+**AI should classify, explain and suggest. It should never diagnose burnout or change a schedule on its own.** Everything the prototype decides today is a plain rule you can read in the source, which is also why every number in this README is checkable.
+
+| Signal | The rule today | Where AI could help later |
+|---|---|---|
+| **Calendar blocks** | Sorted into seven kinds: study, work, errands, social, exercise, rest, other. | Read an event title and pick the kind, with the student free to correct it. |
+| **Weekly workload** | Planned hours against what the student says they can give. Past 85% counts as very full. | Say in plain words which part of the week is causing the pressure. |
+| **Mood check-ins** | Calm and happy clear the sky; tired, stressed and low gather cloud. Recent days weigh most. | Describe the pattern over a term without turning it into a diagnosis. |
+| **Rest suggestions** | Four safe options, ranked by the week: an early night after late ones, a walk if you have barely moved, tea with the friend you have seen least, a slow evening. Only free times are offered. | Suggest ideas that fit the person, not just the gap, and learn from what they accept. |
+
+## 5.3 System Architecture
+```mermaid
+flowchart LR
+  student([University student])
+
+  subgraph proto["Current visual prototype"]
+    direction LR
+    vite["Vite web application"]
+    logic["JavaScript application logic"]
+    rules["Rules, written out in full<br/>hours against capacity to altitude<br/>check-ins to weather<br/>rest ideas ranked against the week"]
+    world["Three.js 3D world"]
+    mock[("Local mock data")]
+  end
+
+  subgraph prod["Production backend, planned"]
+    direction LR
+    auth["Supabase Auth"]
+    db[("PostgreSQL")]
+    rls["Row-level security"]
+    realtime["Supabase Realtime"]
+    storage["Supabase Storage"]
+    cron["Scheduled jobs"]
+    edge["Edge Functions"]
+    ai["AI service, advisory only<br/>name the kind of event<br/>explain the week in plain words<br/>propose rest ideas"]
+  end
+
+  cal["Google and Microsoft calendars<br/>ICS feeds, CalDAV"]
+
+  student --> vite --> logic
+  logic --> rules --> world
+  logic --> mock
+  logic -. future migration .-> auth
+  logic -. future migration .-> db
+  logic -. future migration .-> storage
+  logic -. future migration .-> edge
+  db --> rls
+  db --> realtime
+  cron --> edge
+  edge --> cal
+  edge -. asks .-> ai
+  ai -. suggestions only, never writes to the plan .-> edge
+
+  classDef planned stroke-dasharray:6 4;
+  class ai planned;
+```
+
+<sub>Source: <a href="docs/architecture.mmd">docs/architecture.mmd</a>. The rules box is the part that decides anything today, and it is plain code rather than a model. The AI service is dashed because it is planned, and it only ever advises.</sub>
+## 5.4 Build Plan for the Final
 
 The plan follows the competition's own phases. The order is deliberate: import proves the idea on a judge's own timetable, accounts make a demo survive a refresh, and the phone is where a student would actually keep it open.
 
@@ -459,7 +524,7 @@ flowchart LR
 
 ### Rehearse, 1 to 14 November
 
-A demo that runs from a judge's own calendar link, a recorded fallback in case the network fails, and a five-minute script: import a real timetable, watch the island sink, let the gardener catch it.
+A demo that runs from a judge's own calendar link, a recorded fallback in case the network fails, and a five-minute script: import a real timetable, watch the island sink, let the gardener avatar catch it.
 
 ### Risks we are planning around
 
@@ -470,12 +535,12 @@ A demo that runs from a judge's own calendar link, a recorded fallback in case t
 | Nobody outside the team has used it | The pilot is scheduled inside the deploy window, not left until the end. |
 | A live demo depends on the venue network | The fallback runs on local data with no network at all. |
 
-## 5.4 Beyond the Final
+## 5.5 Beyond the Final
 
 - **Two-way calendar sync** with Google Calendar and Microsoft Graph, so a slow evening added on the island travels back to the calendar it came from.
 - **Live weather between friends**, updating as check-ins land rather than at the next reload.
 - **Gentle milestones**, such as a first week in balance or a first slow evening.
-- **Island decorations and gardener costumes**, bought with dewdrops, cosmetic only, and earned as easily by resting as by studying.
+- **Island decorations and gardener avatar costumes**, bought with dewdrops, cosmetic only, and earned as easily by resting as by studying.
 
 # Summary
 
@@ -488,5 +553,5 @@ The goal is not to help students **do more**. It is to help them see when they a
 <div align="center">
   <strong>Made by Team Codenected</strong>
   <br>
-  <strong><em>© Codenection 2026<em>
+  <strong><em>© Codenection 2026</em></strong>
 </div>

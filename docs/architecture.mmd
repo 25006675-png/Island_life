@@ -1,0 +1,42 @@
+flowchart LR
+  student([University student])
+
+  subgraph proto["Current visual prototype"]
+    direction LR
+    vite["Vite web application"]
+    logic["JavaScript application logic"]
+    rules["Rules, written out in full<br/>hours against capacity to altitude<br/>check-ins to weather<br/>rest ideas ranked against the week"]
+    world["Three.js 3D world"]
+    mock[("Local mock data")]
+  end
+
+  subgraph prod["Production backend, planned"]
+    direction LR
+    auth["Supabase Auth"]
+    db[("PostgreSQL")]
+    rls["Row-level security"]
+    realtime["Supabase Realtime"]
+    storage["Supabase Storage"]
+    cron["Scheduled jobs"]
+    edge["Edge Functions"]
+    ai["AI service, advisory only<br/>name the kind of event<br/>explain the week in plain words<br/>propose rest ideas"]
+  end
+
+  cal["Google and Microsoft calendars<br/>ICS feeds, CalDAV"]
+
+  student --> vite --> logic
+  logic --> rules --> world
+  logic --> mock
+  logic -. future migration .-> auth
+  logic -. future migration .-> db
+  logic -. future migration .-> storage
+  logic -. future migration .-> edge
+  db --> rls
+  db --> realtime
+  cron --> edge
+  edge --> cal
+  edge -. asks .-> ai
+  ai -. suggestions only, never writes to the plan .-> edge
+
+  classDef planned stroke-dasharray:6 4;
+  class ai planned;
