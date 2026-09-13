@@ -314,7 +314,7 @@ Every part of the world is driven by something the student did, not by decoratio
 ```mermaid
 flowchart LR
     Island["<b>The island</b><br/>the student's week, seen at a glance:<br/>how full it is, how they have felt,<br/>what they have finished"]
-    Gardener["<b>The gardener</b><br/>notices when the week is too full<br/>or the last few days were hard,<br/>and offers something restful"]
+    Gardener["<b>The gardener</b><br/>notices when the week is too full<br/>or the last few days were hard,<br/>and offers something restful<br/><i>e.g. a walk, tea with a friend,<br/>an early night</i>"]
     Balance["<b>The analysis page</b><br/>shows which part of life is crowded:<br/>time, mind, body, friends, errands"]
     Planner["<b>The planner</b><br/>an ordinary calendar:<br/>add, move, mark finished,<br/>or drop something"]
 
