@@ -347,6 +347,8 @@ Island Life differs in three ways: the week is read as a **3D place** rather tha
 ## 5.1 Tech Stack
 
 Island Life is currently a **browser-based visual prototype**. The frontend renders the 3D world and keeps demo data locally. For production, Supabase would handle accounts, storage, real-time friend updates, and server-side work that should not run in the browser.
+
+The demo works on **rule-based calculation**: altitude, weather, tree species and rest suggestions are plain functions anyone can read. In the building phase before the final we add an **LLM** for the parts a model is genuinely better at, naming the kind of activity behind a calendar entry, putting a heavy week into plain words, and drafting rest ideas. The rules still decide what happens, and nothing reaches a student's plan until they tap it.
 ```
 Frontend: HTML5 + CSS3 + JavaScript + Three.js + Vite
 Backend: Supabase Auth + Data API + Realtime + Edge Functions + Cron
@@ -362,58 +364,58 @@ Asset pipeline: Blender + Python + GLB/glTF
 
 | Technology | Role | Reason for Selection | Status |
 |---|---|---|---|
-| **HTML5** | Defines the interface: navigation, planner sheets, forms, dialogs, and accessibility labels. | The project does not need a UI framework for the demo, and plain HTML keeps the screens easy to inspect. | In the demo |
-| **CSS3** | Handles responsive layout, visual styling, transitions, animations, and reduced-motion behaviour. | Native CSS gives us enough control for the painterly interface around the 3D world. | In the demo |
-| **JavaScript with ES Modules** | Runs the planner, mood check-ins, social actions, rewards, and Three.js scene updates. | ES modules let us split the prototype into focused files while still running directly in the browser. | In the demo |
-| **Rule-based logic** | Every number the world shows is worked out here, in plain functions: planned hours against capacity become the island's altitude, the week's check-ins become its weather with recent days weighted most, the seven activity kinds become tree species and sizes, and rest ideas are ranked against the gaps in the plan. | Deterministic rules can be read, tested and defended. Nothing about a student's workload or mood is decided by a model, and every figure on screen traces to a line of code. | In the demo |
-| **Three.js** | Renders the islands, trees, bridges, weather, timetable path, character, lighting, and post-processing. | Three.js handles the WebGL work for us, and it can load the GLB files we export from Blender. | In the demo |
-| **GLTFLoader** | Loads the island, tree, character, and decoration models into the scene. | GLB/glTF keeps the models compact and carries across the geometry, materials, and textures we need. | In the demo |
-| **OrbitControls** | Lets users rotate and zoom the camera around the islands and player. | The controls already feel familiar on mouse and touch, so we did not have to build that layer ourselves. | In the demo |
-| **EffectComposer and UnrealBloomPass** | Adds bloom to paths, bridges, lanterns, and atmospheric lighting. | The glow is part of the visual language, especially for the bridge and timetable path. | In the demo |
-| **Browser Media APIs** | Opens the user's camera or uploaded images for mood lanterns and community moments. | The browser already has the capture tools we need for the prototype. | In the demo |
-| **Vite** | Runs the local dev server, handles ES modules, and builds the production bundle. | It starts quickly and fits a plain JavaScript and Three.js project. | In the demo |
+| **HTML5** | Defines the interface: navigation, planner sheets, forms, dialogs, and accessibility labels. | The project does not need a UI framework for the demo, and plain HTML keeps the screens easy to inspect. | In the current demo |
+| **CSS3** | Handles responsive layout, visual styling, transitions, animations, and reduced-motion behaviour. | Native CSS gives us enough control for the painterly interface around the 3D world. | In the current demo |
+| **JavaScript with ES Modules** | Runs the planner, mood check-ins, social actions, rewards, and Three.js scene updates. | ES modules let us split the prototype into focused files while still running directly in the browser. | In the current demo |
+| **Rule-based logic** | Reads simple signals: mood check-ins, how long each activity takes, how many hours are planned, and how mixed the week is. From those it works out the island's altitude, its weather, and which rest idea to offer. | Rules are enough for counting and comparing, and they can be read and tested. | In the current demo |
+| **Three.js** | Renders the islands, trees, bridges, weather, timetable path, character, lighting, and post-processing. | Three.js handles the WebGL work for us, and it can load the GLB files we export from Blender. | In the current demo |
+| **GLTFLoader** | Loads the island, tree, character, and decoration models into the scene. | GLB/glTF keeps the models compact and carries across the geometry, materials, and textures we need. | In the current demo |
+| **OrbitControls** | Lets users rotate and zoom the camera around the islands and player. | The controls already feel familiar on mouse and touch, so we did not have to build that layer ourselves. | In the current demo |
+| **EffectComposer and UnrealBloomPass** | Adds bloom to paths, bridges, lanterns, and atmospheric lighting. | The glow is part of the visual language, especially for the bridge and timetable path. | In the current demo |
+| **Browser Media APIs** | Opens the user's camera or uploaded images for mood lanterns and community moments. | The browser already has the capture tools we need for the prototype. | In the current demo |
+| **Vite** | Runs the local dev server, handles ES modules, and builds the production bundle. | It starts quickly and fits a plain JavaScript and Three.js project. | In the current demo |
 
 ### 3D Asset Production
 
 | Technology | Role | Reason for Selection | Status |
 |---|---|---|---|
-| **Blender** | Creates the islands, trees, gardener character, decorations, and rendered interface artwork. | It gives us modelling, materials, lighting, animation, and GLB export in one tool. | In the demo |
-| **Python** | Generates Blender models, renders, inspections, and exports. | Scripts keep the assets repeatable. If a tree shape changes, we can rebuild the set instead of fixing each file by hand. | In the demo |
-| **GLB/glTF, WebP, PNG, and JPEG** | Deliver 3D models, icons, character sprites, artwork, and photographs. | These formats work across modern browsers and keep file sizes reasonable for the demo. | In the demo |
+| **Blender** | Creates the islands, trees, gardener character, decorations, and rendered interface artwork. | It gives us modelling, materials, lighting, animation, and GLB export in one tool. | In the current demo |
+| **Python** | Generates Blender models, renders, inspections, and exports. | Scripts keep the assets repeatable. If a tree shape changes, we can rebuild the set instead of fixing each file by hand. | In the current demo |
+| **GLB/glTF, WebP, PNG, and JPEG** | Deliver 3D models, icons, character sprites, artwork, and photographs. | These formats work across modern browsers and keep file sizes reasonable for the demo. | In the current demo |
 
 ### Proposed Backend and Database
 
 | Technology | Role | Reason for Selection | Status |
 |---|---|---|---|
-| **Supabase** | Backend platform for the production version. | It gives the team Postgres, auth, storage, realtime, APIs, and edge functions without running separate services for each one. | Planned |
-| **PostgreSQL** | Stores profiles, friendships, blocks, recurrences, check-ins, notes, shared tasks, rewards, moments, and calendar metadata. | The data is relational: friends connect to profiles, blocks create weekly load, and privacy rules depend on who is asking. | Planned |
-| **Supabase Auth** | Handles registration, login, password recovery, sessions, and Google OAuth. | Auth records can link directly to profile rows and database policies. | Planned |
-| **Row-Level Security (RLS)** | Keeps private schedules and mood records visible only to the owner. | Friend views should come from permitted summary values, not accidental access to raw calendar rows. | Planned |
-| **Supabase Data API** | Lets the browser read and write approved database rows. | The client library fits the current JavaScript code and avoids a separate CRUD API at the first production stage. | Planned |
-| **Supabase Realtime** | Updates friend status, notes, shared tasks, community photos, and derived island changes between users. | Friend islands should change while people are using the app, without asking them to refresh. | Planned |
-| **Supabase Storage** | Stores profile images, mood photos, and golden-window submissions. | These files need the same account-based privacy as the rest of the product. | Planned |
-| **Supabase Edge Functions** | Runs calendar OAuth, calendar API calls, notifications, and other privileged work. | API secrets and refresh tokens should stay on the server. | Planned |
-| **Supabase Cron** | Runs scheduled calendar sync, recovery nudges, and the daily golden window. | Those jobs need to happen even when nobody has the app open. | Planned |
+| **Supabase** | Backend platform for the production version. | It gives the team Postgres, auth, storage, realtime, APIs, and edge functions without running separate services for each one. | Planned for the final |
+| **PostgreSQL** | Stores profiles, friendships, blocks, recurrences, check-ins, notes, shared tasks, rewards, moments, and calendar metadata. | The data is relational: friends connect to profiles, blocks create weekly load, and privacy rules depend on who is asking. | Planned for the final |
+| **Supabase Auth** | Handles registration, login, password recovery, sessions, and Google OAuth. | Auth records can link directly to profile rows and database policies. | Planned for the final |
+| **Row-Level Security (RLS)** | Keeps private schedules and mood records visible only to the owner. | Friend views should come from permitted summary values, not accidental access to raw calendar rows. | Planned for the final |
+| **Supabase Data API** | Lets the browser read and write approved database rows. | The client library fits the current JavaScript code and avoids a separate CRUD API at the first production stage. | Planned for the final |
+| **Supabase Realtime** | Updates friend status, notes, shared tasks, community photos, and derived island changes between users. | Friend islands should change while people are using the app, without asking them to refresh. | Planned for the final |
+| **Supabase Storage** | Stores profile images, mood photos, and golden-window submissions. | These files need the same account-based privacy as the rest of the product. | Planned for the final |
+| **Supabase Edge Functions** | Runs calendar OAuth, calendar API calls, notifications, and other privileged work. | API secrets and refresh tokens should stay on the server. | Planned for the final |
+| **Supabase Cron** | Runs scheduled calendar sync, recovery nudges, and the daily golden window. | Those jobs need to happen even when nobody has the app open. | Planned for the final |
 
 ### APIs and External Services
 
 | Technology | Role | Reason for Selection | Status |
 |---|---|---|---|
-| **Google Calendar API** | Imports Google Calendar events, with updates planned later. | Many students already keep classes and deadlines there, including repeating events. | Planned |
-| **Microsoft Graph Calendar API** | Connects Outlook, Microsoft 365, and supported university calendars. | This matters for schools that run on Microsoft 365. | Planned |
-| **ICS Calendar Feeds** | Imports classes, coursework, and deadlines from Canvas, Moodle, Blackboard, and similar systems. | ICS links are common and do not require app approval, which makes them a practical first import path. | Planned |
-| **CalDAV** | Leaves room for iCloud Calendar and other compatible calendars later. | It is useful for broader calendar support after the final. | Planned |
-| **Google Classroom API** | Imports coursework due dates from Google Classroom. | Some coursework never reaches the student's personal calendar. | Planned |
-| **External LLM API** | Names the kind of activity from an event title, puts a heavy week into plain words, and drafts rest ideas that the existing rules then rank and place. It advises only: it never diagnoses, and it never writes to a plan without the student tapping the suggestion. | Classification and phrasing are what a model is good at, while the parts that decide anything stay as rules we can read and defend. | Planned |
+| **Google Calendar API** | Imports Google Calendar events, with updates planned later. | Many students already keep classes and deadlines there, including repeating events. | Planned for the final |
+| **Microsoft Graph Calendar API** | Connects Outlook, Microsoft 365, and supported university calendars. | This matters for schools that run on Microsoft 365. | Planned for the final |
+| **ICS Calendar Feeds** | Imports classes, coursework, and deadlines from Canvas, Moodle, Blackboard, and similar systems. | ICS links are common and do not require app approval, which makes them a practical first import path. | Planned for the final |
+| **CalDAV** | Leaves room for iCloud Calendar and other compatible calendars later. | It is useful for broader calendar support after the final. | Planned for the final |
+| **Google Classroom API** | Imports coursework due dates from Google Classroom. | Some coursework never reaches the student's personal calendar. | Planned for the final |
+| **External LLM API** | Helps map calendar entries to the app's activity kinds, and suggests rest based on what the student has been doing lately. The student can correct it, and nothing is added to a plan until they tap it. | Reading messy event titles and wording a suggestion are what a model does well. | Planned for the final |
 
 ### Hosting, Testing, and Delivery
 
 | Technology | Role | Reason for Selection | Status |
 |---|---|---|---|
-| **Vercel** | Hosts the Vite frontend and preview deployments. | The built site is static, so Vercel is a simple fit for the demo and final deployment. | In the demo |
-| **Playwright** | Tests login flows, planner interactions, keyboard controls, dialogs, and browser rendering. | It runs the same flows a judge or student would click through in a real browser. | In the demo |
-| **Node.js Test Runner** | Runs unit tests for workload, altitude, weather, recurrence, and reward calculations. | Node already includes it, so we can test the core logic without adding another framework. | Planned |
-| **GitHub and GitHub Actions** | Handles source control, builds, and test runs. | The repo is already on GitHub; Actions would let every push run the same checks. | GitHub in use, Actions planned |
+| **Vercel** | Hosts the Vite frontend and preview deployments. | The built site is static, so Vercel is a simple fit for the demo and final deployment. | In the current demo |
+| **Playwright** | Tests login flows, planner interactions, keyboard controls, dialogs, and browser rendering. | It runs the same flows a judge or student would click through in a real browser. | In the current demo |
+| **Node.js Test Runner** | Runs unit tests for workload, altitude, weather, recurrence, and reward calculations. | Node already includes it, so we can test the core logic without adding another framework. | Planned for the final |
+| **GitHub and GitHub Actions** | Handles source control, builds, and test runs. | The repo is already on GitHub; Actions would let every push run the same checks. | GitHub in use, Actions planned for the final |
 
 
 ---
@@ -432,7 +434,7 @@ flowchart LR
     mock[("Local mock data")]
   end
 
-  subgraph prod["Production backend, planned"]
+  subgraph prod["Backend, to build in the final phase"]
     direction LR
     auth["Supabase Auth"]
     db[("PostgreSQL")]
