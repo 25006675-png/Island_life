@@ -313,15 +313,15 @@ Every part of the world is driven by something the student did, not by decoratio
 
 ```mermaid
 flowchart LR
-    Island["<b>The island</b><br/>the student's week, seen at a glance:<br/>how full it is, how they have felt,<br/>what they have finished"]
-    Gardener["<b>The gardener</b><br/>notices when the week is too full<br/>or the last few days were hard,<br/>and offers something restful<br/><i>e.g. a walk, tea with a friend,<br/>an early night</i>"]
-    Balance["<b>The analysis page</b><br/>shows which part of life is crowded:<br/>time, mind, body, friends, errands"]
+    Island["<b>The island</b><br/>the student's week at a glance:<br/>how much is planned, how they have felt,<br/>what they have finished"]
+    Gardener["<b>The gardener</b><br/>comes to the student on its own,<br/>and offers a way to unwind"]
+    Balance["<b>The analysis page</b><br/>the student opens it to see<br/>which part of life is crowded"]
     Planner["<b>The planner</b><br/>an ordinary calendar:<br/>add, move, mark finished,<br/>or drop something"]
 
-    Island -- "the week is filling up" --> Gardener
-    Island -- "the student wants detail" --> Balance
-    Gardener -- "suggests something restful<br/>at a time that is free" --> Planner
-    Balance -- "suggests a change<br/><i>e.g. move something<br/>that can wait to next week</i>" --> Planner
+    Island -- "the week turns heavy" --> Gardener
+    Island -- "the student goes looking" --> Balance
+    Gardener -- "suggests a rest<br/><i>e.g. a walk, at a free time</i>" --> Planner
+    Balance -- "suggests a change<br/><i>e.g. move something to next week</i>" --> Planner
     Planner -- "the week is lighter,<br/>so the island rises" --> Island
 ```
 
