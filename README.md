@@ -250,11 +250,11 @@ Burnout creeps up, so Island Life watches for it. When your check-ins keep comin
 <table>
 <tr>
 <td width="50%"><a href="docs/videos/nudge.mp4"><img src="docs/images/clips/nudge.webp" alt="The gardener avatar noticing a run of heavy days and suggesting a way to unwind"/></a><br/><sub>Your gardener avatar speaks up, and you pick a time &nbsp;·&nbsp; <a href="docs/videos/nudge.mp4">full clip</a></sub></td>
-<td width="50%"><img src="docs/images/balance.jpg" alt="The balance page, with the week by area and small changes that would help"/></td>
+<td width="50%"><img src="docs/images/balance.jpg" alt="The analysis page, with the week by area and small changes that would help"/></td>
 </tr>
 <tr>
 <td valign="top"><b>Your gardener avatar speaks up.</b> After a run of tired, stressed or low days, your gardener notices the moment you get home and suggests a way to unwind: tea with the friend you've seen least, a walk if you've barely moved, an early night after late ones, or a slow evening. It has already found a free time. One tap puts it on your plan, or ask for another idea.</td>
-<td valign="top"><b>Your week, in balance.</b> Time, mental, physical, social and errands, each read from your week and put in plain words. Next to them are changes made for you, like pushing the two blocks you marked "can wait" to next week. Each one applies in one tap.</td>
+<td valign="top"><b>The analysis page.</b> Time, mental, physical, social and errands, each read from your week and put in plain words. Next to them are changes made for you, like pushing the two blocks you marked "can wait" to next week. Each one applies in one tap.</td>
 </tr>
 </table>
 
@@ -309,20 +309,20 @@ Every part of the world is driven by something the student did, not by decoratio
 
 </details>
 
-**Rebalancing a heavy week is a loop.** The island shows the week, two things notice when it turns heavy, and both lead to the one place where anything actually changes.
+**Rebalancing a heavy week is a loop.** The student sees the week, the app points out what is too much, the student changes it, and the island shows the result.
 
 ```mermaid
 flowchart LR
-    Island["<b>The island</b><br/>shows the week:<br/>altitude, weather, trees"]
-    Gardener["<b>Your gardener</b><br/>notices heavy days<br/>or a very full week"]
-    Balance["<b>Your balance page</b><br/>shows the week by area<br/>and what could give"]
-    Planner["<b>The planner</b><br/>move, resize, Done,<br/>or let it go"]
+    Island["<b>The island</b><br/>the student's week, seen at a glance:<br/>how full it is, how they have felt,<br/>what they have finished"]
+    Gardener["<b>The gardener</b><br/>notices when the week is too full<br/>or the last few days were hard,<br/>and offers something restful"]
+    Balance["<b>The analysis page</b><br/>shows which part of life is crowded:<br/>time, mind, body, friends, errands"]
+    Planner["<b>The planner</b><br/>an ordinary calendar:<br/>add, move, mark finished,<br/>or drop something"]
 
-    Island -- "looks heavy" --> Gardener
-    Island -- "you open it" --> Balance
-    Gardener -- "one tap, you pick the time" --> Planner
-    Balance -- "apply a small change" --> Planner
-    Planner -- "the week changes, so the island does" --> Island
+    Island -- "the week is filling up" --> Gardener
+    Island -- "the student wants detail" --> Balance
+    Gardener -- "suggests a walk, tea with a friend,<br/>or an early night, at a free time" --> Planner
+    Balance -- "moves something<br/>that can wait to next week" --> Planner
+    Planner -- "the week is lighter,<br/>so the island rises" --> Island
 ```
 
 # 4. What Makes It Different
