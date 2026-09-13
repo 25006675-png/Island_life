@@ -103,8 +103,8 @@ These were the main ideas we tested, kept, changed, or dropped.
 | **Bee Colony & Honeycomb World** | **Dropped** | An alternative way to draw the same data: a honeycomb whose cells fill as the week fills, and nectar earned by turning up for the group. It mapped cleanly, but the team found it busier and more industrious than the floating island, and the calmer world suited an app about not overworking. |
 | **One Mascot Per Member** | **Reshaped** | Early idea of a personal creature for each student. It became one gardener avatar who tends your island, with costumes kept back as a reward in the long-term plan, so the world stays readable rather than crowded. |
 | **Forest-Style Single-Player Tree Planting** | **Dropped** | Forest depends on a timer, and a timer can reward someone for leaving a phone alone while doing nothing. Killing trees for stopping early also felt wrong for a burnout project. |
-| **Crypto-Reward / Tokenomics Concept** | **Dropped** | Zach pushed us to drop it. Crypto rewards are common in hackathon pitches, add friction, and pull attention away from the wellness idea. |
-| **Traditional Virtual Garden Concept** | **Dropped** | Zach also challenged the garden idea because it felt too familiar. The sky island kept the calm feeling but made the data clearer: altitude, weather, trees, and bridges each mean something. |
+| **Crypto-Reward / Tokenomics Concept** | **Dropped** | Mentor Zach suggested us to drop it. Crypto rewards are common in hackathon pitches, add friction, and pull attention away from the wellness idea. |
+| **Traditional Virtual Garden Concept** | **Dropped** | Mentor Zach also challenged the garden idea because it felt too familiar. The sky island kept the calm feeling but made the data clearer: altitude, weather, trees, and bridges each mean something. |
 | **Audio Analysis & Automated AI Pathfinder** | **Dropped** | Audio tracking felt too invasive. We also did not want the app to pretend it knew the perfect schedule when mood and priority are easy to misread. |
 
 
