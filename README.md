@@ -18,8 +18,8 @@
 ## Project Links
 
 - **Video Presentation:** _To be added_
-- **Presentation Slides:** _To be added_
-- **Prototype:** [Island Life Prototype](https://island-life-one.vercel.app/)
+- **Presentation Slides:** [https://canva.link/7yl54f1zapatoy0](https://canva.link/7yl54f1zapatoy0)
+- **Prototype:** [https://island-life-one.vercel.app/](https://island-life-one.vercel.app/)
 
 ## Island Life in 30 seconds
 
