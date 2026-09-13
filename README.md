@@ -364,7 +364,7 @@ Asset pipeline: Blender + Python + GLB/glTF
 |---|---|---|---|
 | **HTML5** | Defines the interface: navigation, planner sheets, forms, dialogs, and accessibility labels. | The project does not need a UI framework for the demo, and plain HTML keeps the screens easy to inspect. | In the demo |
 | **CSS3** | Handles responsive layout, visual styling, transitions, animations, and reduced-motion behaviour. | Native CSS gives us enough control for the painterly interface around the 3D world. | In the demo |
-| **JavaScript with ES Modules** | Runs the planner, mood check-ins, balance calculations, social actions, rewards, and Three.js scene updates. | ES modules let us split the prototype into focused files while still running directly in the browser. | In the demo |
+| **JavaScript with ES Modules** | Runs the planner, mood check-ins, social actions, rewards, and Three.js scene updates. It also holds the rules the world is read from: planned hours against capacity become altitude, the week's check-ins become weather with recent days weighted, and rest ideas are ranked against the gaps in your plan. These are plain functions, so any number on screen can be traced to a line of code. | ES modules let us split the prototype into focused files while still running directly in the browser. | In the demo |
 | **Three.js** | Renders the islands, trees, bridges, weather, timetable path, character, lighting, and post-processing. | Three.js handles the WebGL work for us, and it can load the GLB files we export from Blender. | In the demo |
 | **GLTFLoader** | Loads the island, tree, character, and decoration models into the scene. | GLB/glTF keeps the models compact and carries across the geometry, materials, and textures we need. | In the demo |
 | **OrbitControls** | Lets users rotate and zoom the camera around the islands and player. | The controls already feel familiar on mouse and touch, so we did not have to build that layer ourselves. | In the demo |
@@ -403,6 +403,7 @@ Asset pipeline: Blender + Python + GLB/glTF
 | **ICS Calendar Feeds** | Imports classes, coursework, and deadlines from Canvas, Moodle, Blackboard, and similar systems. | ICS links are common and do not require app approval, which makes them a practical first import path. | Planned |
 | **CalDAV** | Leaves room for iCloud Calendar and other compatible calendars later. | It is useful for broader calendar support after the final. | Planned |
 | **Google Classroom API** | Imports coursework due dates from Google Classroom. | Some coursework never reaches the student's personal calendar. | Planned |
+| **External LLM API** | Names the kind of activity from an event title, puts a heavy week into plain words, and drafts rest ideas that the existing rules then rank and place. It advises only: it never diagnoses, and it never writes to a plan without the student tapping the suggestion. | Classification and phrasing are what a model is good at, while the parts that decide anything stay as rules we can read and defend. | Planned |
 
 ### Hosting, Testing, and Delivery
 
@@ -416,18 +417,7 @@ Asset pipeline: Blender + Python + GLB/glTF
 
 ---
 
-## 5.2 Signals, Rules, and Where AI Fits
-
-**AI should classify, explain and suggest. It should never diagnose burnout or change a schedule on its own.** Everything the prototype decides today is a plain rule you can read in the source, which is also why every number in this README is checkable.
-
-| Signal | The rule today | Where AI could help later |
-|---|---|---|
-| **Calendar blocks** | Sorted into seven kinds: study, work, errands, social, exercise, rest, other. | Read an event title and pick the kind, with the student free to correct it. |
-| **Weekly workload** | Planned hours against what the student says they can give. Past 85% counts as very full. | Say in plain words which part of the week is causing the pressure. |
-| **Mood check-ins** | Calm and happy clear the sky; tired, stressed and low gather cloud. Recent days weigh most. | Describe the pattern over a term without turning it into a diagnosis. |
-| **Rest suggestions** | Four safe options, ranked by the week: an early night after late ones, a walk if you have barely moved, tea with the friend you have seen least, a slow evening. Only free times are offered. | Suggest ideas that fit the person, not just the gap, and learn from what they accept. |
-
-## 5.3 System Architecture
+## 5.2 System Architecture
 ```mermaid
 flowchart LR
   student([University student])
@@ -474,7 +464,7 @@ flowchart LR
 ```
 
 <sub>Source: <a href="docs/architecture.mmd">docs/architecture.mmd</a>. The rules box is the part that decides anything today, and it is plain code rather than a model. The AI service is dashed because it is planned, and it only ever advises.</sub>
-## 5.4 Build Plan for the Final
+## 5.3 Build Plan for the Final
 
 The plan follows the competition's own phases. The order is deliberate: import proves the idea on a judge's own timetable, accounts make a demo survive a refresh, and the phone is where a student would actually keep it open.
 
@@ -535,7 +525,7 @@ A demo that runs from a judge's own calendar link, a recorded fallback in case t
 | Nobody outside the team has used it | The pilot is scheduled inside the deploy window, not left until the end. |
 | A live demo depends on the venue network | The fallback runs on local data with no network at all. |
 
-## 5.5 Beyond the Final
+## 5.4 Beyond the Final
 
 - **Two-way calendar sync** with Google Calendar and Microsoft Graph, so a slow evening added on the island travels back to the calendar it came from.
 - **Live weather between friends**, updating as check-ins land rather than at the next reload.

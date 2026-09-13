@@ -33,17 +33,19 @@ def build_bridge():
     deck = bpy.data.materials.new('Deck')
     deck.use_nodes = True
     bsdf = deck.node_tree.nodes['Principled BSDF']
-    bsdf.inputs['Base Color'].default_value = (.80, .54, .24, 1)
-    bsdf.inputs['Roughness'].default_value = .85
-    bsdf.inputs['Emission Color'].default_value = (1, .93, .74, 1)
-    bsdf.inputs['Emission Strength'].default_value = .2
+    bsdf.inputs['Base Color'].default_value = (.96, .72, .26, 1)
+    bsdf.inputs['Roughness'].default_value = .28
+    bsdf.inputs['Emission Color'].default_value = (1, .82, .42, 1)
+    bsdf.inputs['Emission Strength'].default_value = .75
 
     rail = bpy.data.materials.new('Rail')
     rail.use_nodes = True
     rb = rail.node_tree.nodes['Principled BSDF']
-    rb.inputs['Base Color'].default_value = (1, .88, .62, 1)
-    rb.inputs['Emission Color'].default_value = (1, .95, .8, 1)
-    rb.inputs['Emission Strength'].default_value = 1.6
+    rb.inputs['Base Color'].default_value = (1, .86, .45, 1)
+    rb.inputs['Metallic'].default_value = .8
+    rb.inputs['Roughness'].default_value = .22
+    rb.inputs['Emission Color'].default_value = (1, .84, .40, 1)
+    rb.inputs['Emission Strength'].default_value = 3.2
 
     span, rise, planks = 3.2, 1.0, 15
     for i in range(planks - 1):
@@ -87,14 +89,14 @@ else:
 
 # light it warmly, the way the world is lit
 sun = bpy.data.objects.new('Sun', bpy.data.lights.new('Sun', 'SUN'))
-sun.data.energy, sun.data.angle = 9.0, .5
+sun.data.energy, sun.data.angle = 6.5, .35
 sun.rotation_euler = (math.radians(52), 0, math.radians(35))
 bpy.context.collection.objects.link(sun)
 world = bpy.context.scene.world or bpy.data.worlds.new('World')
 bpy.context.scene.world = world
 world.use_nodes = True
 world.node_tree.nodes['Background'].inputs[0].default_value = (.95, .93, .98, 1)
-world.node_tree.nodes['Background'].inputs[1].default_value = 2.2
+world.node_tree.nodes['Background'].inputs[1].default_value = .85
 
 dg = bpy.context.evaluated_depsgraph_get()
 pts = []
