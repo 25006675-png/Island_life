@@ -309,20 +309,20 @@ Every part of the world is driven by something the student did, not by decoratio
 
 </details>
 
-**Rebalancing a heavy week is a loop.** The student sees the week, the app points out what is too much, the student changes it, and the island shows the result.
+**Rebalancing a heavy week is a loop.** You see the week, the app points out what is too much, you change it, and your island shows the result.
 
 ```mermaid
 flowchart LR
-    Island["<b>The island</b><br/>the student's week at a glance:<br/>how much is planned, how they have felt,<br/>what they have finished"]
-    Gardener["<b>The gardener</b><br/>comes to the student on its own,<br/>and offers a way to unwind"]
-    Balance["<b>The analysis page</b><br/>the student opens it to see<br/>which part of life is crowded"]
+    Island["<b>Your island</b><br/>your week at a glance:<br/>how much is planned, how you have felt,<br/>what you have finished"]
+    Gardener["<b>Your gardener avatar</b><br/>reminds you when the week turns heavy,<br/>and offers a way to unwind"]
+    Balance["<b>The analysis page</b><br/>you open it to see<br/>which part of life is crowded"]
     Planner["<b>The planner</b><br/>an ordinary calendar:<br/>add, move, mark finished,<br/>or drop something"]
 
     Island -- "the week turns heavy" --> Gardener
-    Island -- "the student goes looking" --> Balance
+    Island -- "you go looking" --> Balance
     Gardener -- "suggests a rest<br/><i>e.g. a walk, at a free time</i>" --> Planner
     Balance -- "suggests a change<br/><i>e.g. move something to next week</i>" --> Planner
-    Planner -- "the week is lighter,<br/>so the island rises" --> Island
+    Planner -- "the week is lighter,<br/>so your island rises" --> Island
 ```
 
 # 4. What Makes It Different
