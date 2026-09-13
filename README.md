@@ -309,28 +309,21 @@ Every part of the world is driven by something the student did, not by decoratio
 
 </details>
 
-**Rebalancing** happens in three places:
+**Rebalancing a heavy week is a loop.** The island shows the week, two things notice when it turns heavy, and both lead to the one place where anything actually changes.
 
 ```mermaid
 flowchart LR
-    Island["Island shows the week<br/>altitude, weather, trees"]
-    Gardener["Gardener nudge<br/>spots heavy weeks"]
-    Balance["Balance page<br/>suggests small changes"]
-    Planner["Planner<br/>move, resize, Done, Let go"]
+    Island["<b>The island</b><br/>shows the week:<br/>altitude, weather, trees"]
+    Gardener["<b>Your gardener</b><br/>notices heavy days<br/>or a very full week"]
+    Balance["<b>Your balance page</b><br/>shows the week by area<br/>and what could give"]
+    Planner["<b>The planner</b><br/>move, resize, Done,<br/>or let it go"]
 
-    Island --> Gardener
-    Island --> Balance
-    Gardener --> Planner
-    Balance --> Planner
-    Planner --> Island
+    Island -- "looks heavy" --> Gardener
+    Island -- "you open it" --> Balance
+    Gardener -- "one tap, you pick the time" --> Planner
+    Balance -- "apply a small change" --> Planner
+    Planner -- "the week changes, so the island does" --> Island
 ```
-
-- **The planner**, where you move, resize, finish or let go of blocks.
-- **The balance page**, which suggests small changes you apply in one tap.
-- **Your gardener avatar**, who spots a run of heavy days or a very full week and suggests a way to unwind that fits it, with a sign by the windmill keeping the offer.
-
-
-
 
 # 4. What Makes It Different
 
