@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Privacy · Island Life</title>
+<meta name="description" content="What Island Life stores, who can see it, and how to remove it."/>
+<style>
+  :root{--ink:#3a3048;--muted:#5d536d;--bg:#f6f2fb;--card:#fffdfb;--line:#e4dcef;--accent:#a8543a}
+  @media (prefers-color-scheme:dark){:root{--ink:#ece6f5;--muted:#bdb3cc;--bg:#1d1a24;--card:#26222f;--line:#3a3446;--accent:#f0a07f}}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.65 'Segoe UI',system-ui,sans-serif}
+  main{max-width:760px;margin:0 auto;padding:48px 16px 72px}
+  h1{font:normal 38px/1.15 Georgia,serif;margin:0 0 8px;letter-spacing:-.02em}
+  h2{font:normal 24px/1.25 Georgia,serif;margin:40px 0 10px}
+  p,li{color:var(--ink)}
+  .updated{color:var(--muted);font-size:14px;margin:0 0 28px}
+  .lede{font-size:18px}
+  table{width:100%;border-collapse:collapse;background:var(--card);border-radius:12px;overflow:hidden;font-size:15px}
+  th,td{text-align:left;vertical-align:top;padding:10px 12px;border-bottom:1px solid var(--line)}
+  th{font-weight:600}
+  tr:last-child td{border-bottom:0}
+  .wrap{overflow-x:auto}
+  a{color:var(--accent)}
+  .note{background:var(--card);border-left:3px solid var(--accent);padding:12px 16px;border-radius:8px}
+</style>
+</head>
+<body>
+<main>
+  <h1>Privacy at Island Life</h1>
+  <p class="updated">Last updated 5 October 2026 · Island Life is made by team Codenected</p>
+
+  <p class="lede">Island Life turns a student's week into a small floating island. To do that it keeps your plans and the feelings you share with it. This page says exactly what is stored, who can see it, and how to remove it.</p>
+
+  <h2>What Island Life stores</h2>
+  <div class="wrap"><table>
+    <tr><th>What</th><th>Why</th></tr>
+    <tr><td>Your email address and the name you choose</td><td>To sign you in and to show your name to friends in your sky.</td></tr>
+    <tr><td>Your plan: the blocks you add, move, finish or let go</td><td>To grow your island's trees and work out how heavy your week is.</td></tr>
+    <tr><td>Your answers to "How draining was that?"</td><td>So your island learns what a heavy week means for you.</td></tr>
+    <tr><td>Your check-ins ("How are you?") and any photo you add to one</td><td>To show your feelings as lanterns and your island's weather.</td></tr>
+    <tr><td>Notes you leave for friends, tasks you post or join, and photos you hang on the carousel</td><td>To share them with the friends in your sky.</td></tr>
+    <tr><td>Your time zone, and the device you allow to receive prompts</td><td>To ask questions at sensible times, and never between 22:00 and 08:00.</td></tr>
+  </table></div>
+
+  <h2>Google Calendar</h2>
+  <p>Connecting Google Calendar is optional. If you connect it:</p>
+  <ul>
+    <li><strong>Island Life reads your calendars.</strong> It reads each event's title and time, from four weeks back to four weeks ahead, and turns them into blocks on your island. It never edits or deletes events in your own calendars.</li>
+    <li><strong>Two-way is off unless you turn it on.</strong> If you turn it on, Island Life creates one separate calendar called "Island Life" in your Google account. It only ever writes to that calendar, and only the blocks you planned on your island.</li>
+    <li><strong>The access Google gives us stays on our server.</strong> It is never sent to your browser, and it is deleted when you disconnect.</li>
+    <li><strong>Disconnecting</strong> stops all access straight away and removes imported events from today onwards. Past weeks stay on your island as history unless you ask us to delete them.</li>
+  </ul>
+  <p class="note">Island Life's use and transfer of information received from Google APIs adheres to the <a href="https://developers.google.com/terms/api-services-user-data-policy">Google API Services User Data Policy</a>, including the Limited Use requirements. Google user data is used only to provide Island Life's features to you. It is never sold, never used for advertising, and never used to train AI models.</p>
+
+  <h2>AI</h2>
+  <p>Island Life uses Google's Gemini API for two small jobs:</p>
+  <ul>
+    <li>sorting the titles of imported events into kinds of activity, such as study, work or rest;</li>
+    <li>wording the gardener's suggestions, such as "How about a slow evening?".</li>
+  </ul>
+  <p>Only two things are sent: event titles, or a short line describing the suggestion. That line can include a friend's first name, or a phrase such as "the last few days have been heavy". Your check-ins, your answers and your plan are never sent. AI never decides how heavy your week is and never changes your plan.</p>
+
+  <h2>Who can see what</h2>
+  <div class="wrap"><table>
+    <tr><th>Who</th><th>What they can see</th></tr>
+    <tr><td>You</td><td>Everything on this page that is yours.</td></tr>
+    <tr><td>Friends in your sky (up to four people)</td><td>Your name, your island's height and weather, and your lanterns from the last week, including any photo you added to one. Your blocks, as you choose for each one: everything, only its kind and length, or nothing. Notes you write to them, and the task board and carousel you share. They <strong>never</strong> see blocks you set to "nothing", the titles of blocks you set to "kind and length", your "How draining was that?" answers, or your Google Calendar itself.</td></tr>
+    <tr><td>Anyone else</td><td>Nothing.</td></tr>
+  </table></div>
+
+  <h2>Where it is kept</h2>
+  <p>Your data is stored with Supabase, our database and hosting provider. Rules in the database itself enforce who can see what, so one student's app cannot read another student's private rows. Island Life does not sell or share your data with anyone else, and it shows no advertising.</p>
+
+  <h2>Removing your data</h2>
+  <ul>
+    <li><strong>Google Calendar:</strong> disconnect it in the planner under "Sync calendars".</li>
+    <li><strong>Phone prompts:</strong> turn them off in the settings panel (☷).</li>
+    <li><strong>Your whole account:</strong> email us from the address you signed up with, and we will delete your account and everything linked to it within 30 days.</li>
+  </ul>
+
+  <h2>Who it is for</h2>
+  <p>Island Life is made for university students. It is not intended for children under 13.</p>
+
+  <h2>Changes and contact</h2>
+  <p>If this page changes, the date at the top changes too. For questions or deletion requests, email <a href="mailto:ashchujohn@gmail.com">ashchujohn@gmail.com</a>.</p>
+
+  <p><a href="/">← Back to Island Life</a></p>
+</main>
+</body>
+</html>
