@@ -1,0 +1,14 @@
+{
+  "name": "Island Life",
+  "short_name": "Island Life",
+  "description": "Your week, grown into an island in the sky.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#e8e0f4",
+  "theme_color": "#b9afd1",
+  "icons": [
+    { "src": "/assets/icons/app-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/assets/icons/app-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}

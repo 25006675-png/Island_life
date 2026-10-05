@@ -1,13 +1,17 @@
-import { CATEGORIES, CAPACITY, DAWN, NIGHT, fmt, hours, toMin, fullness, catImg } from './data.js';
+import { CATEGORIES, DAWN, NIGHT, fmt, hours, toMin, fullness, catImg } from './data.js';
 import { TODAY, iso, fromIso, addDays, dow, mondayOf } from './plan.js';
 import { blockStatus } from './timetable.js';
 import { confirmLetGo } from './confirm.js';
+import { dayReading, weekReading, forget } from './readings.js';
+import { FORECAST_WORDS } from './climate.js';
+import { calendar as google } from './backend.js';
 
 // The planner sheet -- the conventional input side of the app.
 //   Day   -- one day's list; today's is the plan the island draws as its path
 //   Week  -- drag on empty time to add, drag a block to move it, drag its
 //            lower edge to resize, click (or Enter) to edit
 //   Month -- an overview of load and kinds of time; a day opens its week
+// Each coming day carries how heavy it looks for you (docs/algorithm.md 2.4).
 const $=id=>document.getElementById(id);
 const ROW=22, SLOT=30;                       // px per half hour, minutes per slot
 const DAYS=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
@@ -16,8 +20,10 @@ const STATUS={done:'done',now:'happening now',planned:'planned',skipped:'let go'
 const el=(tag,props={},...kids)=>{const e=Object.assign(document.createElement(tag),props);e.append(...kids);return e;};
 const option=(value,text)=>el('option',{value,textContent:text});
 
-export function createCalendar({plans,owner,clock,notice,sheets}){
-  const sheet=$('planner-sheet'), cap=CAPACITY[owner];
+export function createCalendar({plans,owner,clock,notice,sheets,afterDone,live=null}){
+  const sheet=$('planner-sheet');
+  // a coming day's heaviness, in words; past days have already happened
+  const ahead=date=>{if(date<TODAY)return null;const f=dayReading(owner,date);return f.label==='usual'?null:f;};
   let tab='day', date=TODAY, editing=null;
   // weeks before this one are settled history; this week waits for Done or Let go
   const statusOn=b=>b.skipped?'skipped':b.done||b.date<mondayOf(TODAY)?'done':b.date<TODAY?'waiting':b.date>TODAY?'planned':blockStatus(b,clock.minutes);
@@ -50,37 +56,93 @@ export function createCalendar({plans,owner,clock,notice,sheets}){
   $('ed-delete').onclick=()=>{if(editing){plans.remove(owner,editing);notice(`${editing.title} removed.`);}$('block-editor').close();};
   $('ed-cancel').onclick=()=>$('block-editor').close();
   $('cal-add').onclick=()=>edit(null);
-  // Calendar sync -- demo only: the connect flow is real-looking, but nothing
-  // leaves the page. (Planned: Google Calendar API, Microsoft Graph, CalDAV, ICS.)
+  // Calendar sync. Signed in, Google Calendar is real: import, then an
+  // optional toggle that sends your island blocks to a separate "Island Life"
+  // calendar. Outlook, Apple and course calendars are coming later. In the
+  // demo nothing leaves the page.
   const SYNC=[
-    {id:'google',name:'Google Calendar',glyph:'G',color:'#4a7fd8',how:'Two-way: classes come in, your blocks go out'},
-    {id:'outlook',name:'Outlook or Microsoft 365',glyph:'O',color:'#2f6fb5',how:'Two-way, with your uni account'},
-    {id:'apple',name:'Apple iCloud Calendar',glyph:'A',color:'#55596a',how:'Your iPhone and Mac calendars'},
-    {id:'lms',name:'Canvas, Moodle or Blackboard',glyph:'C',color:'#c0613f',how:'Deadlines from your course calendar link',
-     link:'https://canvas.your-uni.edu/feeds/calendars/…ics'},
+    {id:'google',name:'Google Calendar',glyph:'G',color:'#4a7fd8',how:'Classes, shifts and deadlines come in by themselves'},
+    {id:'outlook',name:'Outlook or Microsoft 365',glyph:'O',color:'#2f6fb5',soon:true},
+    {id:'apple',name:'Apple iCloud Calendar',glyph:'A',color:'#55596a',soon:true},
+    {id:'lms',name:'Canvas, Moodle or Blackboard',glyph:'C',color:'#c0613f',soon:true},
   ];
-  const synced=new Set();
+  let conn=live?.connection??null, demoOn=false;
+  const ago=t=>{if(!t)return 'not synced yet';const m=Math.round((Date.now()-Date.parse(t))/60000);
+    return m<2?'synced just now':m<60?`synced ${m} min ago`:m<1440?`synced ${Math.round(m/60)} h ago`:`synced ${Math.round(m/1440)} d ago`;};
+  async function reloadImported(){
+    if(!live)return;
+    plans.load(owner,await google.reloadMine(live.uid));forget(owner);
+    plans.touch(owner);   // path, trees and altitude follow
+  }
   function renderSync(){
+    const connected=live?!!conn:demoOn;
+    $('sync-demo').hidden=!!live;
     $('sync-list').replaceChildren(...SYNC.map(s=>{
-      const on=synced.has(s.id), link=s.link&&!on?el('input',{type:'url',placeholder:s.link,ariaLabel:`${s.name} calendar link`}):null;
-      const btn=el('button',{type:'button',className:on?'text-button':'solid-small',textContent:on?'Disconnect':'Connect'});
-      btn.onclick=()=>{
-        if(on){synced.delete(s.id);renderSync();notice(`${s.name} disconnected.`);return;}
-        if(link&&!link.value.trim()){link.focus();notice('Paste your course calendar link first.');return;}
-        btn.disabled=true;btn.textContent='Connecting…';
-        setTimeout(()=>{synced.add(s.id);renderSync();notice(`${s.name} connected. In the full app its events arrive as blocks.`);},900);
-      };
-      return el('li',{className:on?'on':''},
+      if(s.soon)return el('li',{className:'soon'},
         el('span',{className:'sync-glyph',style:`--c:${s.color}`,textContent:s.glyph,ariaHidden:'true'}),
-        el('span',{className:'sync-what'},el('strong',{textContent:s.name}),el('span',{textContent:on?'Connected · synced just now':s.how}),...(link?[link]:[])),
-        btn);
+        el('span',{className:'sync-what'},el('strong',{textContent:s.name}),el('span',{textContent:'Coming in a later version'})),
+        el('span',{className:'sync-soon',textContent:'Coming soon'}));
+      const status=!connected?s.how
+        :live?(conn.status==='needs_reconnect'?'Google asked us to reconnect':`${conn.account_email??'Connected'} · ${ago(conn.last_synced_at)}`)
+        :'Connected · synced just now';
+      const btn=el('button',{type:'button',className:connected?'text-button':'solid-small',textContent:connected?'Disconnect':'Connect'});
+      const kids=[el('strong',{textContent:s.name}),el('span',{textContent:status})];
+      const row=el('li',{className:connected?'on':''},el('span',{className:'sync-glyph',style:`--c:${s.color}`,textContent:s.glyph,ariaHidden:'true'}),
+        el('span',{className:'sync-what'},...kids),btn);
+      if(connected&&live){
+        if(conn.status==='needs_reconnect'){btn.textContent='Reconnect';btn.className='solid-small';btn.onclick=()=>google.connect(conn.write_enabled);return row;}
+        const two=el('input',{type:'checkbox',checked:conn.write_enabled});
+        const label=el('label',{className:'check sync-two'},two,' Also send my Island Life plans to Google');
+        const note=el('small',{className:'sync-note',textContent:'They go into a separate “Island Life” calendar. Your own calendars are never changed.'});
+        const now=el('button',{type:'button',className:'text-button',textContent:'Sync now'});
+        kids.push(label,note,now);
+        two.onchange=async()=>{
+          two.disabled=true;
+          try{const r=await google.setWrite(two.checked);if(r===null)return;conn={...conn,write_enabled:two.checked};
+            notice(two.checked?'Your plans now appear in an “Island Life” calendar on Google.':'Island Life stopped sending plans to Google.');}
+          catch(e){two.checked=!two.checked;notice('That didn’t work. Try again in a moment.');}
+          two.disabled=false;
+        };
+        now.onclick=async()=>{now.disabled=true;now.textContent='Syncing…';
+          try{await google.sync();conn=await google.connection();await reloadImported();notice('Google Calendar synced.');}
+          catch{notice('Sync didn’t finish. Try again in a moment.');}
+          renderSync();};
+        row.querySelector('.sync-what').replaceChildren(...kids);
+      }
+      btn.onclick=async()=>{
+        if(!live){
+          if(connected){demoOn=false;renderSync();notice(`${s.name} disconnected.`);return;}
+          btn.disabled=true;btn.textContent='Connecting…';
+          setTimeout(()=>{demoOn=true;renderSync();notice(`${s.name} connected. In the full app its events arrive as blocks.`);},900);
+          return;
+        }
+        btn.disabled=true;
+        if(connected){
+          btn.textContent='Disconnecting…';
+          try{await google.disconnect();conn=null;await reloadImported();notice('Google Calendar disconnected. Imported plans from today on were removed.');}
+          catch{notice('That didn’t work. Try again in a moment.');}
+          renderSync();return;
+        }
+        btn.textContent='Opening Google…';
+        try{await google.connect(false);}catch{btn.disabled=false;btn.textContent='Connect';notice('Google couldn’t be reached. Try again in a moment.');}
+      };
+      return row;
     }));
-    const n=synced.size;
-    $('cal-sync-label').textContent=n?`Synced · ${n} calendar${n===1?'':'s'}`:'Sync calendars';
-    $('cal-sync').classList.toggle('on',n>0);
+    const on=live?!!conn:demoOn;
+    $('cal-sync-label').textContent=on?'Synced · Google Calendar':'Sync calendars';
+    $('cal-sync').classList.toggle('on',on);
   }
   $('cal-sync').onclick=()=>{renderSync();$('sync-dialog').showModal();};
   $('sync-done').onclick=()=>$('sync-dialog').close();
+  renderSync();
+  // back from Google's consent screen (life.js reads ?calendar=)
+  async function openSync(result){
+    if(live)conn=await google.connection().catch(()=>conn);
+    if(result==='connected')await reloadImported();
+    renderSync();$('sync-dialog').showModal();
+    notice(result==='connected'?'Google Calendar connected. Your classes and plans are on your island.'
+          :result==='cancelled'?'Google Calendar wasn’t connected.':'Something went wrong connecting Google Calendar. Try again.');
+  }
 
   // ---- Day -------------------------------------------------------------------------
   function renderDay(){
@@ -101,7 +163,7 @@ export function createCalendar({plans,owner,clock,notice,sheets}){
       else if(st==='skipped')act('Bring back',()=>plans.toggleSkip(owner,b));
       else{
         // Done only once it has happened; upcoming blocks can still be let go
-        const d=act('Done',()=>plans.markDone(owner,b),'plan-done');
+        const d=act('Done',()=>{plans.markDone(owner,b);afterDone?.(b);},'plan-done');
         if(st!=='waiting'){d.disabled=true;d.title='You can mark it done once it has happened';}
         act('Let go',async()=>{if(await confirmLetGo(b.title))plans.toggleSkip(owner,b);});
       }
@@ -110,7 +172,7 @@ export function createCalendar({plans,owner,clock,notice,sheets}){
     // blocks whose time has passed wait for an answer; one tap answers them all
     const waiting=blocks.filter(b=>statusOn(b)==='waiting');
     $('mark-all').hidden=!waiting.length;$('mark-all').textContent=`Mark all as done (${waiting.length})`;
-    $('mark-all').onclick=()=>{for(const b of waiting)plans.markDone(owner,b);notice(`${waiting.length} block${waiting.length===1?'':'s'} took root.`);};
+    $('mark-all').onclick=()=>{for(const b of waiting)plans.markDone(owner,b);notice(`${waiting.length} block${waiting.length===1?'':'s'} took root.`);afterDone?.(waiting);};
   }
 
   // ---- Week ------------------------------------------------------------------------
@@ -135,7 +197,10 @@ export function createCalendar({plans,owner,clock,notice,sheets}){
     const monday=mondayOf(date);
     for(let d=0;d<7;d++){
       const day=addDays(monday,d);
-      grid.append(el('div',{className:`wk-day${day===TODAY?' today':''}`},el('span',{textContent:DAYS[d]}),el('strong',{textContent:String(fromIso(day).getDate())})));
+      const f=ahead(day), head=el('div',{className:`wk-day${day===TODAY?' today':''}${f?` fc-${f.label.replace(' ','-')}`:''}`},
+        el('span',{textContent:DAYS[d]}),el('strong',{textContent:String(fromIso(day).getDate())}));
+      if(f){head.append(el('small',{className:'wk-forecast',textContent:FORECAST_WORDS[f.label]}));head.title=`${FORECAST_WORDS[f.label]}: the island’s forecast from your plan`;}
+      grid.append(head);
     }
     const gutter=el('div',{className:'wk-gutter'});
     for(let m=DAWN;m<NIGHT;m+=60)gutter.append(el('span',{textContent:fmt(m),style:`top:${(m-DAWN)/SLOT*ROW}px`}));
@@ -218,14 +283,16 @@ export function createCalendar({plans,owner,clock,notice,sheets}){
     for(const p of ['day','week','month'])$(`pane-${p}`).hidden=p!==tab;
     const d=fromIso(date), mon=mondayOf(date), sun=fromIso(addDays(mon,6));
     $('cal-range').textContent=tab==='day'?short(date):tab==='week'?`${fromIso(mon).getDate()} ${MONTHS[fromIso(mon).getMonth()].slice(0,3)} – ${sun.getDate()} ${MONTHS[sun.getMonth()].slice(0,3)}`:`${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
-    const h=plans.hours(plans.week(owner,date));
-    const meter=el('span',{className:'fullness'},el('i',{style:`width:${Math.min(100,h/cap*100)}%`}));meter.setAttribute('aria-hidden','true');
-    $('plan-load').replaceChildren(el('span',{textContent:`That week is ${fullness(h/cap)}`}),meter);
+    const w=weekReading(owner,date), f=tab==='day'?ahead(date):null;
+    const meter=el('span',{className:'fullness'},el('i',{style:`width:${Math.min(100,w.sink*100)}%`}));meter.setAttribute('aria-hidden','true');
+    $('plan-load').replaceChildren(el('span',{textContent:`${mondayOf(date)===mondayOf(TODAY)?'This week':'That week'} is ${fullness(w.sink)}`}),meter,
+      ...(f?[el('span',{className:`plan-forecast fc-${f.label.replace(' ','-')}`,textContent:`${date===TODAY?'Today':'This day'}: ${FORECAST_WORDS[f.label].toLowerCase()}`})]:[]));
     if(tab==='day')renderDay();else if(tab==='week')renderWeek();else renderMonth();
   }
   return {
     open(which){if(which)tab=which;sheets.show(sheet,$('planner-toggle'));render();},
     edit,
     render,
+    openSync,
   };
 }

@@ -1,6 +1,11 @@
 import * as T from 'three';
-import { ME, DAWN, NIGHT, CATEGORIES, MOODS, CHECKINS, CAPACITY, WARMTH, NOTES, NOTE_PRESETS, TASKS, fmt, hours, toMin,
+import { ME, LIVE, DAWN, NIGHT, CATEGORIES, MOODS, CHECKINS, WARMTH, NOTES, NOTE_PRESETS, TASKS, fmt, hours, toMin,
          deriveStrain, weatherLabel, loadFromAltitude, altitudeFromLoad, catImg, fullness, WEEK, symbolImg } from './data.js';
+import { reading, gardener as gardenerFor, shouldAsk, answer as recordAnswer, ANSWERS, forecast } from './readings.js';
+import { FORECAST_WORDS } from './climate.js';
+import * as backend from './backend.js';
+import { createAsk } from './ask.js';
+import { mountSkyPanel } from './account.js';
 import { plans, TODAY, addDays, dow, mondayOf } from './plan.js';
 import { HISTORY } from './groves.js';
 import { confirmLetGo } from './confirm.js';
@@ -25,39 +30,49 @@ const nowMinutes=()=>{const d=new Date();return d.getHours()*60+d.getMinutes()+d
 // Weather is one strain value (0..1); the label is only a name for where it sits.
 export const setStrain=(island,s)=>{island.strain=s;island.weather=weatherLabel(s);island.weatherFx.setStrain(s);};
 
-export function initLife({islands,camera,texture,player,notice,visit,nearTree,getMode,getSelected,setAltitude,setGlow}){
+export function initLife({world,islands,camera,texture,player,notice,visit,nearTree,getMode,getSelected,setAltitude,setGlow}){
   const me=islands.find(i=>i.id===ME), members=islands.filter(i=>i.owner), community=islands.find(i=>!i.owner);
   // The demo opens at 23:00, after the whole day has happened, so every one of
-  // today's trees can be answered with Done. "Live" in Tune the world follows real time.
-  const clock={live:false,minutes:toMin('23:00')};
+  // today's trees can be answered with Done. "Live" in Tune the world follows
+  // real time, and a signed-in sky always does.
+  const clock={live:LIVE,minutes:LIVE?nowMinutes():toMin('23:00')};
+  backend.reportErrorsTo(()=>notice('Something didn’t save. Check your connection; your island will catch up.'));
 
   // ---- world ---------------------------------------------------------------
   // Only an explicit Done grows a tree. The mock week is lived in: earlier days
   // are answered for everyone, and friends answer their own blocks as they end.
   // Your blocks from earlier today wait for you (planner: Done, Let go, or Mark all).
+  // (Demo only: real friends answer their own blocks on their own islands.)
   const settleFriends=()=>{
+    if(LIVE)return;
     for(const i of members)if(i.id!==ME)for(const b of plans.on(i.id,TODAY))
       if(!b.done&&!b.skipped&&b.start+b.mins<=clock.minutes)plans.markDone(i.id,b);
   };
-  for(const i of members)for(const b of plans.week(i.id))if(b.date<TODAY&&!b.done&&!b.skipped)plans.markDone(i.id,b);
+  if(!LIVE)for(const i of members)for(const b of plans.week(i.id))if(b.date<TODAY&&!b.done&&!b.skipped)plans.markDone(i.id,b);
   settleFriends();
   const tables={};
   for(const i of members)tables[i.id]=createTimetable(i,{texture,own:i.id===ME,blocks:plans.on(i.id,TODAY)});
   // greenery stays, except the pieces sitting on the path
   for(const i of members)tables[i.id].clearPath(i.model,['RimShrubs','RimBlossom','Tufts','ScatterRocks']);
-  // Altitude = load: this week's committed hours against what the member can give.
-  const settle=id=>setAltitude(id,altitudeFromLoad(plans.hours(plans.week(id))/CAPACITY[id]));
+  // Altitude = how heavy this week is for you, against your own normal week
+  // (readings.js, docs/algorithm.md 2). A real friend's island shows what
+  // their own app published; hours and titles never cross the bridge.
+  const status=world.status??{};
+  const sinkOf=id=>LIVE&&id!==ME?(status[id]?.sink??.5):reading(id).sink;
+  const publish=()=>{if(LIVE)backend.publishStatus(world,reading(ME).sink,me.derivedStrain??0);};
+  const settle=id=>{setAltitude(id,altitudeFromLoad(sinkOf(id)));if(id===ME)publish();};
   members.forEach(i=>settle(i.id));
   // Bridge glow = recent warmth with the group; time spent together warms it.
   const warmth={};
   const warm=(id,by=0)=>{warmth[id]=Math.min(3,(warmth[id]??WARMTH[id]??1.2)+by);setGlow?.(id,warmth[id]);};
   members.forEach(i=>warm(i.id));
   const checkins=Object.fromEntries(members.map(i=>[i.id,[...(CHECKINS[i.id]??[])]]));
-  const weather=i=>{i.derivedStrain=deriveStrain(checkins[i.id]);setStrain(i,i.derivedStrain);};   // feelings only; load is altitude
+  const weather=i=>{i.derivedStrain=deriveStrain(checkins[i.id]);setStrain(i,i.derivedStrain);if(i===me)publish();};   // feelings only; load is altitude
   members.forEach(weather);
   const mood=createMood(texture);
   for(const i of members)mood.addIsland(i,checkins[i.id]);
-  const photos=createCarousel({island:community,members:members.map(({id,owner})=>({id,owner})),me:ME,notice,view,time:()=>clock.minutes});
+  const photos=createCarousel({island:community,members:members.map(({id,owner})=>({id,owner})),me:ME,notice,view,time:()=>clock.minutes,
+    live:LIVE?{moments:world.moments,golden:world.golden,hang:shot=>backend.hangMoment(world,shot)}:null});
   // the board by the arrival spot carries the group's shared goals (below)
   const board=createGoalsBoard(community,{at:[3.4,2.6],face:1.11});   // faces the pond and the arrival spot
   // Notes = support: a few words for a friend, written on wood and left at
@@ -86,6 +101,7 @@ export function initLife({islands,camera,texture,player,notice,visit,nearTree,ge
   $('note-form').onsubmit=e=>{
     e.preventDefault();const to=$('note-to').value, text=$('note-text').value.trim();if(!text)return;
     NOTES.push({from:ME,to,text,day:0,read:false});given.add(to);warm(to,.5);warm(ME,.3);syncNotes();
+    if(LIVE)backend.sendNote(world,to,text);
     $('note-dialog').close();notice(`Your note is waiting at ${owners[to]}’s gate.`);
   };
   $('note-cancel').onclick=()=>$('note-dialog').close();
@@ -97,6 +113,7 @@ export function initLife({islands,camera,texture,player,notice,visit,nearTree,ge
       return li;
     }));
     $('notes-dialog').showModal();
+    if(LIVE&&unread().length)backend.markNotesRead(world);
     for(const n of unread())n.read=true;syncNotes();
   }
   $('notes-close').onclick=()=>$('notes-dialog').close();
@@ -125,31 +142,35 @@ export function initLife({islands,camera,texture,player,notice,visit,nearTree,ge
   }
   const schedule=t=>{const {date,start}=planSlot(t.mins);t.block=plans.add(ME,{date,start,mins:t.mins,cat:t.cat,title:t.title,vis:'open'});};
   // already joined when the demo opens: done last night, so it waits for an answer
-  for(const t of TASKS)if(t.joined.includes(ME)&&t.done[ME]===undefined){
+  // (a signed-in student's joined tasks are already on their plan)
+  if(!LIVE)for(const t of TASKS)if(t.joined.includes(ME)&&t.done[ME]===undefined){
     const y=addDays(TODAY,-1);
     if(y>=mondayOf(TODAY))t.block=plans.add(ME,{date:y,start:19*60,mins:t.mins,cat:t.cat,title:t.title,vis:'open'});else schedule(t);
   }
   const happened=b=>!!b&&(b.date<TODAY||(b.date===TODAY&&b.start+b.mins<=clock.minutes));
   function join(t){
     if(!t.joined.includes(ME))t.joined.push(ME);
+    if(LIVE)Promise.resolve(t.saved??t.id).then(id=>id&&backend.joinTask(id));
     schedule(t);notice(`${t.title} is on your plan for ${dayName(t.block.date)} ${fmt(t.block.start)}. Move it any time in the planner.`);
     renderTasks();
   }
   function finishTask(t){
     if(t.block&&!t.block.done)plans.markDone(ME,t.block);
     t.done[ME]=null;
+    if(LIVE)Promise.resolve(t.saved??t.id).then(id=>id&&backend.finishTask(world,id));
     const n=earned(t);notice(`Done. +${n} 💧${n>t.reward?`, ${n-t.reward} of them for friends who finished too`:''}.`);
     renderTasks();
   }
   let photoFor=null;
   $('task-photo').onchange=e=>{
     const f=e.target.files[0], t=photoFor;e.target.value='';photoFor=null;
-    if(f&&t)loadSquare(f).then(c=>{t.done[ME]=c.toDataURL('image/jpeg',.85);renderTasks();});
+    if(f&&t)loadSquare(f).then(c=>{t.done[ME]=c.toDataURL('image/jpeg',.85);renderTasks();if(LIVE)backend.taskPhoto(world,t.id,t.done[ME]);});
   };
   for(const c of ['study','work','errands','social','exercise','rest'])$('task-cat').append(mk('option',{value:c,textContent:CATEGORIES[c].label}));
   $('task-form').onsubmit=e=>{
     e.preventDefault();const title=$('task-title').value.trim();if(!title)return;
     const t={id:`mine${TASKS.length}`,title,cat:$('task-cat').value,mins:30,by:ME,reward:2,joined:[],done:{}};
+    if(LIVE)t.saved=backend.postTask(world,t).then(r=>{if(r)t.id=r.id;return r?.id;});
     TASKS.unshift(t);$('task-title').value='';join(t);
   };
   function renderTasks(){
@@ -190,23 +211,24 @@ export function initLife({islands,camera,texture,player,notice,visit,nearTree,ge
   // grew, at the hub of the clock-face path. They never touch load or stress.
   const windmills=members.map(i=>createWindmill(i,{face:-2.35}));   // every clock face turns round one
 
-  // Overload nudge: when your week gets very full, or a few heavy days pile
-  // up, a sign appears by your windmill with one idea -- a slow evening --
-  // and a notice points to it once. (Demo: drag your island low in Tune the world.)
+  // The gardener's offer (docs/algorithm.md 5.1). The rules pick which kind of
+  // help fits -- never a reason, only an offer -- and a sign appears by your
+  // windmill, with a notice pointing to it once:
+  //   schedule -- your week (or a day ahead) is heavier than usual for you:
+  //               move something marked "can wait", or keep an evening free
+  //   rest     -- your sky is heavy but your week isn't: it might not be your
+  //               schedule, so rest or a friend, not a timetable fix
+  //   support  -- a grey sky for two weeks running: a gentle pointer to real help
+  // Signed in, Gemini puts the chosen offer into friendly words.
   const NUDGE_AT=[-.93,-2.23];   // gate side of the windmill, seen on arrival
   const nudgeSign=createGateSign(me,{at:NUDGE_AT,face:-2.3});
-  // Burnout nudge: heavy feelings (tired, stressed, low) on three of the last five
-  // days, or a week past 85%. The island offers one way to unwind, picked from your
-  // own week -- an early night after late ones, fresh air if you've barely moved, tea
-  // with the friend you've seen least, or a slow evening -- at a time that's free.
-  // "Another idea" moves down the list.
-  const HEAVY=['tired','stressed','low'];
-  let nudgeOn=false, nudgeTaken=false, nudgeWhy='full', ideaAt=0;
-  const nudgeTitle=()=>{
-    if(nudgeWhy==='full')return 'Your week is very full';
-    const felt=HEAVY.filter(m=>checkins[ME].some(c=>c.day<=WEEK&&c.mood===m)).map(m=>MOODS[m].label.toLowerCase());
-    return `You’ve felt ${felt.length>1?felt.slice(0,-1).join(', ')+' and '+felt.at(-1):felt[0]??'heavy'} lately`;
-  };
+  const DAYS_LONG=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+  let nudgeOn=false, nudgeTaken=false, nudgeWhy=null, ideaAt=0, gardenerNow={mode:null};
+  const refreshGardener=()=>{gardenerNow=gardenerFor(ME,checkins[ME],me.derivedStrain??0);};
+  const nudgeTitle=()=>nudgeWhy==='support'?'A heavy couple of weeks'
+    :nudgeWhy==='rest'?'It might not be your schedule'
+    :gardenerNow.heavyDay&&gardenerNow.heavyDay!==TODAY?`${DAYS_LONG[dow(gardenerNow.heavyDay)-1]} looks heavy for you`
+    :'Your week is heavier than usual for you';
   function freeSlots(starts,mins,count){
     const out=[];
     for(let d=0;d<=7&&out.length<count;d++){
@@ -229,34 +251,53 @@ export function initLife({islands,camera,texture,player,notice,visit,nearTree,ge
     }
     return null;
   }
+  // blocks still ahead this week that their owner marked "can wait", the heavy day's first
+  const canWait=()=>plans.week(ME).filter(b=>b.priority==='low'&&!b.skipped&&!b.done&&(b.date>TODAY||(b.date===TODAY&&b.start>=clock.minutes)))
+    .sort((a,b)=>(b.date===gardenerNow.heavyDay)-(a.date===gardenerNow.heavyDay));
   function ideas(){
     const week=plans.week(ME).filter(b=>!b.skipped), mins=c=>week.filter(b=>b.cat===c).reduce((a,b)=>a+b.mins,0);
     const late=week.filter(b=>b.start+b.mins>=22*60).length, moved=mins('exercise');
     const friend=members.filter(i=>i.id!==ME).sort((a,b)=>(warmth[a.id]??1.2)-(warmth[b.id]??1.2))[0];
+    const rest=nudgeWhy==='rest', wait=nudgeWhy==='schedule'?canWait()[0]:null;
     const all=[
+      wait&&{fit:5,move:wait,title:`Move ${wait.title}`,label:`moving “${wait.title}” to next week`,button:'Move it to next week',
+       why:`You marked “${wait.title}” as able to wait.`},
       {fit:late>=2?3:0,title:'Early night',cat:'rest',mins:60,starts:[21*60+30],vis:'hidden',label:'an early night',button:'Plan an early night',
        why:late>=2?`${late} late nights this week.`:'Sleep is the quickest reset.'},
-      {fit:moved<90?2.6:nudgeWhy==='heavy'?2.3:0,title:'A walk outside',cat:'exercise',mins:30,starts:[17*60+30,12*60+30,8*60],vis:'open',label:'a walk outside',button:'Add a walk',
+      {fit:moved<90?2.6:rest?2.3:0,title:'A walk outside',cat:'exercise',mins:30,starts:[17*60+30,12*60+30,8*60],vis:'open',label:'a walk outside',button:'Add a walk',
        why:moved<90?'You’ve hardly moved this week.':'Fresh air helps after heavy days.'},
-      friend&&{fit:mins('social')<120?1.2:.8,title:`Tea with ${friend.owner}`,cat:'social',mins:60,starts:[18*60,12*60+30],vis:'open',label:`tea with ${friend.owner}`,
-       button:`Invite ${friend.owner}`,why:`It’s been a while since you and ${friend.owner} caught up.`,friend},
-      {fit:1.5,title:'Slow evening',cat:'rest',mins:60,starts:[20*60+30],vis:'hidden',label:'a slow evening',button:'Add a slow evening',
-       why:'Nothing planned, nothing to finish.'},
+      friend&&{fit:rest?2.8:mins('social')<120?1.2:.8,title:`Tea with ${friend.owner}`,cat:'social',mins:60,starts:[18*60,12*60+30],vis:'open',label:`tea with ${friend.owner}`,
+       button:`Invite ${friend.owner}`,why:rest?'Your week isn’t heavy, but the last few days have been.':`It’s been a while since you and ${friend.owner} caught up.`,friend},
+      {fit:rest?2.5:1.5,title:'Slow evening',cat:'rest',mins:60,starts:[20*60+30],vis:'hidden',label:'a slow evening',button:'Add a slow evening',
+       why:rest?'Your week isn’t heavy, but the last few days have been.':'Nothing planned, nothing to finish.'},
     ].filter(Boolean).sort((a,b)=>b.fit-a.fit);
-    for(const i of all)i.slot=freeSlot(i.starts,i.mins);
-    return all.filter(i=>i.slot);
+    for(const i of all)if(!i.move)i.slot=freeSlot(i.starts,i.mins);
+    return all.filter(i=>i.move||i.slot);
   }
   const whenText=s=>`${s.date===TODAY?'today':s.date===addDays(TODAY,1)?'tomorrow':dayName(s.date)} at ${fmt(s.start)}`;
   const slotLabel=s=>`${s.date===TODAY?'Today':s.date===addDays(TODAY,1)?'Tomorrow':dayName(s.date)} ${fmt(s.start)}`;
   const idea=()=>{const l=ideas();return l.length?l[ideaAt%l.length]:null;};
+  // Gemini's wording for the current offer, fetched once per offer (signed in only)
+  const worded={};
+  function wording(i){
+    const fallback=`${i.why} How about ${i.label}?`, key=`${nudgeWhy}|${i.title}`;
+    if(!LIVE)return fallback;
+    if(!(key in worded)){
+      worded[key]=fallback;
+      backend.gardenerLine(nudgeWhy,{offer:i.label,why:i.why,kind:i.cat??'',friend:i.friend?.owner??''},fallback)
+        .then(line=>{worded[key]=line;});
+    }
+    return worded[key];
+  }
   function checkNudge(){
-    const heavy=checkins[ME].filter(c=>c.day<=WEEK&&MOODS[c.mood].strain>=.55).length, full=loadFromAltitude(me.altitude)>=.85;
-    const on=!nudgeTaken&&(full||heavy>=3), why=full?'full':'heavy', was=nudgeOn;
-    if(on===nudgeOn&&why===nudgeWhy)return;nudgeOn=on;nudgeWhy=why;
-    nudgeSign.set(on?{head:'From your island',body:`${nudgeTitle()}. Here’s a way to unwind.`,foot:'walk up for an idea'}:null);
-    if(on&&!was)notice(`${nudgeTitle()}. Your gardener has an idea to help you unwind.`);
+    const mode=nudgeTaken&&gardenerNow.mode!=='support'?null:gardenerNow.mode, on=!!mode&&(mode==='support'||!!idea()), was=nudgeOn;
+    if(on===nudgeOn&&mode===nudgeWhy)return;nudgeOn=on;nudgeWhy=mode;
+    nudgeSign.set(on?{head:'From your island',body:mode==='support'?'A heavy couple of weeks. There’s help nearby.':`${nudgeTitle()}. Here’s an idea.`,
+                      foot:'walk up to read it'}:null);
+    if(on&&!was)notice(mode==='support'?'Your gardener has left you a note by the windmill.':`${nudgeTitle()}. Your gardener has an idea.`);
   }
   function takeIdea(i,slot=i.slot){
+    if(i.move){plans.shift(ME,i.move,7);nudgeTaken=true;checkNudge();notice(`${i.move.title} moved to next week. Your island rises a little.`);return;}
     plans.add(ME,{date:slot.date,start:slot.start,mins:i.mins,cat:i.cat,title:i.title,vis:i.vis});
     if(i.friend){warm(i.friend.id,.8);warm(ME,.8);}
     nudgeTaken=true;checkNudge();
@@ -270,8 +311,12 @@ export function initLife({islands,camera,texture,player,notice,visit,nearTree,ge
     calendar.edit(null,{date:slot.date,start:slot.start,mins:i.mins,cat:i.cat,title:i.title,vis:i.vis});
   }
   function nudgeCard(key,kicker,at,dismiss){
+    if(nudgeWhy==='support')
+      return {key:`${key}support`,wood:true,kicker,title:nudgeTitle(),sub:'Your sky has been grey for a while. You don’t have to carry it alone.',
+              action:()=>{$('support-dialog').showModal();nudgeTaken=true;},actionLabel:'Where to find support',
+              ...(dismiss?{letGo:dismiss,letGoLabel:'Not now'}:{}),at};
     const i=idea();if(!i)return null;
-    if(asking){
+    if(asking&&!i.move){
       const slots=freeSlots(i.starts,i.mins,2);
       if(slots.length)return {key:`${key}when${ideaAt}`,wood:true,kicker,title:i.title,sub:'When suits you?',
         action:()=>{asking=false;takeIdea(i,slots[0]);},actionLabel:slotLabel(slots[0]),
@@ -279,11 +324,13 @@ export function initLife({islands,camera,texture,player,notice,visit,nearTree,ge
         letGo:()=>{asking=false;pickOwnTime(i,slots[0]);},letGoLabel:'Pick a time',at};
       asking=false;
     }
-    return {key:`${key}${ideaAt}`,wood:true,kicker,title:nudgeTitle(),sub:`${i.why} How about ${i.label}?`,
-            action:()=>{asking=true;},actionLabel:i.button,alt:()=>{ideaAt++;},altLabel:'Another idea',
+    const sub=wording(i);
+    return {key:`${key}${ideaAt}${nudgeWhy}${sub.length}`,wood:true,kicker,title:nudgeTitle(),sub,
+            action:i.move?()=>takeIdea(i):()=>{asking=true;},actionLabel:i.button,alt:()=>{ideaAt++;},altLabel:'Another idea',
             ...(dismiss?{letGo:dismiss,letGoLabel:'Not now'}:{}),at};
   }
-  const dew=()=>36+plans.week(ME).filter(b=>!b.skipped&&b.done).length   // explicit Done only
+  $('support-close').onclick=()=>$('support-dialog').close();
+  const dew=()=>(LIVE?0:36)+plans.week(ME).filter(b=>!b.skipped&&b.done).length   // explicit Done only
                   +(photos.items.some(i=>i.golden&&i.member.id===ME)?3:0)
                   +NOTES.filter(n=>n.to===ME&&n.read).length+given.size+taskDew();
   // What anyone may see of an island (README.md privacy): its weather and its
@@ -374,7 +421,8 @@ export function initLife({islands,camera,texture,player,notice,visit,nearTree,ge
 
   // ---- sheets: the planner (input) and your balance (analysis + solutions) ---
   const sheets=createSheets();
-  const calendar=createCalendar({plans,owner:ME,clock,notice,sheets});
+  const calendar=createCalendar({plans,owner:ME,clock,notice,sheets,afterDone:list=>maybeAsk(list),
+    live:LIVE?{connection:world.connection,uid:world.uid}:null});
   const balance=createBalance({plans,me,friends:members.filter(i=>i.id!==ME),clock,checkins:checkins[ME],sheets,notice,dew,warm:id=>warm(id,.8)});
   // your gardener waits at the left end of an open sheet's top edge; walk it
   // with ← →, jump with Space, turn it with Q E
@@ -386,13 +434,27 @@ export function initLife({islands,camera,texture,player,notice,visit,nearTree,ge
     }});
   };
   const shop=createShop({sheets,dew,notice});
+  // "How draining was that?" -- after you mark something done (when the island
+  // isn't sure yet), or when a phone prompt brings you here. The gardener says
+  // what it learned; the island re-reads your week at once.
+  const ask=createAsk({notice,onAnswer:(b,value)=>{
+    const line=recordAnswer(ME,b,value);
+    if(LIVE)backend.saveAnswer(ANSWERS[ME].at(-1));
+    settle(ME);refreshGardener();balance.render();calendar.render();
+    return line;
+  }});
+  function maybeAsk(list){
+    const b=[].concat(list).find(b=>shouldAsk(ME,b));
+    if(b)setTimeout(()=>ask.ask(b),700);
+  }
   const buddies={planner:sheetBuddy($('planner-sheet')),balance:sheetBuddy($('balance-sheet')),shop:sheetBuddy($('shop-sheet'))};
   // any plan edit re-draws that island's path, settles its altitude, refreshes the sheets
   plans.onChange(id=>{
     tables[id]?.setBlocks(plans.on(id,TODAY));settle(id);
     if(lifted===id)setLift(id);
-    if(id===ME){calendar.render();balance.render();buddies.planner.hop();buddies.balance.hop();}
+    if(id===ME){calendar.render();balance.render();buddies.planner.hop();buddies.balance.hop();refreshGardener();}
   });
+  refreshGardener();
 
   // ---- check-in and the small top-right panels ------------------------------
   for(const [k,m] of Object.entries(MOODS)){
@@ -405,7 +467,8 @@ export function initLife({islands,camera,texture,player,notice,visit,nearTree,ge
     const entry={day:0,mood:k,time:clock.minutes,photo:checkinPhoto};checkins[ME].push(entry);
     const onMine=player.surface?.kind==='island'&&player.surface.id===ME;
     mood.checkIn(me,entry,onMine?player.position.clone().sub(me.group.position).add(new T.Vector3(0,1.2,0)):null);
-    weather(me);checkinPhoto=null;$('checkin-photo').value='';balance.render();
+    if(LIVE)backend.saveCheckin(world,{mood:k,minute:clock.minutes,photo:checkinPhoto});
+    weather(me);checkinPhoto=null;$('checkin-photo').value='';balance.render();refreshGardener();
     notice(`A ${MOODS[k].label.toLowerCase()} lantern rises over your island.`);
     if(!$('mood-panel').hidden)setMoodPanel(false);
   }
@@ -486,7 +549,7 @@ export function initLife({islands,camera,texture,player,notice,visit,nearTree,ge
     $('reveal-letgo').hidden=!next.letGo;$('reveal-letgo').textContent=next.letGoLabel??'Let go';
   }
   // Your own planned block, finished early: its card offers "Done", and the ghost takes root.
-  const finish=b=>{plans.markDone(ME,b);notice(`${b.title} took root.`);};
+  const finish=b=>{plans.markDone(ME,b);notice(`${b.title} took root.`);maybeAsk(b);};
   // Your own open blocks: Done once it has happened, Let go (after a gentle confirm) any time.
   const letGo=async b=>{if(await confirmLetGo(b.title)){plans.toggleSkip(ME,b);notice(`${b.title} drifted away. Bring it back from the planner any time.`);}};
   const withActions=(card,b)=>{
@@ -572,6 +635,50 @@ export function initLife({islands,camera,texture,player,notice,visit,nearTree,ge
     return null;
   }
 
+  // ---- a signed-in sky: your sky's panel, live updates, links from phone prompts ----
+  mountSkyPanel(world,notice);
+  $('demo-controls').hidden=LIVE;
+  if(LIVE){
+    backend.listen(world,{
+      status:(id,r)=>{status[id]={sink:r.sink,strain:r.strain};settle(id);},
+      checkin:(id,entry)=>{
+        checkins[id].push(entry);const i=members.find(m=>m.id===id);
+        mood.checkIn(i,entry,null);weather(i);notice(`A ${MOODS[entry.mood].label.toLowerCase()} lantern rises over ${i.owner}’s island.`);
+      },
+      note:n=>{NOTES.push(n);syncNotes();notice(`${owners[n.from]} left a note at your gate.`);},
+      moment:m=>photos.receive(m),
+      golden:g=>photos.schedule(g.opensAt),
+      task:t=>{TASKS.unshift(t);renderTasks();},
+      taskMember:(taskId,id,photo)=>{
+        const t=TASKS.find(t=>t.id===taskId);if(!t)return;
+        if(!t.joined.includes(id))t.joined.push(id);
+        if(photo!==undefined)t.done[id]=photo;
+        renderTasks();
+      },
+      membersChanged:()=>notice('Someone new joined your sky. Reload to see their island.'),
+    });
+  }
+  // a phone prompt opens the app on its question: ?ask=drain&block=..&date=.. or ?ask=mood
+  const params=new URLSearchParams(location.search);
+  if(params.get('ask')==='mood')setTimeout(()=>setMoodPanel(true),1200);
+  if(params.get('ask')==='drain'){
+    const b=plans.on(ME,params.get('date')??TODAY).find(b=>String(b.series?.id??b.id)===params.get('block'));
+    if(b)setTimeout(()=>ask.ask(b),1200);
+  }
+  // back from Google: the planner's sync dialog shows how it went
+  const cal=params.get('calendar');
+  if(cal)setTimeout(()=>{calendar.open('week');calendar.openSync(cal);},900);
+  if(params.has('ask')||params.has('calendar')||params.has('join'))history.replaceState(null,'',location.pathname);
+  // Once a day, the first time you open the island: what today holds, in words.
+  try{
+    const key=`island-morning-${ME}`, day=forecast(ME,TODAY);
+    if(day&&localStorage.getItem(key)!==TODAY&&clock.minutes<17*60){
+      localStorage.setItem(key,TODAY);
+      const n=plans.on(ME,TODAY).filter(b=>!b.skipped).length;
+      if(n)setTimeout(()=>notice(`Today: ${FORECAST_WORDS[day.label].toLowerCase()}. ${n} thing${n===1?'':'s'} planned.`),4200);
+    }
+  }catch{}
+
   // ---- per frame --------------------------------------------------------------------
   let lastSelected=null,lastMode=null,lastMinute=-1,chips='',lastDew=null;
   const v=new T.Vector3(), rv=new T.Vector3(), bv=new T.Vector3();
@@ -580,7 +687,7 @@ export function initLife({islands,camera,texture,player,notice,visit,nearTree,ge
     update(dt,elapsed,motion){
       if(clock.live)clock.minutes=nowMinutes();
       const minute=Math.floor(clock.minutes);
-      if(minute!==lastMinute){lastMinute=minute;showClock();settleFriends();calendar.render();}
+      if(minute!==lastMinute){lastMinute=minute;showClock();settleFriends();calendar.render();refreshGardener();}
       const mode=getMode(), selected=getSelected();
       if(mode!==lastMode||selected!==lastSelected){
         if(lifted&&(mode!=='walk'||selected!==lifted))setLift(null);

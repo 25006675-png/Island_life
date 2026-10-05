@@ -521,3 +521,36 @@ label:has(> .ed-cat-icon){position:relative}
 #reveal-sub{display:flex;flex-wrap:wrap;align-items:center;gap:5px}
 .rv-chip{padding:2px 8px;border-radius:10px;background:oklch(.92 .02 295);color:var(--ink);font-size:11px;white-space:nowrap}
 #reveal.wood .rv-chip{background:oklch(.36 .05 60 / .16);color:#3b2a1c}
+/* ---- signed-in additions: sign-in card states, the island's question, forecast, sync, learned ---- */
+.login-card .google-button{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;margin-top:10px;border:1px solid oklch(.82 .02 295);border-radius:22px;padding:10px 17px;background:oklch(1 0 0);font-size:13px}
+.login-card .google-button .g{font:700 15px 'Segoe UI',sans-serif;color:#4a7fd8}
+.login-card .solid-ghost{width:100%;border:1px solid var(--accent);border-radius:22px;padding:10px 17px;background:transparent;color:var(--accent);font-size:13px}
+.login-card .login-links{display:flex;flex-wrap:wrap;justify-content:center;gap:4px 16px;margin-top:4px}.login-card .login-links .text-button{margin:10px 0 0}
+.login-card .text-button.small{font-size:11px}
+.login-card .login-or{text-align:center;margin:10px 0;font-size:11px}
+.login-card .login-status{min-height:1.2em;margin:12px 0 0;font-size:12px;color:oklch(.5 .14 30);text-align:center}.login-card .login-status.good{color:oklch(.42 .1 150)}
+.login-card .login-status:empty{min-height:0;margin:0}
+#ask-dialog{width:min(400px,calc(100% - 32px))}
+.ask-what{display:flex;align-items:center;justify-content:center;gap:2px}
+.ask-answers{display:flex;justify-content:center;gap:10px;margin:16px 0 10px}
+dialog.wood .ask-answers .wood-button{flex:1;padding:12px 10px;font-size:15px}
+.ask-why{font-size:12px;text-align:center;opacity:.85}
+.support-list{margin:6px 0 16px;padding-left:18px;font:14px/1.55 'Segoe Print','Bradley Hand',Georgia,serif;color:#2f2116}.support-list li{margin-bottom:8px}
+.wk-forecast{display:block;margin-top:3px;font-size:9px;letter-spacing:.02em;white-space:nowrap}
+.wk-day.fc-light .wk-forecast{color:oklch(.45 .09 150)}
+.wk-day.fc-heavy .wk-forecast,.wk-day.fc-very-heavy .wk-forecast{color:oklch(.5 .14 36);font-weight:600}
+.plan-forecast{margin-left:auto;padding:3px 9px;border-radius:12px;font-size:11px;background:oklch(.97 .01 295)}
+.plan-forecast.fc-heavy,.plan-forecast.fc-very-heavy{background:oklch(.93 .05 40);color:oklch(.42 .13 36)}
+.plan-forecast.fc-light{background:oklch(.94 .04 150);color:oklch(.38 .09 150)}
+.sync-list li.soon{opacity:.7}
+.sync-soon{font-size:11px;padding:4px 10px;border-radius:12px;background:oklch(.93 .015 295);color:var(--muted);white-space:nowrap}
+.sync-what .sync-two{display:flex;margin:8px 0 2px;font-size:12px;color:var(--ink)}
+.sync-what .sync-note{font-size:11px;color:var(--muted);line-height:1.4}
+.sync-what .text-button{align-self:flex-start;margin-top:6px}
+.bal-learned{list-style:none;margin:10px 0 0;padding:0;display:grid;gap:6px}
+.bal-learned li{display:flex;align-items:center;gap:6px;font-size:13px;padding:6px 10px;border-radius:9px;background:oklch(.97 .008 295);border-left:3px solid var(--c,oklch(.8 .02 295))}
+.bal-learned li small{margin-left:auto;font-size:11px;color:var(--muted);white-space:nowrap}
+.bal-learned li.heavier{background:oklch(.96 .025 40)}.bal-learned li.lighter{background:oklch(.96 .025 150)}
+.bal-learned li.none{border-left:0;color:var(--muted);font-size:12px}
+.sky-section{margin-bottom:6px}.sky-section h3{font:normal 16px Georgia,serif;margin:0 0 6px}.sky-section .text-button{display:block;margin:8px 0 0}
+.sky-section+label{margin-top:16px}

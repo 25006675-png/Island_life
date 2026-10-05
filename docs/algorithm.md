@@ -113,14 +113,14 @@ Starting values, all in ordinary hours:
 
 ### 2.4 Forecast: heavy days before they arrive
 
-Each coming day gets a predicted load, which is compared with a typical day (`C ÷ 7`):
+Each coming day gets a predicted load. It is compared with a **typical busy day**: your normal week spread over five days (`C ÷ 5`), because most students' weeks are concentrated on weekdays.
 
-| Day's load against a typical day | Label |
+| Day's load against a typical busy day | Label |
 |---|---|
-| below 0.7 | Light for you |
-| 0.7 – 1.3 | A usual day |
-| 1.3 – 1.6 | Heavy for you |
-| above 1.6 | Very heavy for you |
+| below 0.6 | Light for you |
+| 0.6 – 1.4 | A usual day |
+| 1.4 – 1.8 | Heavy for you |
+| above 1.8 | Very heavy for you |
 
 The forecast appears in three places, never in the sky:
 - the planner marks each day,
@@ -169,7 +169,7 @@ For some students, mood follows the schedule closely. For others it hardly does:
 
 ```
 for each of the last 28 days with an evening answer:
-    pair  (that day's weather value,  that day's load ÷ a typical day)
+    pair  (that day's weather value,  that day's load ÷ a typical busy day)
 link  = correlation of the pairs × n ÷ (n + 10)       n = number of pairs
 ```
 

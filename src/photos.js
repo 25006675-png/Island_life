@@ -7,6 +7,9 @@ import { fmt, toMin } from './data.js';
 // It stands on the pond's deck and turns slowly; walk up to it to open the day
 // as an album. Only hooks that carry a photo are hung, so a missing photo is
 // never drawn. The day clears at midnight.
+//
+// Signed in (`live`), the photos are the sky's own, the window's time comes
+// from the server, and the server decides which photos hang in gold.
 const WINDOW_MS=120000;
 const DIR=`${import.meta.env.BASE_URL}assets/moments/`;
 // Today's photos for the demo: real photos (Unsplash licence, most via Lorem
@@ -31,10 +34,11 @@ const MOMENTS=[
   {id:'purple',src:'puppy.jpg',at:'12:40',caption:'A regular’s dog'},
   {id:'sakura',src:'bench.jpg',at:'12:50',caption:'Lunch with Ben'},
 ];
-const load=src=>new Promise((resolve,reject)=>{
-  const img=new Image();img.onload=()=>resolve(square(img,img.naturalWidth,img.naturalHeight,512));img.onerror=reject;
-  img.src=DIR+src;
+const loadUrl=url=>new Promise((resolve,reject)=>{
+  const img=new Image();img.crossOrigin='anonymous';img.onload=()=>resolve(square(img,img.naturalWidth,img.naturalHeight,512));img.onerror=reject;
+  img.src=url;
 });
+const load=src=>loadUrl(DIR+src);
 const $=id=>document.getElementById(id);
 
 // Sizes in world units. The deck is ~3 across its radius: the plinth fits on
@@ -130,7 +134,7 @@ function polaroid(item){
   const t=new T.CanvasTexture(c);t.colorSpace=T.SRGBColorSpace;t.anisotropy=4;return t;
 }
 
-export function createCarousel({island,members,me,notice,view,time}){
+export function createCarousel({island,members,me,notice,view,time,live=null}){
   const deck=island.model.getObjectByName('Deck')??island.model.getObjectByName('Water');
   island.group.updateMatrixWorld(true);
   const deckBox=new T.Box3().setFromObject(deck);
@@ -283,7 +287,16 @@ export function createCarousel({island,members,me,notice,view,time}){
   }
   $('capture-snap').onclick=()=>{const v=$('capture-video');preview(square(v,v.videoWidth,v.videoHeight,512));};
   $('capture-file').onchange=e=>{const f=e.target.files[0];if(f)loadSquare(f,512).then(preview);e.target.value='';};
-  $('capture-send').onclick=()=>{if(pending)post(owner,pending,{golden:open,caption:$('capture-caption').value.trim()});$('capture').close();};
+  $('capture-send').onclick=async()=>{
+    if(!pending)return;
+    const canvas=pending, caption=$('capture-caption').value.trim();
+    if(!live){post(owner,canvas,{golden:open,caption});$('capture').close();return;}
+    $('capture-send').disabled=true;$('capture-status').textContent='Hanging it up…';
+    const dataUrl=canvas.toDataURL('image/jpeg',.88), row=await live.hang({dataUrl,caption});
+    $('capture-send').disabled=false;$('capture').close();
+    if(row)post(owner,canvas,{golden:row.golden,caption,src:dataUrl});
+    else notice('Your photo didn’t reach the carousel. Try again in a moment.');
+  };
   $('capture-cancel').onclick=()=>$('capture').close();
   $('capture').addEventListener('close',stop);
   $('golden-share').onclick=openCapture;$('share-late').onclick=openCapture;
@@ -315,15 +328,43 @@ export function createCarousel({island,members,me,notice,view,time}){
   $('album-close').onclick=()=>$('album').close();
   $('album-add').onclick=()=>{$('album').close();openCapture();};
 
-  // Today so far: the golden window rang at 13:27, and the day's photos are up.
-  Promise.all(MOMENTS.map(m=>load(m.src).then(c=>[m,c]))).then(list=>{
-    rung=true;
-    for(const [m,c] of list)post(members.find(x=>x.id===m.id),c,{golden:!!m.golden,at:toMin(m.at),caption:m.caption,src:DIR+m.src,quiet:true});
-  }).catch(e=>console.warn('[photos] moments did not load',e));
+  // A friend's photo arriving (signed in), or one already up when the app opens.
+  function receive(m,quiet=false){
+    const member=members.find(x=>x.id===m.member);if(!member||!m.src)return;
+    loadUrl(m.src).then(c=>post(member,c,{golden:!!m.golden,at:m.at,caption:m.caption,src:m.src,quiet}))
+      .catch(e=>console.warn('[photos] a photo did not load',e));
+  }
+  // The sky's window for today (signed in): open it now if it is open, wait for
+  // it if it is still to come, or show it as rung if it has passed.
+  let waiting=null;
+  function schedule(opensAt){
+    clearTimeout(waiting);
+    if(!opensAt)return;
+    const now=Date.now();
+    if(now>=opensAt+WINDOW_MS){rung=true;windowAt=time()-Math.round((now-opensAt)/60000);refresh();return;}
+    if(now>=opensAt){openWindow(opensAt+WINDOW_MS);return;}
+    waiting=setTimeout(()=>openWindow(opensAt+WINDOW_MS),opensAt-now);
+  }
+  function openWindow(until){
+    if(open)return;
+    open=true;rung=true;windowAt=time();endsAt=until;clearInterval(timer);timer=setInterval(tick,500);tick();
+    notice('✦ The golden window is open. Two minutes to share this moment.');
+    refresh();
+  }
+  if(live){
+    for(const m of live.moments)receive(m,true);
+    schedule(live.golden?.opensAt);
+  }else{
+    // Today so far: the golden window rang at 13:27, and the day's photos are up.
+    Promise.all(MOMENTS.map(m=>load(m.src).then(c=>[m,c]))).then(list=>{
+      rung=true;
+      for(const [m,c] of list)post(members.find(x=>x.id===m.id),c,{golden:!!m.golden,at:toMin(m.at),caption:m.caption,src:DIR+m.src,quiet:true});
+    }).catch(e=>console.warn('[photos] moments did not load',e));
+  }
 
   const wp=new T.Vector3();
   return {
-    ring,openAlbum,
+    ring,openAlbum,receive,schedule,
     get items(){return items;},
     get status(){return {open,rung};},
     update(t,motion){

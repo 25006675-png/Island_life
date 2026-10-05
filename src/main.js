@@ -12,46 +12,47 @@ import { initLife, setStrain } from './life.js';
 import { ME } from './data.js';
 import { createForest } from './forest.js';
 import { createLogin } from './login.js';
+import { demoWorld, DEMO_PEOPLE } from './world.js';
 
 const $=id=>document.getElementById(id), canvas=$('world');
 // One activity category = one tree species (groves.js). The gathering
 // island's mushrooms and clover are decoration only.
 const SPECIES_SCALE={sakura:1.05,purple:1.2,oak:.85,palm:1.0,mushrooms:.5,clover:.32,
                      willow:.95,pale:.9,magic_mushrooms:1.25};
-
-// NOTE: owner names are placeholders -- swap them for your real members.
 // Torii pillars, in member-island model units (same for every variant).
 const TORII_POSTS=[{x:-6.44,z:-3.85,r:.42},{x:-4.36,z:-6.15,r:.42}];
 // Everyone arrives just inside their own torii (README.md: the arch is the
 // spawn point), the camera out beyond the gate looking in across the island.
 const ARCH_SPAWN=[-4.1,-3.8], ARCH_CAM=[-11.9,10,-10.7];
 
-// Bridges leave the gathering tree at 150, 10 and 300 degrees; the pond sits
-// in the middle against the tree's plaza, ringed by a path. Each member island is its own
-// irregular outline (meadow_a/b/c), and plantings sit away from its bridge
-// landing, its torii, and the camera side (+z) of the spawn -- the walk-in
-// camera sits behind the gardener at +z, so a grove there fills the view.
-const definitions=[
-  {id:'community',model:'community',name:'The gathering Island',owner:null,
+// A sky holds up to five member islands, 72 degrees apart on a ring round the
+// gathering island; a member's slot fixes where their island floats. Each is
+// one of three irregular outlines (meadow_a/b/c); plantings sit away from its
+// bridge landing, its torii, and the camera side (+z) of the spawn -- the
+// walk-in camera sits behind the gardener at +z, so a grove there fills the view.
+const RING=85;
+const SLOTS={sakura:{model:'meadow_a',angle:210,altitude:5},purple:{model:'meadow_b',angle:354,altitude:7},
+             oak:{model:'meadow_c',angle:66,altitude:-4},willow:{model:'meadow_b',angle:282,altitude:3},
+             palm:{model:'meadow_c',angle:138,altitude:9}};
+const COMMUNITY={id:'community',model:'community',name:'The gathering Island',owner:null,
    description:'Everyone’s island. The bridges start here.',
    x:0,z:0,altitude:0,scale:2.2,spawn:[2,.5],
    // the trunk; its buttress roots are fenced off by field.block() in init()
    obstacles:[{x:6.2,z:-5.6,r:2.7}],
-   plantings:[{asset:'mushrooms',n:4,a:2.36,r:16,spread:3},
-              {asset:'clover',n:4,a:4.10,r:15,spread:3.5}]},
-
-  {id:'sakura',model:'meadow_a',owner:'Aisha',description:'A study-heavy week, softened by friends.',
-   x:-73.6,z:-42.5,altitude:5,scale:2.0,spawn:ARCH_SPAWN,cam:ARCH_CAM,obstacles:TORII_POSTS},
-
-  {id:'purple',model:'meadow_b',owner:'Ben',description:'Café shifts, lab work and band practice.',
-   x:83.7,z:-14.8,altitude:7,scale:2.0,spawn:ARCH_SPAWN,cam:ARCH_CAM,obstacles:TORII_POSTS},
-
-  {id:'oak',model:'meadow_c',owner:'Chen',description:'Long internship days and exam prep.',
-   x:42.5,z:73.6,altitude:-4,scale:2.0,spawn:ARCH_SPAWN,cam:ARCH_CAM,obstacles:TORII_POSTS},
-];
-for(const d of definitions){
-  d.name=d.id===ME?'My island':d.owner?`${d.owner}’s island`:d.name;
+   // between the bridges, clear of every landing
+   plantings:[{asset:'mushrooms',n:4,a:1.78,r:16,spread:3},
+              {asset:'clover',n:4,a:4.29,r:15,spread:3.5}]};
+// people: [{id, name}] in slot order; ME (data.js) says which one is yours
+function defineIslands(people){
+  return [COMMUNITY,...people.map(p=>{
+    const s=SLOTS[p.id], a=s.angle*Math.PI/180;
+    return {id:p.id,model:s.model,owner:p.name,description:p.description??'',
+            x:+(Math.cos(a)*RING).toFixed(1),z:+(Math.sin(a)*RING).toFixed(1),altitude:s.altitude,scale:2.0,
+            spawn:ARCH_SPAWN,cam:ARCH_CAM,obstacles:TORII_POSTS};
+  })].map(d=>({...d,name:d.id===ME?'My island':d.owner?`${d.owner}’s island`:d.name}));
 }
+// until someone signs in, the sky view frames the full five
+let definitions=defineIslands(DEMO_PEOPLE);
 
 // Decorative groves on the gathering island: `n` of one species in a tight
 // cluster. Member islands grow their activity trees in forest.js.
@@ -254,10 +255,18 @@ function walk(dt){
 
 // module scope: frame() is top-level and reads this too
 const LITE=new URLSearchParams(location.search).has('lite');
-// ?skiplogin -> straight into the world (embedding, tests). The sign-in is
-// mock: it only waits for a click while the world loads behind it.
-if(new URLSearchParams(location.search).has('skiplogin'))$('login').hidden=true;
-else createLogin(()=>{canvas.focus({preventScroll:true});notice('Welcome back, Aisha. Your island kept growing while you were away.');});
+// ?skiplogin -> straight into the demo world (embedding, tests). Otherwise
+// the world loads behind the sign-in, and its islands are built once we know
+// whose sky it is: the demo's five, or a signed-in student's (world.js).
+let world;
+const worldReady=new Promise(resolve=>{
+  if(new URLSearchParams(location.search).has('skiplogin')){$('login').hidden=true;resolve(demoWorld());return;}
+  createLogin(w=>{
+    resolve(w);canvas.focus({preventScroll:true});
+    notice(w.live?`Welcome back, ${w.people.find(p=>p.id===ME)?.name||'friend'}. Your island kept growing while you were away.`
+                 :'Welcome to the demo sky. This is Aisha’s island, and her four friends.');
+  });
+});
 
 async function init(){
   // ?lite  -> low-stress dev mode: halves resolution, drops bloom + shadows,
@@ -287,6 +296,10 @@ renderer=new T.WebGLRenderer({canvas,antialias:true,powerPreference:'high-perfor
   for(const key of ['community','meadow_a','meadow_b','meadow_c'])
     fields[key]=new HeightField(WALKABLE[key==='community'?'community':'meadow'].map(n=>assets[key].getObjectByName(n)));
   fields.community.block([assets.community.getObjectByName('TreeWood')]);   // the buttress roots are solid
+  // whose sky: the islands are built only once that is known
+  world=await worldReady;
+  definitions=defineIslands(world.people);
+  camera.position.copy(overviewPosition());controls.maxDistance=skyReach();controls.update();
   for(const def of definitions){const island={...def,weather:'clear',field:fields[def.model],obstacles:[...(def.obstacles??[])]};
     const group=new T.Group();group.position.set(def.x,def.altitude,def.z);scene.add(group);island.group=group;
     const model=assets[def.model].clone(true);model.scale.setScalar(def.scale);group.add(model);island.model=model;model.traverse(o=>{o.userData.islandId=def.id;});
@@ -303,7 +316,7 @@ renderer=new T.WebGLRenderer({canvas,antialias:true,powerPreference:'high-perfor
   const playerRoot=new T.Group();scene.add(playerRoot);gardener=assets.gardener;gardener.scale.setScalar(.38);playerRoot.add(gardener);player.root=playerRoot;
   const shadow=new T.Mesh(new T.CircleGeometry(.43,24),new T.MeshBasicMaterial({color:'#35492f',transparent:true,opacity:.22,depthWrite:false}));shadow.rotation.x=-Math.PI/2;shadow.position.y=.035;playerRoot.add(shadow);
   spawnOn(islands[0]);
-  life=initLife({islands,camera,texture:atmosphere.texture,player,notice,visit,nearTree:forest.near,getMode:()=>mode,getSelected:()=>selected,
+  life=initLife({world,islands,camera,texture:atmosphere.texture,player,notice,visit,nearTree:forest.near,getMode:()=>mode,getSelected:()=>selected,
     setAltitude:(id,h)=>{updateAltitude(islands.find(i=>i.id===id),T.MathUtils.clamp(h,-10,16));syncPanel();},
     setGlow:(id,g)=>{const b=bridges.find(b=>b.id===id);if(!b)return;b.glow=T.MathUtils.clamp(g,.15,3);b.glowMaterial.emissiveIntensity=b.glow*2.2;b.deckMaterial.emissiveIntensity=b.glow*.16;syncPanel();}});
   ready=true;

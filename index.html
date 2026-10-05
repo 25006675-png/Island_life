@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en">
-<head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><meta name="theme-color" content="#b9afd1"/><title>Island Life · Above the clouds</title></head>
+<head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><meta name="theme-color" content="#b9afd1"/><link rel="manifest" href="/manifest.webmanifest"/><link rel="apple-touch-icon" href="/assets/icons/app-192.png"/><title>Island Life · Above the clouds</title></head>
 <body>
   <main id="app">
     <canvas id="world" aria-label="Floating island world. Choose an island below to visit, then use WASD or arrow keys to walk." tabindex="0"></canvas>
@@ -9,8 +9,10 @@
     <div id="ribbon-labels"></div>
     <aside id="settings" hidden aria-label="World settings">
       <div class="panel-heading"><h2>Make it your evening</h2><button id="settings-close" aria-label="Close world settings">×</button></div>
+      <div id="sky-section" class="sky-section" hidden></div>
       <label>Sky tone<select id="sky-tone"><option value="peach">Peach twilight</option><option value="lavender">Lavender dusk</option><option value="mint">Mint daybreak</option></select></label>
       <label class="check"><input id="motion" type="checkbox" checked/> Gentle motion</label>
+      <div id="demo-controls">
       <hr/><label>Time of day <output id="clock-value"></output><input id="clock" type="range" min="360" max="1380" step="5"/></label>
       <label class="check"><input id="clock-live" type="checkbox"/> Follow the real clock</label>
       <button id="golden-ring" class="text-button">Ring the golden window now</button>
@@ -20,6 +22,7 @@
       <p id="weather-note" class="panel-note">Clear, then cloud gathers, then drizzle, then rain. Set by a few days of check-ins; drag to preview.</p>
       <label id="bridge-control">Bridge glow <output id="bridge-value"></output><input id="bridge-glow" type="range" min="0" max="3" step="0.1"/></label>
       <button id="reset" class="text-button">Restore this evening</button>
+      </div>
     </aside>
     <aside id="mood-panel" hidden aria-labelledby="checkin-title">
       <div class="panel-heading"><h2 id="checkin-title">How do you feel right now?</h2><button id="mood-close" aria-label="Close check-in">×</button></div>
@@ -29,6 +32,23 @@
     </aside>
     <footer><div class="place"><div class="place-title"><span id="location-kicker">Your sky neighborhood</span><h1 id="location-title">A world of little wonders.</h1></div><p id="hint">Choose an island. Stay a little while.</p><details id="island-card" class="island-card" open><summary><b id="ic-title">Your island</b><span id="ic-chips" class="ic-chips"></span></summary><div class="ic-body"><div id="ic-rows" class="ic-rows"></div><div class="ic-actions"><button id="mi-balance" class="text-button" type="button">Open your balance</button><span id="ic-foot" class="ic-foot">👁 friends can see these</span></div></div></details></div><nav class="view-controls" aria-label="Camera view"><button id="overview" aria-pressed="true">↗ <span>Sky view</span></button><button id="walk" aria-pressed="false">♧ <span>Take a walk</span></button><button id="schedule" aria-pressed="false">☰ <span>Schedule</span></button></nav><div class="help"><span id="mode-hint">Drag or Q E to turn · Scroll or Z X to zoom</span><span>Somewhere above the everyday</span></div></footer>
     <div id="reveal" hidden role="status"><img id="reveal-icon" alt="" hidden/><span id="reveal-kicker"></span><strong id="reveal-title"></strong><span id="reveal-sub"></span><div class="reveal-actions"><button id="reveal-action" hidden><span id="reveal-action-label">View photo</span></button><button id="reveal-alt" class="reveal-letgo" hidden>Another idea</button><button id="reveal-letgo" class="reveal-letgo" hidden>Let go</button></div></div>
+    <dialog id="ask-dialog" class="wood" aria-labelledby="ask-title">
+      <h2 id="ask-title">How draining was it?</h2>
+      <p id="ask-what" class="wood-note ask-what"></p>
+      <div class="ask-answers" role="group" aria-labelledby="ask-title"><button type="button" class="wood-button" data-answer="light">Light</button><button type="button" class="wood-button" data-answer="okay">Okay</button><button type="button" class="wood-button" data-answer="draining">Draining</button></div>
+      <p class="wood-note ask-why">One tap teaches your island what this kind of time costs you. Friends never see it.</p>
+      <div class="dialog-actions"><button id="ask-skip" type="button" class="text-button">Skip</button></div>
+    </dialog>
+    <dialog id="support-dialog" class="wood" aria-labelledby="support-title">
+      <h2 id="support-title">A heavy couple of weeks</h2>
+      <p class="wood-note">Your sky has been grey for a while. That happens, and you don’t have to carry it alone.</p>
+      <ul class="support-list">
+        <li>Your university’s counselling or wellbeing service is there for exactly this, and it’s free for students.</li>
+        <li>Telling one friend how it’s been can help. They won’t see this message, only your sky.</li>
+        <li>If you ever feel unsafe, call your local emergency number straight away.</li>
+      </ul>
+      <div class="dialog-actions"><button id="support-close" class="wood-button">Thank you</button></div>
+    </dialog>
     <dialog id="letgo-dialog" aria-labelledby="letgo-title">
       <h2 id="letgo-title">Let it go?</h2>
       <p class="panel-note">Letting go is fine. Its ghost tree drifts off and it won’t count this week. You can bring it back from the planner any time.</p>
@@ -38,7 +58,7 @@
       <h2 id="sync-title">Sync your calendars</h2>
       <p class="panel-note">Bring in classes, shifts and deadlines so your island carries the whole week. Synced events arrive as blocks you can move or let go.</p>
       <ul id="sync-list" class="sync-list"></ul>
-      <p class="sync-demo">Demo only. Nothing leaves this page and no account is touched.</p>
+      <p id="sync-demo" class="sync-demo">Demo only. Nothing leaves this page and no account is touched.</p>
       <div class="dialog-actions"><button id="sync-done" class="solid-small">Done</button></div>
     </dialog>
     <div id="golden" hidden><span class="golden-spark" aria-hidden="true">✦</span><div><strong id="golden-title">The golden window is open</strong><span id="golden-time"></span></div><button id="golden-share">Share this moment</button><button id="golden-dismiss" aria-label="Hide the golden window">×</button></div>
@@ -126,6 +146,12 @@
             <p id="bal-progress" class="bal-progress-line"></p>
             <div id="bal-days" class="bal-days"></div>
             <p class="bal-days-key">Solid is done, pale is still planned.</p>
+          </section>
+          <section class="bal-panel" aria-labelledby="bal-learned-title">
+            <h3 id="bal-learned-title">What your island has learned</h3>
+            <p id="bal-normal" class="bal-note-line"></p>
+            <ul id="bal-learned" class="bal-learned"></ul>
+            <p class="bal-days-key">From your answers to “How draining was that?”. Only you see this.</p>
           </section>
           <section class="bal-panel" aria-labelledby="bal-suggest-title">
             <h3 id="bal-suggest-title">Small changes that would help</h3>

@@ -1,6 +1,13 @@
-// Mock data for the v1 demo -- there is no backend. Times are minutes after
-// midnight; `day` on a check-in counts days before today (0 = today).
-export const ME='sakura';               // the viewer's own island (placeholder: Aisha's)
+// The demo's mock data, and the containers a signed-in sky fills instead
+// (backend.js). Times are minutes after midnight; `day` on a check-in counts
+// days before today (0 = today).
+//
+// A sky holds up to five islands. Each member is one slot, and each slot is
+// an island id: sakura, purple, oak, willow, palm (main.js places them).
+export const SLOT_IDS=['sakura','purple','oak','willow','palm'];
+export let ME='sakura';                 // the viewer's own island (demo: Aisha's)
+export let LIVE=false;                  // true once a signed-in sky is loaded
+export function setViewer(id,live){ME=id;LIVE=live;}
 export const DAWN=7*60, NIGHT=22*60;    // the wisp leaves the arch at dawn, is home by night
 
 // One category = one tree species (groves.js) = one colour. The colours must
@@ -24,16 +31,18 @@ export const MOODS={
   low:     {label:'Low',     color:'#92aede',strain:.8},
 };
 
-// Altitude = load. An empty week floats at 16 m; a full one sits at -10 m,
-// down by the cloud sea.
+// Altitude = how heavy this week is for you, against your own normal week
+// (climate.js, docs/algorithm.md). 0 floats at 16 m; 1 sits at -10 m, down by
+// the cloud sea.
 const HIGH=16, LOW=-10;
 export const loadFromAltitude=a=>Math.min(1,Math.max(0,(HIGH-a)/(HIGH-LOW)));
 export const altitudeFromLoad=l=>HIGH-Math.min(1,Math.max(0,l))*(HIGH-LOW);
-export const CAPACITY={sakura:35,purple:36,oak:35};   // hours a week each member can give
-// How full a week is, in words: shown instead of hours (balance and planner).
-export const fullness=l=>l<.35?'light':l<.65?'about half full':l<.85?'full':'very full';
+// How heavy a week is, in words: shown instead of hours (balance and planner).
+export const fullness=l=>l<.35?'light for you':l<.65?'about usual for you':l<.85?'heavier than usual':'much heavier than usual';
 // Bridge glow = recent interaction warmth with the group (0 quiet ... 3 bright); never breaks.
-export const WARMTH={sakura:1.7,purple:1.4,oak:.6};
+export const WARMTH={sakura:1.7,purple:1.4,oak:.6,willow:1.1,palm:.9};
+// Everyone's name, by island. The demo's; a signed-in sky replaces them.
+export const OWNERS={sakura:'Aisha',purple:'Ben',oak:'Chen',willow:'Dara',palm:'Eli'};
 
 export const toMin=s=>{const [h,m]=s.split(':').map(Number);return h*60+m;};
 export const fmt=m=>`${String(Math.floor(m/60)%24).padStart(2,'0')}:${String(Math.floor(m%60)).padStart(2,'0')}`;
@@ -54,23 +63,48 @@ export const SEEDS={
            ['19:30',90,'other','Sketching','open','low']],
     week:[[4,'20:30',90,'study','Problem set'],[7,'16:00',60,'errands','Room tidy','open','low']],
     repeat:[[1,'10:00',120,'study','Linear algebra lecture','open'],[3,'10:00',120,'study','Linear algebra lecture','open'],
-            [4,'18:00',60,'exercise','Badminton','open']]},
+            [4,'18:00',60,'exercise','Badminton','open'],[2,'09:00',180,'study','Chemistry lab'],[2,'14:00',180,'work','Tutoring shift','open'],
+            [3,'14:00',120,'study','Library session','open'],[5,'10:00',120,'study','Linear algebra tutorial','open'],
+            [5,'14:00',150,'study','Essay draft'],[6,'11:00',90,'social','Brunch with Mei','open']]},
   purple:{
     today:[['09:00',180,'work','Café shift'],['13:00',60,'errands','Groceries'],['14:30',120,'study','Lab report'],
            ['17:00',60,'social','Band practice','open'],['19:00',60,'rest','Nap','hidden'],['20:30',60,'study','Reading']],
     week:[[7,'10:00',60,'rest','Lie-in','hidden']],
-    repeat:[[1,'09:00',180,'work','Café shift'],[2,'13:00',120,'study','Lab']]},
+    repeat:[[1,'09:00',180,'work','Café shift'],[2,'13:00',120,'study','Lab'],[3,'09:00',180,'work','Café shift'],
+            [5,'09:00',180,'work','Café shift'],[4,'13:00',120,'study','Lab report']]},
   oak:{
     today:[['07:30',60,'exercise','Swim'],['09:00',240,'work','Internship'],['14:00',120,'work','Client deck','hidden'],
            ['16:30',90,'study','Stats problem set'],['18:30',60,'other','Call home'],['20:00',120,'study','Exam prep']],
     week:[[2,'20:00',120,'study','Exam prep'],[3,'21:00',90,'work','Report edits','hidden']],
     repeat:[[1,'09:00',240,'work','Internship'],[2,'09:00',240,'work','Internship'],
-            [3,'09:00',240,'work','Internship'],[4,'09:00',240,'work','Internship']]},
+            [3,'09:00',240,'work','Internship'],[4,'09:00',240,'work','Internship'],[5,'09:00',240,'work','Internship'],
+            [1,'18:00',120,'study','Exam prep'],[3,'19:00',150,'study','Exam prep'],[4,'20:00',120,'study','Group project'],
+            [6,'10:00',180,'study','Revision']]},
+  willow:{   // Dara: nursing placements, and a choir that keeps her going
+    today:[['07:00',300,'work','Ward placement'],['13:00',60,'rest','Long lunch','open'],['15:00',90,'study','Care plan write-up'],
+           ['18:00',90,'social','Choir','open'],['20:30',60,'errands','Meal prep','open']],
+    week:[[6,'11:00',120,'social','Picnic','open']],
+    repeat:[[2,'07:00',300,'work','Ward placement'],[4,'07:00',300,'work','Ward placement'],[5,'07:00',300,'work','Ward placement'],
+            [1,'15:00',120,'study','Clinical skills'],[3,'15:00',120,'study','Pharmacology'],[6,'07:00',300,'work','Weekend shift']]},
+  palm:{     // Eli: a light timetable, a lot of football
+    today:[['10:00',120,'study','Design studio','open'],['13:00',60,'social','Lunch with the team','open'],
+           ['16:00',120,'exercise','Football training','open'],['19:30',90,'other','Gaming','hidden']],
+    week:[[6,'09:00',180,'exercise','Match day','open']],
+    repeat:[[1,'14:00',120,'study','Studio crit','open'],[3,'16:00',120,'exercise','Football training','open']]},
 };
 // Today's blocks per island, kept current by plan.js (forest.js reads this).
 export const SCHEDULES={};
-// Committed hours in the three weeks before this one, oldest first.
-export const TRENDS={sakura:[21,19,18],purple:[16,15,15],oak:[24,27,29]};
+// The demo's earlier weeks, in ordinary hours (docs/algorithm.md 2.1), oldest
+// first: they set each demo island's normal week. A signed-in island works
+// these out from its own past blocks instead.
+export const TRENDS={sakura:[24,23,22],purple:[16,15,15],oak:[22,24,25],willow:[27,26,25],palm:[14,15,13]};
+// The demo's answers to "How draining was that?", so Aisha's island has
+// already learned something: long study days drain her, time with friends
+// doesn't. [days ago, start, minutes, kind, answer]
+export const DEMO_ANSWERS={sakura:[
+  [6,'09:00',120,'study','draining'],[5,'12:30',60,'social','light'],[4,'10:00',120,'study','draining'],
+  [3,'14:00',90,'study','okay'],[3,'18:00',60,'exercise','okay'],[2,'10:00',120,'study','draining'],
+  [2,'19:00',60,'social','light'],[1,'16:00',60,'errands','light'],[1,'09:00',150,'study','draining']]};
 
 export const CHECKINS={
   // three heavy days in the last five: the windmill sign is up when the demo opens
@@ -81,6 +115,10 @@ export const CHECKINS={
   // Chen is mid hard week, so his sky stays rainy
   oak:   [{day:6,mood:'tired'},{day:5,mood:'calm'},{day:4,mood:'stressed'},{day:3,mood:'tired'},
           {day:2,mood:'stressed'},{day:1,mood:'low'},{day:0,mood:'stressed',time:toMin('07:15')}],
+  willow:[{day:6,mood:'calm'},{day:5,mood:'tired'},{day:4,mood:'happy'},{day:3,mood:'tired'},
+          {day:2,mood:'calm'},{day:1,mood:'happy'},{day:0,mood:'tired',time:toMin('12:50')}],
+  palm:  [{day:6,mood:'happy'},{day:5,mood:'happy'},{day:4,mood:'calm'},{day:3,mood:'happy'},
+          {day:2,mood:'calm'},{day:1,mood:'happy'},{day:0,mood:'happy',time:toMin('09:30')}],
 };
 
 // Notes = support. A few words left for a friend, written on a wooden plaque

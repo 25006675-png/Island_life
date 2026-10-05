@@ -1,5 +1,7 @@
-import { CATEGORIES, CAPACITY, TRENDS, MOODS, hours, weatherLabel, fullness, catImg, WEEK } from './data.js';
+import { CATEGORIES, TRENDS, MOODS, LIVE, hours, weatherLabel, fullness, catImg, WEEK } from './data.js';
 import { TODAY, addDays, mondayOf, dow, fromIso, daysBetween } from './plan.js';
+import { reading, weekReading, learned } from './readings.js';
+import { sinkOf } from './climate.js';
 
 // The balance sheet: analysis plus solutions for your own week. Your gardener
 // walks along its top edge (buddy.js; it never speaks or advises).
@@ -13,7 +15,7 @@ const h1=h=>`${+h.toFixed(1)} h`;
 const list=parts=>parts.length<2?parts.join(''):`${parts.slice(0,-1).join(', ')} and ${parts.at(-1)}`;
 
 export function createBalance({plans,me,friends,clock,checkins,sheets,notice,dew,warm}){
-  const sheet=$('balance-sheet'), owner=me.id, cap=CAPACITY[owner];
+  const sheet=$('balance-sheet'), owner=me.id;
   const ahead=b=>!b.done&&(b.date>TODAY||(b.date===TODAY&&b.start>=clock.minutes));
   const when=day=>day===TODAY?'tonight':day===addDays(TODAY,1)?'tomorrow':`on ${DAYS[dow(day)-1]}`;
   let current=[], span='week';
@@ -47,12 +49,12 @@ export function createBalance({plans,me,friends,clock,checkins,sheets,notice,dew
     return out;
   }
 
-  function trend(values){
+  function trend(values,cap){
     const w=132,h=36,p=5,max=Math.max(cap,...values),y=v=>h-p-v/max*(h-2*p);
     const pts=values.map((v,i)=>[p+i*(w-2*p)/(values.length-1),y(v)]);
     $('bal-trend').innerHTML=`<line class="cap" x1="${p}" x2="${w-p}" y1="${y(cap)}" y2="${y(cap)}"/>`+
       `<polyline points="${pts.map(q=>q.join(',')).join(' ')}"/>`+pts.map((q,i)=>`<circle cx="${q[0]}" cy="${q[1]}" r="${i===pts.length-1?3.2:2}"/>`).join('');
-    $('bal-trend').setAttribute('aria-label','How full your last four weeks were, oldest first. The dashed line is a full week.');
+    $('bal-trend').setAttribute('aria-label','How heavy your last weeks were, oldest first. The dashed line is your normal week.');
   }
   const DAYN=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
   const pct=(x,t)=>Math.round(x/t*100);
@@ -126,7 +128,10 @@ export function createBalance({plans,me,friends,clock,checkins,sheets,notice,dew
     let seed=[...monday].reduce((a,c)=>(a*31+c.charCodeAt(0))&0x7fffffff,7);
     const r=()=>{seed=(seed*1103515245+12345)&0x7fffffff;return seed/0x7fffffff;};
     const pick=w=>{let x=r()*w.reduce((a,[,n])=>a+n,0);for(const [k,n] of w)if((x-=n)<0)return k;return w[0][0];};
-    const past=[20,...TRENDS[owner]];   // hours planned in the four weeks before this one, oldest first
+    if(LIVE)return liveMonth(weeks);
+    const normal=reading(owner).normal;   // bars are drawn as how heavy each week was for you
+    const toSink=h=>sinkOf({week:h,normal});
+    const past=[20,...TRENDS[owner]];   // ordinary hours in the four weeks before this one, oldest first
     const crunch=weeks[past.indexOf(Math.max(...past))];
     const days=[];
     for(let i=0;i<35;i++){
@@ -141,12 +146,28 @@ export function createBalance({plans,me,friends,clock,checkins,sheets,notice,dew
     const byCat={}, add=(c,m)=>{byCat[c]=(byCat[c]||0)+m;};
     const bars=weeks.map((w,i)=>{
       if(i===4){const wk=plans.week(owner).filter(b=>!b.skipped);wk.forEach(b=>add(b.cat,b.mins));
-        return {w,plan:plans.hours(wk)/cap,done:plans.hours(wk.filter(b=>b.done))/cap,now:true};}
+        const sink=reading(owner).sink, h=plans.hours(wk)||1;
+        return {w,plan:sink,done:sink*plans.hours(wk.filter(b=>b.done))/h,now:true};}
       const share=w===crunch?{study:.55,work:.05,errands:.07,social:.08,exercise:.07,rest:.06,other:.12}
                             :{study:.38,work:.05,errands:.1,social:.16,exercise:.11,rest:.11,other:.09};
       for(const [c,f] of Object.entries(share))add(c,past[i]*60*f*(.9+r()*.2));
-      const plan=past[i]/cap;return {w,plan,done:plan*(.8+r()*.15)};
+      const plan=toSink(past[i]);return {w,plan,done:plan*(.8+r()*.15)};
     });
+    return {weeks,crunch,days,bars,byCat};
+  }
+  // a signed-in island's last five weeks, from its own plan and lanterns
+  function liveMonth(weeks){
+    const days=[], byCat={};
+    for(let i=0;i<35;i++){
+      const date=addDays(weeks[0],i), back=daysBetween(date,TODAY), es=checkins.filter(c=>c.day===back);
+      days.push({date,mood:back>=0&&es.length?es.at(-1).mood:null,future:back<0});
+    }
+    const bars=weeks.map((w,i)=>{
+      const wk=plans.range(owner,w,7).filter(b=>!b.skipped);for(const b of wk)byCat[b.cat]=(byCat[b.cat]||0)+b.mins;
+      const sink=weekReading(owner,w).sink, h=plans.hours(wk)||1;
+      return {w,plan:sink,done:sink*plans.hours(wk.filter(b=>b.done||b.date<TODAY))/h,now:i===4};
+    });
+    const crunch=bars.reduce((a,b)=>b.plan>a.plan?b:a).w;
     return {weeks,crunch,days,bars,byCat};
   }
   function monthHead(m){
@@ -181,7 +202,7 @@ export function createBalance({plans,me,friends,clock,checkins,sheets,notice,dew
   }
   function weeksBars(m){
     const box=$('bal-days');box.classList.add('weeks');
-    const past=m.bars.slice(0,4), rate=past.reduce((a,b)=>a+b.done/b.plan,0)/past.length;
+    const past=m.bars.slice(0,4), rate=past.reduce((a,b)=>a+(b.plan?b.done/b.plan:0),0)/past.length;
     $('bal-progress').textContent=`About ${pct(rate,1)}% of each week’s plan got done`;
     const max=Math.max(1,...m.bars.map(b=>b.plan));
     box.replaceChildren(...m.bars.map(b=>{
@@ -219,6 +240,20 @@ export function createBalance({plans,me,friends,clock,checkins,sheets,notice,dew
     const label=weatherLabel(me.strain??0);
     return heavy?`${label}: ${heavy===1?'one heavier day':heavy<4?'a few heavier days':'a run of heavier days'} this week.`:`${label}: calm, steady days this week.`;
   }
+  const LEARN_WHAT={study:'Study',work:'Work',errands:'Errands',social:'Time with friends',exercise:'Exercise',rest:'Rest',other:'Other things'};
+  function renderLearned(){
+    const r=reading(owner), list=learned(owner);
+    $('bal-normal').textContent=`Your normal week is about ${Math.round(r.normal)} ordinary hours`+
+      (r.answers>=8?`, and you usually bounce back within ${r.climate.halfLife<3?'a couple of days':r.climate.halfLife<4?'three or four days':'about five days'}.`
+                   :`. Still learning how quickly you recover (${r.answers} of about 8 answers).`);
+    $('bal-learned').replaceChildren(...(list.length?list.map(k=>{
+      const ratio=k.cost/k.prior;
+      const words=ratio>1.15?'heavier for you than for most':ratio<.85?'lighter for you than for most':'about typical for you';
+      const li=el('li',{},catImg(k.cat),el('span',{textContent:`${LEARN_WHAT[k.cat]} feels ${words}`}),el('small',{textContent:`${k.n} answer${k.n===1?'':'s'}`}));
+      li.style.setProperty('--c',CATEGORIES[k.cat].color);li.classList.toggle('heavier',ratio>1.15);li.classList.toggle('lighter',ratio<.85);
+      return li;
+    }):[el('li',{className:'none',textContent:'Nothing yet. After a few activities, answer “How draining was that?” and your island starts to learn.'})]));
+  }
   function renderList(){
     $('bal-suggest').replaceChildren(...current.map(s=>{
       const done=applied.has(s.key);
@@ -229,11 +264,11 @@ export function createBalance({plans,me,friends,clock,checkins,sheets,notice,dew
   }
   function render(){
     if(sheet.hidden)return;
-    const week=plans.week(owner), h=plans.hours(week), load=h/cap;
+    const week=plans.week(owner), r=reading(owner), load=r.sink;
     for(const t of sheet.querySelectorAll('[data-span]'))t.setAttribute('aria-selected',String(t.dataset.span===span));
     $('balance-title').textContent=span==='week'?'Your week, in balance':'Your month, in balance';
     $('bal-done-title').textContent=span==='week'?'Done so far':'Week by week';
-    trend(TRENDS[owner].concat(Math.round(h)));
+    trend(lastWeeks(r),r.normal);
     $('bal-areas').hidden=span!=='week';
     if(span==='week'){
       $('bal-load').textContent=`Your week is ${fullness(load)}`;
@@ -242,8 +277,14 @@ export function createBalance({plans,me,friends,clock,checkins,sheets,notice,dew
       mix(byCatOf(week));moods();progress(week);areas(week,load);
     }else{const m=monthData();monthHead(m);mix(m.byCat,'month');moodMonth(m);weeksBars(m);}
     $('bal-weather').textContent=weatherLine();
-    renderList();
+    renderLearned();renderList();
     $('bal-dew').textContent=`💧 ${dew()} dewdrops, a slow drip from finished blocks, golden-window moments and notes between friends. They grew the windmill in the middle of your island.`;
+  }
+  // the last four weeks and this one, as loads (the demo's earlier weeks are given)
+  function lastWeeks(r){
+    if(TRENDS[owner])return TRENDS[owner].concat(r.week);
+    const monday=mondayOf(TODAY);
+    return [-21,-14,-7].map(n=>weekReading(owner,addDays(monday,n)).week).concat(r.week);
   }
   for(const t of sheet.querySelectorAll('[data-span]'))t.onclick=()=>{span=t.dataset.span;render();};
   return {

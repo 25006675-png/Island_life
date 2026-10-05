@@ -84,11 +84,11 @@ test('week load uses answers where given and predictions elsewhere', () => {
   near(load,2*1.6+predict(c,'rest',-.5));
 });
 
-test('forecast labels a day against a typical day', () => {
-  assert.equal(dayForecast(2,30).label,'light');
-  assert.equal(dayForecast(30/7,30).label,'usual');
-  assert.equal(dayForecast(6,30).label,'heavy');
-  assert.equal(dayForecast(8,30).label,'very heavy');
+test('forecast labels a day against a typical busy day (normal week ÷ 5)', () => {
+  assert.equal(dayForecast(3,30).label,'light');
+  assert.equal(dayForecast(6,30).label,'usual');
+  assert.equal(dayForecast(10,30).label,'heavy');
+  assert.equal(dayForecast(11,30).label,'very heavy');
 });
 
 test('the link is shrunk while there are few days, and unknown below seven', () => {

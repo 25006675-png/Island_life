@@ -115,10 +115,12 @@ export function sinkOf({week,normal,hours=0,late=0}){
 // blocks ending after 23:00 (guardrail 2.5)
 export const isLate=b=>!b.skipped&&b.start+b.mins>23*60;
 
-// ---- 2.4 forecast for one day
+// ---- 2.4 forecast for one day, against a typical busy day: your normal week
+// spread over five days (most students' weeks are weekday-heavy)
+export const typicalDay=normal=>normal/5;
 export function dayForecast(dayLoad,normal){
-  const ratio=dayLoad/(normal/7);
-  return {ratio,label:ratio<.7?'light':ratio<=1.3?'usual':ratio<=1.6?'heavy':'very heavy'};
+  const ratio=dayLoad/typicalDay(normal);
+  return {ratio,label:ratio<.6?'light':ratio<=1.4?'usual':ratio<=1.8?'heavy':'very heavy'};
 }
 export const FORECAST_WORDS={light:'Light for you',usual:'A usual day','heavy':'Heavy for you','very heavy':'Very heavy for you'};
 

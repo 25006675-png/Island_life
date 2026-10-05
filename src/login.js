@@ -1,9 +1,11 @@
 import { createBuddy } from './buddy.js';
+import { createAccount } from './account.js';
 
-// A mock sign-in for the demo: nothing is checked, Enter or the button lets
-// you in, and the world loads behind it meanwhile. The gardener waits big on
-// the cloud line and can be walked right across the page, in front of the
-// cards (← → walk, Space jump, Q E turn), so the sign-in is already the world.
+// The sign-in, with the world loading behind it. The card itself (account.js)
+// signs in, makes an account, or opens the demo, and hands over whose sky to
+// build. The gardener waits big on the cloud line and can be walked right
+// across the page, in front of the cards (← → walk, Space jump, Q E turn), so
+// the sign-in is already the world.
 const $=id=>document.getElementById(id);
 
 export function createLogin(onEnter){
@@ -33,7 +35,7 @@ export function createLogin(onEnter){
   const keys=e=>{
     if(['INPUT','SELECT','TEXTAREA'].includes(document.activeElement.tagName))return;
     const onButton=document.activeElement.tagName==='BUTTON';   // a focused sign or button keeps Enter and Space
-    if(e.code==='Enter'&&e.type==='keydown'&&!onButton){enter();return;}   // Enter anywhere else lets you in
+    if(e.code==='Enter'&&e.type==='keydown'&&!onButton){account.enterKey();return;}   // Enter anywhere else: the card's main action
     if(e.code==='Space'&&onButton)return;
     if(buddy.key(e.code,e.type==='keydown')){e.preventDefault();e.stopImmediatePropagation();}
   };
@@ -53,14 +55,13 @@ export function createLogin(onEnter){
     el.append(m);m.addEventListener('animationend',()=>m.remove());
   });
   let left=false;
-  const enter=()=>{
+  const enter=world=>{
     if(left)return;left=true;el.classList.add('leaving');
     setTimeout(()=>{
       el.hidden=true;cancelAnimationFrame(raf);
       for(const type of ['keydown','keyup'])document.removeEventListener(type,keys,true);
-      onEnter?.();
+      onEnter?.(world);
     },matchMedia('(prefers-reduced-motion: reduce)').matches?0:450);
   };
-  $('login-form').onsubmit=e=>{e.preventDefault();enter();};
-  $('login-guest').onclick=enter;
+  const account=createAccount({form:$('login-form'),enter});
 }
