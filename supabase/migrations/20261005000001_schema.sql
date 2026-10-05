@@ -91,8 +91,6 @@ create table public.blocks (
   external_id        text,
   external_calendar  text,
   kept_cat           boolean not null default false,   -- the student changed the kind; sync keeps theirs
-  -- two-way sync: the event this block became in the "Island Life" calendar
-  google_event_id    text,
   created_at         timestamptz not null default now(),
   updated_at         timestamptz not null default now(),
   unique (owner, source, external_id)
