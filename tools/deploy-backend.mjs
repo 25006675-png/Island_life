@@ -17,7 +17,7 @@ const missing = need.filter(k => !env[k]);
 if (missing.length) { console.error('Missing in .env:', missing.join(', ')); process.exit(1); }
 
 const REF = env.supabase_project_id, URL = `https://${REF}.supabase.co`;
-const APP = 'https://island-life-one.vercel.app';
+const APP = 'https://island-life-r21r.vercel.app';
 const LOCAL = ['http://127.0.0.1:5173', 'http://127.0.0.1:5179'];
 const steps = process.argv.slice(2).length ? process.argv.slice(2) : ['db', 'secrets', 'functions', 'vault', 'auth'];
 const cliEnv = { ...process.env, SUPABASE_ACCESS_TOKEN: env.supabase_access_token, SUPABASE_DB_PASSWORD: env.supabase_db_password };

@@ -35,7 +35,7 @@ export const fromCron = (req: Request) => {
 
 // The apps allowed to receive a student back after Google: production and local dev.
 export function allowedReturn(url: string | null): string {
-  const origins = (Deno.env.get('APP_ORIGINS') ?? 'https://island-life-one.vercel.app').split(',').map(s => s.trim());
+  const origins = (Deno.env.get('APP_ORIGINS') ?? 'https://island-life-r21r.vercel.app').split(',').map(s => s.trim());
   try {
     const u = new URL(url ?? '');
     if (origins.includes(u.origin)) return u.toString();
