@@ -4,7 +4,7 @@
 //
 // Reads keys from .env (never committed) and passes them through environment
 // variables, so nothing secret appears on a command line or in this file.
-import { readFileSync, writeFileSync, rmSync } from 'node:fs';
+import { readFileSync, readdirSync, writeFileSync, rmSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
