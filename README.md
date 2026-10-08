@@ -17,7 +17,7 @@
 
 ## Project Links
 
-- **Video Presentation:** _To be added_
+- **Video Presentation:** [https://www.youtube.com/watch?v=IwbC7wqz-7Q](https://www.youtube.com/watch?v=IwbC7wqz-7Q)
 - **Presentation Slides:** [https://canva.link/7yl54f1zapatoy0](https://canva.link/7yl54f1zapatoy0)
 - **Prototype:** [https://island-life-one.vercel.app/](https://island-life-one.vercel.app/)
 
