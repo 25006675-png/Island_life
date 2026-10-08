@@ -240,6 +240,10 @@ export const calendar={
 export async function gardenerLine(mode,facts,fallback){
   try{return (await fn('gardener',{mode,facts,fallback})).line||fallback;}catch{return fallback;}
 }
+// Gemini's own idea from a summary of the week; null means use the app's own ideas
+export async function gardenerIdea(summary){
+  try{return (await fn('gardener',summary)).idea??null;}catch{return null;}
+}
 
 // ---- phone prompts ----------------------------------------------------------------------------------------
 export const pushSupported=()=>configured&&!!VAPID&&'serviceWorker' in navigator&&'PushManager' in window&&'Notification' in window;

@@ -2,7 +2,7 @@
   "name": "Island Life",
   "short_name": "Island Life",
   "description": "Your week, grown into an island in the sky.",
-  "start_url": "/",
+  "start_url": "/?enter",
   "scope": "/",
   "display": "standalone",
   "background_color": "#e8e0f4",

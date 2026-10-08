@@ -1,5 +1,5 @@
 import { CATEGORIES, DAWN, NIGHT, fmt, hours, toMin, fullness, catImg } from './data.js';
-import { TODAY, iso, fromIso, addDays, dow, mondayOf } from './plan.js';
+import { TODAY, iso, fromIso, addDays, dow, mondayOf, isDone } from './plan.js';
 import { blockStatus } from './timetable.js';
 import { confirmLetGo } from './confirm.js';
 import { dayReading, weekReading, forget } from './readings.js';
@@ -20,13 +20,13 @@ const STATUS={done:'done',now:'happening now',planned:'planned',skipped:'let go'
 const el=(tag,props={},...kids)=>{const e=Object.assign(document.createElement(tag),props);e.append(...kids);return e;};
 const option=(value,text)=>el('option',{value,textContent:text});
 
-export function createCalendar({plans,owner,clock,notice,sheets,afterDone,live=null}){
+export function createCalendar({plans,owner,clock,notice,sheets,live=null}){
   const sheet=$('planner-sheet');
   // a coming day's heaviness, in words; past days have already happened
   const ahead=date=>{if(date<TODAY)return null;const f=dayReading(owner,date);return f.label==='usual'?null:f;};
   let tab='day', date=TODAY, editing=null;
-  // weeks before this one are settled history; this week waits for Done or Let go
-  const statusOn=b=>b.skipped?'skipped':b.done||b.date<mondayOf(TODAY)?'done':b.date<TODAY?'waiting':b.date>TODAY?'planned':blockStatus(b,clock.minutes);
+  // earlier days are settled (plan.js isDone); today waits for Done or Let go
+  const statusOn=b=>b.skipped?'skipped':isDone(b)?'done':b.date>TODAY?'planned':blockStatus(b,clock.minutes);
   const short=s=>{const d=fromIso(s);return `${DAYS[dow(s)-1]} ${d.getDate()} ${MONTHS[d.getMonth()].slice(0,3)}`;};
 
   // ---- editor (shared by every view) -------------------------------------------
@@ -159,20 +159,21 @@ export function createCalendar({plans,owner,clock,notice,sheets,afterDone,live=n
       // every block can be answered: Done grows its tree, Let go lets it drift away
       const acts=el('span',{className:'plan-acts'});
       const act=(label,fn,cls='text-button')=>{const x=el('button',{type:'button',className:cls,textContent:label});x.onclick=fn;acts.append(x);return x;};
-      if(st==='done')act('Undo',()=>plans.unmarkDone(owner,b));
+      if(st==='done'&&b.done)act('Undo',()=>plans.unmarkDone(owner,b));
+      else if(st==='done')act('Didn’t happen',async()=>{if(await confirmLetGo(b.title))plans.toggleSkip(owner,b);});   // a settled earlier day
       else if(st==='skipped')act('Bring back',()=>plans.toggleSkip(owner,b));
       else{
         // Done only once it has happened; upcoming blocks can still be let go
-        const d=act('Done',()=>{plans.markDone(owner,b);afterDone?.(b);},'plan-done');
+        const d=act('Done',()=>plans.markDone(owner,b),'plan-done');
         if(st!=='waiting'){d.disabled=true;d.title='You can mark it done once it has happened';}
         act('Let go',async()=>{if(await confirmLetGo(b.title))plans.toggleSkip(owner,b);});
       }
       li.append(acts);list.append(li);
     }
-    // blocks whose time has passed wait for an answer; one tap answers them all
+    // today's blocks whose time has passed wait for an answer; one tap answers them all
     const waiting=blocks.filter(b=>statusOn(b)==='waiting');
     $('mark-all').hidden=!waiting.length;$('mark-all').textContent=`Mark all as done (${waiting.length})`;
-    $('mark-all').onclick=()=>{for(const b of waiting)plans.markDone(owner,b);notice(`${waiting.length} block${waiting.length===1?'':'s'} took root.`);afterDone?.(waiting);};
+    $('mark-all').onclick=()=>{for(const b of waiting)plans.markDone(owner,b);notice(`${waiting.length} block${waiting.length===1?'':'s'} took root.`);};
   }
 
   // ---- Week ------------------------------------------------------------------------

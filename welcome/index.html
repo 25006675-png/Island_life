@@ -1,0 +1,862 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Island Life · Welcome home</title>
+<style>
+/* Island Life as a game: the panel is a dialogue box (Blomy is talking to you), the main button is the "continue".
+   Type: Fredoka for everything you'd see in a game's UI (titles, name tag, buttons); Nunito Sans for reading text.
+   Both are served from ./fonts (SIL Open Font License, see the OFL files there). */
+@font-face{font-family:'Fredoka';font-weight:300 700;font-stretch:75% 125%;font-display:swap;src:url(/assets/fonts/fredoka.woff) format('woff')}
+@font-face{font-family:'Nunito Sans';font-weight:200 1000;font-display:swap;src:url(/assets/fonts/nunitosans.woff) format('woff')}
+:root{
+  --ink:#3a2550;          /* dusk plum: all text */
+  --ink-soft:#6e5a86;
+  --paper:#fff8f0;        /* cloud cream */
+  --lantern:#f2c14e;      /* lantern gold: frames, keys */
+  --lantern-deep:#c98f22;
+  --leaf:#5cae48;         /* Blomy's green: kept for her name only */
+  --leaf-deep:#2f7a2c;
+  --lilac:#c9a2ff;        /* the dream palette: lilac, orchid, petal pink, peach, periwinkle (the sky at dusk) */
+  --orchid:#9d63f2;
+  --orchid-deep:#4f2a99;
+  --pink:#ff9fd8;
+  --peach:#ffd6a8;
+  --peri:#9fc4ff;
+  --violet:#6a4499;       /* twilight: second-rank actions */
+  --violet-soft:#dccbf0;
+  --petal:#f6b8cf;
+  --dawn:#231a4a;         /* page ground, matches the dusk sky */
+  --display:'Fredoka','Baloo 2','Trebuchet MS',system-ui,sans-serif;
+  --body:'Nunito Sans','Segoe UI',system-ui,sans-serif;
+  --spring:cubic-bezier(.34,1.56,.64,1);
+  color-scheme:light;
+}
+html,body{height:100%}
+body{margin:0;background:var(--dawn);color:var(--ink);font-family:var(--body);overflow:hidden;-webkit-font-smoothing:antialiased}
+#world{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:pan-y}
+.vignette{position:fixed;inset:0;pointer-events:none;background:radial-gradient(ellipse at 45% 42%,transparent 55%,rgba(20,10,40,.38) 100%)}
+button{font-family:var(--display);-webkit-tap-highlight-color:transparent}
+button:focus-visible,input:focus-visible,a:focus-visible{outline:3px solid var(--pink);outline-offset:3px}
+[hidden]{display:none!important}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+svg.i{width:1.15em;height:1.15em;flex:none;fill:currentColor}
+
+/* loading: the brand on the dusk sky, a lantern-gold bar that tracks the real asset bytes */
+#veil{position:fixed;inset:0;z-index:20;display:grid;place-items:center;background:radial-gradient(ellipse at 50% 35%,#5a3a92,#231a4a 70%);transition:opacity .9s ease;pointer-events:none}
+#veil.gone{opacity:0}
+.veil-inner{display:grid;justify-items:center;gap:18px;transform:translateY(-4vh)}
+.veil-inner img{height:64px;width:auto}
+.veil-inner p{margin:0;font:500 17px/1.4 var(--display);color:#efe4ff;letter-spacing:.01em}
+.bar{width:170px;height:8px;background:rgba(255,255,255,.14);overflow:hidden;border-radius:8px;box-shadow:inset 0 1px 2px rgba(0,0,0,.25)}
+.bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--lilac),var(--pink),var(--peach));border-radius:8px;transition:width .3s;box-shadow:0 0 12px rgba(255,159,216,.7)}
+
+.logo{position:fixed;top:calc(env(safe-area-inset-top,0px) + 18px);left:22px;height:50px;width:auto;z-index:5;opacity:0;transition:opacity .8s ease;filter:drop-shadow(0 1px 10px rgba(255,250,246,.95)) drop-shadow(0 0 2px rgba(255,255,255,.9))}
+.lit .logo{opacity:1}
+
+/* buttons: three ranks. The orchid button is the one action. */
+.go{position:relative;overflow:hidden;width:100%;display:flex;align-items:center;gap:12px;padding:14px 18px 15px;border-radius:18px;border:3px solid #f6eeff;
+  background:radial-gradient(120% 140% at 20% 0%,rgba(255,159,216,.55),transparent 55%),linear-gradient(#c99bff,var(--orchid) 55%,#7c46d8);color:#fff;font:600 20px/1 var(--display);letter-spacing:.01em;text-shadow:0 2px 0 rgba(60,24,120,.55);cursor:pointer;
+  box-shadow:0 5px 0 var(--orchid-deep),0 14px 26px -10px rgba(124,70,216,.8),0 0 26px -6px rgba(255,159,216,.6),inset 0 2px 0 rgba(255,255,255,.5);transition:transform .14s ease,box-shadow .14s ease}
+.go b{font-weight:600;flex:1;text-align:left}
+.go:hover{transform:translateY(-2px);box-shadow:0 7px 0 var(--orchid-deep),0 18px 28px -10px rgba(124,70,216,.85),0 0 34px -4px rgba(255,159,216,.75),inset 0 2px 0 rgba(255,255,255,.5)}
+.go:active,.go.pressed{transform:translateY(4px);box-shadow:0 1px 0 var(--orchid-deep),0 6px 12px -6px rgba(124,70,216,.7),inset 0 2px 0 rgba(255,255,255,.4)}
+.go::after{content:"";position:absolute;top:-20%;bottom:-20%;width:38%;left:-50%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.55),transparent);transform:skewX(-18deg);pointer-events:none}
+.panel.s3 .go:not(.pressed)::after{animation:glint 4.2s ease-in-out 1.1s infinite}
+@keyframes glint{0%,70%{left:-50%}86%,100%{left:130%}}
+.go .leaf{font-size:22px;filter:drop-shadow(0 2px 0 rgba(60,24,120,.5))}
+.go.pressed .leaf{animation:spin 1.1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+kbd{font:600 12px/1 var(--display);padding:5px 8px 6px;border-radius:8px;background:rgba(255,255,255,.22);border:2px solid rgba(255,255,255,.65);box-shadow:0 2px 0 rgba(60,24,120,.45);text-shadow:none;letter-spacing:.02em}
+@media (hover:none){kbd{display:none}}
+.pill{display:inline-flex;align-items:center;gap:8px;padding:9px 16px 10px;border-radius:999px;border:2.5px solid var(--violet-soft);background:#fff;color:var(--violet);font:600 15px/1 var(--display);cursor:pointer;
+  box-shadow:0 3px 0 var(--violet-soft);transition:transform .14s ease,box-shadow .14s ease,border-color .2s}
+.pill:hover{transform:translateY(-2px);box-shadow:0 5px 0 var(--violet-soft);border-color:#c7afe8}
+.pill:active{transform:translateY(2px);box-shadow:0 1px 0 var(--violet-soft)}
+.pill.quiet{border-color:transparent;background:transparent;box-shadow:none;color:var(--ink-soft);padding-left:8px;padding-right:8px}
+.pill.quiet:hover{color:var(--violet);transform:none}
+
+#skip{position:fixed;z-index:6;top:calc(env(safe-area-inset-top,0px) + 20px);right:22px;opacity:0;transition:opacity .4s ease,transform .14s ease,box-shadow .14s ease;border-color:rgba(255,255,255,.9);color:var(--ink);box-shadow:0 3px 0 rgba(40,20,70,.45)}
+.lit #skip{opacity:1}
+
+/* the dialogue box: a frame of slowly moving dusk colours, a pearl inner line, a violet underside like a tile you could press */
+.panel{position:fixed;z-index:5;right:max(28px,6vw);top:50%;width:min(400px,calc(100vw - 48px));transform:translateY(-50%);opacity:0;pointer-events:none;transition:opacity .35s ease}
+.panel.on{opacity:1;pointer-events:auto}
+.card{position:relative;box-sizing:border-box;padding:34px 28px 20px;border-radius:28px;border:4px solid transparent;
+  background:radial-gradient(90% 70% at 100% 0%,rgba(255,214,168,.28),transparent 60%) padding-box,radial-gradient(120% 90% at 0% 0%,#fefaff 0%,#f5ecff 52%,#fdeef9 100%) padding-box,
+    linear-gradient(120deg,var(--lilac),var(--pink),var(--peach),var(--peri),var(--lilac),var(--pink)) border-box;
+  background-size:100% 100%,100% 100%,300% 300%;
+  box-shadow:inset 0 0 0 3px rgba(255,255,255,.85),0 7px 0 #6b45b8,0 0 46px -8px rgba(201,162,255,.65),0 34px 50px -22px rgba(30,8,60,.75)}
+.panel.s1 .card,#entry.on .card{animation:pop .75s var(--spring) both,aurora 9s linear infinite}
+@keyframes aurora{to{background-position:0 0,0 0,300% 0}}
+@keyframes pop{0%{transform:scale(.82) rotate(-2.5deg);opacity:0}55%{opacity:1}100%{transform:none;opacity:1}}
+.nametag{position:absolute;top:-21px;left:22px;display:inline-flex;align-items:center;gap:7px;padding:7px 16px 8px 12px;border-radius:999px;border:3px solid #fffaf0;
+  background:linear-gradient(#ffb1e1,#c46be8);color:#fff;font:600 17px/1 var(--display);text-shadow:0 2px 0 rgba(110,40,140,.5);box-shadow:0 4px 0 #8a3fb3,0 0 18px -2px rgba(255,159,216,.8);transform:rotate(-3deg)}
+.title{margin:0 0 10px;font:600 44px/1 var(--display);letter-spacing:-.005em;color:var(--ink);text-shadow:0 3px 0 #fff,0 5px 0 rgba(157,99,242,.28);text-wrap:balance}
+.lede{margin:0 0 20px;font-size:16px;line-height:1.55;color:var(--ink-soft);text-wrap:pretty;min-height:4.65em}
+.lede .w{white-space:nowrap}
+.row{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:16px;flex-wrap:wrap}
+/* staging: name tag and title, then Blomy's line types out, then the buttons */
+.panel .nametag,.panel .title,.panel .go,.panel .row{opacity:0;transition:opacity .35s ease,transform .55s var(--spring)}
+.panel .nametag{transform:translateY(-10px) rotate(-8deg)}
+.panel .title{transform:translateY(10px) scale(.94)}
+.panel .go,.panel .row{transform:translateY(12px) scale(.96)}
+.panel.s1 .nametag{opacity:1;transform:rotate(-3deg)}
+.panel.s1 .title{opacity:1;transform:none}
+.panel.s3 .go,.panel.s3 .row{opacity:1;transform:none}
+.panel.s3 .row{transition-delay:.08s}
+.lede .c{opacity:0}
+.panel.s2 .lede .c{opacity:1;transition:opacity .08s linear calc(var(--i) * 8ms)}
+
+/* ornaments: a crescent moon on the top corner, a flowering vine on the bottom corner, sparkles that twinkle on the frame,
+   the RPG "more" arrow once the line has typed out, and a burst of stardust when the button is pressed */
+.orn{position:absolute;pointer-events:none;display:block}
+.orn svg{display:block;width:100%;height:100%;overflow:visible}
+.moon{top:-30px;right:-18px;width:66px;height:66px;filter:drop-shadow(0 0 12px rgba(255,214,168,.8)) drop-shadow(0 3px 0 rgba(107,69,184,.35));animation:moon 7s ease-in-out infinite}
+@keyframes moon{50%{transform:translateY(-4px) rotate(-6deg)}}
+.vine{z-index:0;bottom:-58px;left:-96px;width:170px;height:122px;rotate:180deg;filter:drop-shadow(0 -2px 0 rgba(79,42,153,.25));transform-origin:50% 50%;animation:sway 8s ease-in-out infinite}
+@keyframes sway{50%{transform:rotate(-2.5deg)}}
+.panel>.card{z-index:1}
+.tw{position:absolute;width:18px;height:18px;color:#fff;filter:drop-shadow(0 0 6px var(--pink)) drop-shadow(0 0 2px #fff);animation:tw 2.8s ease-in-out infinite;pointer-events:none}
+.tw svg{width:100%;height:100%;fill:currentColor;display:block}
+.tw.a{top:16px;right:62px;width:12px;height:12px;animation-delay:.4s}
+.tw.b{top:46%;right:-10px;animation-delay:1.3s}
+.tw.c{bottom:58px;right:18px;width:13px;height:13px;animation-delay:2.1s}
+.tw.d{top:-8px;left:46%;width:11px;height:11px;animation-delay:.9s}
+@keyframes tw{0%,100%{transform:scale(.3) rotate(0);opacity:.2}45%{transform:scale(1) rotate(45deg);opacity:1}}
+.next{display:inline-block;width:12px;height:10px;margin-left:6px;vertical-align:-1px;color:var(--orchid);opacity:0;transition:opacity .3s}
+.next svg{width:100%;height:100%;fill:currentColor;display:block}
+.panel.s3 .next{opacity:1;animation:nudge 1s ease-in-out infinite}
+@keyframes nudge{50%{transform:translateY(3px)}}
+.burst{position:absolute;width:10px;height:10px;margin:-5px 0 0 -5px;pointer-events:none;z-index:3;color:#fff;animation:burst .9s cubic-bezier(.2,.7,.3,1) forwards}
+.burst svg{width:100%;height:100%;fill:currentColor;filter:drop-shadow(0 0 4px var(--c))}
+@keyframes burst{0%{transform:translate(0,0) scale(.4) rotate(0);opacity:1}100%{transform:translate(var(--dx),var(--dy)) scale(1.1) rotate(160deg);opacity:0}}
+
+/* after the button: a warm veil, then the real entry (the same sign-in as the app's login section) */
+#warm{position:fixed;inset:0;z-index:11;pointer-events:none;opacity:0;transition:opacity 1s ease;background:radial-gradient(ellipse at 70% 30%,rgba(255,214,168,.35),transparent 50%),radial-gradient(ellipse at 40% 60%,rgba(232,214,255,.6),rgba(240,228,252,.94) 70%)}
+#warm.on{opacity:1}
+#entry{position:fixed;inset:0;z-index:12;display:grid;grid-template-columns:1.1fr .9fr;align-items:center;gap:4vw;padding:0 7vw;box-sizing:border-box;opacity:0;pointer-events:none;transition:opacity .9s ease;overflow:auto}
+#entry.on{opacity:1;pointer-events:auto}
+.entry-pitch img{height:46px;width:auto;margin-bottom:22px;display:block}
+.entry-pitch h2{font:600 clamp(34px,3.9vw,56px)/1.04 var(--display);margin:0 0 16px;color:var(--ink);text-shadow:0 3px 0 #fff,0 6px 0 rgba(157,99,242,.25);text-wrap:balance}
+.entry-pitch p{margin:0;font-size:17px;line-height:1.6;color:var(--ink-soft);max-width:42ch;text-wrap:pretty}
+.entry-card{display:grid;gap:12px;max-width:390px;width:100%;justify-self:end;padding:30px 26px 20px}
+.entry-card h3{margin:0;font:600 28px/1.05 var(--display);color:var(--ink)}
+.entry-card>p{margin:0 0 2px;font-size:15px;color:var(--ink-soft)}
+.entry-card label{display:grid;gap:6px;font:500 15px var(--display);color:var(--ink)}
+.entry-card input{font:16px var(--body);padding:12px 14px;border-radius:14px;border:2.5px solid #eadcf3;background:#fff;color:var(--ink);width:100%;box-sizing:border-box;transition:border-color .2s,box-shadow .2s}
+.entry-card input:focus{outline:none;border-color:var(--orchid);box-shadow:0 0 0 4px rgba(157,99,242,.2)}
+.entry-card .go{margin-top:6px;justify-content:center}
+.entry-card .go b{flex:none}
+.entry-card .pill{justify-content:center}
+.entry-card .demo{margin:2px 0 0;font-size:13px;color:var(--ink-soft);text-align:center}
+/* the sign-in card's content comes from the app (src/account.js): its buttons wear this page's .go and .pill */
+#login-form{display:grid;gap:12px}
+#login-form h2{margin:0;font:600 28px/1.05 var(--display);color:var(--ink)}
+#login-form>p{margin:0 0 2px;font-size:15px;color:var(--ink-soft)}
+#login-form label{display:grid;gap:6px;font:500 15px var(--display);color:var(--ink)}
+#login-form .solid{position:relative;overflow:hidden;width:100%;margin-top:6px;padding:13px 18px 14px;border-radius:18px;border:3px solid #f6eeff;
+  background:radial-gradient(120% 140% at 20% 0%,rgba(255,159,216,.55),transparent 55%),linear-gradient(#c99bff,var(--orchid) 55%,#7c46d8);color:#fff;font:600 19px/1 var(--display);text-shadow:0 2px 0 rgba(60,24,120,.55);cursor:pointer;
+  box-shadow:0 5px 0 var(--orchid-deep),0 14px 26px -10px rgba(124,70,216,.8),inset 0 2px 0 rgba(255,255,255,.5);transition:transform .14s ease,box-shadow .14s ease}
+#login-form .solid:hover{transform:translateY(-2px)}
+#login-form .solid:active{transform:translateY(4px);box-shadow:0 1px 0 var(--orchid-deep),inset 0 2px 0 rgba(255,255,255,.4)}
+#login-form .google-button,#login-form .solid-ghost,#login-form .pill{display:flex;align-items:center;justify-content:center;gap:10px;padding:10px 16px 11px;border-radius:999px;border:2.5px solid var(--violet-soft);background:#fff;color:var(--violet);font:600 15px/1 var(--display);cursor:pointer;box-shadow:0 3px 0 var(--violet-soft);transition:transform .14s ease,box-shadow .14s ease}
+#login-form .google-button:hover,#login-form .solid-ghost:hover,#login-form .pill:hover{transform:translateY(-2px);box-shadow:0 5px 0 var(--violet-soft)}
+#login-form .google-button .g{display:grid;place-items:center;width:22px;height:22px;border-radius:50%;background:conic-gradient(#ea4335 0 25%,#fbbc05 0 50%,#34a853 0 75%,#4285f4 0);color:#fff;font:700 13px/1 var(--body)}
+#login-form .text-button{border:0;background:none;padding:2px 0;color:var(--violet);font:600 14px var(--display);cursor:pointer;text-decoration:underline;text-decoration-color:var(--violet-soft);text-underline-offset:3px}
+#login-form .text-button:hover{text-decoration-color:currentColor}
+#login-form .text-button.small{font-size:13px;color:var(--ink-soft)}
+#login-form>.text-button{justify-self:center}
+#login-form .login-links{display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px 14px}
+#login-form .login-or{margin:0;text-align:center;font-size:13px;color:var(--ink-soft)}
+#login-form .login-status{margin:0;min-height:1em;font-size:14px;color:#b4235a}
+#login-form .login-status.good{color:var(--leaf-deep)}
+#login-form button:disabled{opacity:.6;cursor:wait}
+.entry-foot{position:fixed;left:20px;bottom:calc(env(safe-area-inset-bottom,0px) + 16px)}
+#toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 22px);transform:translateX(-50%);background:var(--ink);color:#fff8f0;font:500 15px var(--display);padding:11px 18px;border-radius:999px;z-index:30;opacity:0;transition:opacity .3s;pointer-events:none;max-width:calc(100vw - 48px);text-align:center;box-shadow:0 4px 0 rgba(0,0,0,.25)}
+#toast.on{opacity:1}
+
+/* phones, portrait: scene in the top half, the dialogue box is a sheet along the bottom */
+@media (max-width:820px){
+  .logo{height:38px;left:16px}
+  #skip{right:14px;top:calc(env(safe-area-inset-top,0px) + 14px)}
+  .panel{right:10px;left:10px;width:auto;top:auto;bottom:calc(env(safe-area-inset-bottom,0px) + 10px);transform:none}
+  .card{padding:30px 20px 14px;border-radius:24px}
+  .moon{width:52px;height:52px;top:-24px;right:-6px}
+  .vine{display:none}
+  .tw.b{right:-6px}
+  .title{font-size:34px;margin-bottom:6px}
+  .lede{font-size:14.5px;margin-bottom:14px;min-height:0}
+  .go{font-size:18px;padding:12px 16px 13px}
+  .row{margin-top:12px}
+  #entry{grid-template-columns:1fr;align-content:start;gap:34px;padding:calc(env(safe-area-inset-top,0px) + 24px) 16px 90px}
+  .entry-pitch img{height:36px;margin-bottom:14px}
+  .entry-pitch h2{font-size:31px}
+  .entry-pitch p{font-size:15px}
+  .entry-card{justify-self:stretch;max-width:none;padding:26px 18px 16px}
+}
+@media (max-width:820px) and (max-height:620px){.lede{display:none}}
+@media (prefers-reduced-motion:reduce){
+  .panel,.panel *,.logo,#veil,#warm,#entry,.entry-card,#skip{transition-duration:.2s!important;animation:none!important}
+  .lede .c{opacity:1!important;transition:none!important}
+  .card,.moon,.tw,.next,.vine{animation:none!important}.tw{opacity:.8}
+}
+</style>
+
+<canvas id="world" aria-label="Blomy arriving at your island on a cloud whale" role="img"></canvas>
+<div class="vignette" aria-hidden="true"></div>
+<div id="warm" aria-hidden="true"></div>
+<div id="veil" role="status"><div class="veil-inner"><img src="/assets/logo.webp" alt="Island Life" width="351" height="120"><p id="veil-text">Gathering the island…</p><div class="bar"><i id="bar"></i></div></div></div>
+<img class="logo" src="/assets/logo.webp" alt="Island Life" width="351" height="120">
+<button type="button" id="skip" class="pill">Skip <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5v13l8-6.5zM12.5 5.5v13l8-6.5z"/></svg></button>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <symbol id="spark" viewBox="0 0 20 20"><path d="M10 0Q11 9 20 10Q11 11 10 20Q9 11 0 10Q9 9 10 0Z"/></symbol>
+  <linearGradient id="moong" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff7dc"/><stop offset=".55" stop-color="#ffd6a8"/><stop offset="1" stop-color="#ffaedf"/></linearGradient>
+</defs></svg>
+<section class="panel" id="panel" aria-labelledby="welcome">
+  <span class="orn vine" aria-hidden="true"><svg viewBox="0 0 128 92"><path d="M6 88C18 70 14 52 30 44S58 40 70 30S96 12 122 14" fill="none" stroke="#5f9f48" stroke-width="3.4" stroke-linecap="round"/><path d="M30 44c-9-3-12-13-4-16c6-2 8 5 3 7" fill="none" stroke="#5f9f48" stroke-width="2.2" stroke-linecap="round"/><path d="M70 30c2-8 10-10 13-5c2 4-3 7-5 4" fill="none" stroke="#5f9f48" stroke-width="2" stroke-linecap="round"/><ellipse cx="14" cy="72" rx="7.5" ry="3.6" transform="rotate(-55 14 72)" fill="#7cc35f"/><ellipse cx="22" cy="56" rx="7" ry="3.4" transform="rotate(30 22 56)" fill="#8fd06e"/><ellipse cx="40" cy="40" rx="7" ry="3.4" transform="rotate(-30 40 40)" fill="#7cc35f"/><ellipse cx="58" cy="36" rx="6.5" ry="3.2" transform="rotate(35 58 36)" fill="#8fd06e"/><ellipse cx="78" cy="26" rx="7" ry="3.4" transform="rotate(-35 78 26)" fill="#7cc35f"/><ellipse cx="96" cy="16" rx="6.5" ry="3.2" transform="rotate(30 96 16)" fill="#8fd06e"/><ellipse cx="108" cy="12" rx="6" ry="3" transform="rotate(-20 108 12)" fill="#7cc35f"/><circle cx="46.0" cy="38.4" r="2.8" fill="#ffb6dd"/><circle cx="49.4" cy="40.9" r="2.8" fill="#ffb6dd"/><circle cx="48.1" cy="44.9" r="2.8" fill="#ffb6dd"/><circle cx="43.9" cy="44.9" r="2.8" fill="#ffb6dd"/><circle cx="42.6" cy="40.9" r="2.8" fill="#ffb6dd"/><circle cx="46" cy="42" r="2.2" fill="#ffd56a"/><circle cx="86.0" cy="18.8" r="2.5" fill="#ffffff"/><circle cx="89.0" cy="21.0" r="2.5" fill="#ffffff"/><circle cx="87.9" cy="24.6" r="2.5" fill="#ffffff"/><circle cx="84.1" cy="24.6" r="2.5" fill="#ffffff"/><circle cx="83.0" cy="21.0" r="2.5" fill="#ffffff"/><circle cx="86" cy="22" r="2.0" fill="#ffd56a"/><circle cx="116.0" cy="10.0" r="2.3" fill="#e3c8ff"/><circle cx="118.9" cy="12.1" r="2.3" fill="#e3c8ff"/><circle cx="117.8" cy="15.4" r="2.3" fill="#e3c8ff"/><circle cx="114.2" cy="15.4" r="2.3" fill="#e3c8ff"/><circle cx="113.1" cy="12.1" r="2.3" fill="#e3c8ff"/><circle cx="116" cy="13" r="1.9" fill="#ffd56a"/><circle cx="20.0" cy="61.2" r="2.2" fill="#ffffff"/><circle cx="22.7" cy="63.1" r="2.2" fill="#ffffff"/><circle cx="21.6" cy="66.3" r="2.2" fill="#ffffff"/><circle cx="18.4" cy="66.3" r="2.2" fill="#ffffff"/><circle cx="17.3" cy="63.1" r="2.2" fill="#ffffff"/><circle cx="20" cy="64" r="1.7" fill="#ffd56a"/></svg></span>
+  <div class="card">
+    <span class="orn moon" aria-hidden="true"><svg viewBox="0 0 64 64"><path d="M38 6a26 26 0 1 0 20 42A21 21 0 1 1 38 6z" fill="url(#moong)" stroke="#fff" stroke-width="2.2" stroke-linejoin="round"/><circle cx="22" cy="40" r="3.2" fill="#ffb1e1" opacity=".45"/><circle cx="30" cy="50" r="2" fill="#ffb1e1" opacity=".4"/><circle cx="18" cy="28" r="1.8" fill="#ffb1e1" opacity=".35"/><use href="#spark" x="48" y="2" width="12" height="12" fill="#fff"/><use href="#spark" x="56" y="20" width="7" height="7" fill="#ffe7f6"/></svg></span><i class="tw a" aria-hidden="true"><svg viewBox="0 0 20 20"><use href="#spark"/></svg></i><i class="tw b" aria-hidden="true"><svg viewBox="0 0 20 20"><use href="#spark"/></svg></i><i class="tw c" aria-hidden="true"><svg viewBox="0 0 20 20"><use href="#spark"/></svg></i><i class="tw d" aria-hidden="true"><svg viewBox="0 0 20 20"><use href="#spark"/></svg></i>
+    <span class="nametag"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 4C11 4 5 8 5 15c0 1.3.3 2.5.8 3.5L4 20.3l1.4 1.4 1.8-1.8c1 .6 2.3 1.1 3.8 1.1C18 21 20 13 20 4zm-9.6 13.4-1.2-1.2C12 13 14.6 10.5 17 9c-2.6 2-4.7 4.6-6.6 8.4z"/></svg>Blomy</span>
+    <h1 class="title" id="welcome">Welcome home!</h1>
+    <p class="lede" id="lede">Your week becomes a little island in the sky. Stay a while: I’ll keep the garden growing, and your friends are only a bridge away.</p>
+    <button type="button" class="go" id="ashore"><svg class="i leaf" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 4C11 4 5 8 5 15c0 1.3.3 2.5.8 3.5L4 20.3l1.4 1.4 1.8-1.8c1 .6 2.3 1.1 3.8 1.1C18 21 20 13 20 4zm-9.6 13.4-1.2-1.2C12 13 14.6 10.5 17 9c-2.6 2-4.7 4.6-6.6 8.4z"/></svg><b id="ashore-label">Come ashore</b><kbd>Enter</kbd></button>
+    <div class="row">
+      <button type="button" class="pill" id="signin-link">Sign in to my island</button>
+      <button type="button" class="pill quiet" id="replay"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5V2L7 6l5 4V7a5 5 0 1 1-5 5H5a7 7 0 1 0 7-7z"/></svg>Replay</button>
+    </div>
+  </div>
+</section>
+
+<section id="entry" aria-labelledby="entry-title">
+  <div class="entry-pitch">
+    <img src="/assets/logo.webp" alt="Island Life" width="351" height="120">
+    <h2 id="entry-title">Your week, grown into an island in the sky.</h2>
+    <p>Island Life turns your timetable and your feelings into a small floating world. A heavy week shows before it arrives, and friends see your weather, never your plans.</p>
+  </div>
+  <div class="entry-card card">
+    <span class="orn moon" aria-hidden="true"><svg viewBox="0 0 64 64"><path d="M38 6a26 26 0 1 0 20 42A21 21 0 1 1 38 6z" fill="url(#moong)" stroke="#fff" stroke-width="2.2" stroke-linejoin="round"/><circle cx="22" cy="40" r="3.2" fill="#ffb1e1" opacity=".45"/><circle cx="30" cy="50" r="2" fill="#ffb1e1" opacity=".4"/><circle cx="18" cy="28" r="1.8" fill="#ffb1e1" opacity=".35"/><use href="#spark" x="48" y="2" width="12" height="12" fill="#fff"/><use href="#spark" x="56" y="20" width="7" height="7" fill="#ffe7f6"/></svg></span><i class="tw a" aria-hidden="true"><svg viewBox="0 0 20 20"><use href="#spark"/></svg></i><i class="tw b" aria-hidden="true"><svg viewBox="0 0 20 20"><use href="#spark"/></svg></i><i class="tw c" aria-hidden="true"><svg viewBox="0 0 20 20"><use href="#spark"/></svg></i><i class="tw d" aria-hidden="true"><svg viewBox="0 0 20 20"><use href="#spark"/></svg></i>
+    <span class="nametag"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 4C11 4 5 8 5 15c0 1.3.3 2.5.8 3.5L4 20.3l1.4 1.4 1.8-1.8c1 .6 2.3 1.1 3.8 1.1C18 21 20 13 20 4zm-9.6 13.4-1.2-1.2C12 13 14.6 10.5 17 9c-2.6 2-4.7 4.6-6.6 8.4z"/></svg>Your island</span>
+    <form id="login-form" aria-labelledby="login-form-title">
+      <h2 id="login-form-title">Visit your island</h2>
+      <p>Sign in to see what grew while you were away.</p>
+      <button type="button" class="pill" id="login-guest">Try the demo island</button>
+    </form>
+  </div>
+  <div class="entry-foot"><button type="button" class="pill quiet" id="again"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5V2L7 6l5 4V7a5 5 0 1 1-5 5H5a7 7 0 1 0 7-7z"/></svg>Replay the arrival</button></div>
+</section>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script type="module">
+import * as T from 'three';
+import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+import {MeshoptDecoder} from 'three/addons/libs/meshopt_decoder.module.js';
+import {EffectComposer} from 'three/addons/postprocessing/EffectComposer.js';
+import {RenderPass} from 'three/addons/postprocessing/RenderPass.js';
+import {UnrealBloomPass} from 'three/addons/postprocessing/UnrealBloomPass.js';
+import {OutputPass} from 'three/addons/postprocessing/OutputPass.js';
+import {makers} from '../src/welcome/sprites.js';
+import {makeGardener} from '../src/blomy.js';
+import {RoundedBoxGeometry} from 'three/addons/geometries/RoundedBoxGeometry.js';
+import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
+import {createPier,PIER} from '../src/pier.js';
+import {GATE as GATE_AT,moveGate} from '../src/gate.js';
+import {createAccount} from '../src/account.js';
+
+const $=id=>document.getElementById(id);
+const REDUCED=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const Q=new URLSearchParams(location.search);const FIX=parseFloat(Q.get('t'));
+// performance tiers: high = shadows + bloom + full particles · mid = shadows, no bloom · low = flat light, few particles
+const cores=navigator.hardwareConcurrency||4,mem=navigator.deviceMemory||4;
+const TIER=Q.get('tier')||(Q.has('lite')||mem<=2||cores<=2?'low':(innerWidth<820||mem<=4||cores<=4?'mid':'high'));const LITE=TIER==='low';
+const V=(x=0,y=0,z=0)=>new T.Vector3(x,y,z), UP=V(0,1,0);
+const clamp=(x,a=0,b=1)=>Math.min(b,Math.max(a,x)), lerp=(a,b,t)=>a+(b-a)*t;
+const smooth=t=>t*t*(3-2*t), ease=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2, easeOut=t=>1-Math.pow(1-t,3);
+const seg=(t,a,b)=>clamp((t-a)/(b-a));
+let seed=5;const rnd=()=>{seed=(seed*16807)%2147483647;return seed/2147483647;};
+
+/* ---------- renderer ---------- */
+const canvas=$('world');
+const renderer=new T.WebGLRenderer({canvas,antialias:!LITE,powerPreference:'high-performance'});
+renderer.setPixelRatio(Math.min(devicePixelRatio,TIER==='high'?1.75:TIER==='mid'?1.5:1));
+renderer.outputColorSpace=T.SRGBColorSpace;
+renderer.toneMapping=T.ACESFilmicToneMapping;renderer.toneMappingExposure=1.0;
+renderer.shadowMap.enabled=!LITE;renderer.shadowMap.type=T.PCFShadowMap;
+// the top of the cloud sea, for the breach: the whale and its rider are cut away below it
+const SEA_Y=-42;const SEA_CLIP=new T.Plane(new T.Vector3(0,1,0),-SEA_Y);renderer.localClippingEnabled=true;
+const scene=new T.Scene();
+scene.fog=new T.Fog(0x6a4499,240,900);
+const camera=new T.PerspectiveCamera(36,1,.5,2000);scene.add(camera);
+// the composer's own target has no multisampling, so edges would stair-step once bloom is on; give it MSAA on the better tiers
+const composer=new EffectComposer(renderer,new T.WebGLRenderTarget(innerWidth,innerHeight,{type:T.HalfFloatType,samples:TIER==='low'?0:4}));composer.addPass(new RenderPass(scene,camera));
+const bloom=new UnrealBloomPass(new T.Vector2(1,1),.32,.75,.88);if(TIER==='high')composer.addPass(bloom);composer.addPass(new OutputPass());
+
+/* ---------- sky, sun ---------- */
+scene.add(new T.Mesh(new T.SphereGeometry(1400,32,16),new T.ShaderMaterial({side:T.BackSide,depthWrite:false,fog:false,
+  uniforms:{top:{value:new T.Color('#120f3a')},mid:{value:new T.Color('#5a3690')},low:{value:new T.Color('#ff9c5c')}},
+  vertexShader:'varying vec3 p;void main(){p=normalize(position);gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',
+  fragmentShader:'uniform vec3 top,mid,low;varying vec3 p;void main(){float h=p.y;vec3 c=h>0.0?mix(mid,top,smoothstep(.0,.55,h)):mix(low,mid,smoothstep(-.3,.0,h));gl_FragColor=vec4(c,1.);}'})));
+// stars: a field of small points high in the sky, each with its own twinkle
+{const n=900;const pos=new Float32Array(n*3),ph=new Float32Array(n),sz=new Float32Array(n);for(let i=0;i<n;i++){const a=rnd()*Math.PI*2,e=.06+Math.pow(rnd(),.7)*1.4;const r=1300;pos.set([Math.cos(a)*Math.cos(e)*r,Math.sin(e)*r,Math.sin(a)*Math.cos(e)*r],i*3);ph[i]=rnd()*6.28;sz[i]=.6+rnd()*(rnd()<.1?2.4:.9);}
+ const g=new T.BufferGeometry();g.setAttribute('position',new T.BufferAttribute(pos,3));g.setAttribute('ph',new T.BufferAttribute(ph,1));g.setAttribute('sz',new T.BufferAttribute(sz,1));
+ const skyStars=new T.Points(g,new T.ShaderMaterial({transparent:true,depthWrite:false,fog:false,blending:T.AdditiveBlending,uniforms:{t:{value:0}},vertexShader:'attribute float ph,sz;uniform float t;varying float a;void main(){a=.55+.45*sin(t*1.3+ph*7.);gl_PointSize=sz*(2.2+a*1.2);gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',fragmentShader:'varying float a;void main(){vec2 d=gl_PointCoord-.5;float r=length(d);if(r>.5)discard;float f=smoothstep(.5,.1,r);gl_FragColor=vec4(vec3(1.,.95,1.)*f*a,f*a);}'}));skyStars.frustumCulled=false;scene.add(skyStars);scene.userData.skyStars=skyStars;}
+function radialTex(stops,size=256){const c=document.createElement('canvas');c.width=c.height=size;const g=c.getContext('2d');const h=size/2;const gr=g.createRadialGradient(h,h,0,h,h,h);stops.forEach(([o,col])=>gr.addColorStop(o,col));g.fillStyle=gr;g.fillRect(0,0,size,size);const t=new T.CanvasTexture(c);t.colorSpace=T.SRGBColorSpace;return t;}
+const sun=new T.Sprite(new T.SpriteMaterial({map:radialTex([[0,'rgba(255,240,200,1)'],[.14,'rgba(255,190,120,.9)'],[.45,'rgba(255,140,110,.3)'],[1,'rgba(255,120,140,0)']]),fog:false,depthWrite:false,transparent:true,blending:T.AdditiveBlending}));
+sun.position.set(-260,10,-620);sun.scale.setScalar(760);scene.add(sun);
+
+/* ---------- light ---------- */
+scene.add(new T.HemisphereLight(0x7a5cc0,0xff8a5a,.9));
+const keyL=new T.DirectionalLight(0xffb57c,2.4);keyL.position.set(-90,62,60);keyL.castShadow=true;
+keyL.shadow.mapSize.set(2048,2048);Object.assign(keyL.shadow.camera,{left:-60,right:60,top:60,bottom:-60,near:20,far:320});keyL.shadow.bias=-.0004;keyL.shadow.normalBias=.05;
+scene.add(keyL);
+const fill=new T.DirectionalLight(0xa98cff,.9);fill.position.set(90,30,-80);scene.add(fill);
+
+/* ---------- clouds ---------- */
+function puffTex(v){const c=document.createElement('canvas');c.width=c.height=256;const g=c.getContext('2d');let s=v*97+3;const r=()=>{s=(s*16807)%2147483647;return s/2147483647;};
+  for(let i=0;i<16;i++){const x=80+r()*96,y=104+r()*48,rad=28+r()*40;const gr=g.createRadialGradient(x,y,0,x,y,rad);gr.addColorStop(0,'rgba(255,255,255,.96)');gr.addColorStop(.5,'rgba(255,255,255,.6)');gr.addColorStop(1,'rgba(255,255,255,0)');g.fillStyle=gr;g.beginPath();g.arc(x,y,rad,0,7);g.fill();}
+  // fade everything to nothing well inside the border, so no sprite ever shows its square edge
+  g.globalCompositeOperation='destination-in';const mk=g.createRadialGradient(128,128,58,128,128,127);mk.addColorStop(0,'rgba(0,0,0,1)');mk.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=mk;g.fillRect(0,0,256,256);
+  const t=new T.CanvasTexture(c);t.colorSpace=T.SRGBColorSpace;return t;}
+const puffs=[0,1,2,3,4].map(puffTex), tints=[0xffffff,0xfff2f7,0xf6eefb,0xfff1e8,0xffffff];
+/* ---------- batched sprites: many puffs, one draw ----------
+   A Proxy stands in for a Sprite: same position / scale / material.opacity / material.color / material.rotation /
+   visible / userData, so the code that animates Sprites animates these unchanged. A batch draws all of its proxies
+   as instances of one camera-facing quad (scale, then roll, like a Sprite), reading them just before it is drawn.
+   Different puff shapes come from one atlas, picked per instance. One draw call instead of one per puff. */
+class Proxy{constructor(tile=0,color=0xffffff,opacity=1){this.position=new T.Vector3();this.scale=new T.Vector3(1,1,1);this.material={opacity,color:new T.Color(color),rotation:0};this.visible=true;this.userData={};this.renderOrder=0;this.tile=tile;}}
+const puffAtlas=(()=>{const c=document.createElement('canvas');c.width=256*5;c.height=256;const g=c.getContext('2d');puffs.forEach((t,i)=>g.drawImage(t.image,i*256,0));const t=new T.CanvasTexture(c);t.colorSpace=T.SRGBColorSpace;return t;})();
+function spriteBatch(list,{map=puffAtlas,tiles=5,blending=T.NormalBlending,renderOrder=0,live=true,farFirst=null}={}){
+  if(farFirst)list=[...list].sort((a,b)=>b.position.distanceToSquared(farFirst)-a.position.distanceToSquared(farFirst));   // drawn back to front from where the camera usually is
+  const n=list.length,mesh=new T.InstancedMesh(new T.PlaneGeometry(1,1),null,n),A=(k,w)=>{const a=new T.InstancedBufferAttribute(new Float32Array(n*w),w);a.setUsage(T.DynamicDrawUsage);mesh.geometry.setAttribute(k,a);return a;};
+  const col=A('aCol',3),op=A('aOp',1),tl=A('aTile',1),rot=A('aRot',1);mesh.instanceMatrix.setUsage(T.DynamicDrawUsage);
+  mesh.material=new T.ShaderMaterial({transparent:true,depthWrite:false,blending,fog:true,uniforms:T.UniformsUtils.merge([T.UniformsLib.fog,{map:{value:null},tiles:{value:tiles}}]),
+    vertexShader:`attribute vec3 aCol;attribute float aOp,aTile,aRot;uniform float tiles;varying vec3 vCol;varying float vOp;varying vec2 vUv;
+#include <fog_pars_vertex>
+void main(){if(aOp<=.002){gl_Position=vec4(2.,2.,2.,1.);return;}
+  vUv=vec2((uv.x+aTile)/tiles,uv.y);vCol=aCol;vOp=aOp;
+  vec4 mvPosition=modelViewMatrix*instanceMatrix*vec4(0.,0.,0.,1.);
+  vec2 c=position.xy*vec2(length(instanceMatrix[0].xyz)*length(modelMatrix[0].xyz),length(instanceMatrix[1].xyz)*length(modelMatrix[1].xyz));
+  float cs=cos(aRot),sn=sin(aRot);mvPosition.xy+=vec2(cs*c.x-sn*c.y,sn*c.x+cs*c.y);gl_Position=projectionMatrix*mvPosition;
+#include <fog_vertex>
+}`,
+    fragmentShader:`uniform sampler2D map;varying vec3 vCol;varying float vOp;varying vec2 vUv;
+#include <fog_pars_fragment>
+void main(){vec4 t=texture2D(map,vUv);gl_FragColor=vec4(vCol*t.rgb,t.a*vOp);
+#include <tonemapping_fragment>
+#include <colorspace_fragment>
+#include <fog_fragment>
+}`});
+  mesh.material.uniforms.map.value=map;mesh.frustumCulled=false;mesh.renderOrder=renderOrder;mesh.castShadow=mesh.receiveShadow=false;
+  const m4=new T.Matrix4();
+  const sync=()=>{for(let i=0;i<n;i++){const p=list[i],c=p.material.color;m4.makeScale(p.scale.x,p.scale.y,1).setPosition(p.position);mesh.setMatrixAt(i,m4);
+      col.array[i*3]=c.r;col.array[i*3+1]=c.g;col.array[i*3+2]=c.b;op.array[i]=p.visible?p.material.opacity:0;tl.array[i]=p.tile;rot.array[i]=p.material.rotation;}
+    mesh.instanceMatrix.needsUpdate=col.needsUpdate=op.needsUpdate=tl.needsUpdate=rot.needsUpdate=true;};
+  sync();if(live)mesh.onBeforeRender=sync;return mesh;}
+// a cloud puff: random shape from the atlas, tinted
+function cloudP(scale,opacity,tint){const p=new Proxy((rnd()*5)|0,0xffffff,opacity);p.material.color.set(tint??tints[(rnd()*5)|0]);p.scale.set(scale,scale*.6,1);return p;}
+function cloud(scale,opacity,tint){const s=new T.Sprite(new T.SpriteMaterial({map:puffs[(rnd()*5)|0],color:tint??tints[(rnd()*5)|0],transparent:true,opacity,depthWrite:false}));s.scale.set(scale,scale*.6,1);return s;}
+const sea=new T.Group();scene.add(sea);
+// the cloud sea: a shaded lavender underlayer, then lit white tops, so it has form from above
+// (each layer is one batch, sorted once back to front from where the camera flies, so near puffs cover far ones)
+const VIEW=V(30,30,140);
+{const under=[],tops=[];
+ for(let i=0;i<150;i++){const a=rnd()*Math.PI*2,r=40+Math.pow(rnd(),.65)*560;const s=cloudP(90+rnd()*130,.9,0x5a3d8c);s.position.set(Math.cos(a)*r,-62-rnd()*16-(r>220?14:0),Math.sin(a)*r);under.push(s);}
+ for(let i=0;i<210;i++){const a=rnd()*Math.PI*2,r=46+Math.pow(rnd(),.65)*520;const s=cloudP(50+rnd()*90,.9,rnd()<.55?0xc996e0:rnd()<.5?0xffc49c:0xe8b8ff);s.position.set(Math.cos(a)*r,-44-rnd()*14-(r>220?14:0),Math.sin(a)*r);tops.push(s);}
+ sea.add(spriteBatch(under,{live:false,farFirst:VIEW}),spriteBatch(tops,{live:false,farFirst:VIEW}));}
+const high=new T.Group();scene.add(high);
+{const hs=[];for(let i=0;i<24;i++){const a=rnd()*Math.PI*2,r=220+rnd()*360;const s=cloudP(90+rnd()*120,.4,0x8f6cc8);s.position.set(Math.cos(a)*r,40+rnd()*90,Math.sin(a)*r);hs.push(s);}high.add(spriteBatch(hs,{live:false,farFirst:VIEW}));}
+const curtain=new T.Group();camera.add(curtain);
+for(let i=0;i<90;i++){const s=cloud(10+rnd()*18,1,0xd8b6ea);const x=(rnd()*2-1)*18,y=(rnd()*2-1)*12,z=-(5+rnd()*20);s.position.set(x,y,z);
+  const d=new T.Vector2(x,y);if(d.length()<.5)d.set(rnd()-.5,rnd()-.5);d.normalize();s.userData={home:s.position.clone(),dir:d,speed:20+rnd()*28,delay:rnd()*.4};curtain.add(s);}
+
+/* ---------- load the real assets ---------- */
+const manager=new T.LoadingManager();
+const loader=new GLTFLoader(manager);loader.setMeshoptDecoder(MeshoptDecoder);
+const NAMES=['meadow_a','community','sakura','purple','oak','willow','palm','pale','mushrooms','clover','meadow_a_far','community_far'];   // *_far: one-mesh, light versions for islands seen only from a distance
+manager.onProgress=(u,l,t)=>{$('bar').style.width=(l/t*100)+'%';};
+const A={};
+await Promise.all(NAMES.map(n=>new Promise((res,rej)=>loader.load(n.endsWith('_far')?`/assets/far/${n.slice(0,-4)}.glb`:`/assets/${n}.glb`,g=>{A[n]=g.scene;res();},undefined,rej))));
+const NO_SHADOW=/^(Flowers|Tufts|FloatGrass|FloatRock|VineLeaves|VineStems|RimBlossom|ScatterRocks|LilyPads|Lotus|ReedHeads|Reeds|Water|Waterfalls)$/;
+function prep(root,{glowIndex=[],emissive='#ffd38a'}={}){let i=0;root.traverse(o=>{if(!o.isMesh)return;o.castShadow=!NO_SHADOW.test(o.name);o.receiveShadow=true;o.material.side=T.DoubleSide;
+  if(glowIndex.includes(i)){o.material=o.material.clone();o.material.emissive=new T.Color(emissive);o.material.emissiveIntensity=1.2;}i++;});return root;}
+
+/* ---------- the island ---------- */
+const S=2;                                   // the app shows member islands at scale 2
+const island=new T.Group();island.scale.setScalar(S);scene.add(island);
+const land=prep(A.meadow_a,{glowIndex:[8,9]});moveGate(land);   /* the torii at the shore, as in the app (src/gate.js) */island.add(land);island.updateMatrixWorld(true);     // meshes 8 and 9 are the torii lantern
+const ray=new T.Raycaster();
+// (x,z) in island model units -> surface height in model units, or null off the edge
+const surfaceAt=(x,z)=>{ray.set(island.localToWorld(V(x,9,z)),V(0,-1,0));const h=ray.intersectObject(land,true).find(h=>h.point.y/S>-1&&h.point.y/S<2.2);return h?h.point.y/S:null;};
+const TREE_SCALE={sakura:1.05,purple:1.2,oak:.85,palm:1,willow:.95,pale:.9};
+function plant(name,x,z,s=1,rot){const y=surfaceAt(x,z);if(y===null)return null;const m=prep(A[name].clone(true));m.position.set(x,y-.05,z);m.scale.setScalar((TREE_SCALE[name]??1)*s);m.rotation.y=rot??rnd()*6.3;island.add(m);return m;}
+// the dock side: toward +x +z. The island is turned so its torii faces the dock, as on every island in the app:
+// the pier runs out from the gate's steps, and coming ashore Blomy walks off the deck, along the boardwalk and
+// through the gate, to where the app starts her.
+const DOCK_A=.78;const out=V(Math.cos(DOCK_A),0,Math.sin(DOCK_A)), along=V(-out.z,0,out.x);
+const GATE=new T.Vector2(GATE_AT.x,GATE_AT.z), GDIR=new T.Vector2(.742,.671);   // gate centre, and the direction you walk through it (model units)
+island.rotation.y=Math.atan2(out.x,out.z)-Math.atan2(-GDIR.x,-GDIR.y);island.updateMatrixWorld(true);
+const outM=V(-GDIR.x,0,-GDIR.y);                                           // the dock's direction in the island's own units
+let shoreR=8;for(let r=8;r<16;r+=.1){if(surfaceAt(outM.x*r,outM.z*r)===null){shoreR=r-.4;break;}shoreR=r;}
+const shoreY=surfaceAt(outM.x*(shoreR-.6),outM.z*(shoreR-.6))??.6;
+// groves, one species per kind of activity, kept off the dock and the walk-in line
+[['sakura',-9.5,4,1],['sakura',-5,9.5,.9],['purple',2,-10.5,1],['purple',-10,-.5,.95],['oak',8.5,-7,1],['oak',-1.5,-6.5,.8],
+ ['willow',-11,8.5,1],['pale',11,-1.5,.85],['palm',5,8.5,.85],['sakura',10.5,5.5,.8],['purple',-3,2.5,.7]].forEach(a=>plant(...a));
+for(const [x,z,s] of[[-9.8,-3.6,.7],[-3.2,-8.9,.5],[9.5,2.5,.6]]){const y=surfaceAt(x,z);if(y!==null){const m=prep(A.mushrooms.clone(true));m.position.set(x,y,z);m.scale.setScalar(s);m.rotation.y=rnd()*6;island.add(m);}}
+for(const [x,z,s] of[[-6,-2,.6],[1,6,.5],[-8.5,10.5,.55],[6,-3.5,.5]]){const y=surfaceAt(x,z);if(y!==null){const m=prep(A.clover.clone(true));m.position.set(x,y,z);m.scale.setScalar(s);m.rotation.y=rnd()*6;island.add(m);}}
+
+/* a friend's island, far off, with the glowing bridge the app uses */
+const friend=prep(A.community_far);friend.scale.setScalar(S);friend.position.set(-150,-22,-120);friend.rotation.y=.6;scene.add(friend);
+{const bridgeM=new T.MeshStandardMaterial({color:'#efd2a2',emissive:'#ffbd62',emissiveIntensity:.5,roughness:.8});
+ const glowM=new T.MeshStandardMaterial({color:'#ffe5ac',emissive:'#ffc36c',emissiveIntensity:2.6,roughness:.45});
+ const a=2.9;const r0=S*12.2;const start=V(Math.cos(a)*r0,S*.7,Math.sin(a)*r0);const end=friend.position.clone().add(V(S*11*Math.cos(.3),S*.7,S*11*Math.sin(.3)));
+ const mid=start.clone().lerp(end,.5);mid.y+=10;const curve=new T.QuadraticBezierCurve3(start,mid,end);
+ const planks=new T.InstancedMesh(new T.BoxGeometry(1.75,.11,.36),bridgeM,420);const d=new T.Object3D();
+ for(let i=0;i<420;i++){const u=i/419;const p=curve.getPoint(u),tg=curve.getTangent(u);d.position.copy(p);d.quaternion.setFromUnitVectors(V(0,0,1),tg);d.updateMatrix();planks.setMatrixAt(i,d.matrix);}
+ scene.add(planks);
+ const side=V(-(end.z-start.z),0,end.x-start.x).normalize();
+ for(const s of[-1,1])for(const h of[.12,1.05]){const pts=curve.getPoints(60).map(p=>p.clone().addScaledVector(side,s*.84).add(V(0,h,0)));scene.add(new T.Mesh(new T.TubeGeometry(new T.CatmullRomCurve3(pts),90,.03,5),glowM));}}
+
+/* far islands: more floating gardens out in the haze, so the opening shot shows a sky that is full of them */
+const islets=new T.Group();scene.add(islets);
+{const list=[['community',-310,-12,-430,1.5,1.2],['meadow_a',260,6,-480,1.3,2.4],['community',-30,58,-660,1.1,4.0],['meadow_a',430,-28,-200,1.5,.6]].slice(0,TIER==='high'?4:TIER==='mid'?2:0);
+ for(const [src,x,y,z,k,ry] of list){const m=prep((src==='community'?A.community_far:A.meadow_a_far).clone(true));m.traverse(o=>{if(o.isMesh){o.castShadow=false;o.receiveShadow=false;}});m.position.set(x,y,z);m.scale.setScalar(S*k);m.rotation.y=ry;m.userData.y0=y;m.userData.ph=rnd()*6;islets.add(m);}}
+/* sunbeams: soft rays fanning out from the low sun, behind everything */
+const beams=(()=>{const c=document.createElement('canvas');c.width=c.height=512;const g=c.getContext('2d');g.translate(256,256);
+  for(let i=0;i<54;i++){const a=rnd()*Math.PI*2,w=.008+rnd()*.04,len=140+rnd()*112;const gr=g.createRadialGradient(0,0,18,0,0,len);gr.addColorStop(0,'rgba(255,214,180,.55)');gr.addColorStop(.5,'rgba(255,190,210,.22)');gr.addColorStop(1,'rgba(255,180,220,0)');g.fillStyle=gr;g.beginPath();g.moveTo(0,0);g.arc(0,0,len,a-w,a+w);g.closePath();g.fill();}
+  const t=new T.CanvasTexture(c);t.colorSpace=T.SRGBColorSpace;
+  const sp=new T.Sprite(new T.SpriteMaterial({map:t,transparent:true,depthWrite:false,fog:false,blending:T.AdditiveBlending,opacity:.32}));sp.position.copy(sun.position).add(V(0,0,12));sp.scale.setScalar(1500);scene.add(sp);return sp;})();
+
+/* ---------- the pier (src/pier.js, the same on every island in the app): a boardwalk and a round deck on a living root ---------- */
+const shoreW=out.clone().multiplyScalar(shoreR*S);shoreW.y=shoreY*S;        // world position of the shore point
+const {group:pier,deckY:DECK,pierAt}=createPier({shore:shoreW,out,rnd});scene.add(pier);
+
+/* ---------- the way in: stepping stones from the shore to the torii ---------- */
+// the torii is baked into the island model; its posts stand at these model coordinates (see src/main.js)
+const wayM=[GATE.clone().addScaledVector(GDIR,1.6), GATE.clone().addScaledVector(GDIR,4.5).add(new T.Vector2(.5,-.4)), GATE.clone().addScaledVector(GDIR,8.5)];
+const wayW=new T.CatmullRomCurve3(wayM.map(p=>{const y=surfaceAt(p.x,p.y)??.6;return V(p.x*S,y*S,p.y*S);}),false,'catmullrom',.4);
+{const cols=['#fbf3e3','#c9b2ef','#fbf3e3','#f7b9cf','#fbf3e3','#f4c77a','#fbf3e3','#a9c6ef'];
+ const L=wayW.getLength();const n=Math.floor(L*.78/2.2);
+ const stones=new T.InstancedMesh(new T.CylinderGeometry(.42,.46,.1,9),new T.MeshStandardMaterial({color:'#ffffff',roughness:.7}),n+1);stones.receiveShadow=stones.castShadow=true;island.add(stones);
+ const o=new T.Object3D(),c=new T.Color();
+ for(let i=0;i<=n;i++){const p=wayW.getPointAt(i/n*.78);o.position.set(p.x/S+(rnd()-.5)*.25,p.y/S+.03,p.z/S+(rnd()-.5)*.25);o.rotation.y=rnd()*3;o.updateMatrix();stones.setMatrixAt(i,o.matrix);stones.setColorAt(i,c.set(cols[i%8]));}}
+
+/* ---------- the island sprites: five small keepers, each by the thing it looks after ---------- */
+const sprites=[];
+{const place=(kind,x,z,lift=0,scale=.55,face=0)=>{const y=surfaceAt(x,z);if(y===null)return;const g=makers[kind]();g.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;}});
+   const h=new T.Group();h.position.set(x,y+lift,z);h.scale.setScalar(scale/S);h.rotation.y=face;h.add(g);g.position.y=1.5;island.add(h);
+   sprites.push({kind,h,g,base:y+lift,ph:rnd()*6});};
+ /* the clay sprites are off for now: they clash with the painted character */}             // under the oak
+
+/* ---------- Blomy, the leaf gardener (the team's own model) ---------- */
+// Blomy: the leaf gardener, rebuilt from the Blender recipe, with hips that can walk
+const blomy=new T.Group();scene.add(blomy);
+const hero=makeGardener();hero.scale.setScalar(1.45);hero.position.y=.07;blomy.add(hero);
+hero.traverse(o=>{if(o.isMesh){o.receiveShadow=false;o.geometry.computeBoundingSphere();if(o.geometry.boundingSphere.radius*Math.max(o.scale.x,o.scale.y,o.scale.z)<.16)o.castShadow=false;}});     // she casts a shadow but never catches the map's blocky self-shadow on her own face
+const gait=hero.userData;let stride=0;const lastPos=V();
+
+/* ---------- the star whale: a lantern of a creature. Translucent, iridescent skin over a glowing core, a constellation on its back, light-dust around it ---------- */
+// a galaxy for the whale's skin: dark ground, nebula veils in magenta / violet / blue, and stars, all densest at the back (u = .5)
+function galaxyTex(){const W=1024,H=512;const c=document.createElement('canvas');c.width=W;c.height=H;const g=c.getContext('2d');
+  g.fillStyle='#05040f';g.fillRect(0,0,W,H);
+  const veil=(x,y,r,col,al)=>{const gr=g.createRadialGradient(x,y,0,x,y,r);gr.addColorStop(0,col.replace('A',al));gr.addColorStop(.6,col.replace('A',al*.35));gr.addColorStop(1,col.replace('A',0));g.fillStyle=gr;g.fillRect(x-r,y-r,r*2,r*2);};
+  g.globalCompositeOperation='lighter';
+  const cols=['rgba(120,50,200,A)','rgba(80,60,220,A)','rgba(50,80,230,A)','rgba(200,70,170,A)','rgba(255,150,90,A)'];
+  for(let i=0;i<70;i++){const u=.5+(rnd()-.5)*.62,v=rnd();const x=u*W,y=v*H;const back=1-Math.abs(u-.5)/.31;veil(x,y,40+rnd()*150,cols[(rnd()*cols.length)|0],(.05+rnd()*.16)*Math.max(.15,back));}
+  for(let i=0;i<1400;i++){const u=.5+(rnd()-.5)*.9,v=rnd();const back=Math.pow(Math.max(0,1-Math.abs(u-.5)/.45),1.4);if(rnd()>back+.08)continue;const x=u*W,y=v*H,r=rnd()<.08?1.6+rnd()*1.8:.5+rnd()*.9;
+    g.fillStyle=rnd()<.8?'rgba(255,250,255,'+(.5+rnd()*.5)+')':'rgba(255,200,230,'+(.6+rnd()*.4)+')';g.beginPath();g.arc(x,y,r,0,7);g.fill();if(r>1.6)veil(x,y,r*6,'rgba(255,240,255,A)',.35);}
+  g.globalCompositeOperation='source-over';
+  const t=new T.CanvasTexture(c);t.colorSpace=T.SRGBColorSpace;t.wrapS=T.RepeatWrapping;return t;}
+const WHALE_S=2.0;                                                                 // it is a big animal: about half the island long
+function makeWhale(){
+  // v4: a sky whale, not a pet. Long violet body, swept wing-fins, a crescent tail, a quiet almond eye,
+  // and light that lives in lines and stars on the skin rather than in a glow over the whole animal.
+  const SX=1.3;                                                         // the body is stretched along its length
+  const g=new T.Group();const body=new T.Group();g.add(body);
+  const prof=[[-7.2,.0],[-6.8,.34],[-6.0,.52],[-5.0,.82],[-3.8,1.35],[-2.4,2.0],[-1,2.55],[.5,2.85],[2,2.95],[3.4,2.85],[4.4,2.5],[5.2,1.85],[5.8,1.0],[6.1,.0]];
+  const geo=new T.LatheGeometry(prof.map(([x,r])=>new T.Vector2(r,x*SX)),72);geo.rotateZ(-Math.PI/2);
+  {const p=geo.attributes.position;const col=[];const top=new T.Color('#0a0828'),mid=new T.Color('#1e1a58'),belly=new T.Color('#4a3c96');
+   for(let i=0;i<p.count;i++){const x=p.getX(i)/SX,y=p.getY(i),z=p.getZ(i);const r=Math.hypot(y,z)||1;const up=y/r;
+     p.setY(i,y*(y<0?.82:1)+(y>0?.16*Math.exp(-Math.pow((x+1.8)/1.8,2))*y:0));p.setZ(i,z*(y<0?1.08:1));
+     const c=up>0?mid.clone().lerp(top,Math.pow(up,.8)):mid.clone().lerp(belly,Math.pow(-up,.9));
+     c.lerp(new T.Color('#7a2f8f'),clamp((-x-2.5)/5)*.45);c.lerp(new T.Color('#2a3f9a'),clamp((x-3)/3)*.3);col.push(c.r,c.g,c.b);}
+   geo.setAttribute('color',new T.Float32BufferAttribute(col,3));geo.computeVertexNormals();
+   {const nm=geo.attributes.normal,ps=geo.attributes.position;for(let i=0;i<nm.count;i++){if(Math.hypot(nm.getX(i),nm.getY(i),nm.getZ(i))<1e-4)nm.setXYZ(i,Math.sign(ps.getX(i))||1,0,0);}}}   // the two poles point along the body
+  // the skin carries a galaxy: an emissive map of nebula and stars, densest along the back, that the dark body shows through
+  const skin=new T.MeshPhysicalMaterial({vertexColors:true,transparent:true,opacity:.97,roughness:.55,metalness:0,clearcoat:.3,clearcoatRoughness:.4,
+    iridescence:.15,iridescenceIOR:1.4,iridescenceThicknessRange:[220,560],sheen:.2,sheenColor:new T.Color('#b9a4ff'),emissive:new T.Color('#ffffff'),emissiveMap:galaxyTex(),emissiveIntensity:.85,side:T.FrontSide,depthWrite:true});
+  const bodyM=new T.Mesh(geo,skin);bodyM.renderOrder=3;bodyM.castShadow=true;body.add(bodyM);
+  // a faint inner light, brighter in the chest, that only shows through the thinner belly
+  const core=new T.Mesh(geo,new T.MeshBasicMaterial({color:'#ff7ab0',transparent:true,opacity:.03,depthWrite:false,blending:T.AdditiveBlending}));core.scale.set(.8,.6,.6);core.position.set(.8,-.3,0);core.renderOrder=2;body.add(core);
+  // rim light: violet along the back, rose toward the tail, breathing slowly
+  const rim=new T.ShaderMaterial({transparent:true,blending:T.AdditiveBlending,depthWrite:false,side:T.FrontSide,
+    uniforms:{c1:{value:new T.Color('#ff7ad0')},c2:{value:new T.Color('#ffb060')},t:{value:0},boost:{value:0}},
+    vertexShader:'varying vec3 vN,vV;varying float vX,vD;void main(){vec4 mv=modelViewMatrix*vec4(position,1.);vN=normalize(normalMatrix*normal+vec3(1e-6));vV=normalize(-mv.xyz);vX=position.x;vD=-mv.z;gl_Position=projectionMatrix*mv;}',
+    fragmentShader:'uniform vec3 c1,c2;uniform float t,boost;varying vec3 vN,vV;varying float vX,vD;void main(){float far=smoothstep(40.,150.,vD);float f=pow(clamp(1.-dot(vN,vV),0.,1.),mix(4.,2.2,far));vec3 c=mix(c2,c1,clamp((vX+8.)/14.,0.,1.));float sh=.8+.2*sin(t*1.4+vX*.5);gl_FragColor=vec4(c*f*mix(1.7,3.,far)*sh*(1.+boost),f*.9);}'});
+  const shell=new T.Mesh(geo,rim);shell.scale.setScalar(1.012);shell.renderOrder=4;body.add(shell);
+  // fins: long and swept, the same skin, a little more translucent at the edges
+  const finM=skin.clone();finM.vertexColors=false;finM.color=new T.Color('#2a2466');finM.emissiveIntensity=.7;finM.opacity=.92;
+  const fin=(parent,pos,scale,rot)=>{const f=new T.Mesh(new T.SphereGeometry(1,32,16),finM);f.position.set(...pos);f.scale.set(...scale);f.rotation.set(...rot);f.renderOrder=3;f.castShadow=true;parent.add(f);const r=new T.Mesh(f.geometry,rim);r.position.copy(f.position);r.scale.copy(f.scale).multiplyScalar(1.03);r.rotation.copy(f.rotation);r.renderOrder=4;parent.add(r);return f;};
+  const tail=new T.Group();tail.position.set(-6.9*SX,.1,0);body.add(tail);
+  const pecs=[];
+  for(const s of[-1,1]){fin(tail,[-2.2,.05,2.6*s],[3.4,.14,1.5],[.1*s,-.75*s,0]);                      // crescent flukes, swept back
+    const pg=new T.Group();pg.position.set(1.6*SX,-1.0,1.7*s);body.add(pg);pecs.push(pg);fin(pg,[-.6,-.3,1.3*s],[3.8,.13,1.05],[.45*s,.55*s,-.35]);}   // wing-like pectorals
+  fin(body,[-2.3*SX,2.55,0],[1.5,.95,.08],[0,0,.6]);
+  const seat=new T.Object3D();seat.position.set(1.0*SX,2.5,0);body.add(seat);
+  // the eye: a quiet almond, dark with a violet depth and one small light. No smile.
+  for(const s of[-1,1]){const e=new T.Mesh(new T.SphereGeometry(1,24,16),new T.MeshStandardMaterial({color:'#15102e',roughness:.25,emissive:'#9a7cff',emissiveIntensity:1.3,transparent:true}));e.position.set(4.9*SX,.35,2.04*s);e.scale.set(.5,.2,.08);e.rotation.set(0,0,.12);e.renderOrder=6;body.add(e);
+    const h=new T.Mesh(new T.SphereGeometry(1,12,8),new T.MeshBasicMaterial({color:'#ffffff',transparent:true,opacity:.9}));h.position.set(5.05*SX,.42,2.1*s);h.scale.set(.07,.05,.04);h.renderOrder=7;body.add(h);
+    const lid=new T.Mesh(new T.SphereGeometry(1,24,12,0,Math.PI*2,0,Math.PI/2),skin);lid.position.set(4.9*SX,.42,2.0*s);lid.scale.set(.56,.22,.1);lid.rotation.set(0,0,.12);lid.renderOrder=6;body.add(lid);}
+  // light lines: bioluminescent seams along the flanks and the back, with a pulse that travels nose to tail
+  const onBack=(x,a)=>{const r=prof.reduce((best,[px,pr])=>Math.abs(px-x)<Math.abs(best[0]-x)?[px,pr]:best,[99,0])[1]*1.025;return V(x*SX,Math.cos(a)*r*(Math.cos(a)<0?.82:1),Math.sin(a)*r);};
+  const lineM=new T.ShaderMaterial({transparent:true,blending:T.AdditiveBlending,depthWrite:false,uniforms:{t:{value:0},boost:{value:0},c1:{value:new T.Color('#ff8ad8')},c2:{value:new T.Color('#ffc278')}},
+    vertexShader:'varying float vU;void main(){vU=uv.x;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',
+    fragmentShader:'uniform float t,boost;uniform vec3 c1,c2;varying float vU;void main(){float p=pow(.5+.5*sin(vU*9.-t*1.6),6.);float base=.45+.55*p;vec3 c=mix(c1,c2,p);gl_FragColor=vec4(c*base*1.8*(1.+boost*1.6),base*.95);}'});
+  const lines=[];
+  for(const [a0,a1] of[[.95,.75],[-.95,-.75],[1.45,1.25],[-1.45,-1.25],[0,0]]){const pts=[];for(let i=0;i<=28;i++){const u=i/28;const x=5.2-u*11.2;const a=a0+(a1-a0)*u+(a0===0?0:Math.sin(u*Math.PI)*.1*Math.sign(a0));pts.push(onBack(x,a));}
+    const m=new T.Mesh(new T.TubeGeometry(new T.CatmullRomCurve3(pts),56,a0===0?.07:.055,6),lineM);m.renderOrder=5;body.add(m);lines.push(m);}
+  // stars on the back: a loose constellation, most of them tiny, a few bright, all in violet-white
+  const starTex=radialTex([[0,'rgba(255,255,255,1)'],[.2,'rgba(240,230,255,.95)'],[.5,'rgba(190,170,255,.35)'],[1,'rgba(190,170,255,0)']],64);
+  const constel=[[4.4,.25],[3.0,-.3],[1.4,.2],[0,-.45],[-1.4,.15],[-2.9,-.3],[-4.3,.2],[-5.4,-.1]].map(([x,a])=>onBack(x,a));
+  {const lp=[];for(let i=0;i<constel.length-1;i++){lp.push(constel[i].x,constel[i].y+.03,constel[i].z,constel[i+1].x,constel[i+1].y+.03,constel[i+1].z);}
+   const lg=new T.BufferGeometry();lg.setAttribute('position',new T.Float32BufferAttribute(lp,3));
+   body.add(new T.LineSegments(lg,new T.LineBasicMaterial({color:'#e2d6ff',transparent:true,opacity:.5,blending:T.AdditiveBlending,depthWrite:false})));}
+  const n=190;const sp=new Float32Array(n*3),ph=new Float32Array(n),sz=new Float32Array(n);
+  for(let i=0;i<n;i++){let v;if(i<constel.length){v=constel[i];sz[i]=2.4;}else{v=onBack(-6+rnd()*11.5,(rnd()-.5)*2.4);sz[i]=.5+rnd()*.9;}sp.set([v.x,v.y,v.z],i*3);ph[i]=rnd()*6.28;}
+  const sg=new T.BufferGeometry();sg.setAttribute('position',new T.BufferAttribute(sp,3));sg.setAttribute('ph',new T.BufferAttribute(ph,1));sg.setAttribute('sz',new T.BufferAttribute(sz,1));
+  const stars=new T.Points(sg,new T.ShaderMaterial({transparent:true,blending:T.AdditiveBlending,depthWrite:false,uniforms:{map:{value:starTex},t:{value:0}},
+    vertexShader:'attribute float ph,sz;uniform float t;varying float a;void main(){a=.5+.5*pow(.5+.5*sin(t*2.+ph),2.);vec4 mv=modelViewMatrix*vec4(position,1.);gl_PointSize=sz*(7.+5.*a)*(60./-mv.z);gl_Position=projectionMatrix*mv;}',
+    fragmentShader:'uniform sampler2D map;varying float a;void main(){vec4 c=texture2D(map,gl_PointCoord);gl_FragColor=vec4(c.rgb*a*vec3(.95,.9,1.),c.a*a);}'}));
+  stars.renderOrder=5;body.add(stars);
+  // light-dust drifting around it, violet and rose
+  const m=150;const dp=new Float32Array(m*3),dph=new Float32Array(m),dsz=new Float32Array(m);
+  for(let i=0;i<m;i++){dp.set([-9+rnd()*18,(rnd()-.5)*9,(rnd()-.5)*9],i*3);dph[i]=rnd()*6.28;dsz[i]=.4+rnd()*.7;}
+  const dg=new T.BufferGeometry();dg.setAttribute('position',new T.BufferAttribute(dp,3));dg.setAttribute('ph',new T.BufferAttribute(dph,1));dg.setAttribute('sz',new T.BufferAttribute(dsz,1));
+  const motes=new T.Points(dg,new T.ShaderMaterial({transparent:true,blending:T.AdditiveBlending,depthWrite:false,uniforms:{map:{value:starTex},t:{value:0}},
+    vertexShader:'attribute float ph,sz;uniform float t;varying float a;void main(){vec3 p=position;p.y+=sin(t*.8+ph)*.7;p.x+=cos(t*.5+ph*1.3)*.5;a=.3+.7*pow(.5+.5*sin(t*1.5+ph*2.),3.);vec4 mv=modelViewMatrix*vec4(p,1.);gl_PointSize=sz*(6.+4.*a)*(60./-mv.z);gl_Position=projectionMatrix*mv;}',
+    fragmentShader:'uniform sampler2D map;varying float a;void main(){vec4 c=texture2D(map,gl_PointCoord);gl_FragColor=vec4(c.rgb*a*vec3(1.,.8,.95),c.a*a);}'}));
+  motes.renderOrder=5;g.add(motes);
+  // a wide, soft violet halo, so it reads against the clouds from far away
+  const halo=new T.Sprite(new T.SpriteMaterial({map:radialTex([[0,'rgba(255,130,205,.5)'],[.4,'rgba(200,120,255,.2)'],[1,'rgba(190,110,255,0)']],128),transparent:true,depthWrite:false,blending:T.AdditiveBlending,opacity:.4}));halo.scale.set(30,15,1);halo.renderOrder=1;body.add(halo);
+  // ribbon anchors: the two fluke tips and the dorsal tip
+  const anchors=[new T.Object3D(),new T.Object3D(),new T.Object3D()];anchors[0].position.set(-4.6,.1,4.2);anchors[1].position.set(-4.6,.1,-4.2);tail.add(anchors[0],anchors[1]);anchors[2].position.set(-2.2*SX,3.7,0);body.add(anchors[2]);
+  g.userData={tail,body,seat,pecs,rim,stars,motes,anchors,halo,lineM};g.rotation.order='YZX';g.scale.setScalar(WHALE_S);return g;}
+// aurora ribbons: a strip of light trailing from each anchor, rebuilt every frame from where the anchor has been
+const RIB_N=64;const ribbons=[];
+{const rm=new T.ShaderMaterial({transparent:true,blending:T.AdditiveBlending,depthWrite:false,side:T.DoubleSide,uniforms:{t:{value:0}},
+   vertexShader:'attribute float u;varying float vU;varying float vS;attribute float sideA;void main(){vU=u;vS=sideA;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',
+   fragmentShader:'uniform float t;varying float vU,vS;void main(){vec3 a=vec3(1.,.5,.85),b=vec3(1.,.72,.45),c=vec3(.7,.5,1.);vec3 col=mix(mix(a,b,smoothstep(0.,.5,vU)),c,smoothstep(.5,1.,vU));float edge=1.-abs(vS);float fade=(1.-vU)*(1.-vU);float wave=.75+.25*sin(vU*18.-t*6.);gl_FragColor=vec4(col*fade*edge*wave*1.3,fade*edge*.8);}'});
+ for(let k=0;k<3;k++){const g=new T.BufferGeometry();const pos=new Float32Array(RIB_N*2*3),u=new Float32Array(RIB_N*2),sd=new Float32Array(RIB_N*2);const idx=[];
+   for(let i=0;i<RIB_N;i++){u[i*2]=u[i*2+1]=i/(RIB_N-1);sd[i*2]=-1;sd[i*2+1]=1;if(i<RIB_N-1){const a=i*2;idx.push(a,a+1,a+2,a+1,a+3,a+2);}}
+   g.setAttribute('position',new T.BufferAttribute(pos,3));g.setAttribute('u',new T.BufferAttribute(u,1));g.setAttribute('sideA',new T.BufferAttribute(sd,1));g.setIndex(idx);
+   const m=new T.Mesh(g,rm);m.frustumCulled=false;scene.add(m);ribbons.push({mesh:m,hist:[],width:k<2?2.3:1.5});}}
+function updateRibbons(dt){ribbons.forEach((r,k)=>{const p=V();whale.userData.anchors[k].getWorldPosition(p);
+  if(!r.hist.length||r.hist[0].distanceTo(p)>.25){r.hist.unshift(p);if(r.hist.length>RIB_N)r.hist.pop();}
+  const pos=r.mesh.geometry.attributes.position;const n=r.hist.length;
+  for(let i=0;i<RIB_N;i++){const h=r.hist[Math.min(i,n-1)]||p;const w=r.width*(1-i/RIB_N)*.9+.1;const dir=V(0,1,0);
+    pos.setXYZ(i*2,h.x,h.y-w*.5,h.z);pos.setXYZ(i*2+1,h.x,h.y+w*.5,h.z);}
+  pos.needsUpdate=true;r.mesh.material.uniforms.t.value=performance.now()/1000;});}
+const whale=makeWhale();scene.add(whale);
+// hand-written shaders need the clipping chunks to take part in the cloud-sea cut
+function clipReady(m){if(!m.isShaderMaterial){m.clippingPlanes=[SEA_CLIP];return;}if(m.clipping)return;m.clipping=true;m.clippingPlanes=[SEA_CLIP];
+  m.vertexShader='#include <clipping_planes_pars_vertex>\n'+m.vertexShader.replace(/gl_Position=projectionMatrix\*([^;]+);/,(all,x)=>all+'{vec4 mvPosition='+x+';\n#include <clipping_planes_vertex>\n}');
+  m.fragmentShader='#include <clipping_planes_pars_fragment>\n'+m.fragmentShader.replace('void main(){','void main(){\n#include <clipping_planes_fragment>\n');m.needsUpdate=true;}
+whale.traverse(o=>{if(o.material)clipReady(o.material);});ribbons.forEach(r=>clipReady(r.mesh.material));hero.traverse(o=>{if(o.material)clipReady(o.material);});
+// stardust: sprites laid down behind the tail as it swims
+const dust=[];{const tex=radialTex([[0,'rgba(255,255,255,.9)'],[.4,'rgba(200,225,255,.4)'],[1,'rgba(200,225,255,0)']],64);
+  for(let i=0;i<160;i++){const s=new Proxy(0,i%3==0?0xffc27a:i%3==1?0xff8ad8:0xd4b8ff,0);s.scale.setScalar(.7+rnd()*1.4);s.userData={life:0,v:V()};dust.push(s);}
+  scene.add(spriteBatch(dust,{map:tex,tiles:1,blending:T.AdditiveBlending}));}
+let dustI=0,dustT=0;
+// embers: warm light rising through the cloud sea below the pier, as if something burned gold beneath the clouds
+{const emberTex=radialTex([[0,'rgba(255,170,90,.55)'],[.3,'rgba(255,120,110,.28)'],[.7,'rgba(200,80,160,.08)'],[1,'rgba(200,80,160,0)']],128);
+ for(const [o,a,sc] of[[6,-4,170],[26,-24,140],[-4,22,120],[40,10,150],[-30,-30,120]]){const e=new T.Sprite(new T.SpriteMaterial({map:emberTex,transparent:true,depthWrite:false,blending:T.AdditiveBlending}));const p=pierAt(PIER+o).addScaledVector(along,a);e.position.set(p.x,-40,p.z);e.scale.set(sc,sc*.55,1);scene.add(e);}}
+const breath=[];for(let i=0;i<44;i++){const c=cloudP(3,0,[0xe8d6f7,0xffe2d2,0xdcc0f0,0xfff0f4][i%4]);c.userData={v:V(),t:0,g:5};breath.push(c);}scene.add(spriteBatch(breath,{renderOrder:9}));let puffI=0,puffT=0,foamT=0;
+/* the breach: big cloud puffs thrown up and out where the whale breaks the surface of the cloud sea, and a flash of light */
+/* the breach: the whale rises out of the cloud sea. Everything of it below the surface is clipped away (SEA_CLIP),
+   and a ring of thrown-up cloud hides the cut while it climbs out. */
+const splash=[];for(let i=0;i<(TIER==='low'?20:42);i++){const c=cloudP(10,0,[0xe6cdf6,0xffd2bd,0xd9b9ef,0xfbe4f0,0xc9a6e6][i%5]);c.userData={v:V(),t:0,g:10};splash.push(c);}scene.add(spriteBatch(splash,{renderOrder:9}));
+const flash=new T.Sprite(new T.SpriteMaterial({map:radialTex([[0,'rgba(255,226,240,.95)'],[.3,'rgba(255,150,210,.42)'],[1,'rgba(190,120,255,0)']],128),transparent:true,depthWrite:false,blending:T.AdditiveBlending,opacity:0}));flash.renderOrder=9;flash.userData.t=0;scene.add(flash);
+let breached=false,breachT=-1;
+// the burst: a ring of cloud thrown out across the surface, a column thrown up with the whale, a flash of light, a spray of stardust
+function breach(at,dir){breached=true;breachT=(performance.now()-t0)/1000;const side=V(-dir.z,0,dir.x).normalize();
+  splash.forEach((c,i)=>{const ring=i%3!==0,a=rnd()*Math.PI*2,r=ring?5+rnd()*6:rnd()*5;c.position.set(at.x+Math.cos(a)*r,SEA_Y-3+rnd()*4,at.z+Math.sin(a)*r);
+    if(ring)c.userData.v.set(Math.cos(a)*(6+rnd()*13),3+rnd()*9,Math.sin(a)*(6+rnd()*13));else c.userData.v.copy(dir).multiplyScalar(-2+rnd()*6).add(V((rnd()-.5)*6,14+rnd()*20,(rnd()-.5)*6));
+    c.userData.t=1;c.userData.g=ring?12+rnd()*12:8+rnd()*9;c.scale.set(c.userData.g,c.userData.g*.62,1);c.material.opacity=0;});
+  flash.position.copy(at).add(V(0,3,0));flash.userData.t=1;
+  for(let i=0;i<46;i++){const d=dust[dustI++%dust.length];d.position.copy(at).add(V((rnd()-.5)*8,(rnd()-.5)*8,(rnd()-.5)*8));d.userData.life=1.3+rnd()*.8;d.userData.v.copy(dir).multiplyScalar(3+rnd()*12).addScaledVector(side,(rnd()-.5)*16).add(V(0,2+rnd()*9,0));}}
+function stepSplash(dt){
+  splash.forEach(c=>{const d=c.userData;if(d.t>0){d.t-=dt*.3;c.position.addScaledVector(d.v,dt);d.v.multiplyScalar(1-Math.min(1,dt*1.2));d.v.y-=dt*3;const g=d.g*(1+(1-d.t)*1.8);c.scale.set(g,g*.62,1);c.material.opacity=Math.max(0,Math.min(1,(1-d.t)*9)*Math.min(1,d.t*1.6)*.82);}else c.material.opacity=0;});
+  if(flash.userData.t>0){flash.userData.t-=dt*1.3;const k=Math.max(0,flash.userData.t);flash.material.opacity=k*.85;flash.scale.setScalar(36+(1-k)*70);}else flash.material.opacity=0;}
+
+/* ---------- fireflies: slow warm motes over the island and the pier, brighter the lower the light ---------- */
+const fireflies=(()=>{const n=TIER==='high'?300:TIER==='mid'?180:110;const pos=new Float32Array(n*3),ph=new Float32Array(n),sz=new Float32Array(n);
+  for(let i=0;i<n;i++){const a=rnd()*Math.PI*2,r=Math.pow(rnd(),.6)*40;const near=rnd()<.3;const base=near?pierAt(rnd()*PIER):V(Math.cos(a)*r,0,Math.sin(a)*r);
+    pos.set([base.x+(near?(rnd()-.5)*6:0),(near?DECK:shoreY*S)+1+rnd()*(near?4:9),base.z+(near?(rnd()-.5)*6:0)],i*3);ph[i]=rnd()*6.28;sz[i]=.5+rnd()*.7;}
+  const g=new T.BufferGeometry();g.setAttribute('position',new T.BufferAttribute(pos,3));g.setAttribute('ph',new T.BufferAttribute(ph,1));g.setAttribute('sz',new T.BufferAttribute(sz,1));
+  const tex=radialTex([[0,'rgba(255,250,200,1)'],[.25,'rgba(255,236,150,.8)'],[.6,'rgba(220,255,160,.2)'],[1,'rgba(220,255,160,0)']],64);
+  const m=new T.ShaderMaterial({transparent:true,blending:T.AdditiveBlending,depthWrite:false,uniforms:{map:{value:tex},t:{value:0}},
+    vertexShader:'attribute float ph,sz;uniform float t;varying float a;void main(){vec3 p=position;p.x+=sin(t*.35+ph)*1.6+sin(t*1.1+ph*2.)*.3;p.y+=sin(t*.5+ph*1.7)*.9;p.z+=cos(t*.3+ph*.6)*1.6;float b=pow(.5+.5*sin(t*1.3+ph*3.),6.);a=.08+.92*b;vec4 mv=modelViewMatrix*vec4(p,1.);gl_PointSize=sz*(6.+11.*b)*(80./-mv.z);gl_Position=projectionMatrix*mv;}',
+    fragmentShader:'uniform sampler2D map;varying float a;void main(){vec4 c=texture2D(map,gl_PointCoord);gl_FragColor=vec4(c.rgb*a,c.a*a);}'});
+  const pts=new T.Points(g,m);pts.frustumCulled=false;scene.add(pts);return pts;})();
+
+/* ---------- petals ---------- */
+const petalTex=(()=>{const c=document.createElement('canvas');c.width=c.height=64;const g=c.getContext('2d');g.fillStyle='#f7b1cc';g.beginPath();g.ellipse(32,32,11,22,.6,0,7);g.fill();const t=new T.CanvasTexture(c);t.colorSpace=T.SRGBColorSpace;return t;})();
+const petals=new T.Group();scene.add(petals);
+const petalList=[];for(let i=0;i<60;i++){const s=new Proxy(0,0xffffff,.85);s.material.rotation=rnd()*6;s.scale.setScalar(.45+rnd()*.35);s.position.set((rnd()-.5)*120,rnd()*40-8,(rnd()-.5)*120);s.userData={v:.5+rnd(),ph:rnd()*6};petalList.push(s);}
+petals.add(spriteBatch(petalList,{map:petalTex,tiles:1}));
+
+/* ---------- the shot ----------
+   Geometry: the whale docks on the far side of the pier, the camera lives on the near side. From the lens the island
+   is on the left, the pier tip in the centre, open sky on the right, where the entry panel goes.
+   Time (seconds, first play):
+   0–3.8    the opening: the whole island far off in a sky of clouds, the sun behind it. The whale breaks up through the
+            cloud sea on the right (~1 s), its lights flaring, and arcs over toward the island while the camera sweeps down
+            and in, in one continuous move.
+   3.8–6.2  the companion shot: alongside the whale as it slows at the pier.
+   5.75–7.35 crouch, jump, land · 7.35–8.55 she turns and waves goodbye, the whale nods, then sinks back toward the clouds
+   8.55–9.2 she turns to you; the panel has come up from 8.3. */
+const SIDE=-1;                                                                    // the whale's side of the pier; the camera keeps to the other
+const rel=(o,a,y)=>pierAt(PIER+o).addScaledVector(along,a).add(V(0,y,0));        // pier-relative: metres out, along, up
+const DOCK=rel(2,SIDE*9.6,-4.2);                                                   // whale centre when docked
+const LAND=rel(.4,SIDE*1.0,0);                                                     // where her feet come down
+// coming ashore: off the deck and along the boardwalk to the foot of the pier, in front of the torii: where the app
+// starts her (src/main.js spawnOn). Walked at an even pace, easing in and out.
+const ASHORE=new T.CatmullRomCurve3([LAND.clone(),pierAt(PIER*.55),pierAt(1.8)],false,'centripetal',.5);
+const ASHORE_L=ASHORE.getLength(),ASHORE_V=3,ASHORE_ACC=.7,ASHORE_T=ASHORE_L/ASHORE_V+ASHORE_ACC;
+const ashoreS=et=>{const t=clamp(et-.3,0,ASHORE_T),a=ASHORE_V/ASHORE_ACC;if(t<ASHORE_ACC)return .5*a*t*t;if(t<ASHORE_T-ASHORE_ACC)return .5*ASHORE_V*ASHORE_ACC+ASHORE_V*(t-ASHORE_ACC);const r=ASHORE_T-t;return ASHORE_L-.5*a*r*r;};
+const chaseDir=ASHORE.getTangentAt(0).setY(0).normalize();let warmT=NaN;
+const smoother=x=>x*x*x*(x*(x*6-15)+10);
+// monotone cubic (PCHIP) through (ts, vs), flat at both ends: speeds blend smoothly from one beat to the next, nothing overshoots
+const mono=(ts,vs)=>{const n=ts.length,h=[],d=[],m=new Array(n).fill(0);
+  for(let i=0;i<n-1;i++){h.push(ts[i+1]-ts[i]);d.push((vs[i+1]-vs[i])/h[i]);}
+  for(let i=1;i<n-1;i++){if(d[i-1]*d[i]>0){const w1=2*h[i]+h[i-1],w2=h[i]+2*h[i-1];m[i]=(w1+w2)/(w1/d[i-1]+w2/d[i]);}}
+  return t=>{if(t<=ts[0])return vs[0];if(t>=ts[n-1])return vs[n-1];let i=0;while(t>ts[i+1])i++;const k=(t-ts[i])/h[i],k2=k*k,k3=k2*k;
+    return (2*k3-3*k2+1)*vs[i]+(k3-2*k2+k)*h[i]*m[i]+(-2*k3+3*k2)*vs[i+1]+(k3-k2)*h[i]*m[i+1];};};
+// the whale's flight: from under the cloud sea, up through it on the right of the island, a long banking turn for home, then along the pier
+const whalePath=new T.CatmullRomCurve3([V(112,-72,0),V(104,-47,6),V(90,-26,13),V(74,-14,19),V(61,-9,23.5),rel(17,SIDE*18,-9),rel(9.5,SIDE*11.2,-6),rel(5.5,SIDE*10,-4.7),DOCK],false,'centripetal',.5);
+whale.userData.seat.position.set(1.3,2.5,SIDE*1.4);                                 // she rides on the shoulder nearest the pier
+// where her seat is once the whale has docked (used when the ride frames were never seen, e.g. a frozen-time preview)
+const SEAT_DOCK=(()=>{const g=whalePath.getTangentAt(.999);return whale.userData.seat.position.clone().multiplyScalar(WHALE_S).applyAxisAngle(UP,Math.atan2(-g.z,g.x)).add(DOCK);})();
+const PRO=3.8, ARR=PRO+2.4;                                                          // end of the opening sweep; the whale reaches the pier
+const TL={arrive:ARR, ant:[ARR-.45,ARR], air:[ARR,ARR+.55], land:[ARR+.55,ARR+1.15], back:[ARR+1.15,ARR+1.55], wave:[ARR+1.5,ARR+2.35], nod:[ARR+1.75,ARR+2.45], face:[ARR+2.35,ARR+2.85], panel:ARR+2.1, done:ARR+3.0};
+// the whale is fastest as it bursts out of the clouds and slows all the way in; arc-length fraction along its path at time t
+const WHALE_T0=.35;const whaleU=t=>{const x=clamp((t-WHALE_T0)/(ARR-WHALE_T0));return 1-Math.pow(1-x,1.8);};
+// the moment it breaks the surface, for frozen-time previews that start after it
+const t0b=(()=>{let tb=0;for(let k=0;k<=400;k++){const tt=k/400*PRO,u=whaleU(tt);if(whalePath.getPointAt(u).y+whalePath.getTangentAt(u).y*13>SEA_Y){tb=tt;break;}}return ()=>tb;})();
+const toCam=V(),tmp=V(),tmp2=V(),qY=new T.Quaternion().setFromAxisAngle(UP,Math.PI/2);
+// the camera rail: one spline through all the posts, travelled by arc length on a monotone time curve, so the sweep
+// never stops and starts. Phones get their own opening (the island has to fit the width) and stand further back after.
+let narrow=innerWidth<820;
+const G0=V(34,-8,0), G0N=V(44,-22,8);                                              // where the opening shot looks: the island, a little left of centre
+const FOV0=42, FOV0N=78;
+function camPosts(){const R=(o,a,y)=>narrow?rel(o*1.4+2,-SIDE*a*1.5,y*1.45):rel(o,-SIDE*a,y);
+  const open=narrow?[[0,V(100,60,260)],[null,V(62,40,170)]]:[[0,V(10,36,170)],[null,V(26,27,116)]];      // the middle post only bends the path; it has no time of its own, so the sweep is one long ease
+  return [...open,[PRO,R(30,26,13)],[ARR,R(21,19,9.2)],[ARR+1.3,R(18,18,8)],[TL.done,R(15,17,6.6)]];}
+let POSTV,rail,railLen,railS;
+function buildRail(){POSTV=camPosts();rail=new T.CatmullRomCurve3(POSTV.map(p=>p[1]),false,'centripetal',.5);const N=600,L=rail.getLengths(N);railLen=L[N];
+  const n=POSTV.length,K=POSTV.map((p,i)=>[p[0],L[Math.round(i/(n-1)*N)]]).filter(k=>k[0]!==null);railS=mono(K.map(k=>k[0]),K.map(k=>k[1]));}
+buildRail();
+const camPosAt=t=>rail.getPointAt(clamp(railS(t)/railLen));
+const FINAL=()=>POSTV[POSTV.length-1][1].clone();   // (the last post is the resting shot)
+const rightOf=(from,to)=>{const d=to.clone().sub(from).setY(0).normalize();return V(-d.z,0,d.x);};   // camera right, on the ground
+const fovAt=t=>{const base=narrow?62:50;let f=narrow?FOV0N:FOV0;f=lerp(f,base,smoother(seg(t,.2,PRO+.4)));f=lerp(f,base-6,smooth(seg(t,PRO,ARR-.2)));f=lerp(f,base-10,smooth(seg(t,ARR+1.2,ARR+2.8)));return f;};
+const gazeAt=t=>{const gP=pierAt(PIER).add(V(0,1,0)),gW=wSmooth.clone().add(V(0,1.2,0));
+  // the island first, then the whale and the pier. A phone is too narrow to hold the island and the breach at once, so there the camera turns to the whale as it rises.
+  const l=narrow?G0N.clone().lerp(gW.clone().add(V(0,2,0)),smoother(seg(t,1.0,2.4))*.7).lerp(gW.lerp(gP,.74),smoother(seg(t,2.4,PRO+.3)))
+                :G0.clone().lerp(gW.lerp(gP,.6),smoother(seg(t,1.4,PRO+.3)));
+  const gJ=pierAt(PIER+1).addScaledVector(along,SIDE*2.6).add(V(0,1.2,0));   // the jump: a fixed anchor between her seat and the deck
+  l.lerp(gJ,smooth(seg(t,ARR-1.0,ARR-.1)));
+  const r=rightOf(FINAL(),LAND);const gF=LAND.clone().addScaledVector(r,narrow?0:4.2).add(V(0,narrow?-3.6:.9,0));
+  l.lerp(gF,smooth(seg(t,ARR+1.2,ARR+2.8)));return l;};
+const camPos=V(),camLook=V();let wSmooth=DOCK.clone();
+function frame(){const w=innerWidth,h=innerHeight;renderer.setSize(w,h,false);composer.setSize(w,h);camera.aspect=w/h;const nw=w<820;if(nw!==narrow){narrow=nw;buildRail();}camera.updateProjectionMatrix();}
+addEventListener('resize',frame);frame();
+
+/* ---------- contact shadow under her feet (the shadow map is off on low tiers; this keeps her grounded) ---------- */
+const blob=new T.Mesh(new T.CircleGeometry(1,24),new T.MeshBasicMaterial({map:radialTex([[0,'rgba(40,30,60,.42)'],[.5,'rgba(40,30,60,.2)'],[1,'rgba(40,30,60,0)']],64),transparent:true,depthWrite:false}));
+blob.rotation.x=-Math.PI/2;blob.renderOrder=1;scene.add(blob);blob.visible=false;
+
+/* ---------- state ---------- */
+const EFIX=parseFloat(Q.get('enter'));
+const CALM=REDUCED||Q.has('calm');
+let phase='intro';        // intro · landed · entering · entry
+let t0=0,e0=NaN,last=0,raf=0,hiddenAt=0;
+let seatQ=new T.Quaternion();const takeoff=V();
+let wYaw=0,wRate=0,wBank=0,wPh=0,wPrev=DOCK.clone();
+let mx=0,my=0,pmx=0,pmy=0;                                   // pointer, -.5..5, and its eased copy
+addEventListener('pointermove',e=>{if(e.pointerType==='mouse'){mx=e.clientX/innerWidth-.5;my=e.clientY/innerHeight-.5;}},{passive:true});
+let toastTimer;const toast=m=>{const el=$('toast');el.textContent=m;el.classList.add('on');clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('on'),2800);};
+const panel=$('panel');
+// Blomy's line types out like a game dialogue: a span per letter, words kept whole so lines break where they would anyway
+{const el=$('lede');const txt=el.textContent;let i=0;
+ el.innerHTML='<span class="sr">'+txt+'</span>'+txt.split(' ').map(w=>'<span class="w" aria-hidden="true">'+[...w].map(ch=>`<span class="c" style="--i:${i++}">${ch}</span>`).join('')+'</span>').join(' ')+'<span class="next" aria-hidden="true"><svg viewBox="0 0 12 10"><path d="M1 1h10L6 9z"/></svg></span>';}
+// a burst of stardust from the button when it is pressed
+function burstFrom(btn){if(REDUCED)return;const card=btn.closest('.card'),r=btn.getBoundingClientRect(),cr=card.getBoundingClientRect();const cols=['#ff9fd8','#c9a2ff','#ffd6a8','#9fc4ff','#ffffff'];
+  for(let k=0;k<16;k++){const i=document.createElement('i');i.className='burst';i.innerHTML='<svg viewBox="0 0 20 20"><use href="#spark"/></svg>';const a=-Math.PI*(.08+Math.random()*.84),d=40+Math.random()*70;
+    i.style.cssText=`left:${r.left-cr.left+r.width*(.1+Math.random()*.8)}px;top:${r.top-cr.top+r.height*.4}px;--dx:${Math.cos(a)*d}px;--dy:${Math.sin(a)*d}px;--c:${cols[k%5]};color:${cols[(k+2)%5]};width:${7+Math.random()*9}px;height:${7+Math.random()*9}px`;
+    card.appendChild(i);setTimeout(()=>i.remove(),950);}}
+// keyboard, like a game: Enter skips the arrival, then comes ashore
+addEventListener('keydown',e=>{if(e.key!=='Enter'||e.repeat)return;const tag=document.activeElement&&document.activeElement.tagName;if(tag==='INPUT'||tag==='BUTTON'||tag==='TEXTAREA')return;
+  if(phase==='landed'){e.preventDefault();enter();}else if(phase==='intro'){e.preventDefault();skip();}});
+function clearTrails(){for(const r of ribbons)r.hist.length=0;for(const d of dust){d.userData.life=0;d.material.opacity=0;}for(const c of breath){c.userData.t=0;c.material.opacity=0;}for(const c of splash){c.userData.t=0;c.material.opacity=0;}flash.userData.t=0;flash.material.opacity=0;whale.userData.breathed=false;}
+function setPanel(on,stages=3){panel.classList.toggle('on',on);for(let i=1;i<=3;i++)panel.classList.toggle('s'+i,on&&i<=stages);}
+function restart(){phase='intro';e0=NaN;t0=performance.now();breached=false;wSmooth.copy(whalePath.getPointAt(0));{const g=whalePath.getTangentAt(.2);wYaw=Math.atan2(-g.z,g.x);}wRate=0;wBank=0;wPrev.copy(whalePath.getPointAt(0));
+  $('entry').classList.remove('on');$('warm').classList.remove('on');$('skip').hidden=false;setPanel(false);$('ashore').classList.remove('pressed');$('ashore-label').textContent='Come ashore';
+  camPos.copy(camPosAt(0));camLook.copy(gazeAt(0));clearTrails();pmx=pmy=0;hero.userData.look(0,0,1);}
+function skip(){if(phase==='entering'){finishEnter();return;}if(phase!=='intro')return;breached=true;
+  t0=performance.now()-(TL.done+.01)*1000;phase='landed';wSmooth.copy(DOCK);wBank=0;wRate=0;
+  camPos.copy(camPosAt(TL.done));camLook.copy(gazeAt(TL.done));clearTrails();blomy.position.copy(LAND);blomy.rotation.set(0,Math.atan2(camPos.x-LAND.x,camPos.z-LAND.z),0);$('skip').hidden=true;setPanel(true);sessionStorage.setItem('il-arrived','1');}
+function enter(){if(phase!=='landed')return;burstFrom($('ashore'));phase='entering';e0=performance.now();warmT=NaN;chaseDir.copy(ASHORE.getTangentAt(0)).setY(0).normalize();$('ashore').classList.add('pressed');$('ashore-label').textContent='Coming ashore…';
+  panel.classList.remove('s3');setTimeout(()=>{if(phase==='entering'||phase==='entry')setPanel(false);},260);$('skip').hidden=false;}
+function finishEnter(){phase='entry';$('warm').classList.add('on');$('entry').classList.add('on');$('skip').hidden=true;setPanel(false);}
+// into the app: the app's old sign-in screen is skipped (?enter); a signed-in visitor's session is already saved, so
+// the app opens their sky straight away (src/main.js), and the demo opens the demo sky
+function openApp(kind){toast(kind==='demo'?'Opening the demo island…':'Opening your island…');try{sessionStorage.setItem('il-arrived','1');}catch{}setTimeout(()=>{location.href=kind==='demo'?'/?enter=demo':'/?enter';},350);}
+$('skip').onclick=skip;$('replay').onclick=restart;$('again').onclick=restart;$('ashore').onclick=enter;
+$('signin-link').onclick=()=>{if(phase==='landed')enter();};
+createAccount({form:$('login-form'),handoff:openApp,enter:()=>openApp('demo')});
+document.addEventListener('visibilitychange',()=>{if(document.hidden){hiddenAt=performance.now();cancelAnimationFrame(raf);raf=0;}
+  else{if(hiddenAt){const gap=performance.now()-hiddenAt;t0+=gap;if(!isNaN(e0))e0+=gap;hiddenAt=0;}last=performance.now();if(!raf)raf=requestAnimationFrame(tick);}});
+
+/* ---------- start ---------- */
+$('veil-text').textContent='Here it comes.';
+restart();
+const seen=sessionStorage.getItem('il-arrived')&&!Q.has('intro');
+if(CALM||seen)skip();
+if(!isNaN(EFIX)){skip();enter();}
+requestAnimationFrame(()=>{$('veil').classList.add('gone');document.body.classList.add('lit');});
+last=performance.now();
+// Smoothness governor (like the app's): watch real frame times. Slower than ~36 fps for 1.5 s -> no glow (bloom)
+// first, then fewer pixels, never below 0.8x. Keeping pace with the screen's own refresh for a while -> a little sharper
+// again, after a wait that grows each time, so sharpness never flickers. Shader warm-up is ignored.
+const PR_MAX=renderer.getPixelRatio(),PR_MIN=Math.min(PR_MAX,.8);
+let pixelRatio=PR_MAX,gWin=[],gWarm=0,gRefresh=1e3/60,gCalm=0,gHoldUntil=0,gHold=20000;
+function govern(ms,now){
+  if(!(ms>0)||ms>250||document.hidden)return;
+  if(gWarm<90){gWarm++;return;}
+  gWin.push(ms);if(gWin.reduce((a,b)=>a+b,0)<1500)return;
+  const sorted=[...gWin].sort((a,b)=>a-b),avg=sorted.reduce((a,b)=>a+b,0)/sorted.length;gWin=[];
+  gRefresh=Math.min(gRefresh,sorted[Math.floor(sorted.length*.25)]);let next=pixelRatio;
+  if(avg>28){if(composer.passes.includes(bloom))composer.removePass(bloom);else if(pixelRatio>PR_MIN)next=Math.max(PR_MIN,+(pixelRatio-.15).toFixed(2));gCalm=0;gHoldUntil=now+gHold;gHold=Math.min(gHold*2,160000);}
+  else if(avg<gRefresh*1.12&&pixelRatio<PR_MAX&&now>gHoldUntil&&++gCalm>=3){next=Math.min(PR_MAX,+(pixelRatio+.1).toFixed(2));gCalm=0;}
+  if(next!==pixelRatio){pixelRatio=next;renderer.setPixelRatio(pixelRatio);composer.setPixelRatio(pixelRatio);}
+}
+function tick(now){
+  raf=requestAnimationFrame(tick);
+  if(isNaN(FIX))govern(now-last,now);const dt=clamp((now-last)/1000,0,.05);last=now;      // never negative: a frame timestamp can precede the clock read that started the loop
+  if(!isNaN(FIX))t0=now-FIX*1000;
+  const t=Math.min((now-t0)/1000,CALM?TL.done+.01:1e9), time=CALM?12.3:(isNaN(FIX)?now/1000:FIX*1.7);
+  if(phase==='intro'&&t>=TL.done){phase='landed';$('skip').hidden=true;setPanel(true);sessionStorage.setItem('il-arrived','1');}
+  // a first-play watchdog: if frames are slow, drop the bloom and the pixel ratio once
+
+  // ambient: the clouds thin out over the first second, the island breathes, petals and fireflies drift (all frozen when motion is reduced)
+  const pt=easeOut(seg(t,0,.95));
+  curtain.children.forEach(s=>{const d=s.userData,u=easeOut(clamp((pt-d.delay*.5)/(1-d.delay*.5)));s.position.set(d.home.x+d.dir.x*d.speed*u,d.home.y+d.dir.y*d.speed*u*.8,d.home.z+u*3);s.material.opacity=(1-u)*.55;s.visible=u<1;});
+  const iy=CALM?0:Math.sin(time*.5)*.3;island.position.y=iy;pier.position.y=iy;friend.position.y=-22+Math.sin(time*.4+1)*.5;
+  high.rotation.y=time*.003;sea.rotation.y=time*.0015;islets.children.forEach(m=>m.position.y=m.userData.y0+Math.sin(time*.3+m.userData.ph)*1.6);beams.material.rotation=time*.012;scene.userData.skyStars.material.uniforms.t.value=time;fireflies.material.uniforms.t.value=time;fireflies.position.y=iy;
+  if(!CALM)petalList.forEach(p=>{p.position.y-=.011*p.userData.v;p.position.x+=Math.sin(time*.7+p.userData.ph)*.015;p.material.rotation+=.006;if(p.position.y<-16)p.position.y=30;});
+
+  /* whale: a slow heavy glide along the curve, settling at the pier; the body leans into turns, the fins lag the tail */
+  const u=whaleU(t);
+  whalePath.getPointAt(u,whale.position);
+  const speed=whale.position.distanceTo(wPrev)/Math.max(dt,1e-3);wPrev.copy(whale.position);
+  const tg=whalePath.getTangentAt(Math.min(u,.995));
+  const yawT=Math.atan2(-tg.z,tg.x);let dy=yawT-wYaw;dy=Math.atan2(Math.sin(dy),Math.cos(dy));const step=dy*Math.min(1,dt*5);wYaw+=step;
+  wRate+=((dt>0?step/dt:0)-wRate)*Math.min(1,dt*4);wBank+=(clamp(-wRate*.9,-.3,.3)-wBank)*Math.min(1,dt*3);
+  const docked=t>TL.arrive, nod=Math.sin(Math.PI*seg(t,...TL.nod))*.13;
+  const settle=smoother(seg(t,ARR+1.9,ARR+4.4));                          // answering the goodbye it bows, sinks a little toward the clouds and drifts off the pier
+  whale.position.y+=iy+(CALM?0:Math.sin(time*1.05)*.28)-settle*8;whale.position.addScaledVector(along,SIDE*settle*6);
+  whale.rotation.set(wBank,wYaw,tg.y*.9*(1-smooth(seg(t,ARR-.8,ARR)))+nod-Math.sin(Math.PI*settle)*.1);
+  wPh+=dt*(CALM?0:(1.1+Math.min(speed,22)*.11));const amp=.22+.14*clamp(speed/20);
+  whale.userData.tail.rotation.z=Math.sin(wPh)*amp;whale.userData.body.rotation.z=Math.sin(wPh+1.1)*.035;
+  whale.userData.pecs.forEach((p,i)=>{const s=i?1:-1;p.rotation.x=s*(.6+Math.sin(wPh-1.3)*.16);});
+  whale.updateMatrixWorld(true);
+  {const tb=isNaN(FIX)?breachT:t0b();const b=breached&&!CALM&&tb>=0?1.4*Math.exp(-Math.max(0,t-tb)*1.3):0;whale.userData.rim.uniforms.boost.value=b;whale.userData.lineM.uniforms.boost.value=b;
+   whale.userData.halo.material.opacity=.22+.7*smooth(clamp((camera.position.distanceTo(whale.position)-40)/110));}
+  whale.userData.rim.uniforms.t.value=time;whale.userData.lineM.uniforms.t.value=time;whale.userData.stars.material.uniforms.t.value=time;whale.userData.motes.material.uniforms.t.value=time;
+  if(TIER!=='low'&&!CALM)updateRibbons(dt);
+  if(!CALM&&time-dustT>(docked?.14:.028)){dustT=time;const d=dust[dustI++%dust.length];const a=(rnd()-.5)*2.2;const r=4.1*(rnd()<.5?1:1.05);d.position.set((-9+rnd()*14)*WHALE_S,Math.cos(a)*r*WHALE_S+.4,Math.sin(a)*r*WHALE_S).applyAxisAngle(UP,whale.rotation.y).add(whale.position);d.userData.life=1.1+rnd()*.5;d.userData.v.set(-1.2-rnd()*1.6,.8+rnd()*1.4,(rnd()-.5)*1.2).applyAxisAngle(UP,whale.rotation.y);}
+  for(const d of dust){if(d.userData.life>0){d.userData.life-=dt*.6;d.position.addScaledVector(d.userData.v,dt);d.userData.v.y+=dt*.6;d.material.opacity=Math.min(1,d.userData.life*1.6)*.9;}else d.material.opacity=0;}
+  if(docked&&!whale.userData.breathed){whale.userData.breathed=true;if(!CALM)for(let i=0;i<18;i++){const d=dust[dustI++%dust.length];d.position.copy(whale.position).add(V(6.6*WHALE_S,1.5,0).applyAxisAngle(UP,whale.rotation.y));d.userData.life=1.2;d.userData.v.set(rnd()-.5,.5+rnd()*.6,rnd()-.5).multiplyScalar(2.5);}}
+  // the breach: the first frame the whale's head clears the top of the cloud sea, the clouds are thrown up around it
+  if(!breached&&!CALM&&phase==='intro'&&t<PRO&&whale.position.y+tg.y*13>SEA_Y){const at=whale.position.clone().addScaledVector(tg,(SEA_Y-whale.position.y)/Math.max(.2,tg.y));breach(at,V(tg.x,0,tg.z).normalize());
+    if(!isNaN(FIX)){for(let k=0;k<Math.round(Math.max(0,FIX-t0b())/(1/30));k++)stepSplash(1/30);}}            // frozen-time previews: play the splash forward to the frame asked for
+  stepSplash(isNaN(FIX)?dt:0);
+  {const sc=WHALE_S/1.6,head=whale.position.y+tg.y*13*sc,tail=whale.position.y-tg.y*15*sc;
+   if(breached&&!CALM&&head>SEA_Y&&tail<SEA_Y+2&&time-foamT>.035){foamT=time;const c=breath[puffI++%breath.length];const k=(SEA_Y-whale.position.y)/Math.max(.2,tg.y);
+     c.position.copy(whale.position).addScaledVector(tg,k).add(V((rnd()-.5)*9,(rnd()-.3)*3,(rnd()-.5)*9));c.userData.g=9+rnd()*9;c.scale.set(c.userData.g,c.userData.g*.62,1);c.userData.t=1;
+     const a=rnd()*Math.PI*2;c.userData.v.set(Math.cos(a)*(3+rnd()*6),2+rnd()*5,Math.sin(a)*(3+rnd()*6));}}
+  // cloud wake: while it flies, puffs peel off its flanks and drift away; bigger and denser while it is fast, as it climbs out of the clouds
+  const wakeGap=speed>18?.045:.11;
+  if(!docked&&!CALM&&speed>4&&time-puffT>wakeGap){puffT=time;const c=breath[puffI++%breath.length];const sd=rnd()<.5?-1:1;const big=clamp((speed-8)/22);
+    c.position.copy(whale.position).add(V((-6+rnd()*10)*WHALE_S/1.6,-1.5+rnd()*2,sd*(4.2+big*2)*WHALE_S/1.6).applyAxisAngle(UP,whale.rotation.y));c.userData.g=5+big*9;c.scale.set(c.userData.g,c.userData.g*.6,1);c.userData.t=1;c.userData.v.set(-speed*.25*rnd(),.6+big*2,sd*(2.2+big*3)).applyAxisAngle(UP,whale.rotation.y);}
+  breath.forEach(c=>{if(c.userData.t>0){c.userData.t-=dt*.5;c.position.addScaledVector(c.userData.v,dt);c.scale.x+=dt*4;c.scale.y+=dt*2.4;c.material.opacity=c.userData.t*.55;}else c.material.opacity=0;});
+  wSmooth.lerp(whale.position,Math.min(1,dt*3.5));
+  const seatW=whale.userData.seat.getWorldPosition(tmp);whale.userData.seat.getWorldQuaternion(seatQ);
+
+  /* Blomy */
+  const at=seg(t,...TL.ant), air=seg(t,...TL.air), ld=seg(t,...TL.land), bk=seg(t,...TL.back), wv=seg(t,...TL.wave), fc=seg(t,...TL.face);
+  const et=phase==='entering'||phase==='entry'?(isNaN(EFIX)?(now-e0)/1000:EFIX):-1;
+  const yawTo=(target,k)=>{let d=target-blomy.rotation.y;d=Math.atan2(Math.sin(d),Math.cos(d));blomy.rotation.y+=d*k;};
+  const faceTo=p=>Math.atan2(p.x-blomy.position.x,p.z-blomy.position.z);
+  let airH=0;
+  if(air<=0){                                                   // on the whale's back, tilting with it
+    blomy.position.copy(seatW);blomy.quaternion.copy(seatQ).multiply(qY);
+    takeoff.copy(seatW);if(at>0){const yawRide=blomy.rotation.y;blomy.rotation.set(0,yawRide,0);yawTo(faceTo(LAND),smooth(at));gait.jump(-at);}
+    else gait.ride(time,wBank,Math.sin(time*1.05));}
+  else if(air<1){const e=air;if(!isNaN(FIX))takeoff.copy(SEAT_DOCK);blomy.position.lerpVectors(takeoff,LAND,e);airH=4*e*(1-e)*1.7;blomy.position.y+=airH;blomy.rotation.set(0,blomy.rotation.y,0);yawTo(faceTo(LAND),.2);gait.jump(e);}
+  else if(et<0){blomy.position.copy(LAND);blomy.rotation.set(0,blomy.rotation.y,0);
+    if(ld<1)gait.jump(1+ld);
+    else if(wv>0&&wv<1)gait.wave(wv);
+    else gait.idle(time);
+    const whaleEye=whale.position.clone().add(V(6.4*WHALE_S,.6,0).applyAxisAngle(UP,whale.rotation.y));
+    // looking back: the body turns most of the way to the whale, the head does the rest, so the goodbye still reads from the front
+    const yawCam=faceTo(camPos),yawW=faceTo(whaleEye);let dw=yawW-yawCam;dw=Math.atan2(Math.sin(dw),Math.cos(dw));if(dw>0)dw-=Math.PI*2;   // always over the right shoulder, so the waving arm stays on the near side
+    if(bk>0&&fc<=0)yawTo(yawCam+dw*.36,Math.min(1,dt*7)*smooth(bk));
+    if(fc>0)yawTo(yawCam,Math.min(1,dt*6)*smooth(fc));                           // then to you
+    // where she looks: the whale while waving, you afterwards, the pointer a little once everything is still
+    if(bk>0&&fc<=0){const d=whaleEye.clone().sub(blomy.position);gait.look(dw*.5,Math.atan2(d.y,Math.hypot(d.x,d.z))*.6,.08);}
+    else if(phase==='landed'&&!CALM&&!narrow){gait.look(-pmx*.9,-pmy*.4,.06);}
+    else gait.look(0,0,.06);}
+  else{                                                         // coming ashore: along the pier, up the steps and through the gate
+    const u=ashoreS(et)/ASHORE_L;blomy.position.copy(ASHORE.getPointAt(u));blomy.rotation.set(0,blomy.rotation.y,0);
+    if(u<.995)yawTo(faceTo(ASHORE.getPointAt(Math.min(1,u+.03))),Math.min(1,dt*7)*smooth(seg(et,0,.35)));gait.look(0,0,.08);
+    const moved=Math.hypot(blomy.position.x-lastPos.x,blomy.position.z-lastPos.z);const sp=moved/Math.max(dt,1e-3);
+    if(sp>.3){stride+=moved*2.1;gait.walk(stride,clamp(sp/3));}else gait.idle(time);}
+  blomy.position.y+=iy;lastPos.copy(blomy.position);
+  if(air>0){blob.visible=true;blob.position.set(blomy.position.x,DECK+iy+.03,blomy.position.z);const k=1-clamp(airH/1.7)*.45;blob.scale.set(1.5*k,1.5*k,1);blob.material.opacity=k;}else blob.visible=false;
+  if(air>0&&air<1)blob.position.lerpVectors(takeoff,LAND,air).setY(DECK+iy+.03);
+  gait.after(dt,time);
+
+  /* camera: the rail, a blended gaze, then (and only then) a small eased parallax from the pointer */
+  let tp,tl;
+  if(et>=0){const k=smooth(seg(et,0,1.6));
+    const fwd=ASHORE.getTangentAt(Math.min(.999,ashoreS(et)/ASHORE_L)).setY(0).normalize();chaseDir.lerp(fwd,Math.min(1,dt*2.5)).normalize();
+    tp=FINAL().lerp(blomy.position.clone().addScaledVector(chaseDir,-14).add(V(0,7.5,0)),k);
+    const ahead=blomy.position.clone().addScaledVector(chaseDir,7).add(V(0,1.6,0));tl=gazeAt(TL.done).lerp(ahead,smooth(seg(et,0,1.2)));}
+  else{tp=camPosAt(Math.min(t,TL.done));tl=gazeAt(Math.min(t,TL.done));}
+  const k=(isNaN(FIX)&&isNaN(EFIX))?1-Math.exp(-dt*(phase==='intro'?9:4)):1;camPos.lerp(tp,k);camLook.lerp(tl,k);if(window.__dbg){Object.assign(__dbg,{t,et,tp:tp.clone(),tl:tl.clone(),dt});(__dbg.hist??=[]);if(__dbg.hist.length<14)__dbg.hist.push([+t.toFixed(2),document.hidden,...camPos.toArray().map(x=>+x.toFixed(1)),'|',...tp.toArray().map(x=>+x.toFixed(1))]);}
+  const settled=phase==='landed'&&!CALM&&!narrow;pmx+=((settled?mx:0)-pmx)*Math.min(1,dt*2.2);pmy+=((settled?my:0)-pmy)*Math.min(1,dt*2.2);
+  const r=rightOf(camPos,camLook);
+  camera.position.copy(camPos).addScaledVector(r,pmx*1.1).add(V(0,-pmy*.6,0));
+  tmp2.copy(camLook).addScaledVector(r,pmx*.35).add(V(0,-pmy*.18,0));camera.lookAt(tmp2);
+  {const f=et>=0?fovAt(TL.done)-1.5*smooth(seg(et,0,1.8)):fovAt(t);if(Math.abs(camera.fov-f)>.02){camera.fov=f;camera.updateProjectionMatrix();}}
+
+  /* ui beats */
+  if(phase==='intro'){if(t>=TL.panel&&!panel.classList.contains('on'))setPanel(true,1);panel.classList.toggle('s2',t>=TL.panel+.3);panel.classList.toggle('s3',t>=TL.panel+.6);}
+  if(phase==='entering'){if(CALM){if(et>=.05)$('warm').classList.add('on');if(et>=.4)finishEnter();}
+    else{if(isNaN(warmT)&&ashoreS(et)>=ASHORE_L-.05)warmT=et;   /* at the gate: the warm veil, then the sign-in */if(!isNaN(warmT)){$('warm').classList.add('on');if(et>=warmT+1.05)finishEnter();}}
+    for(const pl of lanterns)pl.intensity=9+6*smooth(seg(et,.2,1.4));}
+  else for(const pl of lanterns)pl.intensity+=(9-pl.intensity)*Math.min(1,dt*3);
+  if(phase!=='entry'||(frameN++%2===0))composer.render();
+}
+let frameN=0;const lanterns=[];pier.traverse(o=>{if(o.isPointLight)lanterns.push(o);});
+raf=requestAnimationFrame(tick);
+if(Q.has('debug'))window.__dbg={renderer,composer,camera,blomy,whale,camPos,camLook,LAND,DOCK,rel,out,along,shoreW,DECK,PIER,whalePath,island,friend,sun,scene,T,camPosAt,gazeAt,fovAt,whaleU,get phase(){return phase;},dust,breath,splash,flash,ribbons,beams,islets,
+  sample(t,extra=[]){const cam=new T.PerspectiveCamera(fovAt(t),innerWidth/innerHeight,.5,3000);const p=camPosAt(t);cam.position.copy(p);
+    const wp=whalePath.getPointAt(whaleU(t)),wl=whalePath.getPointAt(whaleU(Math.max(0,t-.28)));const keep=wSmooth.clone();wSmooth.copy(wl);const l=gazeAt(t);wSmooth.copy(keep);
+    cam.lookAt(l);cam.updateMatrixWorld();cam.updateProjectionMatrix();const pr=v=>{const q=v.clone().project(cam);return [+q.x.toFixed(2),+q.y.toFixed(2),q.z<1?1:-1];};
+    const tg=whalePath.getTangentAt(Math.min(whaleU(t),.995));
+    return {t,cam:p.toArray().map(x=>+x.toFixed(1)),fov:+fovAt(t).toFixed(1),isl:pr(V(-1,0,.5)),islL:pr(V(-36,0,0)),islR:pr(V(34.5,0,0)),tree:pr(V(-1,18,.5)),bottom:pr(V(-1,-24,.5)),pier:pr(pierAt(PIER)),
+      whale:pr(wp),wHead:pr(wp.clone().addScaledVector(tg,13)),wTail:pr(wp.clone().addScaledVector(tg,-15)),sun:pr(sun.position),extra:extra.map(e=>pr(V(...e)))};}};
+</script>

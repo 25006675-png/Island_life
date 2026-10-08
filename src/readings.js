@@ -90,11 +90,20 @@ export function expectation(id,b){
   const w=C.worn(hist,Date.UTC(...b.date.split('-').map((x,i)=>i===1?x-1:+x))/864e5+b.start/1440,r.normal,r.climate);
   return {drain:C.predict(r.climate,b.cat,w),worn:w,known:r.climate.n[b.cat]};
 }
-// should the island ask about this block right now? (docs/algorithm.md 5.2)
-export function shouldAsk(id,b){
-  if(b.mins<30||(ANSWERS[id]??[]).some(a=>String(a.blockId)===String(b.series?.id??b.id)&&a.date===b.date))return false;
-  const e=expectation(id,b);
-  return Math.random()<C.askChance(e.known,e.worn)*(b.cat==='rest'?.3:1);
+// Which of today's finished blocks to ask about after the evening check-in
+// (docs/algorithm.md 5.2): at most two a day, one per kind, the kinds the
+// island knows least first, then the longest. Each still has to pass its
+// chance, so the questions thin out as the island learns.
+export function eveningAsks(id,blocks,max=2){
+  const today=(ANSWERS[id]??[]).filter(a=>a.date===TODAY), left=max-today.length;
+  if(left<=0)return [];
+  const asked=b=>today.some(a=>String(a.blockId)===String(b.series?.id??b.id));
+  const picks=blocks.filter(b=>b.mins>=30&&!b.skipped&&!asked(b)).map(b=>({b,e:expectation(id,b)}))
+    .filter(({b,e})=>Math.random()<C.askChance(e.known,e.worn)*(b.cat==='rest'?.3:1))
+    .sort((x,y)=>x.e.known-y.e.known||y.b.mins-x.b.mins);
+  const kinds=new Set(), out=[];
+  for(const {b} of picks){if(kinds.has(b.cat))continue;kinds.add(b.cat);out.push(b);if(out.length===left)break;}
+  return out;
 }
 const WHAT={study:'study',work:'work',errands:'errands',social:'time with friends',exercise:'exercise',rest:'rest',other:'that kind of thing'};
 // Record an answer; the reply says what was learned, never a number.

@@ -1,5 +1,5 @@
 import { setViewer, OWNERS, CHECKINS, NOTES, TASKS, WARMTH, TRENDS, SLOT_IDS } from './data.js';
-import { plans, TODAY, addDays, daysBetween } from './plan.js';
+import { plans, TODAY, daysBetween, mondayOf } from './plan.js';
 import { HISTORY } from './groves.js';
 import { ANSWERS, STARTED, seedDemoAnswers } from './readings.js';
 import { planWriter } from './backend.js';
@@ -41,9 +41,11 @@ export function enterWorld(w){
   for(const k of Object.keys(CHECKINS))delete CHECKINS[k];
   for(const k of Object.keys(WARMTH))delete WARMTH[k];
   for(const p of w.people){OWNERS[p.id]=p.name;CHECKINS[p.id]=w.checkins[p.id]??[];plans.load(p.id,w.blocks[p.id]??[]);}
-  // last week's grown trees: what each member marked done (friends' as their visibility allows)
+  // this week's grown trees, Monday to yesterday: the island starts fresh each
+  // Monday (friends' trees as their visibility allows)
   for(const k of Object.keys(HISTORY))delete HISTORY[k];
-  for(const p of w.people)HISTORY[p.id]=plans.range(p.id,addDays(TODAY,-7),7).filter(b=>b.done&&!b.skipped)
+  const monday=mondayOf(TODAY);
+  for(const p of w.people)HISTORY[p.id]=plans.range(p.id,monday,daysBetween(monday,TODAY)).filter(b=>!b.skipped)
     .map((b,i)=>({id:`h${p.id}${i}`,day:daysBetween(b.date,TODAY),cat:b.cat,mins:b.mins,title:b.title,vis:b.vis}));
   NOTES.length=0;NOTES.push(...w.notes);
   TASKS.length=0;TASKS.push(...w.tasks);

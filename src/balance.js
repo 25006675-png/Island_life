@@ -1,5 +1,5 @@
 import { CATEGORIES, TRENDS, MOODS, LIVE, hours, weatherLabel, fullness, catImg, WEEK } from './data.js';
-import { TODAY, addDays, mondayOf, dow, fromIso, daysBetween } from './plan.js';
+import { TODAY, addDays, mondayOf, dow, fromIso, daysBetween, isDone } from './plan.js';
 import { reading, weekReading, learned } from './readings.js';
 import { sinkOf } from './climate.js';
 
@@ -101,13 +101,13 @@ export function createBalance({plans,me,friends,clock,checkins,sheets,notice,dew
     $('bal-mood-note').textContent=!heavy.length?'Light days all week, and your sky has stayed clear.'
       :`${light>=4?'Mostly light days.':'A mixed week.'} The heavier ${heavy.length===1?'one was':'ones were'} ${list(heavy)}.`;
   }
-  // Done so far: blocks answered Done against the week's plan, day by day.
+  // Done so far: earlier days' blocks and today's answered Done, against the week's plan, day by day.
   function progress(week){
     $('bal-days').classList.remove('weeks');
-    const live=week.filter(b=>!b.skipped), done=live.filter(b=>b.done), monday=mondayOf(TODAY);
+    const live=week.filter(b=>!b.skipped), done=live.filter(isDone), monday=mondayOf(TODAY);
     $('bal-progress').textContent=`${done.length} of ${live.length} blocks done so far`;
     const per=DAYN.map((name,i)=>{const date=addDays(monday,i), bl=live.filter(b=>b.date===date);
-      return {name,date,plan:bl.reduce((a,b)=>a+b.mins,0),done:bl.filter(b=>b.done).reduce((a,b)=>a+b.mins,0),n:bl.length,d:bl.filter(b=>b.done).length};});
+      return {name,date,plan:bl.reduce((a,b)=>a+b.mins,0),done:bl.filter(isDone).reduce((a,b)=>a+b.mins,0),n:bl.length,d:bl.filter(isDone).length};});
     const max=Math.max(60,...per.map(p=>p.plan));
     $('bal-days').replaceChildren(...per.map(p=>{
       const col=el('div',{className:`day-col${p.date===TODAY?' today':''}`,title:`${p.name}: ${p.d} of ${p.n} done`},
@@ -147,7 +147,7 @@ export function createBalance({plans,me,friends,clock,checkins,sheets,notice,dew
     const bars=weeks.map((w,i)=>{
       if(i===4){const wk=plans.week(owner).filter(b=>!b.skipped);wk.forEach(b=>add(b.cat,b.mins));
         const sink=reading(owner).sink, h=plans.hours(wk)||1;
-        return {w,plan:sink,done:sink*plans.hours(wk.filter(b=>b.done))/h,now:true};}
+        return {w,plan:sink,done:sink*plans.hours(wk.filter(isDone))/h,now:true};}
       const share=w===crunch?{study:.55,work:.05,errands:.07,social:.08,exercise:.07,rest:.06,other:.12}
                             :{study:.38,work:.05,errands:.1,social:.16,exercise:.11,rest:.11,other:.09};
       for(const [c,f] of Object.entries(share))add(c,past[i]*60*f*(.9+r()*.2));
@@ -165,7 +165,7 @@ export function createBalance({plans,me,friends,clock,checkins,sheets,notice,dew
     const bars=weeks.map((w,i)=>{
       const wk=plans.range(owner,w,7).filter(b=>!b.skipped);for(const b of wk)byCat[b.cat]=(byCat[b.cat]||0)+b.mins;
       const sink=weekReading(owner,w).sink, h=plans.hours(wk)||1;
-      return {w,plan:sink,done:sink*plans.hours(wk.filter(b=>b.done||b.date<TODAY))/h,now:i===4};
+      return {w,plan:sink,done:sink*plans.hours(wk.filter(isDone))/h,now:i===4};
     });
     const crunch=bars.reduce((a,b)=>b.plan>a.plan?b:a).w;
     return {weeks,crunch,days,bars,byCat};
@@ -288,7 +288,11 @@ export function createBalance({plans,me,friends,clock,checkins,sheets,notice,dew
   }
   for(const t of sheet.querySelectorAll('[data-span]'))t.onclick=()=>{span=t.dataset.span;render();};
   return {
-    open(from){current=suggest();applied.clear();sheets.show(sheet,from??$('balance-toggle'));render();},
+    // at: 'suggest' opens straight at "Small changes that would help" (the gardener's "See why"), lit for a moment
+    open(from,at){current=suggest();applied.clear();sheets.show(sheet,from??$('balance-toggle'));render();
+      if(at==='suggest'){const panel=$('bal-suggest-title').closest('.bal-panel');
+        setTimeout(()=>{panel.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'});
+          panel.classList.remove('lit');void panel.offsetWidth;panel.classList.add('lit');},380);}},
     render,
   };
 }

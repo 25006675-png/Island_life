@@ -35,6 +35,19 @@ test('gardener: refuses strangers, words an offer, keeps support exact', async (
   assert.equal(s.line, 'A careful sentence.');
 });
 
+test('gardener: an idea of its own uses only the free times it was offered', async () => {
+  const auth = { Authorization: `Bearer ${token}` };
+  const summary = { mode: 'schedule', week: { sky: 'Drizzle', island: 'Sinking low', lateNights: 3, hours: { study: 19, work: 8 },
+      days: [{ day: 'Thu', looks: 'Very heavy for you', hours: { study: 6, work: 4 } }] },
+    slots: [{ day: 'Wed (today)', time: '20:30' }, { day: 'Thu', time: '21:30' }], canWait: [{ kind: 'errands', day: 'Thu', hours: 1.5 }], friends: ['Ben'] };
+  const r = await (await call('gardener', summary, auth)).json();
+  console.log('    gemini idea:', JSON.stringify(r.idea));   // null when Gemini is unavailable: the app uses its own ideas
+  assert.ok('idea' in r);
+  if (r.idea?.type === 'add') assert.ok(r.idea.slot >= 0 && r.idea.slot < 2 && ['rest', 'exercise', 'social', 'other'].includes(r.idea.cat));
+  if (r.idea?.type === 'move') assert.equal(r.idea.move, 0);
+  assert.equal((await (await call('gardener', { ...summary, mode: 'support' }, auth)).json()).idea, null, 'support is never an AI idea');
+});
+
 test('google-calendar: start gives a consent URL with the right scopes and a signed state', async () => {
   const r = await (await call('google-calendar/start', { return_to: 'http://127.0.0.1:5173/', write: true }, { Authorization: `Bearer ${token}` })).json();
   const u = new globalThis.URL(r.url);
@@ -59,7 +72,7 @@ test('google-calendar: sync without a connection says so; cron route needs the s
   assert.equal((await call('google-calendar/sync-all', {}, { 'x-cron-secret': env.CRON_SECRET })).status, 200);
 });
 
-test('prompts: asks about a block that just ended, once, then waits', async () => {
+test('prompts: one evening "How are you?", never twice, never about single activities', async () => {
   assert.equal((await call('prompts')).status, 403);
   const tz = 'Asia/Kuala_Lumpur';
   await admin.from('profiles').update({ timezone: tz }).eq('id', uid);
@@ -67,15 +80,16 @@ test('prompts: asks about a block that just ended, once, then waits', async () =
     hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).formatToParts(new Date()).map(x => [x.type, x.value]));
   const today = `${p.year}-${p.month}-${p.day}`, now = +p.hour * 60 + +p.minute;
   await db.from('push_subscriptions').insert({ endpoint: `https://push.invalid/${uid}`, p256dh: 'BKx', auth: 'x' });
-  if (now < 8 * 60 + 40 || now >= 22 * 60) { console.log('    (local time is in quiet hours; checking quiet-hours behaviour only)'); }
-  else await db.from('blocks').insert({ date: today, start_min: now - 35, mins: 30, cat: 'study', title: 'Problem set' });
+  // a block that just ended no longer gets a notification of its own
+  if (now >= 8 * 60 + 40 && now < 22 * 60) await db.from('blocks').insert({ date: today, start_min: now - 35, mins: 30, cat: 'study', title: 'Problem set' });
   const r = await (await call('prompts', {}, { 'x-cron-secret': env.CRON_SECRET })).json();
   const mine = r.results[uid];
-  assert.ok(['asked drain', 'quiet hours'].includes(mine), mine);
-  if (mine === 'asked drain') {
+  const expected = now < 8 * 60 || now >= 22 * 60 ? 'quiet hours' : now >= 20 * 60 ? 'asked mood' : 'nothing to ask';
+  assert.equal(mine, expected);
+  if (mine === 'asked mood') {
     const again = await (await call('prompts', {}, { 'x-cron-secret': env.CRON_SECRET })).json();
-    assert.notEqual(again.results[uid], 'asked drain', 'the same block is never asked about twice');
-    const { data } = await db.from('prompts').select('kind,answered_at');
-    assert.equal(data.length, 1);
+    assert.equal(again.results[uid], 'nothing to ask', 'the evening question is asked once a day');
   }
+  const { data } = await db.from('prompts').select('kind');
+  assert.ok(data.every(x => x.kind === 'mood'));
 });

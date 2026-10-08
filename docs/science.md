@@ -20,7 +20,7 @@ This page explains each idea in plain words: where it comes from, what Island Li
 | [Fitness–fatigue model](#3-the-fitnessfatigue-model-load-wears-you-down-then-fades) | Sports science | The same lecture feeling heavier after three late nights |
 | [Effort–Recovery model](#4-the-effortrecovery-model-recovery-is-the-point) | Occupational psychology | How fast rest brings each student back |
 | [Job Demands–Resources model](#5-the-job-demandsresources-model-the-whole-island) | Occupational psychology | The whole island: demands sink it, resources hold it up, strain shows in the sky |
-| [Experience sampling](#6-experience-sampling-ask-in-the-moment) | Psychology research | Short questions asked close to the moment |
+| [Experience sampling and day reconstruction](#6-asking-while-its-fresh-experience-sampling-and-day-reconstruction) | Psychology research | Short questions the same evening, while the day is fresh |
 | [Learning from few answers](#7-learning-from-few-answers) | Statistics, machine learning | Learning each student's costs from a handful of taps, without overreacting |
 
 ---
@@ -105,20 +105,20 @@ A planner only sees the schedule, and a mood tracker only sees feelings. Island 
 
 ---
 
-## 6. Experience sampling: ask in the moment
+## 6. Asking while it's fresh: experience sampling and day reconstruction
 
-**What it is.** The experience-sampling method [1] and ecological momentary assessment [2] are standard psychology research methods. Instead of asking people at the end of the week how it went, they ask briefly and often, close to the moment. People remember a whole week badly, but they rate the last hour well.
+**What it is.** The experience-sampling method [1] and ecological momentary assessment [2] are standard psychology research methods. Instead of asking people at the end of the week how it went, they ask briefly and often, close to the moment. People remember a whole week badly, but they rate the last hour well. Asking after every activity is tiring, though, so Kahneman and colleagues built the **Day Reconstruction Method** [16]: people go back over the day's activities that same evening. It gives a picture close to experience sampling with far fewer interruptions.
 
 **What Island Life takes.** Two short questions, each one tap:
 
 | Question | When | It changes |
 |---|---|---|
-| "How draining was that?" | Soon after an activity ends | The island's height |
 | "How are you?" | Once, in the evening | The sky (a lantern, then the weather) |
+| "How draining was that?" | Straight after, about one or two of the day's activities | The island's height |
 
 Questions about **things** move the island. Questions about **you** change the sky. Feelings are never predicted, only asked.
 
-To avoid the fatigue that frequent questions cause, there are limits: at most two activity questions a day, none at night or during an activity, and fewer if the student starts ignoring them.
+To avoid the fatigue that frequent questions cause, the whole day costs one notification: at most two activity questions, one per kind, none at night or during an activity, and fewer if the student starts ignoring them.
 
 ---
 
@@ -138,14 +138,14 @@ These lines come from the same research, read carefully:
 
 - **It never diagnoses.** It never labels a student or explains why they feel the way they do. It only chooses *which kind of help* to offer.
 - **It never asks why** someone feels bad.
-- **It never lets AI decide a number.** Gemini sorts calendar entries into kinds and puts the gardener's chosen offer into friendly words. The rules above decide everything else, and they can be read and tested.
+- **It never lets AI decide a number.** Gemini sorts calendar entries into kinds, and suggests the gardener's idea from free times the app has found, which the app checks before showing. The rules above decide everything else, and they can be read and tested.
 - **It never puts anything on a plan** until the student taps it.
 
 ---
 
 ## How to say it in the pitch
 
-- *"Most apps count hours. Island Life asks one question after an activity, the same one elite sports teams ask their athletes: how hard was that?"*
+- *"Most apps count hours. Island Life asks one question about your day's activities, the same one elite sports teams ask their athletes: how hard was that?"*
 - *"Your island sinks when this week is heavier than **your** normal week, the way coaches compare an athlete's last week with their last month."*
 - *"When your feelings don't match your schedule, Island Life notices it isn't about your timetable, and stops suggesting timetable fixes."*
 - *"Island Life isn't a metaphor we made up. It's a well-established burnout model, turned into a world you can see."*
@@ -162,7 +162,7 @@ On day one, the student's normal week comes from four weeks of imported calendar
 That's the point. The island measures how the week feels *to you*, which no calendar can. Sports science made the same choice with session-RPE [3, 4]: how hard a session felt captures intensity that counting minutes misses.
 
 **"Why not just let AI work it out?"**
-A model that judges your week can't be explained, can't be checked, and isn't personal. These rules fit on one page ([algorithm.md](algorithm.md)), are covered by tests, and learn from each student's own answers.
+A model that judges your week can't be explained, can't be checked, and isn't personal. These rules fit on one page ([algorithm.md](algorithm.md)), are covered by tests, and learn from each student's own answers. AI gets one bounded job: once the rules say the gardener should speak, Gemini suggests the idea, picking only from free times the app found.
 
 ---
 
@@ -183,3 +183,4 @@ A model that judges your week can't be explained, can't be checked, and isn't pe
 13. Bakker, A. B., & Demerouti, E. (2007). The Job Demands–Resources model: state of the art. *Journal of Managerial Psychology, 22*(3), 309–328.
 14. Settles, B. (2009). *Active Learning Literature Survey* (Computer Sciences Technical Report 1648). University of Wisconsin–Madison.
 15. Impellizzeri, F. M., Tenan, M. S., Kempton, T., Novak, A., & Coutts, A. J. (2020). Acute:chronic workload ratio: conceptual issues and fundamental pitfalls. *International Journal of Sports Physiology and Performance, 15*(6), 907–913.
+16. Kahneman, D., Krueger, A. B., Schkade, D. A., Schwarz, N., & Stone, A. A. (2004). A survey method for characterizing daily life experience: The day reconstruction method. *Science, 306*(5702), 1776–1780.

@@ -21,12 +21,12 @@ The island asks two short questions, and each feeds one side of the world.
 
 | Question | When | Answers | Feeds |
 |---|---|---|---|
-| **"How draining was that?"** | Soon after an activity ends (not every one; see section 5) | Light · Okay · Draining | Altitude |
 | **"How are you?"** | Once, in the evening | Calm · Happy · Tired · Stressed · Low | A lantern, then the weather |
+| **"How draining was that?"** | Straight after, about one or two of the day's activities (see section 5) | Light · Okay · Draining | Altitude |
 
 Questions about *things* move the island. Questions about *you* change the sky.
 
-Asking briefly, close to the moment, is the **experience sampling** method used in psychology research [1, 2]. People recall a day badly after the fact, but they rate the last hour well.
+Asking briefly, close to the moment, is the **experience sampling** method used in psychology research [1, 2]. Island Life asks the same evening instead, the way the **Day Reconstruction Method** does [16]: people rate the day's activities while the day is still fresh. That gives a picture close to experience sampling with one interruption a day instead of one per activity, which is what keeps students answering.
 
 ---
 
@@ -64,11 +64,11 @@ The running average is **exponentially weighted** [7]: last week counts most, an
 
 | Ratio | Island |
 |---|---|
-| half your normal week or less | high in the sky |
-| your normal week | mid-sky |
-| one and a half times your normal week or more | down at the cloud sea |
+| half your normal week or less | high in the sky, 45 m up |
+| your normal week | level with the gathering island, 0 m |
+| one and a half times your normal week or more | down in the cloud sea, 55 m below |
 
-In between, the island moves smoothly: `sink = clamp((R − 0.5) ÷ 1.0, 0, 1)`.
+In between, the island moves smoothly: `sink = clamp((R − 0.5) ÷ 1.0, 0, 1)`, and its height runs from 45 m (sink 0) through 0 m (sink 0.5) to −55 m (sink 1), each half in a straight line.
 
 ### 2.3 What the island learns from "How draining was that?"
 
@@ -202,16 +202,16 @@ The gardener checks these in order and acts on the first that applies:
 | 3 | Island low (sinking 0.65 or more), or a heavy day ahead | A schedule fix: move a block marked *can wait*, or keep an evening free. Exception: when the sky is Drizzle or worse and the link is known to be below 0.15, the offer is rest instead, because schedule fixes have not tracked this student's feelings. |
 | – | Anything else, including one bad day | Nothing. One day is noise. |
 
-The rules decide. Gemini only puts the chosen offer into friendly words, and fixed sentences take over whenever the network is down.
+The rules decide when the gardener speaks and which kind of help fits. Within that, Gemini suggests the idea itself from a summary of the week (kinds of activity and hours, never titles), choosing only from free times and *can wait* blocks the app offers. The app checks the choice and shows it only while that time is still free. If Gemini is unavailable or its idea doesn't check out, the app's own ideas take over: move something that can wait, an early night, a walk, tea with a friend, or a slow evening. Row 1 is always the same fixed text and is never written by AI.
 
 ### 5.2 When the island asks
 
 | Rule | Value |
 |---|---|
-| Activities asked about | Only blocks of 30 minutes or more that have ended. Rest blocks are rarely asked about. |
+| Activities asked about | Today's blocks of 30 minutes or more that have ended, straight after the evening's "How are you?". Rest blocks are rarely asked about. |
 | Chance of asking about an activity | `1 ÷ √(answers for that kind + 1)` plus `0.3 × |worn|`, kept between 0.15 and 1 |
-| Activity questions a day | At most 2, picking the ones the island is least sure of |
-| Mood question | Once, in the evening, unless already answered |
+| Activity questions a day | At most 2, one per kind: the kinds the island knows least first, then the longest activity |
+| Mood question | Once, in the evening (a single phone notification from 20:00), unless already answered |
 | Quiet hours | No questions from 22:00 to 08:00, or during an activity |
 | Ignored questions | Three unanswered in a row halve the asking for a week |
 
@@ -225,7 +225,7 @@ Asking most about what it is least sure of is **uncertainty sampling** from acti
 - It never asks why someone feels bad.
 - It never puts anything on the plan until the student taps it.
 - It never shows friends hours, titles, or answers to "How draining was that?"
-- It never lets AI decide a number. Gemini sorts imported event titles into kinds and words the gardener's lines. The arithmetic above decides everything else.
+- It never lets AI decide a number. Gemini sorts imported event titles into kinds, and suggests and words the gardener's ideas from options the app offers and checks. The arithmetic above decides everything else.
 
 ---
 
@@ -255,3 +255,4 @@ Asking most about what it is least sure of is **uncertainty sampling** from acti
 13. Bakker, A. B., & Demerouti, E. (2007). The Job Demands–Resources model: state of the art. *Journal of Managerial Psychology, 22*(3), 309–328.
 14. Settles, B. (2009). *Active Learning Literature Survey* (Computer Sciences Technical Report 1648). University of Wisconsin–Madison.
 15. Impellizzeri, F. M., Tenan, M. S., Kempton, T., Novak, A., & Coutts, A. J. (2020). Acute:chronic workload ratio: conceptual issues and fundamental pitfalls. *International Journal of Sports Physiology and Performance, 15*(6), 907–913.
+16. Kahneman, D., Krueger, A. B., Schkade, D. A., Schwarz, N., & Stone, A. A. (2004). A survey method for characterizing daily life experience: The day reconstruction method. *Science, 306*(5702), 1776–1780.

@@ -1,29 +1,68 @@
 import * as T from 'three';
+import { CLOUD_SEA, LOW, HIGH } from './data.js';
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 const noise = `
 float hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
 float noise(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(hash(i),hash(i+vec2(1,0)),f.x),mix(hash(i+vec2(0,1)),hash(i+vec2(1)),f.x),f.y);}
 float fbm(vec2 p){float v=0.,a=.5;for(int i=0;i<5;i++){v+=a*noise(p);p=p*2.03+11.4;a*=.5;}return v;}`;
 // the cloud sea's own tint, shared so anything cloudy can match it
 export const cloudTint=new T.Color('#f5cfbf');
-const palettes={peach:['#787da9','#c0afd0','#ffd7b2','#f5cfbf'],lavender:['#666b9b','#ae9bcb','#eec7d5','#cdbbd9'],mint:['#77a8b8','#b3d2c9','#ffe0b8','#c5dcd2']};
+// A sky tone sets the sky (top, middle, horizon), the cloud sea (shade, lit tops, billows), the fog and the light.
+// Violet dusk is the welcome page's evening: violet light from above, orange bounced up from below and a warm
+// sun, so shade turns violet and lit sides turn gold. The older tones keep their softer, near-white light.
+const SOFT={sky:'#fff2d4',ground:'#8d92aa',hemi:1.15,sun:'#ffdeb2',sunI:2.0,fill:'#bcd9e5',fillI:.9};
+export const TONES={
+  dusk:    {sky:['#2a1f5c','#6c47aa','#ff9f70'],tint:'#d2c0ea',lit:'#fbe6ea',billow:'#f3e8f6',fog:['#8f73bd',.0009],
+            light:{sky:'#b8a6f2',ground:'#e9ad9c',hemi:1.2,sun:'#ffe2c4',sunI:2.25,fill:'#b49cff',fillI:.8}},
+  peach:   {sky:['#787da9','#c0afd0','#ffd7b2'],tint:'#f5cfbf',lit:'#ffe6cf',billow:'#ffe3d3',fog:['#f5cfbf',.0009],light:SOFT},
+  lavender:{sky:['#666b9b','#ae9bcb','#eec7d5'],tint:'#cdbbd9',lit:'#ffe6cf',billow:'#ffe3d3',fog:['#cdbbd9',.0009],light:SOFT},
+  mint:    {sky:['#77a8b8','#b3d2c9','#ffe0b8'],tint:'#c5dcd2',lit:'#ffe6cf',billow:'#ffe3d3',fog:['#c5dcd2',.0009],light:SOFT}};
+// Many soft camera-facing puffs in ONE draw call. Each puff is an instance of a unit quad that the vertex shader
+// turns to face the camera (like a Sprite) and sizes from its instance scale. Same look as separate Sprites,
+// without a draw call per puff. Draw order inside the batch is fixed, which suits overlapping soft puffs.
+export function puffBatch(items,{map,color='#ffffff',blending=T.NormalBlending}={}){
+  const n=items.length, mesh=new T.InstancedMesh(new T.PlaneGeometry(1,1),null,n), op=new Float32Array(n), m=new T.Matrix4();
+  items.forEach((it,i)=>{m.makeScale(it.sx,it.sy,1).setPosition(it.x,it.y,it.z);mesh.setMatrixAt(i,m);op[i]=it.opacity??1;});
+  mesh.geometry.setAttribute('aOpacity',new T.InstancedBufferAttribute(op,1));
+  mesh.material=new T.ShaderMaterial({transparent:true,depthWrite:false,blending,fog:true,
+    uniforms:T.UniformsUtils.merge([T.UniformsLib.fog,{map:{value:null},color:{value:new T.Color(color)}}]),
+    vertexShader:`attribute float aOpacity;varying float vO;varying vec2 vUv;
+#include <fog_pars_vertex>
+void main(){vUv=uv;vO=aOpacity;vec4 mvPosition=modelViewMatrix*instanceMatrix*vec4(0.,0.,0.,1.);
+  vec2 s=vec2(length(instanceMatrix[0].xyz)*length(modelMatrix[0].xyz),length(instanceMatrix[1].xyz)*length(modelMatrix[1].xyz));
+  mvPosition.xy+=position.xy*s;gl_Position=projectionMatrix*mvPosition;
+#include <fog_vertex>
+}`,
+    fragmentShader:`uniform sampler2D map;uniform vec3 color;varying float vO;varying vec2 vUv;
+#include <fog_pars_fragment>
+void main(){vec4 t=texture2D(map,vUv);gl_FragColor=vec4(color*t.rgb,t.a*vO);
+#include <tonemapping_fragment>
+#include <colorspace_fragment>
+#include <fog_fragment>
+}`});
+  mesh.material.uniforms.map.value=map;mesh.frustumCulled=false;
+  mesh.setOpacity=(i,o)=>{op[i]=o;mesh.geometry.attributes.aOpacity.needsUpdate=true;};
+  return mesh;
+}
+
 export function createAtmosphere(scene) {
   const uniforms={top:{value:new T.Color()},mid:{value:new T.Color()},bottom:{value:new T.Color()},time:{value:0}};
   const sky=new T.Mesh(new T.SphereGeometry(450,32,16),new T.ShaderMaterial({side:T.BackSide,depthWrite:false,uniforms,vertexShader:`varying vec3 vWorld;void main(){vWorld=position;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}`,fragmentShader:`varying vec3 vWorld;uniform vec3 top,mid,bottom;uniform float time;${noise}
 void main(){vec3 d=normalize(vWorld);float h=d.y;vec3 col=mix(bottom,mid,smoothstep(-.2,.28,h));col=mix(col,top,smoothstep(.15,.8,h));float sun=pow(max(0.,dot(d,normalize(vec3(-.8,.13,-1.)))),18.);col+=vec3(.17,.10,.025)*sun;float clouds=fbm(d.xz*5./max(.25,abs(d.y)+.3)+time*.002);float veil=smoothstep(.48,.77,clouds)*(1.-smoothstep(.08,.6,h));col=mix(col,bottom*1.07,veil*.38);float stars=step(.9978,hash(floor(d.xz/max(.16,h)*340.)))*smoothstep(.28,.75,h);col+=stars*.38;gl_FragColor=vec4(col,1.);#include <tonemapping_fragment>\n#include <colorspace_fragment>}`.replace(';#include',';\n#include')}));
   scene.add(sky);
-  const cloudUniforms={time:uniforms.time,tint:{value:cloudTint}};
+  const cloudUniforms={time:uniforms.time,tint:{value:cloudTint},lit:{value:new T.Color('#ffe6cf')},holes:{value:[...Array(6)].map(()=>new T.Vector4())}};
   // the cloud sea is far wider than any view and fades out, so no edge ever shows
-  const sea=new T.Mesh(new T.PlaneGeometry(4000,4000),new T.ShaderMaterial({uniforms:cloudUniforms,transparent:true,depthWrite:false,side:T.DoubleSide,vertexShader:`varying vec3 vWorld;void main(){vWorld=(modelMatrix*vec4(position,1.)).xyz;gl_Position=projectionMatrix*viewMatrix*vec4(vWorld,1.);}`,fragmentShader:`varying vec3 vWorld;uniform float time;uniform vec3 tint;${noise}
-void main(){vec2 p=vWorld.xz*.026+vec2(time*.002,0.);float n=fbm(p);float detail=fbm(p*3.);vec3 col=mix(tint*.83,vec3(1.,.9,.81),smoothstep(.22,.8,n));col+=pow(detail,3.)*.14;gl_FragColor=vec4(col,.98*(1.-smoothstep(700.,1800.,length(vWorld.xz))));#include <tonemapping_fragment>\n#include <colorspace_fragment>}`.replace(';#include',';\n#include')}));
-  sea.rotation.x=-Math.PI/2;sea.position.y=-17;scene.add(sea);
+  const sea=new T.Mesh(new T.PlaneGeometry(4000,4000),new T.ShaderMaterial({uniforms:cloudUniforms,transparent:true,depthWrite:false,side:T.DoubleSide,vertexShader:`varying vec3 vWorld;void main(){vWorld=(modelMatrix*vec4(position,1.)).xyz;gl_Position=projectionMatrix*viewMatrix*vec4(vWorld,1.);}`,fragmentShader:`varying vec3 vWorld;uniform float time;uniform vec3 tint,lit;uniform vec4 holes[6];${noise}
+void main(){vec2 p=vWorld.xz*.011+vec2(time*.001,0.);float open=0.;vec2 sw=vec2(0.);for(int i=0;i<6;i++){vec4 h=holes[i];if(h.w<=0.)continue;vec2 d=vWorld.xz-h.xy;float r=length(d);float k=h.w*(1.-smoothstep(h.z*.5,h.z*1.4,r));if(k>0.){float an=atan(d.y,d.x)+time*.06+(1.-min(1.,r/h.z))*1.8;sw+=vec2(cos(an),sin(an))*k;open=max(open,k);}}float n=fbm(p+sw*.6);float detail=fbm(p*3.+sw);vec3 col=mix(tint*.92,lit,smoothstep(.12,.95,n));col+=pow(detail,3.)*.06;float wisp=smoothstep(.32,.82,fbm(vWorld.xz*.045+sw*1.6+vec2(time*.03,-time*.02)));float alpha=.98*(1.-smoothstep(700.,1800.,length(vWorld.xz)))*mix(1.,.1+.6*wisp,open);gl_FragColor=vec4(col,alpha);#include <tonemapping_fragment>\n#include <colorspace_fragment>}`.replace(';#include',';\n#include')}));
+  sea.rotation.x=-Math.PI/2;sea.position.y=CLOUD_SEA;scene.add(sea);
   // Soft billows use one shared procedural sprite, keeping the cloud sea inexpensive.
   const canvas=document.createElement('canvas');canvas.width=canvas.height=128;
   const ctx=canvas.getContext('2d'),gradient=ctx.createRadialGradient(64,64,5,64,64,64);
   gradient.addColorStop(0,'rgba(255,255,255,.55)');gradient.addColorStop(.45,'rgba(255,255,255,.26)');gradient.addColorStop(1,'rgba(255,255,255,0)');ctx.fillStyle=gradient;ctx.fillRect(0,0,128,128);
   const texture=new T.CanvasTexture(canvas),clouds=new T.Group();scene.add(clouds);
-  for(let n=0;n<100;n++) {const s=new T.Sprite(new T.SpriteMaterial({map:texture,color:'#ffe3d3',transparent:true,depthWrite:false,opacity:.45}));const angle=n*2.399,r=22+Math.sqrt(n/100)*150;s.position.set(Math.cos(angle)*r,-13+(n%5)*.5,Math.sin(angle)*r);s.scale.set(30+n%7*5,11+n%4*3,1);clouds.add(s);}
+  const billows=puffBatch([...Array(100)].map((_,n)=>{const angle=n*2.399,r=22+Math.sqrt(n/100)*150;return {x:Math.cos(angle)*r,y:CLOUD_SEA+4+(n%5)*.5,z:Math.sin(angle)*r,sx:30+n%7*5,sy:11+n%4*3,opacity:.45};}),{map:texture,color:'#ffe3d3'});clouds.add(billows);
   const bands=new T.Group();scene.add(bands);
-  for(const y of [7,19,32]){const band=new T.Mesh(new T.CylinderGeometry(190,190,.13,100,1,true),new T.MeshBasicMaterial({color:'#fae5c1',transparent:true,opacity:.095,side:T.DoubleSide,depthWrite:false}));band.position.y=y;bands.add(band);}
+  for(const y of [LOW+15,0,HIGH*.5,HIGH+12]){const band=new T.Mesh(new T.CylinderGeometry(190,190,.13,100,1,true),new T.MeshBasicMaterial({color:'#fae5c1',transparent:true,opacity:.095,side:T.DoubleSide,depthWrite:false}));band.position.y=y;bands.add(band);}
   // .004 buried the islands in haze; .0009 keeps depth without the milk
   scene.fog=new T.FogExp2('#dec4d1',.0009);
   // far scenery for the sky view: small rock islands adrift, thin high cloud,
@@ -43,18 +82,22 @@ void main(){vec2 p=vWorld.xz*.026+vec2(time*.002,0.);float n=fbm(p);float detail
       p.setXYZ(i,x*s,y*s,z*s);col.set([c.r,c.g,c.b],i*3);
     }
     geo.setAttribute('color',new T.BufferAttribute(col,3));geo.computeVertexNormals();
-    return new T.Mesh(geo,new T.MeshStandardMaterial({vertexColors:true,flatShading:true,roughness:1}));
+    return geo;
   }
+  // one draw per isle: every part carries its colour in its vertices and joins the rock's geometry
+  const isleMat=new T.MeshStandardMaterial({vertexColors:true,flatShading:true,roughness:1});
+  const painted=(geo,color,x=0,y=0,z=0)=>{const g=(geo.index?geo.toNonIndexed():geo);g.deleteAttribute('uv');g.translate(x,y,z);
+    if(!g.attributes.color){const c=new T.Color(color),a=new Float32Array(g.attributes.position.count*3);for(let i=0;i<a.length;i+=3)a.set([c.r,c.g,c.b],i);g.setAttribute('color',new T.BufferAttribute(a,3));}return g;};
   for(let i=0;i<9;i++){
     const a=i*2.399+.6, r=280+(i*53)%150, s=5+(i*7)%9, g=new T.Group();
-    g.add(rockIsle(s,i*1.7));
+    const parts=[painted(rockIsle(s,i*1.7))];
     for(let k=0;k<1+i%3;k++){
       const x=(k-1)*s*.35, z=((k*5)%3-1)*s*.25;
-      const trunk=new T.Mesh(new T.CylinderGeometry(s*.05,s*.07,s*.45,5),bark);trunk.position.set(x,s*.4,z);
-      const crown=new T.Mesh(new T.IcosahedronGeometry(s*(.24+.06*k),0),leaves[(i+k)%3]);crown.position.set(x,s*(.72+.05*k),z);
-      g.add(trunk,crown);
+      parts.push(painted(new T.CylinderGeometry(s*.05,s*.07,s*.45,5),bark.color,x,s*.4,z));
+      parts.push(painted(new T.IcosahedronGeometry(s*(.24+.06*k),0),leaves[(i+k)%3].color,x,s*(.72+.05*k),z));
     }
-    g.position.set(Math.cos(a)*r,-2+(i*17)%38,Math.sin(a)*r);g.rotation.y=a;g.userData={y:g.position.y,p:i};isles.add(g);
+    const merged=mergeGeometries(parts);merged.computeVertexNormals();g.add(new T.Mesh(merged,isleMat));
+    g.position.set(Math.cos(a)*r,CLOUD_SEA+10+(i*17)%(HIGH+20-CLOUD_SEA),Math.sin(a)*r);g.rotation.y=a;g.userData={y:g.position.y,p:i};isles.add(g);
   }
   // A humpback, lofted along its spine (head at +z): a broad, flat-topped head,
   // a pale grooved throat, long pectoral fins, a small dorsal fin, wide flukes.
@@ -103,7 +146,7 @@ void main(){vec2 p=vWorld.xz*.026+vec2(time*.002,0.);float n=fbm(p);float detail
     const heave=(f,t)=>(f<.62?((.62-f)/.62)**2*.55*Math.sin(t*1.25-f*4.5):0)+(f<.4?((.4-f)/.4)**2*.3:0);   // wave + the tail stock's upward sweep
     g.userData.swim=t=>{
       for(let i=0;i<RINGS;i++){const d=heave(i/(RINGS-1),t);for(let j=0;j<SEG;j++){const n=i*SEG+j;attr.setY(n,rest[n]+d);}}
-      const d0=heave(0,t);attr.setY(tail,d0);attr.needsUpdate=true;geo.computeVertexNormals();
+      const d0=heave(0,t);attr.setY(tail,d0);attr.needsUpdate=true;   // normals stay as at rest: far away and a small bend, so recomputing them every frame bought nothing
       flukes.position.set(0,d0,-LEN/2);flukes.rotation.x=-Math.atan((heave(.05,t)-d0)/(.05*LEN))*1.4;   // flukes tilt with the beat
       pecs.forEach(p=>{p.rotation.z=-.45+Math.sin(t*.8)*.16;});
     };
@@ -123,15 +166,18 @@ void main(){vec2 p=vWorld.xz*.026+vec2(time*.002,0.);float n=fbm(p);float detail
     {size:16,r:720,y:95,speed:15,dir:1,a:2.4},{size:8,r:720,y:86,speed:15,dir:1,a:2.33},        // a second pair
     {size:13,r:780,y:60,speed:12,dir:-1,a:-2.9},                                                   // a lone one, the other way
   ].map(p=>({...p,w:whale(p.size)}));
-  for(let n=0;n<26;n++){
-    const s=new T.Sprite(new T.SpriteMaterial({map:texture,color:'#fff3ea',transparent:true,depthWrite:false,opacity:.16+(n%4)*.04}));
-    const a=n*2.399+.3,r=160+(n*37)%230;s.position.set(Math.cos(a)*r,24+(n*13)%46,Math.sin(a)*r);s.scale.set(60+(n%5)*14,14+(n%3)*5,1);haze.add(s);
-  }
+  haze.add(puffBatch([...Array(26)].map((_,n)=>{const a=n*2.399+.3,r=160+(n*37)%230;return {x:Math.cos(a)*r,y:24+(n*13)%46,z:Math.sin(a)*r,sx:60+(n%5)*14,sy:14+(n%3)*5,opacity:.16+(n%4)*.04};}),{map:texture,color:'#fff3ea'}));
   // drifting sparkles: a little light in the air, rising slowly and wrapping round
   const SP=140, spark=new Float32Array(SP*3), sparkGeo=new T.BufferGeometry();
   sparkGeo.setAttribute('position',new T.BufferAttribute(spark,3));
   scene.add(new T.Points(sparkGeo,new T.PointsMaterial({map:texture,color:'#fff1c9',size:1.1,transparent:true,opacity:.7,depthWrite:false,blending:T.AdditiveBlending})));
-  return {texture,setTone(tone){const p=palettes[tone]??palettes.peach;uniforms.top.value.set(p[0]);uniforms.mid.value.set(p[1]);uniforms.bottom.value.set(p[2]);cloudUniforms.tint.value.set(p[3]);scene.fog.color.set(p[3]);},
+  return {texture,light:TONES.dusk.light,
+    // islands down in the cloud sea open it into wisps round them (main.js, every frame)
+    setHoles(islands){const h=cloudUniforms.holes.value;for(let k=0;k<h.length;k++){const i=islands[k];
+      h[k].set(i?.x??0,i?.z??0,(i?.scale??2)*21,i?Math.min(1,Math.max(0,(CLOUD_SEA+28-i.altitude)/(CLOUD_SEA+28-LOW))):0);}},
+    setTone(name){const p=TONES[name]??TONES.dusk;uniforms.top.value.set(p.sky[0]);uniforms.mid.value.set(p.sky[1]);uniforms.bottom.value.set(p.sky[2]);
+      cloudUniforms.tint.value.set(p.tint);cloudUniforms.lit.value.set(p.lit);billows.material.uniforms.color.value.set(p.billow);
+      scene.fog.color.set(p.fog[0]);scene.fog.density=p.fog[1];this.light=p.light;},
     update(t,camera){
       uniforms.time.value=t;clouds.rotation.y=t*.001;haze.rotation.y=t*.0006;
       for(const g of isles.children)g.position.y=g.userData.y+Math.sin(t*.15+g.userData.p)*.8;
@@ -142,7 +188,7 @@ void main(){vec2 p=vWorld.xz*.026+vec2(time*.002,0.);float n=fbm(p);float detail
         p.w.rotation.set(Math.sin(t*.25+k)*.03,Math.atan2(-Math.sin(th)*p.dir,Math.cos(th)*p.dir),Math.sin(t*.2+k)*.04);
         p.w.userData.swim(t+k*.9);
       });
-      for(let i=0;i<SP;i++){const a=i*2.399+t*.01*(i%3+1),r=20+(i*37)%120;spark.set([Math.cos(a)*r,-4+(i*7.3+t*.4)%34,Math.sin(a)*r],i*3);}
+      for(let i=0;i<SP;i++){const a=i*2.399+t*.01*(i%3+1),r=20+(i*37)%120,k=i*3;spark[k]=Math.cos(a)*r;spark[k+1]=CLOUD_SEA+6+(i*7.3+t*.4)%(HIGH+20-CLOUD_SEA);spark[k+2]=Math.sin(a)*r;}   // written in place: no throwaway arrays
       sparkGeo.attributes.position.needsUpdate=true;
       if(camera)sky.position.copy(camera.position);   // the dome travels with the eye: no outside to see
     }};
@@ -153,20 +199,51 @@ const ramp=(a,b,x)=>{const t=Math.min(1,Math.max(0,(x-a)/(b-a)));return t*t*(3-2
 // the sun glow fades as cloud gathers; the cloud deck thickens and darkens;
 // low mist comes and goes in the middle; past ~0.55 rain starts as a drizzle
 // and grows into a shower. `radius` is the island's, in world units.
+// Cumulus, drawn once on canvases: a flat-bottomed heap of soft, cotton-edged lobes, biggest in the middle, white
+// where the sun catches the top and a gentle lavender-grey underneath, then blurred, so they read as vapour rather
+// than as solid shapes. Four variations, so no two clumps match.
+let cumulus=null;
+function cumulusTextures(){
+  if(cumulus)return cumulus;
+  cumulus=[0,1,2,3].map(v=>{
+    const W=256,H=160,c=document.createElement('canvas');c.width=W;c.height=H;const g=c.getContext('2d');
+    let s=v*7919+17;const r=()=>{s=(s*16807)%2147483647;return s/2147483647;};
+    const base=H*.78;
+    const lobe=(x,y,rad,al)=>{const gr=g.createRadialGradient(x,y,0,x,y,rad);gr.addColorStop(0,`rgba(255,255,255,${al})`);gr.addColorStop(.55,`rgba(255,255,255,${al*.85})`);gr.addColorStop(1,'rgba(255,255,255,0)');
+      g.fillStyle=gr;g.beginPath();g.arc(x,y,rad,0,7);g.fill();};
+    for(let i=0;i<22;i++){const t=r(),mid=1-Math.abs(t-.5)*2,x=W*(.12+.76*t),rad=12+mid*24+r()*12,y=base-rad*.45-mid*mid*26-r()*10;lobe(x,y,rad,.75+r()*.25);}
+    for(let i=0;i<6;i++)lobe(W*(.25+.5*r()),base-6-r()*6,22+r()*10,.6);   // a soft, flattish underside
+    g.globalCompositeOperation='source-atop';
+    const gr=g.createLinearGradient(0,H*.15,0,base+6);gr.addColorStop(0,'rgba(255,255,255,0)');gr.addColorStop(.6,'rgba(214,206,236,.22)');gr.addColorStop(1,'rgba(172,162,206,.5)');
+    g.fillStyle=gr;g.fillRect(0,0,W,H);
+    const out=document.createElement('canvas');out.width=W;out.height=H;const o=out.getContext('2d');o.filter='blur(4px)';o.drawImage(c,0,0);
+    const tex=new T.CanvasTexture(out);tex.colorSpace=T.SRGBColorSpace;return tex;
+  });
+  return cumulus;
+}
 export function createWeather(texture,radius=26) {
   const group=new T.Group(), mist=new T.Group(), R=radius;group.add(mist);
   const sprite=(color,blending=T.NormalBlending)=>new T.Sprite(new T.SpriteMaterial({map:texture,color,opacity:0,transparent:true,depthWrite:false,blending}));
-  // the cloud deck spans the whole island; each puff arrives at its own strain
-  // (in scattered order), so cover accumulates everywhere at once
-  const deck=[], light=new T.Color('#f0eef4'), dark=new T.Color('#65607f'), PUFFS=34;
-  for(let i=0;i<PUFFS;i++){
-    const a=i*2.399, r=Math.sqrt((i+.5)/PUFFS)*R*.95, s=sprite('#f0eef4');
-    s.position.set(Math.cos(a)*r,19+(i%3)*.9,Math.sin(a)*r);s.scale.set(28*(1+(i%4)*.15),11,1);
-    // a fixed draw order: re-sorting overlapping puffs as the camera moves made them blink
-    s.userData.from=.12+.45*((i*13)%PUFFS)/PUFFS;s.renderOrder=10+i;group.add(s);deck.push(s);
+  // The clouds over an island: separate cumulus clumps drifting above it, with sky between them, so the ground
+  // stays in view. Each clump is a few puffs of real cloud shape (cumulusTextures: round lobes, lit on top, shaded
+  // underneath). More clumps gather, and darken, as its sky turns heavier; rain brings the darkest. One draw per
+  // cloud shape (puffBatch), drifting slowly round.
+  const deckGroup=new T.Group(), deck=[], light=new T.Color('#ffffff'), dark=new T.Color('#7a7499'), CLUMPS=6;
+  group.add(deckGroup);
+  const shapes=cumulusTextures(), items=shapes.map(()=>[]);
+  for(let k=0;k<CLUMPS;k++){
+    const a=k*2.399+.4, r=R*(.18+.62*((k*.618)%1)), cx=Math.cos(a)*r, cz=Math.sin(a)*r, cy=20+(k%3)*1.6, from=.12+k*.075, size=11+(k%3)*2.5;
+    const across=new T.Vector2(-Math.sin(a),Math.cos(a));
+    for(let j=0;j<7;j++){   // a loose heap: four along the bottom, three smaller ones riding higher, each nudged
+      const top=j>=4, n=k*7+j, jit=((n*.618)%1-.5), along=top?(j-5)*size*.34+jit*size*.2:(j-1.5)*size*.42+jit*size*.15;
+      const s=size*(top?.62+((n*.37)%1)*.18:.78+((n*.29)%1)*.3), depth=jit*size*.35;
+      const p={x:cx+across.x*along-across.y*depth,y:cy+(top?size*.2+jit*2:jit*1.2),z:cz+across.y*along+across.x*depth,sx:s,sy:s*.62,opacity:0};
+      const v=(k+j)%shapes.length;deck.push({v,i:items[v].length,pos:new T.Vector3(p.x,p.y,p.z),from:from+j*.01,base:0});items[v].push(p);
+    }
   }
-  // low mist banks hugging the island's edge
-  for(let i=0;i<12;i++){const a=i/12*Math.PI*2,s=sprite('#eceef0');s.position.set(Math.cos(a)*R*.8,1.2+(i%3)*.8,Math.sin(a)*R*.8);s.scale.set(R*.9,7,1);s.renderOrder=4+i;mist.add(s);}
+  const batches=items.map((list,v)=>{const b=puffBatch(list,{map:shapes[v]});b.renderOrder=10+v;deckGroup.add(b);return b;});
+  // low mist, out past the island's edge only, so it never lies over the grass
+  for(let i=0;i<12;i++){const a=i/12*Math.PI*2,s=sprite('#eceef0');s.position.set(Math.cos(a)*R*1.15,1.2+(i%3)*.8,Math.sin(a)*R*1.15);s.scale.set(R*.7,5,1);s.renderOrder=4+i;mist.add(s);}
   // rain: a streaked shaft that fades top and bottom, plus close-up streaks
   const paint=(w,h,draw)=>{const c=document.createElement('canvas');c.width=w;c.height=h;draw(c.getContext('2d'));return new T.CanvasTexture(c);};
   const streaks=paint(64,128,x=>{for(let i=0;i<70;i++){const px=Math.random()*64,py=Math.random()*128;
@@ -178,38 +255,43 @@ export function createWeather(texture,radius=26) {
   shaft.position.y=10;shaft.scale.y=1.2;group.add(shaft);
   const DROPS=700,positions=new Float32Array(DROPS*6),geometry=new T.BufferGeometry();geometry.setAttribute('position',new T.BufferAttribute(positions,3));
   const drops=new T.LineSegments(geometry,new T.LineBasicMaterial({color:'#d4e4f0',transparent:true,opacity:.6,depthWrite:false}));group.add(drops);
-  // clear: a soft warm sun glow
-  const glow=sprite('#ffc766',T.AdditiveBlending);glow.position.y=22;glow.scale.setScalar(22);group.add(glow);
+  // clear: no orb of its own (the sky has one sun); a few golden motes drift up through the warm air instead
+  const MOTES=26, mote=new Float32Array(MOTES*3), moteGeo=new T.BufferGeometry();moteGeo.setAttribute('position',new T.BufferAttribute(mote,3));
+  const glow=new T.Points(moteGeo,new T.PointsMaterial({map:texture,color:'#ffd98a',size:1.3,transparent:true,opacity:0,depthWrite:false,blending:T.AdditiveBlending}));group.add(glow);
 
   let strain=0, rain=0;
   function setStrain(s){
     strain=Math.min(1,Math.max(0,s));
-    const tone=ramp(.3,.9,strain);
-    for(const p of deck){p.userData.base=ramp(p.userData.from,p.userData.from+.1,strain)*.95;p.material.opacity=p.userData.base;p.material.color.copy(light).lerp(dark,tone);}
-    const m=ramp(.2,.4,strain)*(1-ramp(.65,.85,strain))*.5;for(const b of mist.children){b.userData.base=m;b.material.opacity=m;}
+    const tone=ramp(.35,.95,strain);
+    for(const p of deck){p.base=ramp(p.from,p.from+.08,strain)*.92;batches[p.v].setOpacity(p.i,p.base);}
+    for(const b of batches)b.material.uniforms.color.value.copy(light).lerp(dark,tone);
+    const m=ramp(.2,.4,strain)*(1-ramp(.65,.85,strain))*.3;for(const b of mist.children){b.userData.base=m;b.material.opacity=m;}
     rain=ramp(.55,.95,strain);
     shaft.material.opacity=rain*.85;shaft.visible=rain>0;
     geometry.setDrawRange(0,Math.floor(DROPS*ramp(.5,1,strain))*2);drops.visible=strain>.5;
   }
   setStrain(0);
-  const eye=new T.Vector3();
+  const eye=new T.Vector3(), eyeD=new T.Vector3(), UP=new T.Vector3(0,1,0);
   return {group,setStrain,
     update(t,camera){
       // fade what the camera is about to fly through, instead of letting a
       // puff (or the rain column) suddenly fill the whole screen
       if(camera){
         eye.copy(camera.position).sub(group.position);
-        for(const p of deck)p.material.opacity=p.userData.base*ramp(8,24,eye.distanceTo(p.position));
-        for(const b of mist.children)b.material.opacity=b.userData.base*ramp(4,14,eye.distanceTo(b.position));
+        eyeD.copy(eye).applyAxisAngle(UP,-deckGroup.rotation.y);   /* the clumps drift round: measure in their frame */
+        for(const p of deck)batches[p.v].setOpacity(p.i,p.base*ramp(8,24,eyeD.distanceTo(p.pos)));
+        for(const b of mist.children){b.material.opacity=b.userData.base*ramp(4,14,eye.distanceTo(b.position));b.visible=b.material.opacity>.003;}
         shaft.material.opacity=rain*.85*ramp(R*.7,R*1.1,Math.hypot(eye.x,eye.z));
       }
       if(shaft.visible)streaks.offset.y=t*(.6+rain*.8);
       if(drops.visible){
-        for(let i=0;i<DROPS;i++){const y=15-(i*.21+t*(3+4*rain))%14,a=i*2.399,d=Math.sqrt((i*.618)%1)*R*.85,x=Math.cos(a)*d,z=Math.sin(a)*d;positions.set([x,y,z,x-.05,y-.5,z],i*6);}
+        for(let i=0;i<DROPS;i++){const y=15-(i*.21+t*(3+4*rain))%14,a=i*2.399,d=Math.sqrt((i*.618)%1)*R*.85,x=Math.cos(a)*d,z=Math.sin(a)*d,k=i*6;positions[k]=x;positions[k+1]=y;positions[k+2]=z;positions[k+3]=x-.05;positions[k+4]=y-.5;positions[k+5]=z;}
         geometry.attributes.position.needsUpdate=true;
       }
-      mist.rotation.y=Math.sin(t*.05)*.2;
-      glow.material.opacity=(1-ramp(.1,.3,strain))*(.72+Math.sin(t*.6)*.08);
+      mist.rotation.y=Math.sin(t*.05)*.2;deckGroup.rotation.y=t*.012;   // the clumps drift slowly round
+      glow.material.opacity=(1-ramp(.1,.3,strain))*.85;glow.visible=glow.material.opacity>.003;
+      if(glow.visible){for(let i=0;i<MOTES;i++){const an=i*2.399+t*.05*(i%3?1:-1),d=Math.sqrt((i*.618)%1)*R*.75,k=i*3;
+        mote[k]=Math.cos(an)*d;mote[k+1]=2+(i*1.37+t*.35)%11;mote[k+2]=Math.sin(an)*d;}moteGeo.attributes.position.needsUpdate=true;}
     }};
 }
 
@@ -231,31 +313,50 @@ const puffTexture=()=>{
   puff=new T.CanvasTexture(c);return puff;
 };
 
+// The mist round an island down in the cloud sea: layered, see-through puffs in soft dusk colours (lavender, rose,
+// peach), gathered where the island meets the sea, slowly orbiting, bobbing and breathing, with a faint shimmer.
+// It reacts as the island moves through it: sinking or rising, the puffs part outward and are dragged along with
+// it, then drift back and settle. Close to the camera they thin out, so walking there is never a white-out.
 export function createSinkBank(radius=26){
   const group=new T.Group(), puffs=[], map=puffTexture();
-  // lit: the same cream the cloud sea catches the light with. shade: the sea's
-  // own tint, darkened. Both follow the sky tone, so the bank never goes cold.
-  const lit=new T.Color(1,.92,.84), shade=new T.Color();
-  let tone=-1;
-  const mk=(a,r,y,sx,sy,up,o,order,from)=>{
-    const s=new T.Sprite(new T.SpriteMaterial({map,transparent:true,opacity:0,depthWrite:false}));
-    s.position.set(Math.cos(a)*r,y,Math.sin(a)*r);s.scale.set(sx,sy,1);s.userData={o,up,from};s.renderOrder=order;
-    group.add(s);puffs.push(s);
+  const TINTS=['#efe2ff','#ffdcee','#ffe6d2','#e4d6ff','#f7ecff','#dbe6ff'].map(c=>new T.Color(c));
+  const clamp01=x=>Math.min(1,Math.max(0,x)), ramp=(lo,hi,x)=>clamp01((x-lo)/(hi-lo));
+  const mk=(ring,i,n,dy,size,o,from,glow=false)=>{
+    const s=new T.Sprite(new T.SpriteMaterial({map,transparent:true,opacity:0,depthWrite:false,blending:glow?T.AdditiveBlending:T.NormalBlending}));
+    s.material.color.copy(TINTS[(i*3+ring)%TINTS.length]);if(glow)s.material.color.multiplyScalar(.28);
+    s.userData={a:(i+ring*.37)/n*Math.PI*2,r:radius*[1.3,1.02,.72][ring],dy,size,o,from,glow,
+      w:(.025+((i*7)%5)*.009)*(i%2?1:-1),ph:i*1.7+ring*2.3,push:0,lift:0};
+    s.renderOrder=2+puffs.length;group.add(s);puffs.push(s);
   };
-  const recolour=()=>{
-    tone=cloudTint.getHex();shade.copy(cloudTint).multiplyScalar(.88);
-    for(const s of puffs)s.material.color.copy(s.userData.up?lit:shade);
-  };
-  for(let i=0;i<14;i++){const a=(i+.5)/14*Math.PI*2;mk(a,radius*1.25,-9.5+(i%2)*1.1,radius*1.05,radius*.34,0,.8,2+i,.02);}   // the deep bank, in shadow
-  for(let i=0;i<16;i++){const a=i/16*Math.PI*2;mk(a,radius*1.06,-5.4+(i%3)*.9,radius*.9,radius*.32,1,1,6+i,.34+(i%4)*.12);}  // lit tops, rising to the rim
+  for(let i=0;i<12;i++)mk(0,i,12,-7+(i%2)*1.6,radius*1.15,.5,0);       // the deep bank under the sea line
+  for(let i=0;i<14;i++)mk(1,i,14,(i%3)*1.5-.5,radius*.82,.45,.2);      // at the sea line, wrapping the island
+  for(let i=0;i<10;i++)mk(2,i,10,3+(i%2)*2.8,radius*.56,.2,.5);       // wisps reaching up over the rim
+  for(let i=0;i<6;i++)mk(1,i,6,1.2,radius*.6,.4,.35,true);              // a faint shimmer in the mist
+  let depth=0, alt=null, prev=null, last=null, v=0;
+  const eye=new T.Vector3();
   group.visible=false;
   return {group,
-    // nothing until the island dips below -2; full cover by the floor at -10
-    set(altitude){
-      const t=Math.min(1,Math.max(0,(-2-altitude)/8));
-      group.visible=t>.02;if(tone!==cloudTint.getHex())recolour();
-      // each puff waits its turn, so the bank rises from below rather than all at once
-      for(const s of puffs){const {o,from}=s.userData;s.material.opacity=Math.max(0,Math.min(1,(t-from)/(1-from)))*o;}
-    },
-    update(elapsed){if(!group.visible)return;if(tone!==cloudTint.getHex())recolour();group.rotation.y=elapsed*.02;}};
+    // how deep: nothing while the island is clear of the sea (its underside reaches ~24 m down), full at the floor
+    set(altitude){alt=altitude;depth=ramp(CLOUD_SEA+28,LOW,altitude);group.visible=depth>.02;},
+    update(elapsed,camera){
+      const dt=last===null?0:Math.min(.1,Math.max(0,elapsed-last));last=elapsed;
+      if(dt>0&&prev!==null)v+=((alt-prev)/dt-v)*Math.min(1,dt*6);prev=alt;   // the island's vertical speed, smoothed
+      if(!group.visible)return;
+      const sea=CLOUD_SEA-alt, speed=Math.min(8,Math.abs(v));
+      if(camera)eye.copy(camera.position).sub(group.position);
+      for(const s of puffs){
+        const u=s.userData;
+        // pushed while the island moves (quickly), settling once it stops (slowly)
+        u.push+=(speed*1.6-u.push)*Math.min(1,dt*(speed*1.6>u.push?3:.7));
+        u.lift+=(v*.9-u.lift)*Math.min(1,dt*(Math.abs(v)>.2?2.5:.6));
+        const an=u.a+elapsed*u.w, r=u.r+u.push+Math.sin(elapsed*.3+u.ph)*1.4;
+        s.position.set(Math.cos(an)*r,sea+u.dy+u.lift+Math.sin(elapsed*.5+u.ph)*.7,Math.sin(an)*r);
+        const sc=u.size*(1+.07*Math.sin(elapsed*.42+u.ph))*(1+u.push*.03);s.scale.set(sc,sc*.4,1);
+        let o=u.o*ramp(u.from,1,depth)*(1-Math.min(.5,u.push*.04));
+        if(u.glow)o*=.6+.4*Math.sin(elapsed*1.3+u.ph);
+        if(camera)o*=ramp(6,22,eye.distanceTo(s.position));
+        s.material.opacity=o;s.visible=o>.003;
+      }
+      group.rotation.y=elapsed*.01;
+    }};
 }

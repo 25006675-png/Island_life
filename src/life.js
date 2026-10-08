@@ -1,12 +1,12 @@
 import * as T from 'three';
 import { ME, LIVE, DAWN, NIGHT, CATEGORIES, MOODS, CHECKINS, WARMTH, NOTES, NOTE_PRESETS, TASKS, fmt, hours, toMin,
          deriveStrain, weatherLabel, loadFromAltitude, altitudeFromLoad, catImg, fullness, WEEK, symbolImg } from './data.js';
-import { reading, gardener as gardenerFor, shouldAsk, answer as recordAnswer, ANSWERS, forecast } from './readings.js';
+import { reading, weekReading, gardener as gardenerFor, eveningAsks, answer as recordAnswer, ANSWERS, forecast } from './readings.js';
 import { FORECAST_WORDS } from './climate.js';
 import * as backend from './backend.js';
 import { createAsk } from './ask.js';
 import { mountSkyPanel } from './account.js';
-import { plans, TODAY, addDays, dow, mondayOf } from './plan.js';
+import { plans, TODAY, addDays, dow, mondayOf, isDone, fromIso, daysBetween } from './plan.js';
 import { HISTORY } from './groves.js';
 import { confirmLetGo } from './confirm.js';
 import { createTimetable, blockStatus, ARCH } from './timetable.js';
@@ -30,7 +30,7 @@ const nowMinutes=()=>{const d=new Date();return d.getHours()*60+d.getMinutes()+d
 // Weather is one strain value (0..1); the label is only a name for where it sits.
 export const setStrain=(island,s)=>{island.strain=s;island.weather=weatherLabel(s);island.weatherFx.setStrain(s);};
 
-export function initLife({world,islands,camera,texture,player,notice,visit,nearTree,getMode,getSelected,setAltitude,setGlow}){
+export function initLife({world,islands,camera,texture,player,notice,visit,forest,getMode,getSelected,setAltitude,setGlow,guiding=()=>false}){
   const me=islands.find(i=>i.id===ME), members=islands.filter(i=>i.owner), community=islands.find(i=>!i.owner);
   // The demo opens at 23:00, after the whole day has happened, so every one of
   // today's trees can be answered with Done. "Live" in Tune the world follows
@@ -39,9 +39,9 @@ export function initLife({world,islands,camera,texture,player,notice,visit,nearT
   backend.reportErrorsTo(()=>notice('Something didn’t save. Check your connection; your island will catch up.'));
 
   // ---- world ---------------------------------------------------------------
-  // Only an explicit Done grows a tree. The mock week is lived in: earlier days
-  // are answered for everyone, and friends answer their own blocks as they end.
-  // Your blocks from earlier today wait for you (planner: Done, Let go, or Mark all).
+  // Today, only an explicit Done grows a tree; earlier days are settled (plan.js
+  // isDone). In the demo, friends answer their own blocks as they end. Your
+  // blocks from earlier today wait for you (planner: Done, Let go, or Mark all).
   // (Demo only: real friends answer their own blocks on their own islands.)
   const settleFriends=()=>{
     if(LIVE)return;
@@ -60,7 +60,8 @@ export function initLife({world,islands,camera,texture,player,notice,visit,nearT
   const status=world.status??{};
   const sinkOf=id=>LIVE&&id!==ME?(status[id]?.sink??.5):reading(id).sink;
   const publish=()=>{if(LIVE)backend.publishStatus(world,reading(ME).sink,me.derivedStrain??0);};
-  const settle=id=>{setAltitude(id,altitudeFromLoad(sinkOf(id)));if(id===ME)publish();};
+  const settle=id=>{if(id===ME&&pastWeek)return;setAltitude(id,altitudeFromLoad(sinkOf(id)));if(id===ME)publish();};
+  let pastWeek=null;   // a past week shown on your island (below)
   members.forEach(i=>settle(i.id));
   // Bridge glow = recent warmth with the group; time spent together warms it.
   const warmth={};
@@ -219,7 +220,10 @@ export function initLife({world,islands,camera,texture,player,notice,visit,nearT
   //   rest     -- your sky is heavy but your week isn't: it might not be your
   //               schedule, so rest or a friend, not a timetable fix
   //   support  -- a grey sky for two weeks running: a gentle pointer to real help
-  // Signed in, Gemini puts the chosen offer into friendly words.
+  // Signed in, Gemini reads a summary of the week (kinds and hours, never titles)
+  // and suggests the idea itself, choosing from free times and "can wait" blocks
+  // the app offers; it is shown only while that time is still free. The ideas
+  // below are the fallback, and Gemini words them. Support is never AI-written.
   const NUDGE_AT=[-.93,-2.23];   // gate side of the windmill, seen on arrival
   const nudgeSign=createGateSign(me,{at:NUDGE_AT,face:-2.3});
   const DAYS_LONG=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
@@ -251,15 +255,50 @@ export function initLife({world,islands,camera,texture,player,notice,visit,nearT
     }
     return null;
   }
+  const fits=(s,mins)=>!(s.date===TODAY&&s.start<clock.minutes+30)
+    &&!plans.on(ME,s.date).some(b=>!b.skipped&&b.start<s.start+mins&&b.start+b.mins>s.start);
   // blocks still ahead this week that their owner marked "can wait", the heavy day's first
   const canWait=()=>plans.week(ME).filter(b=>b.priority==='low'&&!b.skipped&&!b.done&&(b.date>TODAY||(b.date===TODAY&&b.start>=clock.minutes)))
     .sort((a,b)=>(b.date===gardenerNow.heavyDay)-(a.date===gardenerNow.heavyDay));
+  const byWarmth=()=>members.filter(i=>i.id!==ME).sort((a,b)=>(warmth[a.id]??1.2)-(warmth[b.id]??1.2));
+  let smart={key:null,idea:null};
+  function askGemini(){
+    const key=`${nudgeWhy}|${TODAY}`;
+    if(!LIVE||!['schedule','rest'].includes(nudgeWhy)||smart.key===key)return;
+    smart={key,idea:null};
+    const hrs=list=>{const h={};for(const b of list)h[b.cat]=Math.round(((h[b.cat]??0)+b.mins/60)*2)/2;return h;};
+    const week=plans.week(ME).filter(b=>!b.skipped);
+    const days=reading(ME).days.filter(d=>d.date>=TODAY&&d.date<addDays(TODAY,7))
+      .map(d=>({day:`${dayName(d.date)}${d.date===TODAY?' (today)':''}`,looks:FORECAST_WORDS[d.label],hours:hrs(plans.on(ME,d.date).filter(b=>!b.skipped))}));
+    const slots=freeSlots([8*60,12*60+30,17*60+30,19*60,20*60+30,21*60+30],60,14), waits=canWait().slice(0,6), friends=byWarmth().slice(0,4);
+    backend.gardenerIdea({mode:nudgeWhy,
+      week:{sky:me.weather,island:shortBand(loadFromAltitude(me.altitude)),lateNights:week.filter(b=>b.start+b.mins>=22*60).length,hours:hrs(week),days},
+      slots:slots.map(s=>({day:dayName(s.date)+(s.date===TODAY?' (today)':''),time:fmt(s.start)})),
+      canWait:waits.map(b=>({kind:b.cat,day:dayName(b.date),hours:b.mins/60})),friends:friends.map(f=>f.owner)})
+      .then(g=>{
+        if(smart.key!==key||!g)return;
+        smart.idea=g.type==='move'?{...g,move:waits[g.move]}:{...g,slot:slots[g.slot],friend:friends.find(f=>f.owner===g.friend)??null};
+        ideaAt=0;
+      });
+  }
+  // Gemini's idea, while it still fits the plan
+  function smartIdea(){
+    const g=smart.key===`${nudgeWhy}|${TODAY}`?smart.idea:null;if(!g)return null;
+    if(g.type==='move'){
+      const b=canWait().find(b=>b.id===g.move.id&&b.date===g.move.date);
+      return b?{fit:9,ai:true,move:b,title:`Move ${b.title}`,label:`moving “${b.title}” to next week`,button:'Move it to next week',line:g.line}:null;
+    }
+    if(!fits(g.slot,g.mins))return null;
+    return {fit:9,ai:true,title:g.title,cat:g.cat,mins:g.mins,starts:[g.slot.start],slot:g.slot,vis:g.cat==='rest'?'hidden':'open',
+            label:g.title.toLowerCase(),button:g.button,line:g.line,friend:g.friend};
+  }
   function ideas(){
     const week=plans.week(ME).filter(b=>!b.skipped), mins=c=>week.filter(b=>b.cat===c).reduce((a,b)=>a+b.mins,0);
     const late=week.filter(b=>b.start+b.mins>=22*60).length, moved=mins('exercise');
-    const friend=members.filter(i=>i.id!==ME).sort((a,b)=>(warmth[a.id]??1.2)-(warmth[b.id]??1.2))[0];
+    const friend=byWarmth()[0];
     const rest=nudgeWhy==='rest', wait=nudgeWhy==='schedule'?canWait()[0]:null;
     const all=[
+      smartIdea(),
       wait&&{fit:5,move:wait,title:`Move ${wait.title}`,label:`moving “${wait.title}” to next week`,button:'Move it to next week',
        why:`You marked “${wait.title}” as able to wait.`},
       {fit:late>=2?3:0,title:'Early night',cat:'rest',mins:60,starts:[21*60+30],vis:'hidden',label:'an early night',button:'Plan an early night',
@@ -271,7 +310,7 @@ export function initLife({world,islands,camera,texture,player,notice,visit,nearT
       {fit:rest?2.5:1.5,title:'Slow evening',cat:'rest',mins:60,starts:[20*60+30],vis:'hidden',label:'a slow evening',button:'Add a slow evening',
        why:rest?'Your week isn’t heavy, but the last few days have been.':'Nothing planned, nothing to finish.'},
     ].filter(Boolean).sort((a,b)=>b.fit-a.fit);
-    for(const i of all)if(!i.move)i.slot=freeSlot(i.starts,i.mins);
+    for(const i of all)if(!i.move&&!i.ai)i.slot=freeSlot(i.starts,i.mins);
     return all.filter(i=>i.move||i.slot);
   }
   const whenText=s=>`${s.date===TODAY?'today':s.date===addDays(TODAY,1)?'tomorrow':dayName(s.date)} at ${fmt(s.start)}`;
@@ -280,6 +319,7 @@ export function initLife({world,islands,camera,texture,player,notice,visit,nearT
   // Gemini's wording for the current offer, fetched once per offer (signed in only)
   const worded={};
   function wording(i){
+    if(i.line)return i.line;
     const fallback=`${i.why} How about ${i.label}?`, key=`${nudgeWhy}|${i.title}`;
     if(!LIVE)return fallback;
     if(!(key in worded)){
@@ -291,7 +331,7 @@ export function initLife({world,islands,camera,texture,player,notice,visit,nearT
   }
   function checkNudge(){
     const mode=nudgeTaken&&gardenerNow.mode!=='support'?null:gardenerNow.mode, on=!!mode&&(mode==='support'||!!idea()), was=nudgeOn;
-    if(on===nudgeOn&&mode===nudgeWhy)return;nudgeOn=on;nudgeWhy=mode;
+    if(on===nudgeOn&&mode===nudgeWhy)return;nudgeOn=on;nudgeWhy=mode;if(on)askGemini();
     nudgeSign.set(on?{head:'From your island',body:mode==='support'?'A heavy couple of weeks. There’s help nearby.':`${nudgeTitle()}. Here’s an idea.`,
                       foot:'walk up to read it'}:null);
     if(on&&!was)notice(mode==='support'?'Your gardener has left you a note by the windmill.':`${nudgeTitle()}. Your gardener has an idea.`);
@@ -310,14 +350,16 @@ export function initLife({world,islands,camera,texture,player,notice,visit,nearT
     nudgeTaken=true;checkNudge();
     calendar.edit(null,{date:slot.date,start:slot.start,mins:i.mins,cat:i.cat,title:i.title,vis:i.vis});
   }
+  // the gardener's advice comes from the same reading as Your balance: "See why" opens it
+  const seeWhy={more:()=>openBalance($('balance-toggle'),'suggest'),moreLabel:'See why'};
   function nudgeCard(key,kicker,at,dismiss){
     if(nudgeWhy==='support')
       return {key:`${key}support`,wood:true,kicker,title:nudgeTitle(),sub:'Your sky has been grey for a while. You don’t have to carry it alone.',
               action:()=>{$('support-dialog').showModal();nudgeTaken=true;},actionLabel:'Where to find support',
-              ...(dismiss?{letGo:dismiss,letGoLabel:'Not now'}:{}),at};
+              ...(dismiss?{letGo:dismiss,letGoLabel:'Not now'}:{}),...seeWhy,at};
     const i=idea();if(!i)return null;
     if(asking&&!i.move){
-      const slots=freeSlots(i.starts,i.mins,2);
+      const slots=i.ai?[i.slot,...freeSlots(i.starts,i.mins,3).filter(s=>s.date!==i.slot.date)].slice(0,2):freeSlots(i.starts,i.mins,2);
       if(slots.length)return {key:`${key}when${ideaAt}`,wood:true,kicker,title:i.title,sub:'When suits you?',
         action:()=>{asking=false;takeIdea(i,slots[0]);},actionLabel:slotLabel(slots[0]),
         ...(slots[1]?{alt:()=>{asking=false;takeIdea(i,slots[1]);},altLabel:slotLabel(slots[1])}:{}),
@@ -325,12 +367,12 @@ export function initLife({world,islands,camera,texture,player,notice,visit,nearT
       asking=false;
     }
     const sub=wording(i);
-    return {key:`${key}${ideaAt}${nudgeWhy}${sub.length}`,wood:true,kicker,title:nudgeTitle(),sub,
+    return {key:`${key}${ideaAt}${nudgeWhy}${i.title}${sub.length}`,wood:true,kicker,title:nudgeTitle(),sub,
             action:i.move?()=>takeIdea(i):()=>{asking=true;},actionLabel:i.button,alt:()=>{ideaAt++;},altLabel:'Another idea',
-            ...(dismiss?{letGo:dismiss,letGoLabel:'Not now'}:{}),at};
+            ...(dismiss?{letGo:dismiss,letGoLabel:'Not now'}:{}),...seeWhy,at};
   }
   $('support-close').onclick=()=>$('support-dialog').close();
-  const dew=()=>(LIVE?0:36)+plans.week(ME).filter(b=>!b.skipped&&b.done).length   // explicit Done only
+  const dew=()=>(LIVE?0:36)+plans.week(ME).filter(isDone).length
                   +(photos.items.some(i=>i.golden&&i.member.id===ME)?3:0)
                   +NOTES.filter(n=>n.to===ME&&n.read).length+given.size+taskDew();
   // What anyone may see of an island (README.md privacy): its weather and its
@@ -339,11 +381,12 @@ export function initLife({world,islands,camera,texture,player,notice,visit,nearT
   const trend=s=>s<.2?'clear days lately':s<.35?'mostly clear':s<.55?'a heavier few days':s<.75?'a tiring stretch':'a hard week';
   // Your island, at a glance (only ever your own; friends see the rows above):
   // the trees standing on it by kind, activity capacity, and this week's feelings.
-  // Trees = what the island shows: last week's grown trees (groves.js HISTORY) plus
+  // Trees = what the island shows: this week's grown trees (groves.js HISTORY) plus
   // one per block today -- solid once Done, glass until then; let-go ones drift off.
+  // While a past week is shown, that week's trees and lanterns instead.
   function islandPanel(){
-    const past=HISTORY[ME]??[], today=plans.on(ME,TODAY).filter(b=>!b.skipped), feel={};
-    for(const c of checkins[ME].filter(c=>c.day<=6))feel[c.mood]=(feel[c.mood]??0)+1;
+    const past=pastWeek?pastWeek.blocks:HISTORY[ME]??[], today=pastWeek?[]:plans.on(ME,TODAY).filter(b=>!b.skipped), feel={};
+    for(const c of pastWeek?pastWeek.lanterns:checkins[ME].filter(c=>c.day<=6))feel[c.mood]=(feel[c.mood]??0)+1;
     return {trees:Object.keys(CATEGORIES).map(c=>({c,done:past.filter(e=>e.cat===c).length+today.filter(b=>b.cat===c&&b.done).length,
                                                    glass:today.filter(b=>b.cat===c&&!b.done).length})),
             load:Math.round(loadFromAltitude(me.altitude)*100)/100,altitude:Math.round(me.altitude*10)/10,
@@ -352,9 +395,7 @@ export function initLife({world,islands,camera,texture,player,notice,visit,nearT
   // One card for whichever island you are looking at. The rows friends can see
   // carry an eye; the private rows below them only ever appear on your own island.
   const SKY={'Clear':'clear','Light cloud':'light-cloud','Cloudy':'cloudy','Drizzle':'drizzle','Rain':'rain'};
-  const pctOf=l=>Math.min(100,Math.round(l*100));
   const shortBand=l=>l<.35?'Floating high':l<.65?'Mid-sky':l<.85?'Sinking low':'Low';
-  const barOf=l=>{const b=mk('span',{className:'mi-bar'},mk('i'));b.firstChild.style.width=`${Math.min(100,l*100)}%`;b.setAttribute('aria-hidden','true');return b;};
   const feelNodes=d=>{
     const moods=Object.keys(MOODS).filter(m=>d.feel[m]);
     return moods.length?moods.map(m=>mk('span',{},symbolImg(`lantern-${m}`,'mi-lantern'),`${d.feel[m]} ${MOODS[m].label.toLowerCase()}`))
@@ -365,17 +406,26 @@ export function initLife({world,islands,camera,texture,player,notice,visit,nearT
       catImg(t.c,'mi-icon'),mk('b',{textContent:String(t.done)}),mk('small',{textContent:t.glass?`+${t.glass}`:''}));
     it.setAttribute('role','listitem');it.setAttribute('aria-label',it.title);return it;
   });
+  // Altitude, said once and plainly: metres from your usual height (0 m, level with the gathering island), an
+  // upright scale -- lighter weeks up top, heavier ones down by the clouds -- with your island on it, and what it means.
+  const altWords=(m,long)=>Math.abs(m)<2?(long?'At your usual height':'usual height'):`${Math.round(Math.abs(m))} m ${m>0?'above':'below'}${long?' your usual':''}`;
+  const altMeaning=l=>l<.35?'Your week is lighter than usual, so your island floats higher.'
+                      :l<.6?'A usual week for you: your island floats level with the gathering island.'
+                      :l<.85?'Your week is heavier than usual, so your island sits lower. A lighter day lifts it.'
+                      :'Much heavier than usual: your island is down by the cloud sea. Rest lifts it.';
+  const gauge=l=>{const g=mk('span',{className:'ic-gauge',role:'img',ariaLabel:altMeaning(l)},mk('i',{className:'ic-gauge-dot'}),
+      mk('small',{},mk('b',{textContent:'45 m'}),' lighter'),mk('small',{},mk('b',{textContent:'0 m'}),' usual'),mk('small',{},mk('b',{textContent:'−55 m'}),' heavier'));
+    g.style.setProperty('--at',`${Math.round(Math.min(1,Math.max(0,l))*100)}%`);return g;};
+  const altRow=(m,l)=>mk('span',{className:'ic-alt'},gauge(l),mk('span',{className:'ic-alt-text'},mk('b',{textContent:altWords(m,true)}),mk('span',{className:'ic-note',textContent:altMeaning(l)})));
   function cardRows(i,d){
     if(!i?.owner){                                   // the gathering island: what the group shares
       const n=photos.items.length, f=TASKS.reduce((a,t)=>a+finishers(t).length,0);
       return [{name:'Carousel',val:[`${n} moment${n===1?'':'s'} today`]},
               {name:'Task board',val:[`${f} ${f===1?'finish':'finishes'} this week`]}];
     }
-    const own=i.id===ME, l=own?d.load:0;
-    const note=l<.65?null:mk('span',{className:'ic-note',textContent:l<.85?'Sinking as the week fills up.':'Riding just above the cloud sea.'});
+    const own=i.id===ME;
     const rows=[
-      {name:'Altitude',eye:own,val:own?[mk('b',{textContent:`${d.altitude} m`}),barOf(d.load),
-                                        mk('span',{className:'ic-right',textContent:`${pctOf(d.load)}% full`}),...(note?[note]:[])]
+      {name:'Altitude',eye:own,val:own?[altRow(d.altitude,d.load)]
                                      :[band(loadFromAltitude(i.altitude))]},
       {name:'Sky',eye:own,val:[mk('b',{textContent:i.weather}),mk('span',{className:'ic-dim',textContent:trend(i.strain??0)})]},
     ];
@@ -391,7 +441,7 @@ export function initLife({world,islands,camera,texture,player,notice,visit,nearT
     if(own){
       const top=Object.entries(d.feel).sort((a,b)=>b[1]-a[1])[0];
       strip=[glance(sky(i.weather),i.weather),
-             glance(symbolImg('altitude','ic-mini'),`${d.altitude} m`),
+             glance(symbolImg('altitude','ic-mini'),altWords(d.altitude)),
              top?glance(symbolImg(`lantern-${top[0]}`,'ic-mini'),MOODS[top[0]].label.toLowerCase()):null,
              glance(symbolImg('trees','ic-mini'),`${d.trees.reduce((a,t)=>a+t.done,0)} grown`)].filter(Boolean);
     }else if(i?.owner){
@@ -407,7 +457,7 @@ export function initLife({world,islands,camera,texture,player,notice,visit,nearT
       if(r.eye)eye.title='Friends can see this';else eye.setAttribute('aria-hidden','true');
       return mk('div',{className:'ic-row'},eye,mk('span',{className:'ic-name',textContent:r.name}),val);
     }));
-    $('mi-balance').hidden=!own;$('ic-foot').hidden=!own;
+    $('mi-balance').hidden=!own;$('ic-foot').hidden=!own;$('mi-past').hidden=!own||!LIVE;
   }
 
   $('mi-balance').onclick=()=>openBalance($('mi-balance'));
@@ -421,8 +471,7 @@ export function initLife({world,islands,camera,texture,player,notice,visit,nearT
 
   // ---- sheets: the planner (input) and your balance (analysis + solutions) ---
   const sheets=createSheets();
-  const calendar=createCalendar({plans,owner:ME,clock,notice,sheets,afterDone:list=>maybeAsk(list),
-    live:LIVE?{connection:world.connection,uid:world.uid}:null});
+  const calendar=createCalendar({plans,owner:ME,clock,notice,sheets,live:LIVE?{connection:world.connection,uid:world.uid}:null});
   const balance=createBalance({plans,me,friends:members.filter(i=>i.id!==ME),clock,checkins:checkins[ME],sheets,notice,dew,warm:id=>warm(id,.8)});
   // your gardener waits at the left end of an open sheet's top edge; walk it
   // with ← →, jump with Space, turn it with Q E
@@ -434,18 +483,35 @@ export function initLife({world,islands,camera,texture,player,notice,visit,nearT
     }});
   };
   const shop=createShop({sheets,dew,notice});
-  // "How draining was that?" -- after you mark something done (when the island
-  // isn't sure yet), or when a phone prompt brings you here. The gardener says
-  // what it learned; the island re-reads your week at once.
-  const ask=createAsk({notice,onAnswer:(b,value)=>{
+  // "How draining was that?" -- straight after the evening's "How are you?",
+  // about the one or two of today's activities the island knows least
+  // (readings.js eveningAsks). The gardener says what it learned; the island
+  // re-reads your week at once.
+  const answerDrain=(b,value)=>{
     const line=recordAnswer(ME,b,value);
     if(LIVE)backend.saveAnswer(ANSWERS[ME].at(-1));
-    settle(ME);refreshGardener();balance.render();calendar.render();
+    settle(ME);refreshGardener();balance.render();calendar.render();renderAsks();
     return line;
-  }});
-  function maybeAsk(list){
-    const b=[].concat(list).find(b=>shouldAsk(ME,b));
-    if(b)setTimeout(()=>ask.ask(b),700);
+  };
+  const ask=createAsk({notice,onAnswer:answerDrain});
+  // The same question, any time: today's finished activities sit under "How do you feel?", each one tap to rate
+  // (light, okay, draining), and a dot on that button says some are waiting. Answering is never required.
+  const DRAIN={light:'Light',okay:'Okay',draining:'Draining'};
+  function renderAsks(){
+    const answered=new Map((ANSWERS[ME]??[]).filter(a=>a.date===TODAY).map(a=>[String(a.blockId),a.answer]));
+    const ended=plans.on(ME,TODAY).filter(b=>!b.skipped&&b.mins>=15&&['done','waiting'].includes(blockStatus(b,clock.minutes)));
+    const open=ended.filter(b=>!answered.has(String(b.series?.id??b.id))).length;
+    $('mood-toggle').classList.toggle('has-asks',open>0);
+    $('today-asks').hidden=!ended.length;
+    $('ask-list').replaceChildren(...ended.map(b=>{
+      const done=answered.get(String(b.series?.id??b.id));
+      const name=`${b.title||CATEGORIES[b.cat].label} · ${fmt(b.start)}`;
+      const li=mk('li',{className:'ask-row'},catImg(b.cat),mk('span',{className:'ask-name',textContent:name,title:name}));
+      // the choices sit on their own row under the name, so names show in full
+      li.append(mk('span',{className:'ask-picks'},...(done?[mk('span',{className:'ask-done',textContent:DRAIN[done]})]
+        :Object.entries(DRAIN).map(([v,label])=>{const x=mk('button',{type:'button',className:'ask-pick',textContent:label});x.onclick=()=>notice(answerDrain(b,v));return x;}))));
+      return li;
+    }));
   }
   const buddies={planner:sheetBuddy($('planner-sheet')),balance:sheetBuddy($('balance-sheet')),shop:sheetBuddy($('shop-sheet'))};
   // any plan edit re-draws that island's path, settles its altitude, refreshes the sheets
@@ -464,25 +530,30 @@ export function initLife({world,islands,camera,texture,player,notice,visit,nearT
   let checkinPhoto=null;
   $('checkin-photo').onchange=e=>{const f=e.target.files[0];checkinPhoto=null;if(f)loadSquare(f).then(c=>{checkinPhoto=c.toDataURL('image/jpeg',.9);});};
   function checkIn(k){
+    showPresent();
     const entry={day:0,mood:k,time:clock.minutes,photo:checkinPhoto};checkins[ME].push(entry);
     const onMine=player.surface?.kind==='island'&&player.surface.id===ME;
     mood.checkIn(me,entry,onMine?player.position.clone().sub(me.group.position).add(new T.Vector3(0,1.2,0)):null);
     if(LIVE)backend.saveCheckin(world,{mood:k,minute:clock.minutes,photo:checkinPhoto});
     weather(me);checkinPhoto=null;$('checkin-photo').value='';balance.render();refreshGardener();
-    notice(`A ${MOODS[k].label.toLowerCase()} lantern rises over your island.`);
+    notice(`A ${MOODS[k].label.toLowerCase()} lantern lights up on your pier.`);
     if(!$('mood-panel').hidden)setMoodPanel(false);
+    // then two quick ones about today, if the island has something to learn
+    const ended=plans.on(ME,TODAY).filter(b=>['done','waiting'].includes(blockStatus(b,clock.minutes)));
+    // (not while Blomy is guiding: the question would cover what the guide points at; it waits in the panel)
+    if(!guiding())eveningAsks(ME,ended).forEach((b,n)=>setTimeout(()=>ask.ask(b),1600+n*50));
   }
   const PANELS=[['settings','settings-toggle'],['mood-panel','mood-toggle']];
   const closeOthers=keep=>{for(const [p,t] of PANELS)if(p!==keep){$(p).hidden=true;$(t).setAttribute('aria-expanded','false');}};
   function setMoodPanel(open){
     $('mood-panel').hidden=!open;$('mood-toggle').setAttribute('aria-expanded',String(open));
-    if(open){closeOthers('mood-panel');sheets.hide();$('moods').querySelector('button')?.focus();}
+    if(open){closeOthers('mood-panel');sheets.hide();renderAsks();$('moods').querySelector('button')?.focus();}
     else $('mood-toggle').focus();
   }
   $('mood-toggle').onclick=()=>setMoodPanel($('mood-panel').hidden);$('mood-close').onclick=()=>setMoodPanel(false);
   $('settings-toggle').addEventListener('click',()=>{closeOthers('settings');sheets.hide();});
   $('planner-toggle').onclick=()=>{closeOthers(null);calendar.open();buddies.planner.reset(80);};
-  const openBalance=from=>{closeOthers(null);balance.open(from);buddies.balance.reset(80);};
+  const openBalance=(from,at)=>{closeOthers(null);balance.open(from,at);buddies.balance.reset(80);};
   $('balance-toggle').onclick=()=>openBalance($('balance-toggle'));
   $('shop-toggle').onclick=()=>{closeOthers(null);shop.open();buddies.shop.reset(80);};
 
@@ -490,7 +561,6 @@ export function initLife({world,islands,camera,texture,player,notice,visit,nearT
   const showClock=()=>{$('clock').value=Math.round(clock.minutes);$('clock-value').value=fmt(clock.minutes);$('clock-live').checked=clock.live;};
   $('clock').oninput=e=>{clock.live=false;clock.minutes=+e.target.value;showClock();};
   $('clock-live').onchange=e=>{clock.live=e.target.checked;if(clock.live)clock.minutes=nowMinutes();showClock();};
-  $('golden-ring').onclick=()=>photos.ring();
   showClock();
 
   // ---- schedule: lift the path into a readable ribbon ----------------------------
@@ -547,9 +617,10 @@ export function initLife({world,islands,camera,texture,player,notice,visit,nearT
     $('reveal-action').hidden=!next.action;$('reveal-action-label').textContent=next.actionLabel??'View photo';
     $('reveal-alt').hidden=!next.alt;if(next.alt)$('reveal-alt').textContent=next.altLabel;
     $('reveal-letgo').hidden=!next.letGo;$('reveal-letgo').textContent=next.letGoLabel??'Let go';
+    $('reveal-more').hidden=!next.more;if(next.more)$('reveal-more').textContent=next.moreLabel??'See why';
   }
   // Your own planned block, finished early: its card offers "Done", and the ghost takes root.
-  const finish=b=>{plans.markDone(ME,b);notice(`${b.title} took root.`);maybeAsk(b);};
+  const finish=b=>{plans.markDone(ME,b);notice(`${b.title} took root.`);};
   // Your own open blocks: Done once it has happened, Let go (after a gentle confirm) any time.
   const letGo=async b=>{if(await confirmLetGo(b.title)){plans.toggleSkip(ME,b);notice(`${b.title} drifted away. Bring it back from the planner any time.`);}};
   const withActions=(card,b)=>{
@@ -558,6 +629,7 @@ export function initLife({world,islands,camera,texture,player,notice,visit,nearT
   };
   $('reveal-action').onclick=()=>{card?.action?.();reveal(nearest());};
   $('reveal-letgo').onclick=()=>card?.letGo?.();
+  $('reveal-more').onclick=()=>card?.more?.();
   $('reveal-alt').onclick=()=>{card?.alt?.();reveal(nearest());};   // redraw now, so the button always matches the idea shown
   window.addEventListener('keydown',e=>{
     if(e.code!=='KeyE'||!card?.action||['INPUT','SELECT','TEXTAREA'].includes(document.activeElement.tagName)||document.querySelector('dialog[open]'))return;
@@ -583,7 +655,7 @@ export function initLife({world,islands,camera,texture,player,notice,visit,nearT
   function gardenerBubble(){
     const home=getMode()==='walk'&&getSelected()===ME;
     if(!home){bubble=null;bubbleSeen=false;return null;}
-    if(!nudgeOn){bubble=null;return null;}
+    if(!nudgeOn||pastWeek){bubble=null;return null;}
     if(!bubbleSeen){bubbleSeen=true;bubble=player.position.clone();}
     if(bubble&&Math.hypot(player.position.x-bubble.x,player.position.z-bubble.z)>4)bubble=null;
     if(!bubble)return null;
@@ -594,7 +666,7 @@ export function initLife({world,islands,camera,texture,player,notice,visit,nearT
     const said=gardenerBubble();if(said)return said;
     if(getMode()!=='walk')return null;
     const here=islands.find(i=>i.id===getSelected());
-    if(nudgeOn&&here?.id===ME&&Math.hypot(player.position.x-me.x-NUDGE_AT[0]*me.scale,player.position.z-me.z-NUDGE_AT[1]*me.scale)<3.2){
+    if(nudgeOn&&!pastWeek&&here?.id===ME&&Math.hypot(player.position.x-me.x-NUDGE_AT[0]*me.scale,player.position.z-me.z-NUDGE_AT[1]*me.scale)<3.2){
       const c=nudgeCard('nudge','From your island',new T.Vector3(me.x+NUDGE_AT[0]*me.scale,me.altitude+(me.field.height(...NUDGE_AT)??.35)*me.scale+2.4,me.z+NUDGE_AT[1]*me.scale));
       if(c)return c;
     }
@@ -602,12 +674,19 @@ export function initLife({world,islands,camera,texture,player,notice,visit,nearT
       const gy=here.altitude+(here.field.height(ARCH.x,ARCH.z)??.35)*here.scale;
       return {...gateCard(here),at:new T.Vector3(here.x+ARCH.x*here.scale,gy+5.6,here.z+ARCH.z*here.scale)};   // above the torii beam
     }
+    // a lantern on the pier, within reach: whose feeling, and when
+    if(here?.owner){const l=mood.near(here.id,player.position);if(l){
+      const m=MOODS[l.entry.mood],whose=l.island.id===ME?'Your':`${l.island.owner}’s`;
+      return {key:`ln${l.island.id}${l.entry.time}${l.entry.mood}`,color:m.color,kicker:l.entry.time!=null?`Checked in at ${fmt(l.entry.time)}`:'Today',
+              title:`${whose} ${m.label.toLowerCase()} lantern`,sub:l.island.id===ME?'How you felt, hung on your pier':'How they felt today',
+              ...(l.entry.photo?{action:()=>view({src:l.entry.photo,title:`${whose} ${m.label.toLowerCase()} lantern`,sub:'Today'}),actionLabel:'View photo'}:{}),
+              at:l.g.getWorldPosition(new T.Vector3()).add(new T.Vector3(0,1.4,0))};}}
     const table=tables[getSelected()];
     if(table){
-      // a path stop wins; otherwise the nearest tree's activity (main.js nearTree)
+      // a path stop wins; otherwise the nearest tree's activity (forest.js near)
       const own=getSelected()===ME, n=table.near(player.position,4.5);
       if(!n){
-        const c=nearTree?.(getSelected(),player.position)??null;
+        const c=forest.near(getSelected(),player.position);
         // a ghost of one of today's blocks: forest.js keys its card g<id><status>
         const b=own&&c&&table.blocks.find(b=>c.key===`g${b.id}${blockStatus(b,clock.minutes)}`);
         return b?withActions(c,b):c;
@@ -635,6 +714,54 @@ export function initLife({world,islands,camera,texture,player,notice,visit,nearT
     return null;
   }
 
+  // ---- past islands: every Monday your island starts fresh, and earlier weeks
+  // can be walked again with that week's trees, height and sky. Signed in only:
+  // the demo has no earlier weeks of its own.
+  const MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const dayMonth=date=>{const d=fromIso(date);return `${d.getDate()} ${MON[d.getMonth()]}`;};
+  const weekRange=monday=>`${dayMonth(monday)} – ${dayMonth(addDays(monday,6))}`;
+  function weekOf(monday){
+    const blocks=plans.range(ME,monday,7).filter(b=>!b.skipped)
+      .map((b,n)=>({id:`p${monday}${n}`,day:daysBetween(b.date,TODAY),cat:b.cat,mins:b.mins,title:b.title,vis:b.vis}));
+    const end=daysBetween(addDays(monday,6),TODAY), lanterns=checkins[ME].filter(c=>c.day>=end&&c.day<end+7);
+    // that week's sky as it stood on its Sunday evening
+    const strain=deriveStrain(checkins[ME].filter(c=>c.day>=end).map(c=>({...c,day:c.day-end})));
+    return {monday,blocks,lanterns,strain,sink:weekReading(ME,monday).sink};
+  }
+  function pastMondays(){
+    const first=mondayOf(world.started??TODAY), out=[];
+    for(let w=1;w<=6;w++){const m=addDays(mondayOf(TODAY),-7*w);if(m<first)break;out.push(m);}
+    return out;
+  }
+  function openPast(){
+    const weeks=pastMondays().map(weekOf);
+    $('past-list').replaceChildren(...(weeks.length?weeks.map(w=>{
+      const b=mk('button',{type:'button'},mk('strong',{textContent:weekRange(w.monday)}),
+        mk('span',{textContent:`${shortBand(w.sink)} · ${w.lanterns.length?weatherLabel(w.strain):'no lanterns'} · ${plural(w.blocks.length,'tree')}`}));
+      b.onclick=()=>showPast(w);
+      return mk('li',{},b);
+    }):[mk('li',{className:'past-empty',textContent:'No earlier weeks yet. Next Monday, this one will be here.'})]));
+    $('past-dialog').showModal();
+  }
+  function showPast(w){
+    $('past-dialog').close();
+    if(getMode()!=='walk'||getSelected()!==ME)visit(ME);
+    if(lifted)setLift(null);
+    pastWeek=w;
+    forest.past(ME,w.blocks,daysBetween(w.monday,TODAY)*7919+13);forest.grow(ME);
+    tables[ME].show(false);mood.show(ME,false);
+    setAltitude(ME,altitudeFromLoad(w.sink));setStrain(me,w.strain);
+    $('past-label').textContent=`Your island, ${weekRange(w.monday)}`;$('past-banner').hidden=false;
+  }
+  function showPresent(){
+    if(!pastWeek)return;
+    pastWeek=null;forest.present(ME);tables[ME].show(true);mood.show(ME,true);
+    settle(ME);weather(me);$('past-banner').hidden=true;
+  }
+  $('mi-past').onclick=openPast;
+  $('past-close').onclick=()=>$('past-dialog').close();
+  $('past-back').onclick=showPresent;
+
   // ---- a signed-in sky: your sky's panel, live updates, links from phone prompts ----
   mountSkyPanel(world,notice);
   $('demo-controls').hidden=LIVE;
@@ -643,7 +770,7 @@ export function initLife({world,islands,camera,texture,player,notice,visit,nearT
       status:(id,r)=>{status[id]={sink:r.sink,strain:r.strain};settle(id);},
       checkin:(id,entry)=>{
         checkins[id].push(entry);const i=members.find(m=>m.id===id);
-        mood.checkIn(i,entry,null);weather(i);notice(`A ${MOODS[entry.mood].label.toLowerCase()} lantern rises over ${i.owner}’s island.`);
+        mood.checkIn(i,entry,null);weather(i);notice(`A ${MOODS[entry.mood].label.toLowerCase()} lantern lights up on ${i.owner}’s pier.`);
       },
       note:n=>{NOTES.push(n);syncNotes();notice(`${owners[n.from]} left a note at your gate.`);},
       moment:m=>photos.receive(m),
@@ -665,9 +792,15 @@ export function initLife({world,islands,camera,texture,player,notice,visit,nearT
     const b=plans.on(ME,params.get('date')??TODAY).find(b=>String(b.series?.id??b.id)===params.get('block'));
     if(b)setTimeout(()=>ask.ask(b),1200);
   }
-  // back from Google: the planner's sync dialog shows how it went
+  // back from Google: connected, you're taken home and your week so far grows
+  // in, Monday's trees first; otherwise the planner's sync dialog says what happened
   const cal=params.get('calendar');
-  if(cal)setTimeout(()=>{calendar.open('week');calendar.openSync(cal);},900);
+  if(cal==='connected'&&LIVE)setTimeout(()=>{
+    visit(ME);
+    setTimeout(()=>{const n=forest.grow(ME);
+      notice(n?`Google Calendar is connected. Your week so far grew in: ${plural(n,'tree')}.`:'Google Calendar is connected. Your plans are on your island.');},1400);
+  },900);
+  else if(cal)setTimeout(()=>{calendar.open('week');calendar.openSync(cal);},900);
   if(params.has('ask')||params.has('calendar')||params.has('join'))history.replaceState(null,'',location.pathname);
   // Once a day, the first time you open the island: what today holds, in words.
   try{
@@ -680,21 +813,26 @@ export function initLife({world,islands,camera,texture,player,notice,visit,nearT
   }catch{}
 
   // ---- per frame --------------------------------------------------------------------
-  let lastSelected=null,lastMode=null,lastMinute=-1,chips='',lastDew=null;
+  let lastSelected=null,lastMode=null,lastMinute=-1,chips='',lastDew=null,slowIn=0,ribbonO=-1;
   const v=new T.Vector3(), rv=new T.Vector3(), bv=new T.Vector3();
   const clamp=(x,a,b)=>Math.min(b,Math.max(a,x));
   return {
     update(dt,elapsed,motion){
       if(clock.live)clock.minutes=nowMinutes();
       const minute=Math.floor(clock.minutes);
-      if(minute!==lastMinute){lastMinute=minute;showClock();settleFriends();calendar.render();refreshGardener();}
-      const mode=getMode(), selected=getSelected();
-      if(mode!==lastMode||selected!==lastSelected){
+      if(minute!==lastMinute){lastMinute=minute;showClock();settleFriends();calendar.render();refreshGardener();renderAsks();}
+      const mode=getMode(), selected=getSelected(), moved=mode!==lastMode||selected!==lastSelected;
+      if(moved){
         if(lifted&&(mode!=='walk'||selected!==lifted))setLift(null);
+        if(pastWeek&&(mode!=='walk'||selected!==ME))showPresent();
         // a visit warms that friend's bridge a little, once a session
         if(mode==='walk'&&selected!==ME&&tables[selected]&&!visited.has(selected)){visited.add(selected);warm(selected,.3);}
         lastMode=mode;lastSelected=selected;
       }
+      // The card, the board and the nudge only change when the plan does, so
+      // they are checked a few times a second rather than every frame.
+      slowIn-=dt;
+      if(moved||slowIn<=0){slowIn=.2;
       // bottom left: what friends can see of the island you're on; from the sky
       // and at home it's your own, and each row opens your balance
       const shown=mode==='walk'?islands.find(i=>i.id===selected):me, drops=dew();
@@ -713,11 +851,14 @@ export function initLife({world,islands,camera,texture,player,notice,visit,nearT
         chip.classList.remove('gain');void chip.offsetWidth;chip.classList.add('gain');chip.append(float);setTimeout(()=>float.remove(),1500);
       }
       lastDew=drops;
-      for(const w of windmills)w.update(dt,motion);writeBoard();checkNudge();
+      writeBoard();checkNudge();
+      }
+      for(const w of windmills)w.update(dt,motion);
       for(const t of Object.values(tables))t.update(clock.minutes,elapsed,dt,camera,motion);
       mood.update(elapsed,dt,motion);photos.update(elapsed,motion);
       const table=lifted&&tables[lifted];
-      $('ribbon-labels').style.opacity=table?Math.max(0,table.lift*4-3):0;
+      const ro=table?Math.max(0,table.lift*4-3):0;
+      if(ro!==ribbonO){ribbonO=ro;$('ribbon-labels').style.opacity=ro;}
       if(table&&table.lift>.75){
         labels.forEach(({el,block},i)=>{
           table.ribbonPoint(block.start+block.mins/2,.35+(i%2)*1.1,v).project(camera);

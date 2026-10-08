@@ -12,6 +12,8 @@ export const daysBetween=(a,b)=>Math.round((fromIso(b)-fromIso(a))/864e5);
 export const dow=s=>(fromIso(s).getDay()+6)%7+1;     // 1 = Monday ... 7 = Sunday
 export const mondayOf=s=>addDays(s,1-dow(s));
 export const TODAY=iso(new Date());
+// Earlier days are settled: what wasn't let go happened. Today waits for Done.
+export const isDone=b=>!b.skipped&&(b.done||b.date<TODAY);
 
 function createPlans(){
   let nextId=1, persist=null, owner=null;

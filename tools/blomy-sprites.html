@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<title>Blomy sprites</title>
+<style>html,body{margin:0;background:transparent}canvas{display:block}</style>
+<canvas id="c" width="197" height="300"></canvas>
+<script type="module">
+// Renders Blomy (src/blomy.js) for the 2D buddy on the sheets (src/buddy.js): frame i is her turned 45°·i,
+// 0 front, 2 right profile, 4 back, 6 left profile. Driven by tools/blomy-sprites.mjs; ?frame=i shows one.
+import * as T from 'three';
+import { makeGardener } from '../src/blomy.js';
+const W=197,H=300,canvas=document.getElementById('c');
+const renderer=new T.WebGLRenderer({canvas,antialias:true,alpha:true,preserveDrawingBuffer:true});
+renderer.setPixelRatio(3);renderer.setSize(W,H,false);canvas.style.width=W+'px';canvas.style.height=H+'px';
+renderer.setClearColor(0,0);renderer.toneMapping=T.ACESFilmicToneMapping;renderer.toneMappingExposure=1.05;renderer.outputColorSpace=T.SRGBColorSpace;
+const scene=new T.Scene();
+scene.add(new T.HemisphereLight('#fff6ec','#c9b8e6',1.5));
+const key=new T.DirectionalLight('#fff1dc',2.6);key.position.set(-3,5,6);scene.add(key);
+const rim=new T.DirectionalLight('#e7d9ff',1.2);rim.position.set(4,3,-5);scene.add(rim);
+const blomy=makeGardener();scene.add(blomy);
+blomy.userData.idle(0);blomy.userData.look(0,0,1);blomy.userData.after(0,0);
+// frame her whole turn the same way, so she doesn't change size between angles
+const box=new T.Box3();for(let i=0;i<8;i++){blomy.rotation.y=i*Math.PI/4;blomy.updateMatrixWorld(true);box.union(new T.Box3().setFromObject(blomy));}
+const size=box.getSize(new T.Vector3()),mid=box.getCenter(new T.Vector3());
+const camera=new T.PerspectiveCamera(22,W/H,.1,100);
+const dist=Math.max(size.y*1.04/(2*Math.tan(T.MathUtils.degToRad(11))),size.x*1.04/(2*Math.tan(T.MathUtils.degToRad(11))*W/H));
+camera.position.set(0,mid.y+size.y*.06,mid.z+dist);camera.lookAt(0,mid.y,mid.z);
+window.renderFrame=i=>{blomy.rotation.y=i*Math.PI/4;renderer.render(scene,camera);return true;};
+window.renderFrame(+(new URLSearchParams(location.search).get('frame')??1));
+window.ready=true;
+</script>

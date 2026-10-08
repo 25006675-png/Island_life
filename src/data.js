@@ -32,11 +32,15 @@ export const MOODS={
 };
 
 // Altitude = how heavy this week is for you, against your own normal week
-// (climate.js, docs/algorithm.md). 0 floats at 16 m; 1 sits at -10 m, down by
-// the cloud sea.
-const HIGH=16, LOW=-10;
-export const loadFromAltitude=a=>Math.min(1,Math.max(0,(HIGH-a)/(HIGH-LOW)));
-export const altitudeFromLoad=l=>HIGH-Math.min(1,Math.max(0,l))*(HIGH-LOW);
+// (climate.js, docs/algorithm.md). The gathering island is 0 m, and so is your
+// normal week (load .5). A light week floats up to 45 m; a heavy one sinks to
+// -55 m, down into the cloud sea (its top is at -50 m), with only the gate and
+// the treetops still showing. Each half of the scale is stretched on its own,
+// so a normal week stays exactly at 0 m.
+export const HIGH=45, LOW=-55, CLOUD_SEA=-50;
+const clamp01=x=>Math.min(1,Math.max(0,x));
+export const loadFromAltitude=a=>a>=0?.5*(1-clamp01(a/HIGH)):.5+.5*clamp01(a/LOW);
+export const altitudeFromLoad=l=>(l=clamp01(l))<=.5?HIGH*(1-l/.5):LOW*(l-.5)/.5;
 // How heavy a week is, in words: shown instead of hours (balance and planner).
 export const fullness=l=>l<.35?'light for you':l<.65?'about usual for you':l<.85?'heavier than usual':'much heavier than usual';
 // Bridge glow = recent interaction warmth with the group (0 quiet ... 3 bright); never breaks.

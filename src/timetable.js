@@ -1,3 +1,4 @@
+import { GATE } from './gate.js';
 import * as T from 'three';
 import { CATEGORIES, DAWN, NIGHT } from './data.js';
 
@@ -10,10 +11,10 @@ import { CATEGORIES, DAWN, NIGHT } from './data.js';
 
 // Torii centre and its inward axis, in member-island model units
 // (run2.py TORII_AT / TORII_FACING, mirrored into Three.js x/z).
-export const ARCH={x:-5.4,z:-5.0};
+export const ARCH=GATE;   // the torii, at the shore (gate.js)
 const INWARD=new T.Vector3(.743,0,.669).normalize();
 const SAMPLES=480, LEG=40, WIDTH=1.25, HOVER=.09;
-const RADIUS=8, LEG_MIN=20;   // loop radius (world units); minutes spent on each arch leg
+export const RADIUS=17, LEG_MIN=20;   // loop radius (world units): most of the island; minutes spent on each arch leg
 const RIBBON={length:26,height:1.3,distance:21};
 const NEUTRAL=new T.Color('#f3e2b8'), HIDDEN=new T.Color('#d9d2c6'), GREY=new T.Color('#b9b4c4');
 const COLORS=Object.fromEntries(Object.entries(CATEGORIES).map(([k,c])=>[k,new T.Color(c.color)]));
@@ -68,7 +69,7 @@ export function createTimetable(island,{texture,own,blocks:initial}){
   // clockwise round the middle, home on the other side.
   {
     const arch=new T.Vector3(ARCH.x*s,0,ARCH.z*s), side=new T.Vector3(-INWARD.z,0,INWARD.x);
-    const gate=arch.clone().addScaledVector(INWARD,2*s), a0=Math.atan2(gate.z,gate.x), gap=.38;
+    const gate=arch.clone().addScaledVector(INWARD,2*s), a0=Math.atan2(gate.z,gate.x), gap=.26;
     const onLoop=a=>new T.Vector3(Math.cos(a)*RADIUS,0,Math.sin(a)*RADIUS);
     const start=onLoop(a0+gap), end=onLoop(a0+Math.PI*2-gap);
     const outCtl=gate.clone().addScaledVector(side,-.9*s), inCtl=gate.clone().addScaledVector(side,.9*s);
@@ -109,7 +110,7 @@ export function createTimetable(island,{texture,own,blocks:initial}){
     position.set(base);geometry.attributes.position.needsUpdate=true;morphed=false;painted=null;
   }
 
-  const tmp=new T.Color();
+  const tmp=new T.Color();let paintTick=0;
   function paint(now,t,motion){
     // with motion on, light flows along the lit path every frame, so no caching
     const wu=timeToU(now), key=motion?null:`${wu.toFixed(4)}|${lift}`;if(key!==null&&painted===key)return;painted=key;
@@ -156,6 +157,7 @@ export function createTimetable(island,{texture,own,blocks:initial}){
   setBlocks(initial??[]);
   return {
     setBlocks,
+    show(on){group.visible=on;},   // hidden while the island shows a past week
     setLift(on){target=on?1:0;},
     get lifted(){return target===1;},
     get lift(){return lift;},
@@ -213,7 +215,8 @@ export function createTimetable(island,{texture,own,blocks:initial}){
       return best;
     },
     update(now,t,dt,camera,motion){
-      paint(now,t,motion);arrow.material.opacity=.85*(1-lift);
+      if(!motion||(paintTick++&1)===0)paint(now,t,motion);   // the travelling glow reads the same at 30 a second, at half the cost
+      arrow.material.opacity=.85*(1-lift);
       if(lift!==target)lift=motion?clamp01(lift+Math.sign(target-lift)*dt/1.4):target;
       if(lift>0){aim(camera);morph();}
       else if(morphed){position.set(base);geometry.attributes.position.needsUpdate=true;morphed=false;}

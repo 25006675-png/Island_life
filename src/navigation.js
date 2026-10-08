@@ -94,5 +94,7 @@ export function islandSurface(island,x,z,clearance=.27) {
 export function surfaceAt(islands,bridges,x,z) {
   for(const b of bridges){const s=bridgeSurface(b,x,z);if(s)return s;}
   for(const i of islands){const s=islandSurface(i,x,z);if(s)return s;}
+  // a member island's pier (main.js buildPier): the boardwalk and the round deck
+  for(const i of islands)if(i.pier?.walk.on(x-i.x,z-i.z))return {x,y:i.altitude+i.pier.deckY,z,kind:'island',id:i.id};
   return null;
 }

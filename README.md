@@ -96,7 +96,7 @@ These were the main ideas we tested, kept, changed, or dropped.
 | **Personalized 3D Island World (3D Sky Island)** | **Chosen** | A dashboard made the week feel like homework. A floating island let us show the same data physically: height for load, weather for mood, trees for planned time. |
 | **1-Tap Photo Check-Ins ("The Golden Window")** | **Chosen** | We liked the honesty of BeReal: one quick photo of what is happening now. The photos sit on The Gathering Island carousel, so the group sees real moments instead of fake focus timers. |
 | **Shared Peer Bridges & Gathering Island** | **Chosen** | Bridges gave the social part a shape. Friends can see weather, altitude, notes, and shared tasks, but not the private details of someone else's plan. |
-| **AI-assisted gardener avatar** | **Chosen** | The gardener avatar watches mood check-ins and weekly load. In the prototype, it uses clear rules to suggest something small and already schedulable: tea, a walk, early sleep, or a slow evening. In a fuller version, AI would help classify calendar events and rank better activity ideas. |
+| **AI-assisted gardener avatar** | **Chosen** | The gardener avatar watches mood check-ins and weekly load. Clear rules decide when it speaks and what kind of help fits. Gemini reads a summary of the week and suggests the idea, choosing only from free times the app has found, and the app checks it before showing it. If Gemini is unavailable, the app's own ideas take over: tea, a walk, early sleep, or a slow evening. |
 | **Guilt-Free "Let Go" & Balanced Rewards** | **Chosen** | We did not want streaks or dead trees. If you let go of a task, its glass tree drifts away. Rest earns the same reward as studying: **Dewdrops 💧**. |
 | **Visual Activity Trees & Timetable Clock Path** | **Chosen** | Each activity type became its own tree, so a study-heavy week looks different from a social-heavy one. Today's plan became a clock-face path with a light walking through it. |
 | **Blender MCP Server Pipeline** | **Chosen** | We needed a lot of matching 3D assets quickly. Python scripts controlling Blender let us regenerate islands, trees, props, and renders after changes. |
@@ -167,7 +167,7 @@ Thirty-six commits over three days. These were the main product decisions during
 | Decision | Why we made it | What we turned down |
 |---|---|---|
 | **Scripted asset generation** | Seven tree species, four islands, a character and every prop had to exist in three days and still look like one place. Python driving Blender means any of them can be regenerated after a change. | An asset pack, which would have looked like everyone else's, or modelling by hand, which we could not have finished. |
-| **Manual completion** | A tree takes root only when you press Done. This is the whole difference from a timer that rewards a phone left face-down on a desk. | Growth on a schedule, which would have filled the island by itself and meant nothing. |
+| **Manual completion** | Today, a tree takes root only when you press Done. This is the whole difference from a timer that rewards a phone left face-down on a desk. Earlier days settle on their own: whatever you didn't let go counts as done, so connecting a calendar on a Thursday grows Monday to Wednesday at once, and nobody has to tap through a backlog. | Growth on a schedule, which would have filled the island by itself and meant nothing. |
 | **World-based onboarding** | The landing page is the world itself, with signposts you walk up to, so the first thing a student does is move rather than dismiss an overlay. | A tour or tooltip sequence, which most people skip anyway. |
 | **Active rest reminder** | The rest suggestion first sat on a sign by the windmill, and a nudge that waits to be found is not a nudge. Your gardener avatar now speaks when you get home, and the sign keeps the offer. | A passive signpost, which would make the reminder too easy to miss when someone is already tired. |
 | **User-confirmed scheduling** | Taking a suggestion used to put a slow evening on your plan at a time we chose. Now it offers free times, or hands you the planner. | Deciding someone's evening for them, which is the behaviour students already resent in productivity apps. |
@@ -207,7 +207,7 @@ Thirty-six commits over three days. These were the main product decisions during
 </tr>
 <tr>
 <td valign="top"><h3>Everything you do grows into a tree</h3>
-Seven kinds of activity, seven kinds of tree. What's coming up stands as a glass tree. Mark it done, and it takes root in full colour. Let it go, and the glass tree drifts away quietly.</td>
+Seven kinds of activity, seven kinds of tree. What's coming up stands as a glass tree. Mark it done, and it takes root in full colour. Let it go, and the glass tree drifts away quietly. Every Monday the island starts fresh, and the weeks before wait under Past weeks.</td>
 <td valign="top"><h3>A full week sinks your island</h3>
 Your island floats high when your week has room, and sinks toward the clouds as you take more on. You feel it's too much before you've said yes to one more thing.</td>
 </tr>
@@ -299,7 +299,7 @@ Every part of the world is driven by something the student did, not by decoratio
 | **Altitude** | How full your week is | Planned hours this week against what you can give. Very full weeks sit just above the cloud sea. |
 | **Weather** | How you've been feeling | Your check-ins this week, with recent days counting for more. Tired, stressed and low bring cloud and rain. Calm and happy clear it. |
 | **Glass trees** | What's coming up | Future blocks, one species per kind of activity |
-| **Solid trees** | What you did | A block you marked Done. Nothing grows on its own. |
+| **Solid trees** | What you did this week | Today's blocks you marked Done, and earlier days' blocks you didn't let go. Fresh every Monday. |
 | **Glowing path** | Today's timetable | Your blocks from 07:00 to 22:00, laid out like a clock face |
 | **The light on the path** | Right now | It walks the path in real time |
 | **Lanterns in your sky** | Your feelings | Each check-in you make this week |

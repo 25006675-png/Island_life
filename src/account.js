@@ -3,14 +3,16 @@ import { demoWorld, enterWorld } from './world.js';
 
 // The sign-in card: sign in or make an account (email, or Google), start or
 // join a sky, or open the demo. It shows nothing personal until someone has
-// signed in. Without a backend configured, it is the demo's card only.
+// signed in. Without a backend configured, it is the demo's card only. On the welcome page, handoff(kind) is
+// called instead of loading the world there: 'live' once a sky is chosen (the session is saved, and the app
+// opens that sky), or 'demo'.
 const el=(tag,props={},...kids)=>{const e=Object.assign(document.createElement(tag),props);e.append(...kids);return e;};
 const field=(label,props)=>{const input=el('input',props);return [el('label',{},label,input),input];};
 const JOIN_KEY='island-join';
 
-export function createAccount({form,enter}){
+export function createAccount({form,enter,handoff}){
   let main=()=>{};                             // what Enter does on the current card
-  const demo=()=>enter(demoWorld());
+  const demo=()=>handoff?handoff('demo'):enter(demoWorld());
   if(!backend.configured){
     form.onsubmit=e=>{e.preventDefault();demo();};
     form.querySelector('#login-guest').onclick=demo;
@@ -99,6 +101,7 @@ export function createAccount({form,enter}){
   }
 
   async function open(user,sky){
+    if(handoff){handoff('live');return;}
     try{enter(enterWorld(await backend.loadWorld(user,sky)));}
     catch(e){console.error(e);say('Your sky didn’t load. Check your connection and try again.');afterSignIn(user);}
   }

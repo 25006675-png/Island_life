@@ -1,5 +1,6 @@
-// Gemini, advisory only: it sorts imported event titles into kinds and puts
-// the gardener's chosen offer into a friendly line. It never decides a number
+// Gemini, advisory only: it sorts imported event titles into kinds, suggests
+// the gardener's idea from the options the app offers (checked by idea.ts),
+// and puts an offer into a friendly line. It never decides a number
 // (docs/algorithm.md section 6). Every call has a plain fallback.
 import { KINDS, keywordKind, type Kind } from './events.ts';
 
@@ -57,4 +58,40 @@ Situation: ${JSON.stringify(facts)}
 A line the app would otherwise use: "${fallback}"`;
   const line = await generate(prompt, { type: 'STRING' }, 6000);
   return typeof line === 'string' && line.length > 8 && line.length < 200 ? line.trim() : fallback;
+}
+
+// The gardener's own idea: one small thing for this week, picked from the free
+// times and "can wait" blocks the app offers. Facts are kinds, hours, day names
+// and friends' first names; never titles. checkIdea (idea.ts) has the last word.
+export async function gardenerIdea(facts: {
+  mode: string; week: unknown; slots: { day: string; time: string }[];
+  canWait: { kind: string; day: string; hours: number }[]; friends: string[];
+}): Promise<unknown | null> {
+  const prompt = `You are the gardener on a student's floating island in a calm wellbeing app. Suggest ONE small,
+kind thing they could do this week, and write it as one warm sentence.
+${facts.mode === 'schedule'
+    ? `Their week, or a day ahead, is heavier than usual for them. The best help is moving one activity they marked
+"can wait" (type "move", give its number). If nothing can wait, protect some recovery instead: an early night,
+a slow evening, a short walk (type "add").`
+    : `Their sky has been heavy lately, but their schedule is not unusually full, so it may not be the schedule.
+Do not move anything. Offer rest, time outdoors, or time with a friend (type "add").`}
+Their week (kinds of activity in hours, and how each coming day looks for them): ${JSON.stringify(facts.week)}
+Free times (for type "add", give the number): ${facts.slots.map((s, i) => `${i}. ${s.day} ${s.time}`).join('; ') || 'none'}
+Activities marked "can wait" (for type "move", give the number): ${facts.canWait.map((c, i) => `${i}. ${c.kind}, ${c.day}, ${c.hours} h`).join('; ') || 'none'}
+Friends in their sky, least recently in touch first: ${facts.friends.join(', ') || 'none'}
+Rules: for "add", the kind is rest, exercise, social or other, never study or work; 15 to 90 minutes; a title of
+2 to 5 words such as "Walk by the river"; a button of 2 to 4 words such as "Add the walk"; pick the free time that
+fits best, preferring the heaviest days or the evening before them. If you suggest seeing a friend, use their name
+exactly as given. The sentence: at most 24 words, never diagnose, never guess why they feel the way they do, never
+mention numbers, hours, times, percentages or the app, no emoji, plain kind English.`;
+  return await generate(prompt, {
+    type: 'OBJECT',
+    properties: {
+      type: { type: 'STRING', enum: ['add', 'move'] }, title: { type: 'STRING' },
+      cat: { type: 'STRING', enum: ['rest', 'exercise', 'social', 'other'] }, mins: { type: 'INTEGER' },
+      slot: { type: 'INTEGER' }, move: { type: 'INTEGER' }, friend: { type: 'STRING' },
+      line: { type: 'STRING' }, button: { type: 'STRING' },
+    },
+    required: ['type', 'line'],
+  }, 8000);
 }

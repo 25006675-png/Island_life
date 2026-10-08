@@ -1,3 +1,5 @@
+import { GATE } from './gate.js';
+import { RADIUS as LOOP } from './timetable.js';
 import * as T from 'three';
 import { CATEGORIES, SCHEDULES, ME, fmt, hours } from './data.js';
 import { SPECIES, HISTORY, tier, treeCard } from './groves.js';
@@ -15,7 +17,9 @@ import { SPECIES, HISTORY, tier, treeCard } from './groves.js';
 // evenly instead of bunching or leaving bare ground.
 
 const ORDER=['study','work','errands','social','exercise','rest','other'];
-const R_IN=11.5, R_OUT=26;   // scene units; the timetable loop runs at r=8 (timetable.js RADIUS)
+// Trees grow in two bands, inside the day's loop and outside it (timetable.js RADIUS), with a clear lane where
+// the path runs. Scene units, even over area.
+const BAND_IN=[4.5,LOOP-3.2], BAND_OUT=[LOOP+3.2,30], AREA=([a,b])=>b*b-a*a;
 const BRIDGE_GAP=.35;        // radians kept clear either side of the bridge landing
 // ...and either side of the line from the walk-in camera to the spawn point
 // (main.js island.spawn / island.cam): trees there pull the camera in close.
@@ -44,7 +48,8 @@ function freeRing(gaps){
   };
   return {span,angleAt};
 }
-const ROOT_SECONDS=2.6, DRIFT_SECONDS=3;
+const ROOT_SECONDS=2.6, DRIFT_SECONDS=3, GROW_SECONDS=.9, GROW_GAP=.12;   // grow-in: each tree, then the next a beat later
+const easeOutBack=k=>1+2.70158*(k-1)**3+1.70158*(k-1)**2;
 const STATUS={done:'done',now:'happening now',planned:'planned',skipped:'let go',waiting:'did it happen?'};
 const SUN=new T.Vector3(-45,65,25).normalize();   // main.js key light
 
@@ -113,7 +118,7 @@ function blockCard(b,own){
 const CANOPY_MATCH={sakura:.87,magic_mushrooms:.96,willow:.98,oak:1,purple:1.04,palm:1.05,pale:1.27};
 
 export function createForest({assets,islandSurface,speciesScale}){
-  const islands=[], byBlock=new Map(), animating=new Set(), heights={};
+  const islands=[], byBlock=new Map(), animating=new Set(), growing=new Set(), heights={};
   const heightOf=k=>heights[k]??=new T.Box3().setFromObject(assets[k]).getSize(new T.Vector3()).y;
   const scaleFor=(island,cat,mins)=>(speciesScale[SPECIES[cat]]??1)*(CANOPY_MATCH[SPECIES[cat]]??1)*tier(mins).scale*(.92+island.rnd()*.16);
 
@@ -121,10 +126,9 @@ export function createForest({assets,islandSurface,speciesScale}){
   // category still gets room). Wedges are laid out in "free angle" u, which
   // runs round the island from just past the bridge landing and skips the
   // gaps; island.angleAt(u) turns it back into a real angle.
-  function layout(island){
+  function layout(island,items){
     const count={};
-    for(const e of HISTORY[island.id]??[])count[e.cat]=(count[e.cat]??0)+1;
-    for(const b of SCHEDULES[island.id]??[])count[b.cat]=(count[b.cat]??0)+1;
+    for(const it of items)count[it.cat]=(count[it.cat]??0)+1;
     const cats=ORDER.filter(c=>count[c]), weight=c=>count[c]+2;
     const total=cats.reduce((a,c)=>a+weight(c),0);
     const s=island.scale, cam=island.cam??[0,10,16];
@@ -137,15 +141,18 @@ export function createForest({assets,islandSurface,speciesScale}){
   }
 
   function spot(island,cat,sc,anywhere){
-    const t=anywhere?{u0:0,u1:island.span}:island.territories[cat], s=island.scale, own=.85*sc/s;
-    const arch={x:-5.4*s,z:-5*s};   // the torii and its path legs
+    // a kind the island had no trees of when it was planted has no wedge: anywhere will do
+    const t=anywhere||!island.territories[cat]?{u0:0,u1:island.span}:island.territories[cat], s=island.scale, own=.85*sc/s;
+    const arch={x:GATE.x*s,z:GATE.z*s};   // the torii and its path legs
+    const foot={x:-9.3*s,z:-8.6*s};   // where the pier meets the shore (main.js buildPier)
     const m=Math.min(.12,(t.u1-t.u0)*.15);
     let best=null;
     for(let k=0;k<60;k++){
       const a=island.angleAt(t.u0+m+island.rnd()*(t.u1-t.u0-2*m));
-      const r=Math.sqrt(R_IN*R_IN+island.rnd()*(R_OUT*R_OUT-R_IN*R_IN));   // even over area
+      const band=island.rnd()*(AREA(BAND_IN)+AREA(BAND_OUT))<AREA(BAND_IN)?BAND_IN:BAND_OUT;
+      const r=Math.sqrt(band[0]**2+island.rnd()*AREA(band));   // even over area, across both bands
       const x=Math.cos(a)*r, z=Math.sin(a)*r;
-      if(Math.hypot(x-arch.x,z-arch.z)<6)continue;
+      if(Math.hypot(x-arch.x,z-arch.z)<6||Math.hypot(x-foot.x,z-foot.z)<5)continue;
       if(island.obstacles.some(o=>Math.hypot(x/s-o.x,z/s-o.z)<o.r+own+.25))continue;
       const surface=islandSurface(island,island.x+x,island.z+z,1.1);
       if(!surface)continue;
@@ -202,6 +209,7 @@ export function createForest({assets,islandSurface,speciesScale}){
 
   function sync(getSchedule){
     for(const island of islands){
+      if(island.past)continue;   // showing a past week; today's trees are put away
       const blocks=getSchedule(island.id);if(!blocks)continue;
       const seen=new Set();
       for(const b of blocks){
@@ -215,21 +223,59 @@ export function createForest({assets,islandSurface,speciesScale}){
     }
   }
 
+  // Long activities first, so the big trees claim room before the small ones.
+  function grove(island,items,seed){
+    island.rnd=()=>{seed=(seed*1103515245+12345)&0x7fffffff;return seed/0x7fffffff;};
+    island.trees=[];layout(island,items);
+    for(const it of [...items].sort((a,b)=>b.mins-a.mins))addTree(island,it);
+  }
+  const visibleNow=t=>{t.solid.visible=t.state==='solid';if(t.ghost)t.ghost.visible=t.state==='ghost'||!!t.anim;};
+
   let tick=0;
   return {
     plant(island){
-      let seed=island.id.length*7919+13;
-      island.rnd=()=>{seed=(seed*1103515245+12345)&0x7fffffff;return seed/0x7fffffff;};
-      island.trees=[];layout(island);islands.push(island);
-      // Long activities first, so the big trees claim room before the small
-      // ones; today's ghosts interleave with the week's solid trees.
-      const items=[...(HISTORY[island.id]??[]).map(e=>({cat:e.cat,mins:e.mins,entry:e})),
-                   ...(SCHEDULES[island.id]??[]).map(b=>({cat:b.cat,mins:b.mins,block:b}))];
-      items.sort((a,b)=>b.mins-a.mins);
-      for(const it of items)addTree(island,it);
+      islands.push(island);
+      // today's ghosts interleave with the week's solid trees
+      grove(island,[...(HISTORY[island.id]??[]).map(e=>({cat:e.cat,mins:e.mins,entry:e})),
+                    ...(SCHEDULES[island.id]??[]).map(b=>({cat:b.cat,mins:b.mins,block:b}))],island.id.length*7919+13);
+    },
+    // The week grows in, Monday's trees first and today's last: shown once a
+    // calendar has just been connected. Returns how many trees are growing.
+    grow(id){
+      const island=islands.find(i=>i.id===id);if(!island)return 0;
+      const list=island.trees.filter(t=>t.state!=='gone').sort((a,b)=>(b.entry?.day??-1)-(a.entry?.day??-1));
+      list.forEach((t,n)=>{t.grow=-n*GROW_GAP;growing.add(t);for(const o of [t.solid,t.ghost])o?.scale.setScalar(.001);});
+      return list.length;
+    },
+    // A past week on island `id` (life.js "Past islands"): this week's trees are
+    // put away and that week's grow in their place, until present(id).
+    // entries: [{id, day, cat, mins, title, vis}], as groves.js HISTORY.
+    past(id,entries,seed){
+      const island=islands.find(i=>i.id===id);if(!island)return;
+      if(island.past)for(const t of island.trees){island.group.remove(t.solid);growing.delete(t);}
+      else{
+        island.past={trees:island.trees,rnd:island.rnd,territories:island.territories,obstacles:island.obstacles};
+        for(const t of island.trees){t.solid.visible=false;if(t.ghost)t.ghost.visible=false;}
+      }
+      const own=new Set(island.past.trees.map(t=>t.obstacle));
+      island.obstacles=island.past.obstacles.filter(o=>!own.has(o));
+      grove(island,entries.map(e=>({cat:e.cat,mins:e.mins,entry:e})),seed);
+    },
+    present(id){
+      const island=islands.find(i=>i.id===id);if(!island?.past)return;
+      for(const t of island.trees){island.group.remove(t.solid);growing.delete(t);}
+      Object.assign(island,{trees:island.past.trees,rnd:island.past.rnd,territories:island.past.territories,obstacles:island.past.obstacles});
+      island.past=null;
+      for(const t of island.trees)visibleNow(t);
     },
     update(dt,elapsed,motion,getSchedule){
       if((tick-=dt)<=0){tick=.25;sync(getSchedule);}
+      for(const t of growing){
+        t.grow+=motion?dt:GROW_SECONDS;
+        const k=Math.min(1,Math.max(0,t.grow/GROW_SECONDS)), sc=t.sc*Math.max(.001,easeOutBack(k));
+        for(const o of [t.solid,t.ghost])o?.scale.setScalar(sc);
+        if(k>=1)growing.delete(t);
+      }
       for(const t of animating){
         const u=t.mat.uniforms;
         if(t.anim==='root'){
