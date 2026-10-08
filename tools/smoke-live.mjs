@@ -7,11 +7,12 @@
 import { chromium } from '@playwright/test';
 import { createClient } from '@supabase/supabase-js';
 import { mkdirSync } from 'node:fs';
+import { localSecretKey } from './local-supabase-key.mjs';
 
 const APP = process.env.APP ?? 'http://127.0.0.1:5179/';
 const OUT = process.env.OUT ?? 'test-results/smoke';
 mkdirSync(OUT, { recursive: true });
-const admin = createClient('http://127.0.0.1:54321', process.env.SUPABASE_SECRET_KEY, { auth: { persistSession: false } });
+const admin = createClient('http://127.0.0.1:54321', localSecretKey(), { auth: { persistSession: false } });
 const browser = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const results = [];
 const check = (name, ok, detail = '') => { results.push({ name, ok, detail }); console.log(`${ok ? '✔' : '✖'} ${name}${detail ? ` — ${detail}` : ''}`); };

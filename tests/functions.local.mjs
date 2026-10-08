@@ -5,9 +5,10 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { createClient } from '@supabase/supabase-js';
+import { localSecretKey } from '../tools/local-supabase-key.mjs';
 
 const URL = 'http://127.0.0.1:54321', FN = `${URL}/functions/v1`;
-const PUBLISHABLE = 'sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH', SECRET = process.env.SUPABASE_SECRET_KEY;
+const PUBLISHABLE = 'sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH', SECRET = localSecretKey();
 const env = Object.fromEntries(readFileSync('supabase/functions/.env', 'utf8').split('\n').filter(l => l.includes('=')).map(l => [l.slice(0, l.indexOf('=')), l.slice(l.indexOf('=') + 1)]));
 const opts = { auth: { persistSession: false, autoRefreshToken: false } };
 const admin = createClient(URL, SECRET, opts);

@@ -4,10 +4,11 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createClient } from '@supabase/supabase-js';
+import { localSecretKey } from '../tools/local-supabase-key.mjs';
 
 const URL = process.env.SUPABASE_URL ?? 'http://127.0.0.1:54321';
 const PUBLISHABLE = process.env.SUPABASE_PUBLISHABLE_KEY ?? 'sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH';
-const SECRET = process.env.SUPABASE_SECRET_KEY ?? process.env.SUPABASE_SECRET_KEY;
+const SECRET = localSecretKey();
 const opts = { auth: { persistSession: false, autoRefreshToken: false } };
 const admin = createClient(URL, SECRET, opts);
 const run = Date.now().toString(36);
