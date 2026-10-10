@@ -214,6 +214,7 @@ The rules decide when the gardener speaks and which kind of help fits. Within th
 | Mood question | Once, in the evening (a single phone notification from 20:00), unless already answered |
 | Quiet hours | No questions from 22:00 to 08:00, or during an activity |
 | Ignored questions | Three unanswered in a row halve the asking for a week |
+| Golden window | One notification to everyone in the sky the minute it opens (phone and desktop), outside quiet hours. It expires with the window, and isn't shown while the island is already on screen |
 
 Asking most about what it is least sure of is **uncertainty sampling** from active learning [14]. The chance never falls below 0.15, because the same activity can still feel different on another day. So the island asks less as it learns, and never stops checking.
 

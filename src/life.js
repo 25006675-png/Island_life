@@ -792,6 +792,13 @@ export function initLife({world,islands,camera,texture,player,notice,visit,fores
     const b=plans.on(ME,params.get('date')??TODAY).find(b=>String(b.series?.id??b.id)===params.get('block'));
     if(b)setTimeout(()=>ask.ask(b),1200);
   }
+  // the golden window's notification opens the camera: ?golden on a fresh load,
+  // or a message from the service worker when the island was already open
+  const shareGolden=()=>{if(!$('capture').open)photos.capture();};
+  if(params.has('golden'))setTimeout(shareGolden,1200);
+  navigator.serviceWorker?.addEventListener('message',e=>{
+    if(e.data?.open&&new URL(e.data.open).searchParams.has('golden'))shareGolden();
+  });
   // back from Google: connected, you're taken home and your week so far grows
   // in, Monday's trees first; otherwise the planner's sync dialog says what happened
   const cal=params.get('calendar');
@@ -801,7 +808,7 @@ export function initLife({world,islands,camera,texture,player,notice,visit,fores
       notice(n?`Google Calendar is connected. Your week so far grew in: ${plural(n,'tree')}.`:'Google Calendar is connected. Your plans are on your island.');},1400);
   },900);
   else if(cal)setTimeout(()=>{calendar.open('week');calendar.openSync(cal);},900);
-  if(params.has('ask')||params.has('calendar')||params.has('join'))history.replaceState(null,'',location.pathname);
+  if(params.has('ask')||params.has('calendar')||params.has('join')||params.has('golden'))history.replaceState(null,'',location.pathname);
   // Once a day, the first time you open the island: what today holds, in words.
   try{
     const key=`island-morning-${ME}`, day=forecast(ME,TODAY);

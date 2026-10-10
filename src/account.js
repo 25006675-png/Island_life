@@ -125,13 +125,13 @@ export function mountSkyPanel(world,notice){
   const showPush=async()=>{
     const s=await backend.pushState();
     push.hidden=s==='unsupported';
-    push.textContent=s==='on'?'Turn off phone prompts':s==='denied'?'Phone prompts are blocked in your browser':'Get prompts on this device';
+    push.textContent=s==='on'?'Turn off notifications':s==='denied'?'Notifications are blocked in your browser':'Get notifications on this device';
     push.disabled=s==='denied';
   };
   push.onclick=async()=>{
     try{
       if(await backend.pushState()==='on'){await backend.disablePush();notice('No more prompts on this device.');}
-      else if(await backend.enablePush())notice('Your island will ask after activities, and once in the evening.');
+      else if(await backend.enablePush())notice('Your island will ask after activities, once in the evening, and ring when the golden window opens.');
     }catch(e){console.error(e);notice('Prompts couldn’t be turned on here.');}
     showPush();
   };
