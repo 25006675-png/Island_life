@@ -18,6 +18,7 @@ import { createBalance } from './balance.js';
 import { createGoalsBoard, createWindmill, createGateSign } from './decor.js';
 import { createShop } from './shop.js';
 import { createBuddy } from './buddy.js';
+import * as sound from './sound.js';
 
 // Everything README.md says the world should show: the timetable path and wisp,
 // emotion lanterns, weather and altitude from the plan, the shared photo
@@ -156,6 +157,8 @@ export function initLife({world,islands,camera,texture,player,notice,visit,fores
     renderTasks();
   }
   function finishTask(t){
+    // a block on today's plan grows a tree, which chimes as it takes root (main.js); otherwise chime now
+    if(!(t.block&&!t.block.done&&t.block.date===TODAY))sound.play('task_done',{gain:.55,cooldown:.6});
     if(t.block&&!t.block.done)plans.markDone(ME,t.block);
     t.done[ME]=null;
     if(LIVE)Promise.resolve(t.saved??t.id).then(id=>id&&backend.finishTask(world,id));
@@ -573,8 +576,6 @@ export function initLife({world,islands,camera,texture,player,notice,visit,fores
     lifted=id;if(id)tables[id].setLift(true);
     $('schedule').setAttribute('aria-pressed',String(!!id));
     $('ribbon-labels').replaceChildren();labels.length=0;
-    if(getMode()==='walk')$('mode-hint').textContent=id?'Your day, lifted · Schedule to lower it'
-                                                        :'WASD to walk · Space to jump · Drag to look around · Esc for sky view';
     if(!id)return;
     const own=id===ME;
     for(const b of tables[id].blocks){
