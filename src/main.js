@@ -234,7 +234,11 @@ function turnCamera(dt){
   sph.radius=T.MathUtils.clamp(sph.radius*(1+zoom*CAM_ZOOM*dt),controls.minDistance,controls.maxDistance);
   camera.position.copy(controls.target).add(off.setFromSpherical(sph));
 }
-function visit(id){if(!ready)return;selected=id;mode='walk';$('app').dataset.mode=mode;if(innerWidth>=600&&!TOUCH)$('island-card').open=true;const island=islands.find(i=>i.id===id);spawnOn(island);controls.enabled=true;controls.minDistance=6;controls.maxDistance=skyReach();cameraOffset.set(...(island.cam??[0,10,16]));
+// the island card (bottom left) stays minimized once you minimize it, until you open it again; remembered per browser
+const CARD_KEY='il-card-min';
+const cardMinimized=()=>{try{return localStorage.getItem(CARD_KEY)==='1';}catch{return false;}};
+$('island-card').querySelector('summary').addEventListener('click',()=>{const min=$('island-card').open;try{localStorage.setItem(CARD_KEY,min?'1':'0');}catch{}});
+function visit(id){if(!ready)return;selected=id;mode='walk';$('app').dataset.mode=mode;if(innerWidth>=600&&!TOUCH&&!cardMinimized())$('island-card').open=true;const island=islands.find(i=>i.id===id);spawnOn(island);controls.enabled=true;controls.minDistance=6;controls.maxDistance=skyReach();cameraOffset.set(...(island.cam??[0,10,16]));
   transition={from:camera.position.clone(),targetFrom:controls.target.clone(),time:0};
   arrive(island);
   $('hint').textContent='';   // the island's status shows below instead (life.js)
@@ -767,6 +771,11 @@ const rain=sound.ambient('rain_loop',{gain:.6});
 sound.listenForClicks();
 function syncSound(){$('sound-toggle').setAttribute('aria-pressed',String(sound.muted()));$('sound-toggle').title=sound.muted()?'Sound off':'Sound on';$('volume').value=sound.volume();}
 $('sound-toggle').onclick=()=>{sound.setMuted(!sound.muted());syncSound();};
+// UI size (the menu): every panel and bar over the world grows or shrinks together (style.css --ui); remembered per browser
+const UI_KEY='il-ui-size';
+function setUiSize(v){v=Math.min(1.3,Math.max(.8,+v||1));document.documentElement.style.setProperty('--ui',v);$('ui-size').value=v;$('ui-size-value').textContent=`${Math.round(v*100)}%`;return v;}
+try{setUiSize(localStorage.getItem(UI_KEY)??1);}catch{setUiSize(1);}
+$('ui-size').oninput=e=>{const v=setUiSize(e.target.value);try{localStorage.setItem(UI_KEY,String(v));}catch{}};
 $('volume').oninput=e=>{sound.setVolume(+e.target.value);if(sound.muted())sound.setMuted(false);syncSound();};
 syncSound();
 $('altitude').oninput=e=>{if(!ready)return;updateAltitude(islands.find(i=>i.id===ME),+e.target.value);syncPanel();};

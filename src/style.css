@@ -213,7 +213,7 @@ dialog h2{font:normal 21px var(--display);margin:0 0 14px}
 #notice{z-index:6}
 /* sheets: slide up over the living scene, which dims and blurs behind a veil */
 #veil{position:absolute;inset:0;z-index:4;background:oklch(.3 .04 295 / .2);backdrop-filter:blur(5px) saturate(.9)}
-.sheet{position:absolute;left:50%;bottom:0;transform:translateX(-50%);width:min(1060px,calc(100% - 32px));max-height:86svh;display:flex;flex-direction:column;background:var(--surface);border-radius:20px 20px 0 0;box-shadow:0 -10px 40px oklch(.3 .04 295 / .18);z-index:5;animation:sheet-up .38s cubic-bezier(.2,.8,.2,1)}
+.sheet{position:absolute;left:50%;bottom:0;transform:translateX(-50%);width:min(1060px,calc(100% - 32px));max-height:calc(86svh / var(--ui));display:flex;flex-direction:column;background:var(--surface);border-radius:20px 20px 0 0;box-shadow:0 -10px 40px oklch(.3 .04 295 / .18);z-index:5;animation:sheet-up .38s cubic-bezier(.2,.8,.2,1)}
 @keyframes sheet-up{from{transform:translate(-50%,100%)}}
 .sheet-handle{width:52px;height:17px;margin:4px auto 0;cursor:grab;touch-action:none;background:linear-gradient(oklch(.82 .02 295),oklch(.82 .02 295)) center/52px 5px no-repeat;border-radius:3px}
 .sheet-close{position:absolute;top:10px;right:14px;border:0;background:transparent;font-size:24px;line-height:1;padding:4px 8px}
@@ -354,7 +354,7 @@ dialog.wood input::placeholder{color:oklch(.45 .05 60)}
 dialog.wood .dialog-actions .wood-button{background:#3b2a1c;color:#f3e4c8;font:inherit;font-size:13px}
 dialog.wood .dialog-actions .wood-button:hover{background:#503a28}
 dialog.wood .text-button{color:#2f2116;font:inherit;font-size:13px;text-decoration:underline}
-.notes-list{list-style:none;margin:0;padding:0;display:grid;gap:8px;max-height:50vh;overflow:auto}
+.notes-list{list-style:none;margin:0;padding:0;display:grid;gap:8px;max-height:calc(50vh / var(--ui));overflow:auto}
 .notes-list li{display:flex;flex-direction:column;gap:3px;padding:10px 12px;border-radius:8px;background:oklch(.97 .03 80 / .28);border:1px solid oklch(.35 .06 60 / .25)}
 .notes-list li.mine{background:oklch(.97 .05 80 / .5)}
 .notes-list li span{font:12px var(--display);color:#5a4330}.notes-list li strong{font-weight:normal;font-size:15px}
@@ -401,7 +401,7 @@ dialog.album .dialog-actions{justify-content:center;padding:8px 34px 28px;margin
 @media(prefers-reduced-motion:reduce){dialog.album .polaroid{rotate:none}}
 /* the task board dialog */
 #goals-dialog{width:min(540px,calc(100% - 32px))}
-.task-list{max-height:52vh}.task-list li{gap:6px;padding:12px 14px}
+.task-list{max-height:calc(52vh / var(--ui))}.task-list li{gap:6px;padding:12px 14px}
 .task-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
 .task-list .task-head strong{font-size:16px}
 .task-head em{font:600 12.5px 'Nunito Sans','Segoe UI',sans-serif;font-style:normal;color:#2a5f7a;white-space:nowrap}
@@ -451,8 +451,11 @@ label:has(> .ed-cat-icon){position:relative}
 .island-card{margin-top:8px;width:max-content;max-width:min(360px,100%);background:oklch(.97 .012 295 / .85);border-radius:14px;font-size:12px;color:var(--ink);pointer-events:auto;transition:opacity .35s}
 .island-card summary{cursor:pointer;list-style:none;display:flex;align-items:baseline;gap:8px;padding:6px 12px 6px 10px;border-radius:14px}
 .island-card summary::-webkit-details-marker{display:none}
-.island-card summary::before{content:'▸';color:var(--muted);transition:transform .2s}
-.island-card[open] summary::before{transform:rotate(90deg)}
+/* the minimize button: a round chevron at the right end of the title row, pointing down to fold the card, up to open it */
+.ic-toggle{flex:none;align-self:center;display:grid;place-items:center;width:28px;height:28px;margin-left:auto;border-radius:50%;background:#fff;color:var(--violet);border:2px solid var(--violet-soft);box-shadow:0 2px 0 var(--violet-soft);transition:transform .14s ease,box-shadow .14s ease,background .14s}
+.ic-toggle svg{transform:rotate(180deg);transition:transform .2s}.island-card[open] .ic-toggle svg{transform:none}
+.island-card summary:hover .ic-toggle{background:var(--orchid);border-color:var(--orchid);color:#fff;transform:translateY(-1px);box-shadow:0 3px 0 var(--orchid-deep)}
+.island-card summary:active .ic-toggle{transform:translateY(1px);box-shadow:0 1px 0 var(--violet-soft)}
 .island-card summary b{font-weight:600}.island-card summary span{color:var(--muted)}
 .island-card summary:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
 .ic-body{display:grid;gap:5px;padding:2px 14px 12px}
@@ -772,3 +775,11 @@ body:has(#planner-sheet:not([hidden]),#balance-sheet:not([hidden])) :is(#guide,#
 @media(max-width:1240px){.help{flex-direction:column;align-items:flex-start;max-width:none}}
 @media(pointer:coarse){.help{display:none}}
 @media(prefers-reduced-motion:reduce){.help{transition:none}}
+
+/* UI size (the menu's slider, main.js setUiSize): the bars, cards, panels and dialogs over the world scale together.
+   zoom also scales viewport units, so heights given in vh are divided back by --ui where they're set.
+   What follows the 3D world (island labels, the walk-up card, Blomy's spotlight and hand) keeps its size. */
+:root{--ui:1}
+:is(header,footer,#settings,#mood-panel,dialog,#guide,#bridge-banner,#golden,.sheet,#past-banner,#notice){zoom:var(--ui)}
+/* the bottom-left block stops short of the view switcher in the middle (half its width ~176px, plus a gap), at any UI size */
+@media(min-width:951px){.place{max-width:min(390px,calc(50% - 196px))}}
