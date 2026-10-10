@@ -776,6 +776,8 @@ const UI_KEY='il-ui-size';
 function setUiSize(v){v=Math.min(1.3,Math.max(.8,+v||1));document.documentElement.style.setProperty('--ui',v);$('ui-size').value=v;$('ui-size-value').textContent=`${Math.round(v*100)}%`;return v;}
 try{setUiSize(localStorage.getItem(UI_KEY)??1);}catch{setUiSize(1);}
 $('ui-size').oninput=e=>{const v=setUiSize(e.target.value);try{localStorage.setItem(UI_KEY,String(v));}catch{}};
+// Log out (the menu): signs out of the account, if any, and goes back to the home page (welcome/index.html)
+$('log-out').onclick=async e=>{const b=e.currentTarget;b.disabled=true;b.lastChild.textContent='Logging out…';try{if(backend.configured)await backend.signOut();}catch(err){console.error(err);}location.href=`${import.meta.env.BASE_URL}welcome/`;};
 $('volume').oninput=e=>{sound.setVolume(+e.target.value);if(sound.muted())sound.setMuted(false);syncSound();};
 syncSound();
 $('altitude').oninput=e=>{if(!ready)return;updateAltitude(islands.find(i=>i.id===ME),+e.target.value);syncPanel();};
