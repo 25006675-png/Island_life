@@ -7,6 +7,11 @@ import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+import { Pass } from 'three/addons/postprocessing/Pass.js';
+import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
+import { HorizontalBlurShader } from 'three/addons/shaders/HorizontalBlurShader.js';
+import { VerticalBlurShader } from 'three/addons/shaders/VerticalBlurShader.js';
+import { LIFT_LAYER } from './timetable.js';
 import { HeightField, bridgePoint, bridgeSlope, surfaceAt, islandSurface } from './navigation.js';
 import { createAtmosphere, createWeather, createSinkBank } from './atmosphere.js';
 import { initLife, setStrain } from './life.js';
@@ -229,7 +234,11 @@ function turnCamera(dt){
   sph.radius=T.MathUtils.clamp(sph.radius*(1+zoom*CAM_ZOOM*dt),controls.minDistance,controls.maxDistance);
   camera.position.copy(controls.target).add(off.setFromSpherical(sph));
 }
-function visit(id){if(!ready)return;selected=id;mode='walk';$('app').dataset.mode=mode;if(innerWidth>=600&&!TOUCH)$('island-card').open=true;const island=islands.find(i=>i.id===id);spawnOn(island);controls.enabled=true;controls.minDistance=6;controls.maxDistance=skyReach();cameraOffset.set(...(island.cam??[0,10,16]));
+// the island card (bottom left) stays minimized once you minimize it, until you open it again; remembered per browser
+const CARD_KEY='il-card-min';
+const cardMinimized=()=>{try{return localStorage.getItem(CARD_KEY)==='1';}catch{return false;}};
+$('island-card').querySelector('summary').addEventListener('click',()=>{const min=$('island-card').open;try{localStorage.setItem(CARD_KEY,min?'1':'0');}catch{}});
+function visit(id){if(!ready)return;selected=id;mode='walk';$('app').dataset.mode=mode;if(innerWidth>=600&&!TOUCH&&!cardMinimized())$('island-card').open=true;const island=islands.find(i=>i.id===id);spawnOn(island);controls.enabled=true;controls.minDistance=6;controls.maxDistance=skyReach();cameraOffset.set(...(island.cam??[0,10,16]));
   transition={from:camera.position.clone(),targetFrom:controls.target.clone(),time:0};
   arrive(island);
   $('hint').textContent='';   // the island's status shows below instead (life.js)
@@ -355,7 +364,6 @@ function showStick(){
 // bridges. Each step lights up what to touch and waits until you have touched it.
 let walkedFrom=0, felt=false;
 $('moods').addEventListener('click',e=>{if(e.target.closest('.mood'))felt=true;});
-const closeSheet=id=>document.querySelector(`#${id} .sheet-close`)?.click();
 const guide=createGuide([
   {say:'Hi, I’m Blomy! This is your sky: every island is someone’s week, and yours is “My island”. Tap it to come home.',
    target:()=>islands.find(i=>i.id===ME)?.label,hand:true,done:()=>mode==='walk'&&!transition},
@@ -366,13 +374,14 @@ const guide=createGuide([
   {say:'How are you feeling right now? Tap here.',target:()=>$('mood-toggle'),hand:true,done:()=>!$('mood-panel').hidden},
   {say:'Pick the one closest. It hangs as a lantern on your pier, and over a few days your feelings make your island’s weather.',
    start:()=>{felt=false;},target:()=>$('mood-panel').hidden?null:$('moods'),hand:true,done:()=>felt},
-  {say:'Your week lives in the Planner. Every activity you finish grows a tree on your island.',
+  // an open sheet is yours to read: Blomy steps aside (style.css) and waits until you close it yourself
+  {say:'Your week lives in the Planner. Every activity you finish grows a tree on your island. Open it, look around, and close it when you’re done.',
    target:()=>$('planner-toggle'),hand:true,done:()=>!$('planner-sheet').hidden},
-  {say:'And Your balance shows how heavy your week is, with small changes that would help.',
-   start:()=>setTimeout(()=>closeSheet('planner-sheet'),1400),
-   target:()=>$('planner-sheet').hidden?$('balance-toggle'):null,hand:true,done:()=>!$('balance-sheet').hidden},
-  {say:'That’s your island! Bridges lead to your friends: walk onto one and press Go. Esc takes you up to the sky.',art:'esc',
-   start:()=>setTimeout(()=>closeSheet('balance-sheet'),1600)},
+  {say:'Close the planner when you’re done looking.',done:()=>$('planner-sheet').hidden},
+  {say:'And Your balance shows how heavy your week is, with small changes that would help. Have a look, then close it.',
+   target:()=>$('balance-toggle'),hand:true,done:()=>!$('balance-sheet').hidden},
+  {say:'Close your balance when you’re done looking.',done:()=>$('balance-sheet').hidden},
+  {say:'That’s your island! Bridges lead to your friends: walk onto one and press Go. Esc takes you up to the sky.',art:'esc'},
 ]);
 $('guide-again').onclick=()=>{setPanel(false);overview();guide.start(true);};
 // Watering. Done on your own island while you walk it leaves the tree glass for a moment (forest.js "thirsty"):
@@ -494,6 +503,25 @@ function setRung(r){
   const pr=rung<=2?PR_MAX:Math.max(PR_MIN,+(PR_MAX-PR_STEP*(rung-2)).toFixed(2));
   if(pr!==pixelRatio){pixelRatio=pr;renderer.setPixelRatio(pixelRatio);composer.setPixelRatio(pixelRatio);}
 }
+// The lifted timetable: the scene behind it blurs (two rounds of a separable blur, growing with the lift), then the
+// ribbon's own layer is drawn over it with depth cleared, so no island, tree or cloud can ever cover it.
+class LayerPass extends Pass{
+  constructor(layer){super();this.layer=layer;this.needsSwap=false;}
+  render(renderer,writeBuffer,readBuffer){
+    const auto=renderer.autoClear;renderer.autoClear=false;
+    renderer.setRenderTarget(this.renderToScreen?null:readBuffer);renderer.clearDepth();
+    camera.layers.set(this.layer);renderer.render(scene,camera);camera.layers.set(0);
+    renderer.autoClear=auto;
+  }
+}
+const blurPasses=[HorizontalBlurShader,VerticalBlurShader,HorizontalBlurShader,VerticalBlurShader].map(s=>new ShaderPass(s));
+const liftPasses=[...blurPasses,new LayerPass(LIFT_LAYER)];
+function liftBlur(lift){
+  for(const p of liftPasses)p.enabled=lift>0;
+  if(!(lift>0))return;
+  const k=lift*lift*(3-2*lift)*2.2, w=composer.readBuffer.width, h=composer.readBuffer.height;
+  blurPasses.forEach((p,i)=>{if(i%2)p.uniforms.v.value=k/h;else p.uniforms.h.value=k/w;});
+}
 function govern(ms,now){
   if(LITE||PIN>0||!(ms>0)||ms>250)return;              // a tab switch or a hitch, not a trend
   if(warm<120){warm++;return;}
@@ -548,7 +576,7 @@ renderer=new T.WebGLRenderer({canvas,antialias:false,powerPreference:'high-perfo
   const sun=sunLight=new T.DirectionalLight('#ffdeb2',2.0);scene.add(sun.target);sun.position.set(-45,65,25);sun.castShadow=true;sun.shadow.mapSize.set(SHADOW,SHADOW);sun.shadow.camera.left=-65;sun.shadow.camera.right=65;sun.shadow.camera.top=65;sun.shadow.camera.bottom=-65;sun.shadow.camera.far=180;sun.shadow.normalBias=.09;sun.shadow.bias=-.00015;scene.add(sun);
   const fill=fillLight=new T.DirectionalLight('#bcd9e5',.9);fill.position.set(20,20,-30);scene.add(fill);
   atmosphere=createAtmosphere(scene);atmosphere.setTone('dusk');
-  composer=new EffectComposer(renderer,new T.WebGLRenderTarget(innerWidth*pixelRatio,innerHeight*pixelRatio,{type:T.HalfFloatType,samples:!LITE&&PR_MAX<=1.25?4:0}));composer.setSize(innerWidth,innerHeight);/* a supplied target is otherwise read as CSS size */composer.addPass(new RenderPass(scene,camera));if(!LITE){bloomPass=new UnrealBloomPass(new T.Vector2(innerWidth/2,innerHeight/2),.22,.6,1.25);composer.addPass(bloomPass);}composer.addPass(new OutputPass());
+  composer=new EffectComposer(renderer,new T.WebGLRenderTarget(innerWidth*pixelRatio,innerHeight*pixelRatio,{type:T.HalfFloatType,samples:!LITE&&PR_MAX<=1.25?4:0}));composer.setSize(innerWidth,innerHeight);/* a supplied target is otherwise read as CSS size */composer.addPass(new RenderPass(scene,camera));for(const p of liftPasses)composer.addPass(p);if(!LITE){bloomPass=new UnrealBloomPass(new T.Vector2(innerWidth/2,innerHeight/2),.22,.6,1.25);composer.addPass(bloomPass);}composer.addPass(new OutputPass());
   const KEYS=['community','meadow_a','meadow_b','meadow_c','purple','oak','sakura','palm','mushrooms','clover',
               'willow','pale','magic_mushrooms'];
   $('load-progress').max=KEYS.length;
@@ -714,6 +742,7 @@ function frame(time){
   forest.update(dt,elapsed,motion,id=>life.api.getSchedule(id));watering.update(dt);
   followSun();treeDetail();shadeLight(dt);pierDetail();
   placeLabels();
+  liftBlur(life.api.liftAmount());
   renderer.info.reset();composer.render();   // counted over every pass of the frame (autoReset is off)
 }
 
@@ -729,7 +758,7 @@ window.addEventListener('keydown',e=>helpKeys(e,true));
 // the key card peeks out for a second once the world is ready, then tucks behind the right edge; a click on its tab (or on it) toggles it
 let helpTimer=0;
 function setHelp(open){$('help').classList.toggle('tucked',!open);$('help-toggle').setAttribute('aria-expanded',String(open));$('help-toggle').setAttribute('aria-label',open?'Hide controls':'Show controls');}
-function peekHelp(){setHelp(true);helpTimer=setTimeout(()=>setHelp(false),1450);}   // .45s to slide out, then 1s in view
+function peekHelp(){setHelp(true);helpTimer=setTimeout(()=>setHelp(false),3450);}   // .45s to slide out, then 3s in view
 $('help').onclick=()=>{clearTimeout(helpTimer);setHelp($('help').classList.contains('tucked'));};
 window.addEventListener('keyup',e=>helpKeys(e,false));document.addEventListener('visibilitychange',()=>keys.clear());
 $('overview').onclick=overview;$('walk').onclick=()=>visit(selected);
@@ -742,6 +771,13 @@ const rain=sound.ambient('rain_loop',{gain:.6});
 sound.listenForClicks();
 function syncSound(){$('sound-toggle').setAttribute('aria-pressed',String(sound.muted()));$('sound-toggle').title=sound.muted()?'Sound off':'Sound on';$('volume').value=sound.volume();}
 $('sound-toggle').onclick=()=>{sound.setMuted(!sound.muted());syncSound();};
+// UI size (the menu): every panel and bar over the world grows or shrinks together (style.css --ui); remembered per browser
+const UI_KEY='il-ui-size';
+function setUiSize(v){v=Math.min(1.3,Math.max(.8,+v||1));document.documentElement.style.setProperty('--ui',v);$('ui-size').value=v;$('ui-size-value').textContent=`${Math.round(v*100)}%`;return v;}
+try{setUiSize(localStorage.getItem(UI_KEY)??1);}catch{setUiSize(1);}
+$('ui-size').oninput=e=>{const v=setUiSize(e.target.value);try{localStorage.setItem(UI_KEY,String(v));}catch{}};
+// Log out (the menu): signs out of the account, if any, and goes back to the home page (welcome/index.html)
+$('log-out').onclick=async e=>{const b=e.currentTarget;b.disabled=true;b.lastChild.textContent='Logging out…';try{if(backend.configured)await backend.signOut();}catch(err){console.error(err);}location.href=`${import.meta.env.BASE_URL}welcome/`;};
 $('volume').oninput=e=>{sound.setVolume(+e.target.value);if(sound.muted())sound.setMuted(false);syncSound();};
 syncSound();
 $('altitude').oninput=e=>{if(!ready)return;updateAltitude(islands.find(i=>i.id===ME),+e.target.value);syncPanel();};

@@ -240,11 +240,24 @@ export function createCarousel({island,members,me,notice,view,time,live=null}){
     $('golden-time').textContent=`${Math.floor(left/60000)}:${String(Math.ceil(left/1000)%60).padStart(2,'0')} left`;
     if(left<=0)close();
   }
+  // The window opening while the island sits in a background tab or window: a
+  // desktop notification as well, if notifications are allowed. Same tag as the
+  // server's push (supabase/functions/prompts), so the two never double up.
+  async function ringOut(){
+    if(!document.hidden||!('Notification' in window)||Notification.permission!=='granted')return;
+    const title='✦ The golden window is open', opts={body:'Two minutes, everyone at once. Share this moment.',tag:'golden-window',
+      icon:`${import.meta.env.BASE_URL}assets/icons/app-192.png`,data:{url:'/?golden',keep:true}};
+    try{
+      const reg=await navigator.serviceWorker?.getRegistration();
+      if(reg)await reg.showNotification(title,opts);
+      else new Notification(title,opts).onclick=e=>{e.target.close();window.focus();if(open)openCapture();};
+    }catch(e){console.warn('[photos] no golden notification',e);}
+  }
   function ring(){
     if(open)return;
     for(const i of items.filter(i=>i.golden))remove(i);   // demo control: a new window replaces today's
     open=true;rung=true;windowAt=time();endsAt=Date.now()+WINDOW_MS;clearInterval(timer);timer=setInterval(tick,500);tick();
-    notice('✦ The golden window is open. Two minutes to share this moment.');
+    notice('✦ The golden window is open. Two minutes to share this moment.');ringOut();
     // mock friends: most share inside the window, the last one just misses it
     friends.forEach((m,i)=>{
       const late=friends.length>1&&i===friends.length-1, src=MOMENTS.find(x=>x.golden&&x.id===m.id)?.src;
@@ -348,7 +361,7 @@ export function createCarousel({island,members,me,notice,view,time,live=null}){
   function openWindow(until){
     if(open)return;
     open=true;rung=true;windowAt=time();endsAt=until;clearInterval(timer);timer=setInterval(tick,500);tick();
-    notice('✦ The golden window is open. Two minutes to share this moment.');
+    notice('✦ The golden window is open. Two minutes to share this moment.');ringOut();
     refresh();
   }
   if(live){
@@ -364,7 +377,7 @@ export function createCarousel({island,members,me,notice,view,time,live=null}){
 
   const wp=new T.Vector3();
   return {
-    ring,openAlbum,receive,schedule,
+    ring,openAlbum,receive,schedule,capture:openCapture,
     get items(){return items;},
     get status(){return {open,rung};},
     update(t,motion){

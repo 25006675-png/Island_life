@@ -16,7 +16,8 @@ import { createSheets } from './sheets.js';
 import { createCalendar } from './calendar.js';
 import { createBalance } from './balance.js';
 import { createGoalsBoard, createWindmill, createGateSign } from './decor.js';
-import { createShop } from './shop.js';
+import { createShop, itemById } from './shop.js';
+import { createGarden, setGardenDusk } from './garden.js';
 import { createBuddy } from './buddy.js';
 import * as sound from './sound.js';
 
@@ -214,6 +215,16 @@ export function initLife({world,islands,camera,texture,player,notice,visit,fores
   // notes between friends, spent on decorations -- v1 shows the windmill they
   // grew, at the hub of the clock-face path. They never touch load or stress.
   const windmills=members.map(i=>createWindmill(i,{face:-2.35}));   // every clock face turns round one
+  // ...and what dewdrops bought since, round it (garden.js). Signed in, the
+  // server keeps everyone's purchases; the demo keeps yours in this browser,
+  // and the friends' islands come with a few things already grown.
+  const gardens=Object.fromEntries(members.map(i=>[i.id,createGarden(i)]));
+  const SHOP_KEY='island-shop-demo';
+  let demoBought=[];try{demoBought=JSON.parse(localStorage.getItem(SHOP_KEY))?.filter(itemById)??[];}catch{}
+  const DEMO_GARDENS={purple:['flowers','bench'],oak:['kite','lanterns'],willow:['well']};
+  const bought=LIVE?world.purchases??[]
+    :[...demoBought.map(item=>({member:ME,item})),...Object.entries(DEMO_GARDENS).flatMap(([member,list])=>member===ME?[]:list.map(item=>({member,item})))];
+  for(const b of bought)gardens[b.member]?.add(b.item);
 
   // The gardener's offer (docs/algorithm.md 5.1). The rules pick which kind of
   // help fits -- never a reason, only an offer -- and a sign appears by your
@@ -375,9 +386,26 @@ export function initLife({world,islands,camera,texture,player,notice,visit,fores
             ...(dismiss?{letGo:dismiss,letGoLabel:'Not now'}:{}),...seeWhy,at};
   }
   $('support-close').onclick=()=>$('support-dialog').close();
-  const dew=()=>(LIVE?0:36)+plans.week(ME).filter(isDone).length
+  // What this week has earned, counted here. The demo spends from it (536 to
+  // start -- enough to try everything in the shop -- less what you bought).
+  // Signed in, the server counts all time (supabase/migrations/..._shop.sql),
+  // so savings carry over the weeks; anything earned here since its last
+  // count shows straight away and asks it again.
+  const DEMO_START=536;
+  const earnedHere=()=>(LIVE?0:DEMO_START)+plans.week(ME).filter(isDone).length
                   +(photos.items.some(i=>i.golden&&i.member.id===ME)?3:0)
                   +NOTES.filter(n=>n.to===ME&&n.read).length+given.size+taskDew();
+  const spentHere=()=>demoBought.reduce((a,id)=>a+itemById(id).cost,0);
+  let serverDew=world.dew??0, counted=null, recount=null;
+  const askServer=()=>{clearTimeout(recount);recount=setTimeout(async()=>{
+    const at=earnedHere(), n=await backend.dewBalance();if(n!=null){serverDew=n;counted=at;}
+  },1500);};
+  const dew=()=>{
+    const e=earnedHere();
+    if(!LIVE)return Math.max(0,e-spentHere());
+    counted??=e;if(e!==counted)askServer();
+    return Math.max(0,serverDew+e-counted);
+  };
   // What anyone may see of an island (README.md privacy): its weather and its
   // altitude, in words -- never hours, and never what's on the plan.
   const band=l=>l<.35?'Floating high, a light week':l<.7?'Mid-sky, a steady week':'Low, near the clouds, a full week';
@@ -479,13 +507,28 @@ export function initLife({world,islands,camera,texture,player,notice,visit,fores
   // your gardener waits at the left end of an open sheet's top edge; walk it
   // with ← →, jump with Space, turn it with Q E
   const sheetBuddy=sheet=>{
-    sheet.append(Object.assign(document.createElement('span'),{className:'buddy-hint',textContent:'← → walk · Space jump · Q E turn'}));
     return createBuddy(sheet,{height:132,speed:260,place:(el,x,lift,walking)=>{
       x=Math.max(46,Math.min(sheet.clientWidth-46,x));
       el.style.left=`${x}px`;el.style.translate=`-50% ${-lift}px`;el.classList.toggle('walking',walking);return x;
     }});
   };
-  const shop=createShop({sheets,dew,notice});
+  const shop=createShop({sheets,dew,notice,owns:id=>gardens[ME].has(id),buy:async item=>{
+    if(LIVE){
+      const r=await backend.buy(item.id);
+      if(r.error){
+        notice(r.error==='short'?'That needs a few more dewdrops than you have right now.':r.error==='owned'?'That’s already on your island.'
+              :'The shop couldn’t reach your island. Try again in a moment.');
+        if(r.error!=='failed')askServer();
+        return false;
+      }
+      serverDew-=item.cost;askServer();
+    }else{demoBought.push(item.id);try{localStorage.setItem(SHOP_KEY,JSON.stringify(demoBought));}catch{}}
+    gardens[ME].add(item.id,{fresh:true});
+    // home to see it grow in
+    sheets.hide();if(getMode()!=='walk'||getSelected()!==ME)visit(ME);
+    notice(`Blomy: “${item.line}”`);
+    return true;
+  }});
   // "How draining was that?" -- straight after the evening's "How are you?",
   // about the one or two of today's activities the island knows least
   // (readings.js eveningAsks). The gardener says what it learned; the island
@@ -783,6 +826,7 @@ export function initLife({world,islands,camera,texture,player,notice,visit,fores
         if(photo!==undefined)t.done[id]=photo;
         renderTasks();
       },
+      purchase:(id,item)=>{if(!itemById(item))return;gardens[id]?.add(item,{fresh:true});notice(`${owners[id]} grew ${itemById(item).called} on their island.`);},
       membersChanged:()=>notice('Someone new joined your sky. Reload to see their island.'),
     });
   }
@@ -793,6 +837,13 @@ export function initLife({world,islands,camera,texture,player,notice,visit,fores
     const b=plans.on(ME,params.get('date')??TODAY).find(b=>String(b.series?.id??b.id)===params.get('block'));
     if(b)setTimeout(()=>ask.ask(b),1200);
   }
+  // the golden window's notification opens the camera: ?golden on a fresh load,
+  // or a message from the service worker when the island was already open
+  const shareGolden=()=>{if(!$('capture').open)photos.capture();};
+  if(params.has('golden'))setTimeout(shareGolden,1200);
+  navigator.serviceWorker?.addEventListener('message',e=>{
+    if(e.data?.open&&new URL(e.data.open).searchParams.has('golden'))shareGolden();
+  });
   // back from Google: connected, you're taken home and your week so far grows
   // in, Monday's trees first; otherwise the planner's sync dialog says what happened
   const cal=params.get('calendar');
@@ -802,7 +853,7 @@ export function initLife({world,islands,camera,texture,player,notice,visit,fores
       notice(n?`Google Calendar is connected. Your week so far grew in: ${plural(n,'tree')}.`:'Google Calendar is connected. Your plans are on your island.');},1400);
   },900);
   else if(cal)setTimeout(()=>{calendar.open('week');calendar.openSync(cal);},900);
-  if(params.has('ask')||params.has('calendar')||params.has('join'))history.replaceState(null,'',location.pathname);
+  if(params.has('ask')||params.has('calendar')||params.has('join')||params.has('golden'))history.replaceState(null,'',location.pathname);
   // Once a day, the first time you open the island: what today holds, in words.
   try{
     const key=`island-morning-${ME}`, day=forecast(ME,TODAY);
@@ -851,10 +902,16 @@ export function initLife({world,islands,camera,texture,player,notice,visit,fores
         const chip=$('dew-chip'), float=Object.assign(document.createElement('span'),{className:'dew-float',textContent:`+${drops-lastDew} 💧`});
         chip.classList.remove('gain');void chip.offsetWidth;chip.classList.add('gain');chip.append(float);setTimeout(()=>float.remove(),1500);
       }
+      // ...and spent: it dips, and the cost drifts down out of it
+      else if(lastDew!==null&&drops<lastDew){
+        const chip=$('dew-chip'), float=Object.assign(document.createElement('span'),{className:'dew-float spend',textContent:`−${lastDew-drops} 💧`});
+        chip.classList.remove('spend');void chip.offsetWidth;chip.classList.add('spend');chip.append(float);setTimeout(()=>float.remove(),1500);
+      }
       lastDew=drops;
       writeBoard();checkNudge();
       }
       for(const w of windmills)w.update(dt,motion);
+      setGardenDusk(clock.minutes);for(const g of Object.values(gardens))g.update(elapsed,motion);
       for(const t of Object.values(tables))t.update(clock.minutes,elapsed,dt,camera,motion);
       mood.update(elapsed,dt,motion);photos.update(elapsed,motion);
       const table=lifted&&tables[lifted];
@@ -892,8 +949,11 @@ export function initLife({world,islands,camera,texture,player,notice,visit,fores
       week:id=>plans.week(id??ME).map(({id,date,start,mins,cat,title,skipped,priority})=>({id,date,start,mins,cat,title,skipped,priority})),
       setTime:m=>{clock.live=false;clock.minutes=m;showClock();},
       ringGoldenWindow:()=>photos.ring(),
+      garden:id=>gardens[id??ME]?.items()??null,
+      dew,
       checkIn,
       lift:id=>setLift(id??null),
+      liftAmount:()=>Math.max(0,...Object.values(tables).map(t=>t.lift)),   // 0..1, eased: how far a timetable is lifted
       openPlanner:tab=>{calendar.open(tab);buddies.planner.reset(80);},
       openBalance:()=>{balance.open();buddies.balance.reset(80);},
       markDone:id=>{const b=tables[ME].blocks.find(b=>String(b.id)===String(id));if(b)finish(b);},

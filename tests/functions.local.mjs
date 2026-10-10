@@ -94,3 +94,16 @@ test('prompts: one evening "How are you?", never twice, never about single activ
   const { data } = await db.from('prompts').select('kind');
   assert.ok(data.every(x => x.kind === 'mood'));
 });
+
+test('prompts/golden: a window that has just opened rings once', async () => {
+  assert.equal((await call('prompts/golden')).status, 403);
+  const sky = (await db.rpc('create_sky', { tz: 'Asia/Kuala_Lumpur' })).data;
+  const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kuala_Lumpur' }).format(new Date());
+  await admin.from('golden_windows').upsert({ sky_id: sky.id, local_date: today, opens_at: new Date(Date.now() - 20e3).toISOString(), rung_at: null });
+  const first = await (await call('prompts/golden', {}, { 'x-cron-secret': env.CRON_SECRET })).json();
+  assert.ok(sky.id in first.rung, 'the open window is claimed');
+  const again = await (await call('prompts/golden', {}, { 'x-cron-secret': env.CRON_SECRET })).json();
+  assert.ok(!(sky.id in again.rung), 'and rings only once');
+  const { data: w } = await admin.from('golden_windows').select('rung_at').eq('sky_id', sky.id).single();
+  assert.ok(w.rung_at);
+});

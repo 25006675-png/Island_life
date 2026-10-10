@@ -112,7 +112,7 @@ export function createAccount({form,enter,handoff}){
   return {enterKey:()=>main()};
 }
 
-// ---- in the world: your sky's invite, phone prompts, signing out ---------------------
+// ---- in the world: your sky's invite, phone prompts (signing out is the menu's Log out, main.js) ----
 export function mountSkyPanel(world,notice){
   const box=document.getElementById('sky-section');
   if(!world.live){box.hidden=true;return;}
@@ -125,20 +125,18 @@ export function mountSkyPanel(world,notice){
   const showPush=async()=>{
     const s=await backend.pushState();
     push.hidden=s==='unsupported';
-    push.textContent=s==='on'?'Turn off phone prompts':s==='denied'?'Phone prompts are blocked in your browser':'Get prompts on this device';
+    push.textContent=s==='on'?'Turn off notifications':s==='denied'?'Notifications are blocked in your browser':'Get notifications on this device';
     push.disabled=s==='denied';
   };
   push.onclick=async()=>{
     try{
       if(await backend.pushState()==='on'){await backend.disablePush();notice('No more prompts on this device.');}
-      else if(await backend.enablePush())notice('Your island will ask after activities, and once in the evening.');
+      else if(await backend.enablePush())notice('Your island will ask after activities, once in the evening, and ring when the golden window opens.');
     }catch(e){console.error(e);notice('Prompts couldn’t be turned on here.');}
     showPush();
   };
-  const out=el('button',{type:'button',className:'text-button',textContent:'Sign out'});
-  out.onclick=async()=>{await backend.signOut();location.href=location.pathname;};
   box.replaceChildren(el('h3',{textContent:'Your sky'}),
     el('p',{className:'panel-note',textContent:count<5?`${count} of 5 islands. Invite code ${world.sky.invite_code}.`:'All five islands are taken.'}),
-    ...(count<5?[copy]:[]),push,out);
+    ...(count<5?[copy]:[]),push);
   showPush();
 }

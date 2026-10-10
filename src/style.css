@@ -59,7 +59,7 @@ input[type=text],input[type=time],input[type=date],input[type=email],input[type=
 #reveal .reveal-letgo{background:transparent;text-decoration:underline;padding-inline:4px}
 #reveal .reveal-letgo:hover{background:oklch(.93 .02 295)}
 .plan-done:disabled,dialog.wood .wood-button:disabled{cursor:not-allowed}
-.dew-count.gain{animation:dew-pop .9s ease}
+.dew-count.gain{animation:dew-pop .9s ease}.dew-count.spend{animation:dew-dip .9s ease}
 .header-actions .icon-only{padding:10px 13px}.header-actions .icon-only span{margin-left:0}
 #sound-toggle svg{display:block;width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}#sound-toggle .spk{fill:currentColor}#sound-toggle .off,#sound-toggle[aria-pressed=true] .on{display:none}#sound-toggle[aria-pressed=true] .off{display:inline}
 /* arriving: the title starts in the middle of the screen, then slides home */
@@ -73,8 +73,11 @@ input[type=text],input[type=time],input[type=date],input[type=email],input[type=
 .shop-card{position:relative;border:0;border-radius:14px;padding:18px 16px 16px;background:oklch(1 0 0);text-align:left;display:flex;flex-direction:column;gap:6px;font-size:12px;overflow:hidden}
 .shop-card .icon{font-size:30px;line-height:1}.shop-card strong{font:normal 17px var(--display);margin-top:4px}.shop-card>span:not(.icon):not(.soon){color:var(--muted);line-height:1.5}
 .shop-card em{font-style:normal;margin-top:8px;font-weight:600;color:oklch(.36 .09 240)}
-.shop-card .soon{position:absolute;inset:0;display:grid;place-items:center;background:oklch(.97 .012 295 / .93);font:italic 17px var(--display);color:var(--ink);opacity:0;transition:opacity .25s}
-.shop-card.soon-shown .soon{opacity:1}
+/* bought: settled and green; not yet affordable: quieter, the count still says how close */
+.shop-card.owned{background:oklch(.97 .03 150)}.shop-card.owned em{color:oklch(.45 .1 150)}
+.shop-card.short{background:oklch(.985 .005 295)}.shop-card.short .icon{opacity:.6}.shop-card.short em{color:var(--muted)}
+.shop-card:not(.owned):not(.short):hover{box-shadow:0 0 0 2px oklch(.8 .08 225)}
+.shop-card[aria-busy=true]{opacity:.6}
 /* mock sign-in: a peach sky, three cards above a cloud line, and the gardener
    walking in front of them */
 #login{position:absolute;inset:0;z-index:7;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:104px 24px 24px;background:linear-gradient(oklch(.79 .07 292 / .72),oklch(.9 .055 50 / .35) 55%,oklch(.96 .02 60 / .8));overflow:hidden;transition:opacity .45s}
@@ -175,11 +178,13 @@ padding:8px 14px 9px;border-radius:6px;background:linear-gradient(160deg,#caa276
 #reveal.wood strong{font:normal 19px 'Segoe Print','Bradley Hand',Georgia,serif;color:#2f2116}
 #reveal.wood button{background:#3b2a1c;color:#f3e4c8;font-family:'Segoe Print','Bradley Hand',Georgia,serif}
 #reveal.wood.anchored::after{background:#ab7f58}
+@keyframes dew-dip{30%{transform:scale(.9);opacity:.75}}
+.dew-float.spend{top:auto;bottom:-8px;color:oklch(.5 .08 30);animation:dew-fall 1.4s ease-out forwards}
 @keyframes dew-pop{30%{transform:scale(1.16);box-shadow:0 0 0 5px oklch(.86 .08 225 / .55),0 6px 24px oklch(.72 .13 225 / .6)}}
 .dew-float{position:absolute;left:50%;top:-6px;pointer-events:none;white-space:nowrap;font-size:13px;font-weight:700;color:oklch(.45 .13 235);text-shadow:0 1px 6px oklch(1 0 0 / .9);animation:dew-rise 1.4s ease-out forwards}
-@keyframes dew-rise{from{opacity:0;transform:translate(-50%,0)}20%{opacity:1}to{opacity:0;transform:translate(-50%,-44px)}}
+@keyframes dew-rise{from{opacity:0;transform:translate(-50%,0)}20%{opacity:1}to{opacity:0;transform:translate(-50%,-44px)}}@keyframes dew-fall{from{opacity:0;transform:translate(-50%,0)}20%{opacity:1}to{opacity:0;transform:translate(-50%,40px)}}
 /* lifted timetable ribbon */
-#ribbon-labels{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .3s}
+#ribbon-labels{position:absolute;inset:0;z-index:3;pointer-events:none;opacity:0;transition:opacity .3s}
 .ribbon-label{position:absolute;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:1px;padding:5px 9px;border-radius:9px;background:oklch(.98 .01 295 / .92);border-top:3px solid var(--cat);font-size:10px;white-space:nowrap}
 .ribbon-label span{color:var(--muted);font-variant-numeric:tabular-nums}.ribbon-label strong{font-weight:600;max-width:124px;overflow:hidden;text-overflow:ellipsis}
 /* proximity reveal */
@@ -204,7 +209,7 @@ dialog h2{font:normal 21px var(--display);margin:0 0 14px}
 .dialog-actions button,.file-button{border:0;border-radius:20px;padding:9px 14px;background:oklch(.92 .02 295);font-size:12px}
 .file-button{display:inline-block;position:relative;margin:0;cursor:pointer}.file-button input{position:absolute;opacity:0;width:1px;height:1px}
 .file-button:focus-within{outline:3px solid var(--accent);outline-offset:3px}
-#capture-send,#letgo-yes{background:var(--accent);color:oklch(.99 .01 60)}
+#capture-send,#letgo-yes,#buy-yes{background:var(--accent);color:oklch(.99 .01 60)}
 #letgo-yes:hover{background:oklch(.48 .12 36)}#capture-cancel{background:none}
 #viewer img{width:100%;border-radius:12px;display:block}
 #viewer strong{display:block;font:normal 20px var(--display);margin-top:14px}#viewer p{margin:6px 0 0;font-size:12px;color:var(--muted)}
@@ -213,7 +218,7 @@ dialog h2{font:normal 21px var(--display);margin:0 0 14px}
 #notice{z-index:6}
 /* sheets: slide up over the living scene, which dims and blurs behind a veil */
 #veil{position:absolute;inset:0;z-index:4;background:oklch(.3 .04 295 / .2);backdrop-filter:blur(5px) saturate(.9)}
-.sheet{position:absolute;left:50%;bottom:0;transform:translateX(-50%);width:min(1060px,calc(100% - 32px));max-height:86svh;display:flex;flex-direction:column;background:var(--surface);border-radius:20px 20px 0 0;box-shadow:0 -10px 40px oklch(.3 .04 295 / .18);z-index:5;animation:sheet-up .38s cubic-bezier(.2,.8,.2,1)}
+.sheet{position:absolute;left:50%;bottom:0;transform:translateX(-50%);width:min(1060px,calc(100% - 32px));max-height:calc(86svh / var(--ui));display:flex;flex-direction:column;background:var(--surface);border-radius:20px 20px 0 0;box-shadow:0 -10px 40px oklch(.3 .04 295 / .18);z-index:5;animation:sheet-up .38s cubic-bezier(.2,.8,.2,1)}
 @keyframes sheet-up{from{transform:translate(-50%,100%)}}
 .sheet-handle{width:52px;height:17px;margin:4px auto 0;cursor:grab;touch-action:none;background:linear-gradient(oklch(.82 .02 295),oklch(.82 .02 295)) center/52px 5px no-repeat;border-radius:3px}
 .sheet-close{position:absolute;top:10px;right:14px;border:0;background:transparent;font-size:24px;line-height:1;padding:4px 8px}
@@ -266,7 +271,6 @@ dialog h2{font:normal 21px var(--display);margin:0 0 14px}
 .buddy.walking img{animation:buddy-walk .38s ease-in-out infinite}
 @keyframes buddy-walk{0%,100%{translate:0 0;rotate:0deg}25%{translate:0 -5px;rotate:-2.5deg}75%{translate:0 -5px;rotate:2.5deg}}
 .ribbon-label.here{box-shadow:0 0 0 2px var(--cat);scale:1.1}
-.buddy-hint{position:absolute;top:8px;left:150px;font-size:11px;color:var(--muted);pointer-events:none}
 .balance-body{flex:1;min-width:0;max-width:720px}
 .balance-body h2{font:normal 24px var(--display);margin:0 0 12px}
 .balance-body h3{font:normal 15px var(--display);margin:18px 0 10px;color:var(--muted)}
@@ -355,7 +359,7 @@ dialog.wood input::placeholder{color:oklch(.45 .05 60)}
 dialog.wood .dialog-actions .wood-button{background:#3b2a1c;color:#f3e4c8;font:inherit;font-size:13px}
 dialog.wood .dialog-actions .wood-button:hover{background:#503a28}
 dialog.wood .text-button{color:#2f2116;font:inherit;font-size:13px;text-decoration:underline}
-.notes-list{list-style:none;margin:0;padding:0;display:grid;gap:8px;max-height:50vh;overflow:auto}
+.notes-list{list-style:none;margin:0;padding:0;display:grid;gap:8px;max-height:calc(50vh / var(--ui));overflow:auto}
 .notes-list li{display:flex;flex-direction:column;gap:3px;padding:10px 12px;border-radius:8px;background:oklch(.97 .03 80 / .28);border:1px solid oklch(.35 .06 60 / .25)}
 .notes-list li.mine{background:oklch(.97 .05 80 / .5)}
 .notes-list li span{font:12px var(--display);color:#5a4330}.notes-list li strong{font-weight:normal;font-size:15px}
@@ -402,7 +406,7 @@ dialog.album .dialog-actions{justify-content:center;padding:8px 34px 28px;margin
 @media(prefers-reduced-motion:reduce){dialog.album .polaroid{rotate:none}}
 /* the task board dialog */
 #goals-dialog{width:min(540px,calc(100% - 32px))}
-.task-list{max-height:52vh}.task-list li{gap:6px;padding:12px 14px}
+.task-list{max-height:calc(52vh / var(--ui))}.task-list li{gap:6px;padding:12px 14px}
 .task-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
 .task-list .task-head strong{font-size:16px}
 .task-head em{font:600 12.5px 'Nunito Sans','Segoe UI',sans-serif;font-style:normal;color:#2a5f7a;white-space:nowrap}
@@ -452,8 +456,11 @@ label:has(> .ed-cat-icon){position:relative}
 .island-card{margin-top:8px;width:max-content;max-width:min(360px,100%);background:oklch(.97 .012 295 / .85);border-radius:14px;font-size:12px;color:var(--ink);pointer-events:auto;transition:opacity .35s}
 .island-card summary{cursor:pointer;list-style:none;display:flex;align-items:baseline;gap:8px;padding:6px 12px 6px 10px;border-radius:14px}
 .island-card summary::-webkit-details-marker{display:none}
-.island-card summary::before{content:'▸';color:var(--muted);transition:transform .2s}
-.island-card[open] summary::before{transform:rotate(90deg)}
+/* the minimize button: a round chevron at the right end of the title row, pointing down to fold the card, up to open it */
+.ic-toggle{flex:none;align-self:center;display:grid;place-items:center;width:28px;height:28px;margin-left:auto;border-radius:50%;background:#fff;color:var(--violet);border:2px solid var(--violet-soft);box-shadow:0 2px 0 var(--violet-soft);transition:transform .14s ease,box-shadow .14s ease,background .14s}
+.ic-toggle svg{transform:rotate(180deg);transition:transform .2s}.island-card[open] .ic-toggle svg{transform:none}
+.island-card summary:hover .ic-toggle{background:var(--orchid);border-color:var(--orchid);color:#fff;transform:translateY(-1px);box-shadow:0 3px 0 var(--orchid-deep)}
+.island-card summary:active .ic-toggle{transform:translateY(1px);box-shadow:0 1px 0 var(--violet-soft)}
 .island-card summary b{font-weight:600}.island-card summary span{color:var(--muted)}
 .island-card summary:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
 .ic-body{display:grid;gap:5px;padding:2px 14px 12px}
@@ -703,6 +710,8 @@ dialog.wood .ask-answers .wood-button{flex:1;padding:12px 10px;font-size:15px}
 .guide-art .keys kbd:nth-child(1){grid-area:1/2}.guide-art .keys kbd:nth-child(2){grid-area:2/1}.guide-art .keys kbd:nth-child(3){grid-area:2/2}.guide-art .keys kbd:nth-child(4){grid-area:2/3}
 /* while Blomy is guiding, the world's own cards (the gardener, the gate, a tree) wait */
 body:has(#guide:not([hidden])) #reveal{display:none}
+/* while the planner or your balance is open, Blomy (with the dimming and the hand) steps aside until you close it */
+body:has(#planner-sheet:not([hidden]),#balance-sheet:not([hidden])) :is(#guide,#guide-spot,#guide-hand){display:none}
 .guide-art kbd{display:grid;place-items:center;min-width:36px;height:36px;padding:0 8px;border-radius:9px;background:#fff;border:2px solid var(--violet-soft);box-shadow:0 4px 0 #cdb8ec;
   font:600 15px var(--display);color:var(--violet);transition:transform .08s,box-shadow .08s,background .08s,color .08s}
 .guide-art kbd.wide{min-width:58px;font-size:13px}
@@ -771,3 +780,16 @@ body:has(#guide:not([hidden])) #reveal{display:none}
 @media(max-width:1240px){.help{flex-direction:column;align-items:flex-start;max-width:none}}
 @media(pointer:coarse){.help{display:none}}
 @media(prefers-reduced-motion:reduce){.help{transition:none}}
+
+/* UI size (the menu's slider, main.js setUiSize): the bars, cards, panels and dialogs over the world scale together.
+   zoom also scales viewport units, so heights given in vh are divided back by --ui where they're set.
+   What follows the 3D world (island labels, the walk-up card, Blomy's spotlight and hand) keeps its size. */
+:root{--ui:1}
+:is(header,footer,#settings,#mood-panel,dialog,#guide,#bridge-banner,#golden,.sheet,#past-banner,#notice){zoom:var(--ui)}
+/* the bottom-left block stops short of the view switcher in the middle (half its width ~176px, plus a gap), at any UI size */
+@media(min-width:951px){.place{max-width:min(390px,calc(50% - 196px))}}
+/* Log out, at the foot of the menu (main.js): back to the home page */
+#settings .log-out{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;margin-top:18px;padding:11px 16px;border-radius:22px;border:2px solid var(--violet-soft);background:#fff;color:var(--violet);
+  font:600 14px var(--display);box-shadow:0 3px 0 var(--violet-soft);transition:transform .14s ease,box-shadow .14s ease,background .14s,color .14s}
+#settings .log-out:hover{background:var(--orchid);border-color:var(--orchid);color:#fff;transform:translateY(-1px);box-shadow:0 4px 0 var(--orchid-deep)}
+#settings .log-out:active{transform:translateY(1px);box-shadow:0 1px 0 var(--violet-soft)}

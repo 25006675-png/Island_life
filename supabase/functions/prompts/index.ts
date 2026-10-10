@@ -8,6 +8,9 @@
 // Never between 22:00 and 08:00, never during an activity, and three ignored
 // prompts in a row halve the asking for a week. Tapping the notification opens
 // the app on the question.
+//
+// prompts/golden, called by pg_cron the minute a sky's golden window opens:
+// everyone in the sky hears it at once, outside quiet hours.
 import * as webpush from 'jsr:@negrel/webpush@0.5.0';
 import { admin, cors, fromCron, json } from '../_shared/supa.ts';
 import { occurrencesBetween, type IslandBlock } from '../_shared/events.ts';
@@ -26,14 +29,15 @@ function localNow(tz: string) {
   return { date: `${p.year}-${p.month}-${p.day}`, minute: +p.hour * 60 + +p.minute };
 }
 
-async function send(userId: string, payload: Record<string, string>) {
+async function send(userId: string, payload: Record<string, string>,
+                    { ttl = 3600, urgency = webpush.Urgency.Normal }: { ttl?: number; urgency?: webpush.Urgency } = {}) {
   const { data: subs } = await admin.from('push_subscriptions').select('endpoint,p256dh,auth').eq('user_id', userId);
   const app = await pushServer();
   let delivered = false;
   for (const s of subs ?? []) {
     try {
       await app.subscribe({ endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } })
-        .pushTextMessage(JSON.stringify(payload), { ttl: 3600, topic: payload.tag?.replace(/[^A-Za-z0-9_-]/g, '').slice(0, 32) });
+        .pushTextMessage(JSON.stringify(payload), { ttl, urgency, topic: payload.tag?.replace(/[^A-Za-z0-9_-]/g, '').slice(0, 32) });
       delivered = true;
     } catch (e) {
       if (e instanceof webpush.PushMessageError && (e.isGone() || e.response.status === 404))
@@ -76,9 +80,38 @@ async function promptUser(userId: string, tz: string) {
   return 'nothing to ask';
 }
 
+// The golden window: claim the windows that have just opened (rung_at keeps
+// it to one push per window), then ring every member. The push expires with
+// the window, so a phone that was off never buzzes about a window long gone.
+const WINDOW_MS = 120_000;
+async function ringGolden() {
+  const now = Date.now();
+  const { data: windows } = await admin.from('golden_windows').update({ rung_at: new Date(now).toISOString() })
+    .is('rung_at', null).lte('opens_at', new Date(now).toISOString()).gt('opens_at', new Date(now - WINDOW_MS).toISOString())
+    .select('sky_id,opens_at');
+  const rung: Record<string, number> = {};
+  for (const w of windows ?? []) {
+    const ttl = Math.max(1, Math.floor((Date.parse(w.opens_at) + WINDOW_MS - now) / 1000));
+    const { data: members } = await admin.from('sky_members').select('user_id').eq('sky_id', w.sky_id);
+    const ids = (members ?? []).map(m => m.user_id);
+    const { data: profiles } = ids.length ? await admin.from('profiles').select('id,timezone').in('id', ids) : { data: [] };
+    rung[w.sky_id] = 0;
+    for (const p of profiles ?? []) {
+      const { minute } = localNow(p.timezone || 'UTC');
+      if (minute < 8 * 60 || minute >= 22 * 60) continue;
+      try {
+        if (await send(p.id, { title: '✦ The golden window is open', body: 'Two minutes, everyone at once. Share this moment.',
+          url: '/?golden', tag: 'golden-window', keep: '1' }, { ttl, urgency: webpush.Urgency.High })) rung[w.sky_id]++;
+      } catch (e) { console.error('golden', p.id, e); }
+    }
+  }
+  return rung;
+}
+
 Deno.serve(async req => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors });
   if (!fromCron(req)) return json({ error: 'forbidden' }, 403);
+  if (new URL(req.url).pathname.split('/').pop() === 'golden') return json({ rung: await ringGolden() });
   const { data: subs } = await admin.from('push_subscriptions').select('user_id');
   const users = [...new Set((subs ?? []).map(s => s.user_id))];
   const { data: profiles } = users.length ? await admin.from('profiles').select('id,timezone').in('id', users) : { data: [] };
