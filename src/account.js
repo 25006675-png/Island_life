@@ -112,7 +112,7 @@ export function createAccount({form,enter,handoff}){
   return {enterKey:()=>main()};
 }
 
-// ---- in the world: your sky's invite, phone prompts, signing out ---------------------
+// ---- in the world: your sky's invite, phone prompts (signing out is the menu's Log out, main.js) ----
 export function mountSkyPanel(world,notice){
   const box=document.getElementById('sky-section');
   if(!world.live){box.hidden=true;return;}
@@ -135,10 +135,8 @@ export function mountSkyPanel(world,notice){
     }catch(e){console.error(e);notice('Prompts couldn’t be turned on here.');}
     showPush();
   };
-  const out=el('button',{type:'button',className:'text-button',textContent:'Sign out'});
-  out.onclick=async()=>{await backend.signOut();location.href=location.pathname;};
   box.replaceChildren(el('h3',{textContent:'Your sky'}),
     el('p',{className:'panel-note',textContent:count<5?`${count} of 5 islands. Invite code ${world.sky.invite_code}.`:'All five islands are taken.'}),
-    ...(count<5?[copy]:[]),push,out);
+    ...(count<5?[copy]:[]),push);
   showPush();
 }

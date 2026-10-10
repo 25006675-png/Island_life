@@ -783,3 +783,8 @@ body:has(#planner-sheet:not([hidden]),#balance-sheet:not([hidden])) :is(#guide,#
 :is(header,footer,#settings,#mood-panel,dialog,#guide,#bridge-banner,#golden,.sheet,#past-banner,#notice){zoom:var(--ui)}
 /* the bottom-left block stops short of the view switcher in the middle (half its width ~176px, plus a gap), at any UI size */
 @media(min-width:951px){.place{max-width:min(390px,calc(50% - 196px))}}
+/* Log out, at the foot of the menu (main.js): back to the home page */
+#settings .log-out{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;margin-top:18px;padding:11px 16px;border-radius:22px;border:2px solid var(--violet-soft);background:#fff;color:var(--violet);
+  font:600 14px var(--display);box-shadow:0 3px 0 var(--violet-soft);transition:transform .14s ease,box-shadow .14s ease,background .14s,color .14s}
+#settings .log-out:hover{background:var(--orchid);border-color:var(--orchid);color:#fff;transform:translateY(-1px);box-shadow:0 4px 0 var(--orchid-deep)}
+#settings .log-out:active{transform:translateY(1px);box-shadow:0 1px 0 var(--violet-soft)}
