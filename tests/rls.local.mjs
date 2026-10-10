@@ -126,6 +126,22 @@ test('the server-only parts are unreachable', async () => {
   assert.ok(error, 'calendar links are only written by the server');
 });
 
+test('the dewdrop shop: earned on the server, checked on every purchase, seen by the sky', async () => {
+  const before = ok(await A.db.rpc('dew_balance'));
+  assert.ok((await A.db.from('purchases').insert({ user_id: A.id, item: 'kite', cost: 1 })).error, 'purchases are only written by buy()');
+  if (before < 60) assert.match((await A.db.rpc('buy', { item_id: 'well' })).error.message, /not enough/);
+  assert.ok((await A.db.rpc('buy', { item_id: 'castle' })).error, 'only real items');
+  // fifteen notes from Ben, read: fifteen drops
+  ok(await admin.from('notes').insert(Array.from({ length: 15 }, () => ({ from_id: B.id, to_id: A.id, text: 'Proud of you', read_at: new Date().toISOString() }))));
+  assert.equal(ok(await A.db.rpc('dew_balance')), before + 15);
+  const bought = ok(await A.db.rpc('buy', { item_id: 'flowers' }));
+  assert.equal(bought.cost, 15);
+  assert.equal(ok(await A.db.rpc('dew_balance')), before, 'the price comes off');
+  assert.match((await A.db.rpc('buy', { item_id: 'flowers' })).error.message, /already/);
+  assert.deepEqual(ok(await B.db.from('purchases').select('item').eq('user_id', A.id)).map(r => r.item), ['flowers'], 'a friend sees it on her island');
+  assert.equal(ok(await C.db.from('purchases').select('item').eq('user_id', A.id)).length, 0, 'an outsider does not');
+});
+
 test('a sky holds five islands', async () => {
   const more = await Promise.all(['Dee', 'Eli', 'Fay', 'Gus'].map(student));
   for (const s of more.slice(0, 3)) ok(await s.db.rpc('join_sky', { code: sky.invite_code }));

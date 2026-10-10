@@ -72,7 +72,7 @@ export async function loadWorld(user,sky){
   const me=byUser[uid];
   const from=addDays(TODAY,-49), weekAgo=addDays(TODAY,-8);
 
-  const [mine,friends,answers,checkins,status,notes,gate,tasks,joins,moments,golden,connection]=await Promise.all([
+  const [mine,friends,answers,checkins,status,notes,gate,tasks,joins,moments,golden,connection,bought,dew]=await Promise.all([
     db.from('blocks').select('*').eq('owner',uid).or(`date.gte.${from},repeat.eq.true`),
     db.rpc('sky_blocks',{from_date:addDays(TODAY,-8),to_date:addDays(TODAY,14)}),
     db.from('drain_answers').select('block_id,occurred_on,start_min,mins,cat,answer').order('occurred_on'),
@@ -85,6 +85,8 @@ export async function loadWorld(user,sky){
     db.from('moments').select('*').gte('created_at',new Date(Date.now()-36*36e5).toISOString()).order('created_at'),
     db.from('golden_windows').select('local_date,opens_at').eq('local_date',TODAY).maybeSingle(),
     db.from('calendar_connections').select('*').maybeSingle(),
+    db.from('purchases').select('user_id,item'),
+    db.rpc('dew_balance'),
   ]).then(rs=>rs.map(must));
 
   const blocks={[me]:mine.map(toBlock)};
@@ -124,6 +126,7 @@ export async function loadWorld(user,sky){
     notes:noteList,tasks:taskList,moments:momentList,
     golden:golden?{opensAt:Date.parse(golden.opens_at)}:null,
     connection,
+    purchases:bought.filter(b=>byUser[b.user_id]).map(b=>({member:byUser[b.user_id],item:b.item})),dew,
   };
 }
 
@@ -193,6 +196,13 @@ export async function hangMoment(w,{dataUrl,caption}){
   }catch(e){onError(e);return null;}
 }
 
+// ---- the dewdrop shop: the server counts what you've earned and checks every purchase
+export const dewBalance=()=>quietly(db.rpc('dew_balance'));
+export async function buy(item){
+  const {error}=await db.rpc('buy',{item_id:item});
+  return error?{error:/not enough/.test(error.message)?'short':/already/.test(error.message)?'owned':'failed'}:{ok:true};
+}
+
 // ---- live updates from the sky ------------------------------------------------------------
 export function listen(w,handlers){
   const ch=db.channel(`sky-${w.sky.id}`);
@@ -216,6 +226,7 @@ export function listen(w,handlers){
     const urls=await signed([r.photo_path]);
     handlers.taskMember?.(r.task_id,w.byUser[r.user_id],r.done_at?urls[r.photo_path]??null:undefined);
   });
+  on('purchases','INSERT',r=>r.user_id!==w.uid&&w.byUser[r.user_id]&&handlers.purchase?.(w.byUser[r.user_id],r.item));
   on('sky_members','INSERT',()=>handlers.membersChanged?.());
   ch.subscribe();
   return ()=>db.removeChannel(ch);

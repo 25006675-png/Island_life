@@ -278,7 +278,7 @@ export function createBalance({plans,me,friends,clock,checkins,sheets,notice,dew
     }else{const m=monthData();monthHead(m);mix(m.byCat,'month');moodMonth(m);weeksBars(m);}
     $('bal-weather').textContent=weatherLine();
     renderLearned();renderList();
-    $('bal-dew').textContent=`💧 ${dew()} dewdrops, a slow drip from finished blocks, golden-window moments and notes between friends. They grew the windmill in the middle of your island.`;
+    $('bal-dew').textContent=`💧 ${dew()} dewdrops, a slow drip from finished blocks, golden-window moments and notes between friends. They grew the windmill in the middle of your island; spend the rest in the shop.`;
   }
   // the last four weeks and this one, as loads (the demo's earlier weeks are given)
   function lastWeeks(r){

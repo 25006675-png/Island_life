@@ -59,7 +59,7 @@ input[type=text],input[type=time],input[type=date],input[type=email],input[type=
 #reveal .reveal-letgo{background:transparent;text-decoration:underline;padding-inline:4px}
 #reveal .reveal-letgo:hover{background:oklch(.93 .02 295)}
 .plan-done:disabled,dialog.wood .wood-button:disabled{cursor:not-allowed}
-.dew-count.gain{animation:dew-pop .9s ease}
+.dew-count.gain{animation:dew-pop .9s ease}.dew-count.spend{animation:dew-dip .9s ease}
 .header-actions .icon-only{padding:10px 13px}.header-actions .icon-only span{margin-left:0}
 #sound-toggle svg{display:block;width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}#sound-toggle .spk{fill:currentColor}#sound-toggle .off,#sound-toggle[aria-pressed=true] .on{display:none}#sound-toggle[aria-pressed=true] .off{display:inline}
 /* arriving: the title starts in the middle of the screen, then slides home */
@@ -73,8 +73,11 @@ input[type=text],input[type=time],input[type=date],input[type=email],input[type=
 .shop-card{position:relative;border:0;border-radius:14px;padding:18px 16px 16px;background:oklch(1 0 0);text-align:left;display:flex;flex-direction:column;gap:6px;font-size:12px;overflow:hidden}
 .shop-card .icon{font-size:30px;line-height:1}.shop-card strong{font:normal 17px var(--display);margin-top:4px}.shop-card>span:not(.icon):not(.soon){color:var(--muted);line-height:1.5}
 .shop-card em{font-style:normal;margin-top:8px;font-weight:600;color:oklch(.36 .09 240)}
-.shop-card .soon{position:absolute;inset:0;display:grid;place-items:center;background:oklch(.97 .012 295 / .93);font:italic 17px var(--display);color:var(--ink);opacity:0;transition:opacity .25s}
-.shop-card.soon-shown .soon{opacity:1}
+/* bought: settled and green; not yet affordable: quieter, the count still says how close */
+.shop-card.owned{background:oklch(.97 .03 150)}.shop-card.owned em{color:oklch(.45 .1 150)}
+.shop-card.short{background:oklch(.985 .005 295)}.shop-card.short .icon{opacity:.6}.shop-card.short em{color:var(--muted)}
+.shop-card:not(.owned):not(.short):hover{box-shadow:0 0 0 2px oklch(.8 .08 225)}
+.shop-card[aria-busy=true]{opacity:.6}
 /* mock sign-in: a peach sky, three cards above a cloud line, and the gardener
    walking in front of them */
 #login{position:absolute;inset:0;z-index:7;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:104px 24px 24px;background:linear-gradient(oklch(.79 .07 292 / .72),oklch(.9 .055 50 / .35) 55%,oklch(.96 .02 60 / .8));overflow:hidden;transition:opacity .45s}
@@ -175,9 +178,11 @@ padding:8px 14px 9px;border-radius:6px;background:linear-gradient(160deg,#caa276
 #reveal.wood strong{font:normal 19px 'Segoe Print','Bradley Hand',Georgia,serif;color:#2f2116}
 #reveal.wood button{background:#3b2a1c;color:#f3e4c8;font-family:'Segoe Print','Bradley Hand',Georgia,serif}
 #reveal.wood.anchored::after{background:#ab7f58}
+@keyframes dew-dip{30%{transform:scale(.9);opacity:.75}}
+.dew-float.spend{top:auto;bottom:-8px;color:oklch(.5 .08 30);animation:dew-fall 1.4s ease-out forwards}
 @keyframes dew-pop{30%{transform:scale(1.16);box-shadow:0 0 0 5px oklch(.86 .08 225 / .55),0 6px 24px oklch(.72 .13 225 / .6)}}
 .dew-float{position:absolute;left:50%;top:-6px;pointer-events:none;white-space:nowrap;font-size:13px;font-weight:700;color:oklch(.45 .13 235);text-shadow:0 1px 6px oklch(1 0 0 / .9);animation:dew-rise 1.4s ease-out forwards}
-@keyframes dew-rise{from{opacity:0;transform:translate(-50%,0)}20%{opacity:1}to{opacity:0;transform:translate(-50%,-44px)}}
+@keyframes dew-rise{from{opacity:0;transform:translate(-50%,0)}20%{opacity:1}to{opacity:0;transform:translate(-50%,-44px)}}@keyframes dew-fall{from{opacity:0;transform:translate(-50%,0)}20%{opacity:1}to{opacity:0;transform:translate(-50%,40px)}}
 /* lifted timetable ribbon */
 #ribbon-labels{position:absolute;inset:0;z-index:3;pointer-events:none;opacity:0;transition:opacity .3s}
 .ribbon-label{position:absolute;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:1px;padding:5px 9px;border-radius:9px;background:oklch(.98 .01 295 / .92);border-top:3px solid var(--cat);font-size:10px;white-space:nowrap}
@@ -204,7 +209,7 @@ dialog h2{font:normal 21px var(--display);margin:0 0 14px}
 .dialog-actions button,.file-button{border:0;border-radius:20px;padding:9px 14px;background:oklch(.92 .02 295);font-size:12px}
 .file-button{display:inline-block;position:relative;margin:0;cursor:pointer}.file-button input{position:absolute;opacity:0;width:1px;height:1px}
 .file-button:focus-within{outline:3px solid var(--accent);outline-offset:3px}
-#capture-send,#letgo-yes{background:var(--accent);color:oklch(.99 .01 60)}
+#capture-send,#letgo-yes,#buy-yes{background:var(--accent);color:oklch(.99 .01 60)}
 #letgo-yes:hover{background:oklch(.48 .12 36)}#capture-cancel{background:none}
 #viewer img{width:100%;border-radius:12px;display:block}
 #viewer strong{display:block;font:normal 20px var(--display);margin-top:14px}#viewer p{margin:6px 0 0;font-size:12px;color:var(--muted)}
