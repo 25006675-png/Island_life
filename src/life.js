@@ -386,12 +386,13 @@ export function initLife({world,islands,camera,texture,player,notice,visit,fores
             ...(dismiss?{letGo:dismiss,letGoLabel:'Not now'}:{}),...seeWhy,at};
   }
   $('support-close').onclick=()=>$('support-dialog').close();
-  // What this week has earned, counted here. The demo spends from it (36 to
-  // start, less what you bought). Signed in, the server counts all time
-  // (supabase/migrations/..._shop.sql), so savings carry over the weeks;
-  // anything earned here since its last count shows straight away and asks
-  // it again.
-  const earnedHere=()=>(LIVE?0:36)+plans.week(ME).filter(isDone).length
+  // What this week has earned, counted here. The demo spends from it (536 to
+  // start -- enough to try everything in the shop -- less what you bought).
+  // Signed in, the server counts all time (supabase/migrations/..._shop.sql),
+  // so savings carry over the weeks; anything earned here since its last
+  // count shows straight away and asks it again.
+  const DEMO_START=536;
+  const earnedHere=()=>(LIVE?0:DEMO_START)+plans.week(ME).filter(isDone).length
                   +(photos.items.some(i=>i.golden&&i.member.id===ME)?3:0)
                   +NOTES.filter(n=>n.to===ME&&n.read).length+given.size+taskDew();
   const spentHere=()=>demoBought.reduce((a,id)=>a+itemById(id).cost,0);
