@@ -179,7 +179,7 @@ padding:8px 14px 9px;border-radius:6px;background:linear-gradient(160deg,#caa276
 .dew-float{position:absolute;left:50%;top:-6px;pointer-events:none;white-space:nowrap;font-size:13px;font-weight:700;color:oklch(.45 .13 235);text-shadow:0 1px 6px oklch(1 0 0 / .9);animation:dew-rise 1.4s ease-out forwards}
 @keyframes dew-rise{from{opacity:0;transform:translate(-50%,0)}20%{opacity:1}to{opacity:0;transform:translate(-50%,-44px)}}
 /* lifted timetable ribbon */
-#ribbon-labels{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .3s}
+#ribbon-labels{position:absolute;inset:0;z-index:3;pointer-events:none;opacity:0;transition:opacity .3s}
 .ribbon-label{position:absolute;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:1px;padding:5px 9px;border-radius:9px;background:oklch(.98 .01 295 / .92);border-top:3px solid var(--cat);font-size:10px;white-space:nowrap}
 .ribbon-label span{color:var(--muted);font-variant-numeric:tabular-nums}.ribbon-label strong{font-weight:600;max-width:124px;overflow:hidden;text-overflow:ellipsis}
 /* proximity reveal */
@@ -266,7 +266,6 @@ dialog h2{font:normal 21px var(--display);margin:0 0 14px}
 .buddy.walking img{animation:buddy-walk .38s ease-in-out infinite}
 @keyframes buddy-walk{0%,100%{translate:0 0;rotate:0deg}25%{translate:0 -5px;rotate:-2.5deg}75%{translate:0 -5px;rotate:2.5deg}}
 .ribbon-label.here{box-shadow:0 0 0 2px var(--cat);scale:1.1}
-.buddy-hint{position:absolute;top:8px;left:150px;font-size:11px;color:var(--muted);pointer-events:none}
 .balance-body{flex:1;min-width:0;max-width:720px}
 .balance-body h2{font:normal 24px var(--display);margin:0 0 12px}
 .balance-body h3{font:normal 15px var(--display);margin:18px 0 10px;color:var(--muted)}
@@ -703,6 +702,8 @@ dialog.wood .ask-answers .wood-button{flex:1;padding:12px 10px;font-size:15px}
 .guide-art .keys kbd:nth-child(1){grid-area:1/2}.guide-art .keys kbd:nth-child(2){grid-area:2/1}.guide-art .keys kbd:nth-child(3){grid-area:2/2}.guide-art .keys kbd:nth-child(4){grid-area:2/3}
 /* while Blomy is guiding, the world's own cards (the gardener, the gate, a tree) wait */
 body:has(#guide:not([hidden])) #reveal{display:none}
+/* while the planner or your balance is open, Blomy (with the dimming and the hand) steps aside until you close it */
+body:has(#planner-sheet:not([hidden]),#balance-sheet:not([hidden])) :is(#guide,#guide-spot,#guide-hand){display:none}
 .guide-art kbd{display:grid;place-items:center;min-width:36px;height:36px;padding:0 8px;border-radius:9px;background:#fff;border:2px solid var(--violet-soft);box-shadow:0 4px 0 #cdb8ec;
   font:600 15px var(--display);color:var(--violet);transition:transform .08s,box-shadow .08s,background .08s,color .08s}
 .guide-art kbd.wide{min-width:58px;font-size:13px}

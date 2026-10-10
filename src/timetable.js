@@ -15,6 +15,9 @@ export const ARCH=GATE;   // the torii, at the shore (gate.js)
 const INWARD=new T.Vector3(.743,0,.669).normalize();
 const SAMPLES=480, LEG=40, WIDTH=1.25, HOVER=.09;
 export const RADIUS=17, LEG_MIN=20;   // loop radius (world units): most of the island; minutes spent on each arch leg
+// While lifted, the ribbon lives on its own camera layer: main.js blurs the
+// scene, then draws this layer on top of it, in front of everything.
+export const LIFT_LAYER=1;
 const RIBBON={length:26,height:1.3,distance:21};
 const NEUTRAL=new T.Color('#f3e2b8'), HIDDEN=new T.Color('#d9d2c6'), GREY=new T.Color('#b9b4c4');
 const COLORS=Object.fromEntries(Object.entries(CATEGORIES).map(([k,c])=>[k,new T.Color(c.color)]));
@@ -220,6 +223,8 @@ export function createTimetable(island,{texture,own,blocks:initial}){
       if(lift!==target)lift=motion?clamp01(lift+Math.sign(target-lift)*dt/1.4):target;
       if(lift>0){aim(camera);morph();}
       else if(morphed){position.set(base);geometry.attributes.position.needsUpdate=true;morphed=false;}
+      const layer=lift>0?LIFT_LAYER:0;
+      if(path.layers.mask!==1<<layer)group.traverse(o=>o.layers.set(layer));
       const wu=timeToU(now), on=wu>.002&&wu<.998;
       wispScale+=((on?1:0)-wispScale)*Math.min(1,dt*3);
       wisp.visible=wispScale>.01;wisp.scale.setScalar(wispScale);

@@ -479,7 +479,6 @@ export function initLife({world,islands,camera,texture,player,notice,visit,fores
   // your gardener waits at the left end of an open sheet's top edge; walk it
   // with ← →, jump with Space, turn it with Q E
   const sheetBuddy=sheet=>{
-    sheet.append(Object.assign(document.createElement('span'),{className:'buddy-hint',textContent:'← → walk · Space jump · Q E turn'}));
     return createBuddy(sheet,{height:132,speed:260,place:(el,x,lift,walking)=>{
       x=Math.max(46,Math.min(sheet.clientWidth-46,x));
       el.style.left=`${x}px`;el.style.translate=`-50% ${-lift}px`;el.classList.toggle('walking',walking);return x;
@@ -894,6 +893,7 @@ export function initLife({world,islands,camera,texture,player,notice,visit,fores
       ringGoldenWindow:()=>photos.ring(),
       checkIn,
       lift:id=>setLift(id??null),
+      liftAmount:()=>Math.max(0,...Object.values(tables).map(t=>t.lift)),   // 0..1, eased: how far a timetable is lifted
       openPlanner:tab=>{calendar.open(tab);buddies.planner.reset(80);},
       openBalance:()=>{balance.open();buddies.balance.reset(80);},
       markDone:id=>{const b=tables[ME].blocks.find(b=>String(b.id)===String(id));if(b)finish(b);},
