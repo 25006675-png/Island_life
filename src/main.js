@@ -7,7 +7,7 @@ import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
-import { HeightField, bridgePoint, surfaceAt, islandSurface } from './navigation.js';
+import { HeightField, bridgePoint, bridgeSlope, surfaceAt, islandSurface } from './navigation.js';
 import { createAtmosphere, createWeather, createSinkBank } from './atmosphere.js';
 import { initLife, setStrain } from './life.js';
 import { ME, HIGH, LOW, symbolImg } from './data.js';
@@ -134,16 +134,16 @@ function buildBridge(island){
   for(let r=10.8*cs;r<14*cs;r+=.15*cs){if(islandSurface(central,ux*r,uz*r,.05)){startRadius=r;break;}}
   const endRadius=10.5*island.scale;
   const sx=ux*startRadius,sz=uz*startRadius,ex=island.x-ux*endRadius,ez=island.z-uz*endRadius;
-  const sh=central.field.height(sx,sz)??.35,eh=island.field.height((ex-island.x)/island.scale,(ez-island.z)/island.scale)??.35;
-  bridge.start=new T.Vector3(sx,central.altitude+Math.max(sh,.2)+.06,sz);
+  const sh=central.field.height(sx/cs,sz/cs)??.35,eh=island.field.height((ex-island.x)/island.scale,(ez-island.z)/island.scale)??.35;
+  bridge.start=new T.Vector3(sx,central.altitude+Math.max(sh,.2)*cs+.06,sz);
   bridge.end=new T.Vector3(ex,island.altitude+eh*island.scale+.06,ez);
   bridge.group=new T.Group();scene.add(bridge.group);
   const side=new T.Vector3(-uz,0,ux),points=[];
   for(let n=0;n<=64;n++){let p=bridgePoint(bridge,n/64);points.push(new T.Vector3(p.x,p.y,p.z));}
   const deckMaterial=bridgeMaterial.clone();deckMaterial.emissiveIntensity=bridge.glow*.16;bridge.deckMaterial=deckMaterial;
   const planks=new T.InstancedMesh(new T.BoxGeometry(bridge.width,.11,.36),deckMaterial,Math.ceil(length*2.4));
-  const usable=bridge.start.distanceTo(bridge.end),count=Math.ceil(usable/.39);planks.count=count;const dummy=new T.Object3D();
-  for(let n=0;n<count;n++){const t=n/(count-1),p=bridgePoint(bridge,t);dummy.position.set(p.x,p.y-.03,p.z);dummy.rotation.set(0,Math.atan2(ux,uz),0);dummy.rotation.x=-Math.atan((bridge.end.y-bridge.start.y+4*bridge.arch*(1-2*t))/Math.hypot(ex-sx,ez-sz));dummy.updateMatrix();planks.setMatrixAt(n,dummy.matrix);}planks.castShadow=true;planks.receiveShadow=true;bridge.group.add(planks);
+  const usable=points.reduce((s,p,n)=>n?s+p.distanceTo(points[n-1]):0,0),count=Math.min(planks.count,Math.ceil(usable/.39));planks.count=count;const dummy=new T.Object3D();
+  for(let n=0;n<count;n++){const t=n/(count-1),p=bridgePoint(bridge,t);dummy.position.set(p.x,p.y-.03,p.z);dummy.rotation.set(0,Math.atan2(ux,uz),0);dummy.rotation.x=-Math.atan(bridgeSlope(bridge,t)/Math.hypot(ex-sx,ez-sz));dummy.updateMatrix();planks.setMatrixAt(n,dummy.matrix);}planks.castShadow=true;planks.receiveShadow=true;bridge.group.add(planks);
   const glow=new T.MeshStandardMaterial({color:'#ffe5ac',emissive:'#ffc36c',emissiveIntensity:bridge.glow*2.2,roughness:.45});bridge.glowMaterial=glow;
   // the 26 posts are one instanced draw
   const posts=new T.InstancedMesh(new T.CylinderGeometry(.035,.035,1.05,5),glow,26);let k=0;

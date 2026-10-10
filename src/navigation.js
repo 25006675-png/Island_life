@@ -75,9 +75,15 @@ export class HeightField {
   }
 }
 
+// The climb eases in and out (smoothstep) under a gentle arch, so the deck leaves each island level: a bridge
+// down to a sunken island clears the shore it starts on instead of cutting under the grass.
 export function bridgePoint(bridge,t) {
   const {start:a,end:b,arch}=bridge;
-  return {x:a.x+(b.x-a.x)*t,y:a.y+(b.y-a.y)*t+4*arch*t*(1-t),z:a.z+(b.z-a.z)*t};
+  return {x:a.x+(b.x-a.x)*t,y:a.y+(b.y-a.y)*t*t*(3-2*t)+4*arch*t*(1-t),z:a.z+(b.z-a.z)*t};
+}
+// dy/dt of bridgePoint, to tilt the planks
+export function bridgeSlope(bridge,t) {
+  return (bridge.end.y-bridge.start.y)*6*t*(1-t)+4*bridge.arch*(1-2*t);
 }
 export function bridgeSurface(bridge,x,z,margin=.25) {
   const dx=bridge.end.x-bridge.start.x,dz=bridge.end.z-bridge.start.z;
