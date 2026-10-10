@@ -7,7 +7,7 @@ import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
-import { HeightField, bridgePoint, surfaceAt, islandSurface } from './navigation.js';
+import { HeightField, bridgePoint, bridgeSlope, surfaceAt, islandSurface } from './navigation.js';
 import { createAtmosphere, createWeather, createSinkBank } from './atmosphere.js';
 import { initLife, setStrain } from './life.js';
 import { ME, HIGH, LOW, symbolImg } from './data.js';
@@ -16,6 +16,8 @@ import { createPier } from './pier.js';
 import { GATE_POSTS, GATE_OUT as GATE_WAY, moveGate } from './gate.js';
 import { makeGardener } from './blomy.js';
 import { createGuide } from './guide.js';
+import { createWatering } from './watering.js';
+import * as sound from './sound.js';
 import { createLogin } from './login.js';
 import { demoWorld, enterWorld, DEMO_PEOPLE } from './world.js';
 import * as backend from './backend.js';
@@ -100,7 +102,7 @@ function plantIsland(island,group,assets){
     }
   }
 }
-let renderer,scene,camera,controls,composer,atmosphere,gardener,life,forest,sunLight,hemiLight,fillLight;
+let renderer,scene,camera,controls,composer,atmosphere,gardener,life,forest,watering,sunLight,hemiLight,fillLight;
 const islands=[],bridges=[],keys=new Set();
 let selected='community',mode='overview',ready=false,motion=!matchMedia('(prefers-reduced-motion: reduce)').matches,elapsed=0,last=0,transition=null,noticeTimer;
 const player={position:new T.Vector3(),surface:null,distance:0,hop:0,vy:0,stuck:0};
@@ -132,16 +134,16 @@ function buildBridge(island){
   for(let r=10.8*cs;r<14*cs;r+=.15*cs){if(islandSurface(central,ux*r,uz*r,.05)){startRadius=r;break;}}
   const endRadius=10.5*island.scale;
   const sx=ux*startRadius,sz=uz*startRadius,ex=island.x-ux*endRadius,ez=island.z-uz*endRadius;
-  const sh=central.field.height(sx,sz)??.35,eh=island.field.height((ex-island.x)/island.scale,(ez-island.z)/island.scale)??.35;
-  bridge.start=new T.Vector3(sx,central.altitude+Math.max(sh,.2)+.06,sz);
+  const sh=central.field.height(sx/cs,sz/cs)??.35,eh=island.field.height((ex-island.x)/island.scale,(ez-island.z)/island.scale)??.35;
+  bridge.start=new T.Vector3(sx,central.altitude+Math.max(sh,.2)*cs+.06,sz);
   bridge.end=new T.Vector3(ex,island.altitude+eh*island.scale+.06,ez);
   bridge.group=new T.Group();scene.add(bridge.group);
   const side=new T.Vector3(-uz,0,ux),points=[];
   for(let n=0;n<=64;n++){let p=bridgePoint(bridge,n/64);points.push(new T.Vector3(p.x,p.y,p.z));}
   const deckMaterial=bridgeMaterial.clone();deckMaterial.emissiveIntensity=bridge.glow*.16;bridge.deckMaterial=deckMaterial;
   const planks=new T.InstancedMesh(new T.BoxGeometry(bridge.width,.11,.36),deckMaterial,Math.ceil(length*2.4));
-  const usable=bridge.start.distanceTo(bridge.end),count=Math.ceil(usable/.39);planks.count=count;const dummy=new T.Object3D();
-  for(let n=0;n<count;n++){const t=n/(count-1),p=bridgePoint(bridge,t);dummy.position.set(p.x,p.y-.03,p.z);dummy.rotation.set(0,Math.atan2(ux,uz),0);dummy.rotation.x=-Math.atan((bridge.end.y-bridge.start.y+4*bridge.arch*(1-2*t))/Math.hypot(ex-sx,ez-sz));dummy.updateMatrix();planks.setMatrixAt(n,dummy.matrix);}planks.castShadow=true;planks.receiveShadow=true;bridge.group.add(planks);
+  const usable=points.reduce((s,p,n)=>n?s+p.distanceTo(points[n-1]):0,0),count=Math.min(planks.count,Math.ceil(usable/.39));planks.count=count;const dummy=new T.Object3D();
+  for(let n=0;n<count;n++){const t=n/(count-1),p=bridgePoint(bridge,t);dummy.position.set(p.x,p.y-.03,p.z);dummy.rotation.set(0,Math.atan2(ux,uz),0);dummy.rotation.x=-Math.atan(bridgeSlope(bridge,t)/Math.hypot(ex-sx,ez-sz));dummy.updateMatrix();planks.setMatrixAt(n,dummy.matrix);}planks.castShadow=true;planks.receiveShadow=true;bridge.group.add(planks);
   const glow=new T.MeshStandardMaterial({color:'#ffe5ac',emissive:'#ffc36c',emissiveIntensity:bridge.glow*2.2,roughness:.45});bridge.glowMaterial=glow;
   // the 26 posts are one instanced draw
   const posts=new T.InstancedMesh(new T.CylinderGeometry(.035,.035,1.05,5),glow,26);let k=0;
@@ -231,8 +233,8 @@ function visit(id){if(!ready)return;selected=id;mode='walk';$('app').dataset.mod
   transition={from:camera.position.clone(),targetFrom:controls.target.clone(),time:0};
   arrive(island);
   $('hint').textContent='';   // the island's status shows below instead (life.js)
-$('mode-hint').textContent='WASD walk · Shift run · Space jump · Q E turn · R F tilt · Z X zoom · Esc sky view';$('overview').setAttribute('aria-pressed','false');$('walk').setAttribute('aria-pressed','true');syncPanel();canvas.focus({preventScroll:true});}
-function overview(){if(!ready)return;mode='overview';$('app').dataset.mode=mode;$('island-card').open=false;controls.enabled=true;controls.minDistance=14;controls.maxDistance=skyReach();transition={from:camera.position.clone(),targetFrom:controls.target.clone(),time:0};clearTimeout(arriveTimer);document.querySelector('.place').classList.remove('arriving');document.querySelector('.place-title').style.transform='';$('location-kicker').textContent='Your sky neighborhood';$('location-title').textContent='A world of little wonders.';$('hint').textContent='Choose an island. Stay a little while.';$('mode-hint').textContent='Drag to look around · Scroll to zoom';$('overview').setAttribute('aria-pressed','true');$('walk').setAttribute('aria-pressed','false');keys.clear();}
+$('overview').setAttribute('aria-pressed','false');$('walk').setAttribute('aria-pressed','true');syncPanel();canvas.focus({preventScroll:true});}
+function overview(){if(!ready)return;mode='overview';$('app').dataset.mode=mode;$('island-card').open=false;controls.enabled=true;controls.minDistance=14;controls.maxDistance=skyReach();transition={from:camera.position.clone(),targetFrom:controls.target.clone(),time:0};clearTimeout(arriveTimer);document.querySelector('.place').classList.remove('arriving');document.querySelector('.place-title').style.transform='';$('location-kicker').textContent='Your sky neighborhood';$('location-title').textContent='A world of little wonders.';$('hint').textContent='Choose an island. Stay a little while.';$('overview').setAttribute('aria-pressed','true');$('walk').setAttribute('aria-pressed','false');keys.clear();}
 // The sky view may zoom out a little past the framing, never far enough to lose the world.
 const skyReach=()=>overviewPosition().distanceTo(new T.Vector3(0,2,0))*1.25;
 function overviewPosition(){
@@ -289,8 +291,21 @@ function makeBlomy(){
 }
 function pose(dt){
   if(!gardener)return;const g=gardener.userData;
-  if(player.moving&&!player.hop)g.walk(player.distance*STRIDE,motion?1:0);else g.idle(motion?elapsed:0);
+  if(chore?.pouring)g.water(chore.time/POUR,elapsed);
+  else if(player.moving&&!player.hop)g.walk(player.distance*STRIDE,motion?1:0);else g.idle(motion?elapsed:0);
   g.after(dt,elapsed);
+}
+// Footsteps: one each time a foot comes down (every half walk cycle), on whatever is underfoot (navigation.js
+// `under`). Her legs cycle fast, so steps are spaced to a natural pace, a little quicker running. Breaking into a
+// run pushes off with a rush of air.
+let footfall=0,lastStep=0,wasRunning=false;
+function footsteps(){
+  const n=Math.floor(player.distance*STRIDE/Math.PI);
+  const now=performance.now()/1000;   // not `elapsed`: that stands still with motion off
+  if(player.moving&&!player.hop&&n!==footfall&&now-lastStep>=(player.running?.2:.26)){lastStep=now;sound.step(player.surface?.under??'grass',{run:player.running});}
+  footfall=n;
+  if(player.running&&player.moving&&!wasRunning)sound.play('sprint',{gain:.6,cooldown:1.2});
+  wasRunning=player.running&&player.moving;
 }
 // Getting about: 4.1 m/s on foot, quicker on a bridge (they are long now the islands float far apart), and Shift
 // runs anywhere. On a bridge a banner says where it leads; Go walks you the rest of the way at a run.
@@ -309,8 +324,8 @@ function crossBridge(dt){
   const b=bridges.find(b=>b.id===travel.bridge),len=b.start.distanceTo(b.end),pace=WALK*BRIDGE_PACE*RUN;
   travel.t=Math.min(1,Math.max(0,travel.t+travel.dir*pace*dt/len));
   const p=bridgePoint(b,travel.t), ux=(b.end.x-b.start.x)/len*travel.dir, uz=(b.end.z-b.start.z)/len*travel.dir;
-  player.position.set(p.x,p.y,p.z);player.surface={...p,t:travel.t,kind:'bridge',id:b.id};player.distance+=pace*dt;player.moving=true;
-  const turn=Math.atan2(ux,uz)-gardener.rotation.y;gardener.rotation.y+=Math.atan2(Math.sin(turn),Math.cos(turn))*(1-Math.exp(-12*dt));
+  player.position.set(p.x,p.y,p.z);player.surface={...p,t:travel.t,kind:'bridge',id:b.id,under:'wood'};player.distance+=pace*dt;player.moving=player.running=true;
+  turnTo(Math.atan2(ux,uz),dt);
   if(travel.t>0&&travel.t<1)return;
   // the end of the bridge: step off onto the island there
   for(let d=.5;d<8;d+=.5){const s=surfaceAt(islands,[],p.x+ux*d,p.z+uz*d);if(s?.kind==='island'){player.position.set(s.x,s.y,s.z);player.surface=s;break;}}
@@ -360,23 +375,87 @@ const guide=createGuide([
    start:()=>setTimeout(()=>closeSheet('balance-sheet'),1600)},
 ]);
 $('guide-again').onclick=()=>{setPanel(false);overview();guide.start(true);};
-function jump(){if(mode==='walk'&&!transition&&!player.hop&&!player.vy)player.vy=6.2;}
+// Watering. Done on your own island while you walk it leaves the tree glass for a moment (forest.js "thirsty"):
+// the gardener walks over with her can, the tree on her right, and pours; it takes root as the water lands. Trees
+// wait while a sheet covers the view, so you see her go once the planner is closed, and are watered nearest first.
+// Any walking key, leaving the island or turning motion off takes the controls back: the rest take root at once.
+const POUR=2.4, LANDS=.4, GIVE_UP=6, CROSS=3.5;   // seconds watering; when in it the tree starts to take root; longest walk; a far tree's walk
+const thirst=[];let chore=null;
+const home=()=>motion&&mode==='walk'&&!transition&&player.surface?.kind==='island'&&player.surface.id===ME;
+const wantsWater=t=>t.island.id===ME&&!t.island.past&&home()&&(thirst.push(t),true);
+function quench(){if(chore){forest.water(chore.t);chore.sfx?.stop?.();}chore=null;for(const t of thirst.splice(0))forest.water(t);}
+function turnTo(yaw,dt){const turn=yaw-gardener.rotation.y;gardener.rotation.y+=Math.atan2(Math.sin(turn),Math.cos(turn))*(1-Math.exp(-12*dt));}
+// a step of at most `d` toward (ux,uz) on your own island, bending round a trunk in the way
+function stepToward(ux,uz,d,dt){
+  for(const a of [0,.5,-.5,1,-1,1.5,-1.5]){
+    const c=Math.cos(a),s=Math.sin(a),vx=ux*c-uz*s,vz=ux*s+uz*c,n=Math.max(1,Math.ceil(d/.1));let moved=false;
+    for(let k=0;k<n;k++){const f=surfaceAt(islands,bridges,player.position.x+vx*d/n,player.position.z+vz*d/n);
+      if(f?.kind!=='island'||f.id!==ME||Math.abs(f.y-player.position.y)>=.65)break;player.position.set(f.x,f.y,f.z);player.surface=f;moved=true;}
+    if(moved){player.distance+=d;player.moving=true;turnTo(Math.atan2(vx,vz),dt);return true;}
+  }
+  return false;
+}
+// where to stand: a step out from the trunk, on the side you come from if that is open ground
+function standFor(b){
+  const a0=Math.atan2(player.position.z-b.z,player.position.x-b.x), R=b.r+1.5;
+  for(const da of [0,.4,-.4,.8,-.8,1.2,-1.2,1.6,-1.6,2.2,-2.2,Math.PI]){
+    const x=b.x+Math.cos(a0+da)*R, z=b.z+Math.sin(a0+da)*R, f=surfaceAt(islands,bridges,x,z);
+    if(f?.kind==='island'&&f.id===ME)return f;
+  }
+  return player.position.clone();
+}
+const spoutAt=new T.Vector3(), soil=new T.Vector3();
+function tend(dt){
+  if(!home()){quench();return;}
+  if(!chore){
+    if(document.querySelector('.sheet:not([hidden])'))return;   // wait until she can be seen
+    const d=t=>{const b=forest.base(t);return Math.hypot(b.x-player.position.x,b.z-player.position.z);};
+    thirst.sort((a,b)=>d(a)-d(b));const t=thirst.shift();
+    if(t.anim!=='thirsty')return;   // undone, or let go, meanwhile
+    chore={t,b:forest.base(t),time:0,stuck:0,pouring:false};chore.stand=standFor(chore.b);
+    chore.pace=Math.min(WALK*RUN*1.5,Math.max(WALK,Math.hypot(chore.stand.x-player.position.x,chore.stand.z-player.position.z)/CROSS));   // far: she runs
+  }
+  const c=chore,b=c.b=forest.base(c.t);c.time+=dt;   // re-read: the island may still be gliding to a new altitude
+  if(!c.pouring){
+    if(c.t.anim!=='thirsty'){chore=null;return;}
+    const dx=c.stand.x-player.position.x,dz=c.stand.z-player.position.z,d=Math.hypot(dx,dz);
+    player.running=c.pace>WALK*1.2;
+    if(d>.25&&c.time<GIVE_UP){if(!stepToward(dx/d,dz/d,Math.min(d,c.pace*dt),dt)&&(c.stuck+=dt)>.6)c.time=GIVE_UP;return;}
+    c.pouring=true;c.time=0;   // there (or as close as she gets): water from here
+  }
+  const toTree=Math.atan2(b.x-player.position.x,b.z-player.position.z);
+  turnTo(toTree+.75,dt);   // the can is in her right hand
+  const k=c.time/POUR;
+  if(k>.2&&k<.82){
+    c.sfx??=sound.play('water_pour',{gain:.8})??true;   // once (true: there was no sound to play)
+    gardener.userData.spout.getWorldPosition(spoutAt);
+    // the ground a little beyond the rose, toward the tree: the stream stays in view instead of ending inside the trunk
+    const ux=b.x-spoutAt.x,uz=b.z-spoutAt.z,u=Math.hypot(ux,uz)||1,x=spoutAt.x+ux/u*.6,z=spoutAt.z+uz/u*.6;
+    soil.set(x,surfaceAt(islands,bridges,x,z)?.y??player.position.y,z);
+    watering.pour(spoutAt,soil,dt);
+  }
+  if(k>=LANDS)forest.water(c.t);
+  if(k>=1)chore=null;
+}
+function jump(){if(mode==='walk'&&!transition&&!player.hop&&!player.vy){player.vy=6.2;sound.play('jump',{gain:.55});}}
 function walk(dt){
-  player.moving=false;
-  if(mode!=='walk'||transition)return;
+  player.moving=player.running=false;
+  if(mode!=='walk'||transition){quench();return;}
   // A hop only lifts the gardener off the ground; the surface underfoot keeps tracking.
-  if(player.vy||player.hop){player.vy-=18*dt;player.hop=Math.max(0,player.hop+player.vy*dt);if(!player.hop)player.vy=0;}
+  if(player.vy||player.hop){player.vy-=18*dt;player.hop=Math.max(0,player.hop+player.vy*dt);if(!player.hop){player.vy=0;sound.play('land',{gain:.5});sound.step(player.surface?.under??'grass',{gain:1.3});}}
   gardener.position.y=player.hop;
   let ix=Number(keys.has('KeyD')||keys.has('ArrowRight'))-Number(keys.has('KeyA')||keys.has('ArrowLeft'));
   let iz=Number(keys.has('KeyS')||keys.has('ArrowDown'))-Number(keys.has('KeyW')||keys.has('ArrowUp'));
   if(stick.on&&Math.hypot(stick.x,stick.y)>.15){ix=stick.x;iz=stick.y;}   // the touch joystick, analog
   if(travel&&(ix||iz))travel=null;   // any walking key takes the controls back from Go
+  if(chore||thirst.length){if(ix||iz||travel)quench();else{tend(dt);return;}}   // ...and from the watering
   if(travel){crossBridge(dt);return;}
   if(!ix&&!iz)return;
   // Camera-relative: W always walks away from the camera, wherever it has been dragged.
   const f=facing.subVectors(controls.target,camera.position).setY(0).normalize();
   const dx=-f.z*ix-f.x*iz, dz=f.x*ix-f.z*iz;
-  const len=Math.hypot(dx,dz),speed=WALK*(player.surface?.kind==='bridge'?BRIDGE_PACE:1)*(keys.has('ShiftLeft')||keys.has('ShiftRight')||(stick.on&&Math.hypot(stick.x,stick.y)>.9)?RUN:1),step=speed*dt/len;
+  player.running=keys.has('ShiftLeft')||keys.has('ShiftRight')||(stick.on&&Math.hypot(stick.x,stick.y)>.9);
+  const len=Math.hypot(dx,dz),speed=WALK*(player.surface?.kind==='bridge'?BRIDGE_PACE:1)*(player.running?RUN:1),step=speed*dt/len;
   let moved=false; // Small substeps and axis sliding keep the gardener inside the shore.
   const substeps=Math.max(1,Math.ceil(speed*dt/.1));
   for(let n=0;n<substeps;n++){
@@ -387,7 +466,7 @@ function walk(dt){
     }
   }
   if(moved)player.stuck=0;else if((player.stuck+=dt)>.5){player.stuck=0;unstick();}
-  if(moved){player.distance+=speed*dt;const turn=Math.atan2(dx,dz)-gardener.rotation.y;gardener.rotation.y+=Math.atan2(Math.sin(turn),Math.cos(turn))*(1-Math.exp(-12*dt));player.moving=true;
+  if(moved){player.distance+=speed*dt;turnTo(Math.atan2(dx,dz),dt);player.moving=true;
     if(player.surface.kind==='island'&&player.surface.id!==selected){selected=player.surface.id;arrive(islands.find(i=>i.id===selected));syncPanel();}
   }
 }
@@ -486,9 +565,11 @@ renderer=new T.WebGLRenderer({canvas,antialias:false,powerPreference:'high-perfo
   for(const key of ['meadow_a','meadow_b','meadow_c'])moveGate(assets[key]);
   // walkable = terrain PLUS the raised surfaces people stand on
   const WALKABLE={community:['Island','Plaza','Jetty','LilySteps','Deck'],meadow:['Island','ToriiSteps']};
+  // underfoot, for the footsteps: the stepping stones cross the pond, so they splash
+  const UNDER={Plaza:'stone',ToriiSteps:'stone',Jetty:'wood',Deck:'wood',LilySteps:'water'};
   const fields={};
   for(const key of ['community','meadow_a','meadow_b','meadow_c'])
-    fields[key]=new HeightField(WALKABLE[key==='community'?'community':'meadow'].map(n=>assets[key].getObjectByName(n)));
+    {const names=WALKABLE[key==='community'?'community':'meadow'];fields[key]=new HeightField(names.map(n=>assets[key].getObjectByName(n)),.35,names.map(n=>UNDER[n]));}
   fields.community.block([assets.community.getObjectByName('TreeWood')]);   // the buttress roots are solid
   // whose sky: the islands are built only once that is known
   world=await worldReady;
@@ -500,7 +581,8 @@ renderer=new T.WebGLRenderer({canvas,antialias:false,powerPreference:'high-perfo
     plantIsland(island,group,assets);
     if(def.owner){island.pier=buildPier(island);group.add(island.pier.group);}
     // activity trees and today's ghosts
-    forest??=createForest({assets,islandSurface,speciesScale:SPECIES_SCALE});
+    forest??=createForest({assets,islandSurface,speciesScale:SPECIES_SCALE,thirsty:wantsWater,
+      onRoot:t=>{if(ready&&t.island.id===ME)sound.play('task_done',{gain:.55,cooldown:.6});}});   // one chime for "Mark all
     if(def.owner)forest.plant(island);
     island.weatherFx=createWeather(atmosphere.texture);island.weatherFx.group.position.copy(group.position);scene.add(island.weatherFx.group);
     island.sink=createSinkBank();island.sink.group.position.copy(group.position);island.sink.set(def.altitude);scene.add(island.sink.group);
@@ -508,13 +590,14 @@ renderer=new T.WebGLRenderer({canvas,antialias:false,powerPreference:'high-perfo
     islands.push(island);
   }
   for(const island of islands.slice(1))buildBridge(island);
+  watering=createWatering(scene);
   const playerRoot=new T.Group();scene.add(playerRoot);gardener=makeBlomy();playerRoot.add(gardener);player.root=playerRoot;
   const shadow=new T.Mesh(new T.CircleGeometry(.43,24),new T.MeshBasicMaterial({color:'#35492f',transparent:true,opacity:.22,depthWrite:false}));shadow.rotation.x=-Math.PI/2;shadow.position.y=.035;playerRoot.add(shadow);
   spawnOn(islands[0]);
   life=initLife({world,islands,camera,texture:atmosphere.texture,player,notice,visit,forest,guiding:()=>guide.on,getMode:()=>mode,getSelected:()=>selected,
     setAltitude:(id,h)=>{updateAltitude(islands.find(i=>i.id===id),T.MathUtils.clamp(h,LOW,HIGH));syncPanel();},
     setGlow:(id,g)=>{const b=bridges.find(b=>b.id===id);if(!b)return;b.glow=T.MathUtils.clamp(g,.15,3);b.glowMaterial.emissiveIntensity=b.glow*2.2;b.deckMaterial.emissiveIntensity=b.glow*.16;syncPanel();}});
-  ready=true;
+  ready=true;sound.preload();peekHelp();
   // first time here (not in tests, unless ?guide): Blomy shows you round, once the welcome has been said
   {const q=new URLSearchParams(location.search);if(!q.has('skiplogin')||q.has('guide'))setTimeout(()=>guide.start(q.has('guide')),2600);}
   // pieces too small to throw a visible shadow (beads, buttons, little props) stop casting one: each was a draw in the shadow pass
@@ -524,7 +607,7 @@ renderer=new T.WebGLRenderer({canvas,antialias:false,powerPreference:'high-perfo
 $('loading').hidden=true;$('motion').checked=motion;syncPanel();
   renderer.setAnimationLoop(frame);
   // A small inspection API also exposes meaningful world state for embedding.
-  window.islandLife={visit,overview,setAltitude:(id,h)=>{if(!Number.isFinite(h))return;updateAltitude(islands.find(i=>i.id===id),T.MathUtils.clamp(h,LOW,HIGH));syncPanel();},setWeather:(id,s)=>{const i=islands.find(i=>i.id===id),v=typeof s==='number'?s:{clear:.05,cloudy:.45,mist:.45,rain:.85}[s];if(!i||v==null)return;setStrain(i,v);syncPanel();},getState:()=>({ready,mode,selected,gpu,perf:{calls:renderer.info.render.calls,triangles:renderer.info.render.triangles,pixelRatio,rung,tier:TIER},player:{x:player.position.x,y:player.position.y,z:player.position.z,surface:player.surface},islands:islands.map(({id,altitude,altTarget,weather,strain})=>({id,altitude:altTarget??altitude,weather,strain})),bridges:bridges.map(({id,start,end,width,arch,glow})=>({id,start,end,width,arch,glow})),render:renderer.info.render}),surfaceAt:(x,z)=>surfaceAt(islands,bridges,x,z),life:life.api};
+  window.islandLife={visit,overview,setAltitude:(id,h)=>{if(!Number.isFinite(h))return;updateAltitude(islands.find(i=>i.id===id),T.MathUtils.clamp(h,LOW,HIGH));syncPanel();},setWeather:(id,s)=>{const i=islands.find(i=>i.id===id),v=typeof s==='number'?s:{clear:.05,cloudy:.45,mist:.45,rain:.85}[s];if(!i||v==null)return;setStrain(i,v);syncPanel();},getState:()=>({ready,mode,selected,gpu,perf:{calls:renderer.info.render.calls,triangles:renderer.info.render.triangles,pixelRatio,rung,tier:TIER},player:{x:player.position.x,y:player.position.y,z:player.position.z,surface:player.surface},watering:chore&&{pouring:chore.pouring,time:chore.time},thirsty:thirst.length,islands:islands.map(({id,altitude,altTarget,weather,strain})=>({id,altitude:altTarget??altitude,weather,strain})),bridges:bridges.map(({id,start,end,width,arch,glow})=>({id,start,end,width,arch,glow})),render:renderer.info.render}),surfaceAt:(x,z)=>surfaceAt(islands,bridges,x,z),life:life.api};
 }
 
 // Shadows follow you. From the sky the shadow box spans the middle of the neighbourhood; on foot it covers the
@@ -620,14 +703,15 @@ function frame(time){
   if(LITE){ if(time-_last<33) return; _last=time; }   // cap ~30fps
 
   govern(time-last,time);const dt=Math.min((time-last)/1000,.04);last=time;if(document.hidden)return;if(motion)elapsed+=dt;
-  turnCamera(dt);walk(dt);pose(dt);bridgeBanner();showStick();guide.update(dt);player.root.position.copy(player.position);atmosphere.update(elapsed,camera);glideAltitudes(dt);atmosphere.setHoles(islands);for(const i of islands){i.weatherFx.update(elapsed,camera);i.sink.update(elapsed,camera);}
+  turnCamera(dt);walk(dt);pose(dt);footsteps();bridgeBanner();showStick();guide.update(dt);player.root.position.copy(player.position);atmosphere.update(elapsed,camera);glideAltitudes(dt);atmosphere.setHoles(islands);for(const i of islands){i.weatherFx.update(elapsed,camera);i.sink.update(elapsed,camera);}
   if(transition){transition.time+=dt;const a=motion?Math.min(transition.time/1.2,1):1,e=1-Math.pow(1-a,4);look.copy(mode==='walk'?player.position:new T.Vector3(0,2,0));if(mode==='walk')look.y+=1;targetPosition.copy(mode==='walk'?player.position.clone().add(cameraOffset):overviewPosition());camera.position.lerpVectors(transition.from,targetPosition,e);controls.target.lerpVectors(transition.targetFrom,look,e);camera.lookAt(controls.target);if(a===1)transition=null;}
   // walk: orbit controls around the gardener -- drag to turn, scroll to zoom -- carried along as they move
   // (no collision pull-in: the camera stays exactly where the user put it)
   else if(mode==='walk'){look.copy(player.position);look.y+=1;camera.position.add(look).sub(controls.target);controls.target.copy(look);controls.autoRotate=false;controls.update(dt);}
   else {controls.autoRotate=motion;controls.autoRotateSpeed=.1;controls.update(dt);}
   life.update(dt,elapsed,motion);
-  forest.update(dt,elapsed,motion,id=>life.api.getSchedule(id));
+  {const i=islands.find(i=>i.id===selected);rain.set(Math.min(1,Math.max(0,((i?.strain??0)-.55)/.4))*(mode==='walk'?1:.4));}   // atmosphere.js: rain from .55
+  forest.update(dt,elapsed,motion,id=>life.api.getSchedule(id));watering.update(dt);
   followSun();treeDetail();shadeLight(dt);pierDetail();
   placeLabels();
   renderer.info.reset();composer.render();   // counted over every pass of the frame (autoReset is off)
@@ -637,12 +721,29 @@ let down=null;
 canvas.addEventListener('pointerdown',e=>{down=[e.clientX,e.clientY];});
 canvas.addEventListener('pointerup',e=>{if(!ready||!down||Math.hypot(e.clientX-down[0],e.clientY-down[1])>5)return;down=null;pointer.set(e.clientX/innerWidth*2-1,-e.clientY/innerHeight*2+1);raycaster.setFromCamera(pointer,camera);if(life.pick(raycaster))return;if(mode!=='overview')return;const hit=raycaster.intersectObjects(islands.map(i=>i.group),true).find(h=>h.object.userData.islandId);if(hit)visit(hit.object.userData.islandId);});
 window.addEventListener('keydown',e=>{if(['INPUT','SELECT','TEXTAREA','BUTTON'].includes(document.activeElement.tagName))return;if(e.code==='Escape'){overview();return;}if(e.code==='Space'&&mode==='walk'){e.preventDefault();jump();return;}if(/^(Key[WASDQERFZX]|Arrow(Up|Down|Left|Right)|Shift(Left|Right))$/.test(e.code)){if(mode==='walk'||/^Key[QERFZX]$/.test(e.code))e.preventDefault();keys.add(e.code);}});
-window.addEventListener('keyup',e=>keys.delete(e.code));window.addEventListener('blur',()=>keys.clear());document.addEventListener('visibilitychange',()=>keys.clear());
+window.addEventListener('keyup',e=>keys.delete(e.code));window.addEventListener('blur',()=>{keys.clear();helpKeys(null);});
+// the key card at the bottom right (index.html .help) presses down with your keys
+const HELP_KEYS={KeyW:'w',ArrowUp:'w',KeyA:'a',ArrowLeft:'a',KeyS:'s',ArrowDown:'s',KeyD:'d',ArrowRight:'d',ShiftLeft:'shift',ShiftRight:'shift',Space:'space',KeyQ:'q',KeyE:'e',KeyR:'r',KeyF:'f',KeyZ:'z',KeyX:'x',Escape:'esc'};
+function helpKeys(e,down){if(!e){document.querySelectorAll('.help kbd.down').forEach(k=>k.classList.remove('down'));return;}const k=HELP_KEYS[e.code];if(k)document.querySelector(`.help [data-k="${k}"]`)?.classList.toggle('down',down);}
+window.addEventListener('keydown',e=>helpKeys(e,true));
+// the key card peeks out for a second once the world is ready, then tucks behind the right edge; a click on its tab (or on it) toggles it
+let helpTimer=0;
+function setHelp(open){$('help').classList.toggle('tucked',!open);$('help-toggle').setAttribute('aria-expanded',String(open));$('help-toggle').setAttribute('aria-label',open?'Hide controls':'Show controls');}
+function peekHelp(){setHelp(true);helpTimer=setTimeout(()=>setHelp(false),1450);}   // .45s to slide out, then 1s in view
+$('help').onclick=()=>{clearTimeout(helpTimer);setHelp($('help').classList.contains('tucked'));};
+window.addEventListener('keyup',e=>helpKeys(e,false));document.addEventListener('visibilitychange',()=>keys.clear());
 $('overview').onclick=overview;$('walk').onclick=()=>visit(selected);
 function setPanel(open){$('settings').hidden=!open;$('settings-toggle').setAttribute('aria-expanded',String(open));if(open)$('sky-tone').focus();else $('settings-toggle').focus();}
 $('settings-toggle').onclick=()=>setPanel($('settings').hidden);$('settings-close').onclick=()=>setPanel(false);
-$('sky-tone').onchange=e=>{atmosphere?.setTone(e.target.value);$('sky-label').textContent=e.target.selectedOptions[0].textContent;};
+$('sky-tone').onchange=e=>{atmosphere?.setTone(e.target.value);};
 $('motion').onchange=e=>{motion=e.target.checked;};
+// Sound: the speaker in the header mutes, the slider in the settings sets the volume (both remembered).
+const rain=sound.ambient('rain_loop',{gain:.6});
+sound.listenForClicks();
+function syncSound(){$('sound-toggle').setAttribute('aria-pressed',String(sound.muted()));$('sound-toggle').title=sound.muted()?'Sound off':'Sound on';$('volume').value=sound.volume();}
+$('sound-toggle').onclick=()=>{sound.setMuted(!sound.muted());syncSound();};
+$('volume').oninput=e=>{sound.setVolume(+e.target.value);if(sound.muted())sound.setMuted(false);syncSound();};
+syncSound();
 $('altitude').oninput=e=>{if(!ready)return;updateAltitude(islands.find(i=>i.id===ME),+e.target.value);syncPanel();};
 $('weather').oninput=e=>{if(!ready)return;setStrain(islands.find(i=>i.id===ME),+e.target.value);syncPanel();};
 // The demo's scenarios: altitude and weather together, as the real reading would set them, said in one line.

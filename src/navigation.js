@@ -5,12 +5,15 @@ export class HeightField {
   // walkable height is the HIGHEST surface in each cell, so the gardener walks
   // up the stone terraces instead of wading through them at grass level.
   // Bounds come from the geometry, so larger or irregular islands just fit.
-  constructor(objects, step = 0.35) {
+  // `kinds` names what each object is underfoot (grass, wood, stone, water: the footstep sounds); the top
+  // surface in a cell decides.
+  constructor(objects, step = 0.35, kinds = []) {
     const list = [];
-    for (const o of (Array.isArray(objects) ? objects : [objects]))
-      o?.traverse?.(c => { if (c.isMesh) list.push(c); });
+    this.kinds = ['grass', ...new Set(kinds.filter(Boolean))];
+    (Array.isArray(objects) ? objects : [objects]).forEach((o, n) =>
+      o?.traverse?.(c => { if (c.isMesh) list.push([c, Math.max(0, this.kinds.indexOf(kinds[n]))]); }));
     let lo = Infinity, hi = -Infinity;
-    for (const m of list) {
+    for (const [m] of list) {
       const p = m.geometry.attributes.position;
       for (let n = 0; n < p.count; n++) {
         const x = p.getX(n), z = p.getZ(n);
@@ -20,9 +23,10 @@ export class HeightField {
     this.step = step; this.origin = Math.floor(lo) - 1;
     this.size = Math.ceil((hi - this.origin + 1) / step) + 1;
     this.heights = new Float32Array(this.size ** 2).fill(NaN);
-    for (const m of list) this.rasterize(m);
+    this.under = new Uint8Array(this.size ** 2);
+    for (const [m, kind] of list) this.rasterize(m, kind);
   }
-  rasterize(mesh) {
+  rasterize(mesh, kind = 0) {
     const step = this.step;
     const pos = mesh.geometry.attributes.position, index = mesh.geometry.index;
     const get = (n) => { const i = index ? index.getX(n) : n; return [pos.getX(i), pos.getY(i), pos.getZ(i)]; };
@@ -41,7 +45,7 @@ export class HeightField {
         const v=((c[2]-a[2])*(x-c[0])+(a[0]-c[0])*(z-c[2]))/denominator;
         if(u>=-0.001&&v>=-0.001&&u+v<=1.001) {
           const h=u*a[1]+v*b[1]+(1-u-v)*c[1], id=iz*this.size+ix;
-          if(!Number.isFinite(this.heights[id])||h>this.heights[id]) this.heights[id]=h;
+          if(!Number.isFinite(this.heights[id])||h>this.heights[id]) { this.heights[id]=h; this.under[id]=kind; }
         }
       }
     }
@@ -65,18 +69,28 @@ export class HeightField {
     if(ix<0||iz<0||ix>=this.size||iz>=this.size)return null;
     const h=this.heights[iz*this.size+ix];return Number.isFinite(h)?h:null;
   }
+  kind(x,z) {
+    const ix=Math.round((x-this.origin)/this.step),iz=Math.round((z-this.origin)/this.step);
+    return ix<0||iz<0||ix>=this.size||iz>=this.size?'grass':this.kinds[this.under[iz*this.size+ix]];
+  }
 }
 
+// The climb eases in and out (smoothstep) under a gentle arch, so the deck leaves each island level: a bridge
+// down to a sunken island clears the shore it starts on instead of cutting under the grass.
 export function bridgePoint(bridge,t) {
   const {start:a,end:b,arch}=bridge;
-  return {x:a.x+(b.x-a.x)*t,y:a.y+(b.y-a.y)*t+4*arch*t*(1-t),z:a.z+(b.z-a.z)*t};
+  return {x:a.x+(b.x-a.x)*t,y:a.y+(b.y-a.y)*t*t*(3-2*t)+4*arch*t*(1-t),z:a.z+(b.z-a.z)*t};
+}
+// dy/dt of bridgePoint, to tilt the planks
+export function bridgeSlope(bridge,t) {
+  return (bridge.end.y-bridge.start.y)*6*t*(1-t)+4*bridge.arch*(1-2*t);
 }
 export function bridgeSurface(bridge,x,z,margin=.25) {
   const dx=bridge.end.x-bridge.start.x,dz=bridge.end.z-bridge.start.z;
   const t=((x-bridge.start.x)*dx+(z-bridge.start.z)*dz)/(dx*dx+dz*dz);
   if(t<0||t>1)return null;
   const p=bridgePoint(bridge,t);
-  return Math.hypot(x-p.x,z-p.z)<=bridge.width/2-margin?{...p,t,kind:'bridge',id:bridge.id}:null;
+  return Math.hypot(x-p.x,z-p.z)<=bridge.width/2-margin?{...p,t,kind:'bridge',id:bridge.id,under:'wood'}:null;
 }
 
 export function islandSurface(island,x,z,clearance=.27) {
@@ -88,13 +102,13 @@ export function islandSurface(island,x,z,clearance=.27) {
   // The central pond is authored below water level; it is not walkable ground.
   if(island.id==='community'&&h<.17)return null;
   for(const o of island.obstacles??[])if(Math.hypot(lx-o.x,lz-o.z)<o.r+clearance/island.scale)return null;
-  return {x,y:island.altitude+h*island.scale,z,kind:'island',id:island.id};
+  return {x,y:island.altitude+h*island.scale,z,kind:'island',id:island.id,under:island.field.kind(lx,lz)};
 }
 
 export function surfaceAt(islands,bridges,x,z) {
   for(const b of bridges){const s=bridgeSurface(b,x,z);if(s)return s;}
   for(const i of islands){const s=islandSurface(i,x,z);if(s)return s;}
   // a member island's pier (main.js buildPier): the boardwalk and the round deck
-  for(const i of islands)if(i.pier?.walk.on(x-i.x,z-i.z))return {x,y:i.altitude+i.pier.deckY,z,kind:'island',id:i.id};
+  for(const i of islands)if(i.pier?.walk.on(x-i.x,z-i.z))return {x,y:i.altitude+i.pier.deckY,z,kind:'island',id:i.id,under:'wood'};
   return null;
 }

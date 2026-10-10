@@ -9,6 +9,9 @@ import { SPECIES, HISTORY, tier, treeCard } from './groves.js';
 // today's blocks -- a glass ghost while it is planned, which "takes root"
 // (fills with colour from the roots up, a band of light riding the front)
 // once its time is done. A skipped block's ghost thins out and drifts away.
+// On your own island, while you are walking it, the ghost waits for water
+// instead: `thirsty(tree)` sends the gardener over with her can (main.js
+// "Watering") and `water(tree)` starts the take-root once the water lands. `onRoot(tree)` hears every take-root.
 //
 // Territories: the ring outside the timetable loop is cut into wedges, one
 // per category in a fixed order, sized by how many trees each holds, with a
@@ -117,7 +120,7 @@ function blockCard(b,own){
 // changing a species model or SPECIES_SCALE.
 const CANOPY_MATCH={sakura:.87,magic_mushrooms:.96,willow:.98,oak:1,purple:1.04,palm:1.05,pale:1.27};
 
-export function createForest({assets,islandSurface,speciesScale}){
+export function createForest({assets,islandSurface,speciesScale,thirsty,onRoot}){
   const islands=[], byBlock=new Map(), animating=new Set(), growing=new Set(), heights={};
   const heightOf=k=>heights[k]??=new T.Box3().setFromObject(assets[k]).getSize(new T.Vector3()).y;
   const scaleFor=(island,cat,mins)=>(speciesScale[SPECIES[cat]]??1)*(CANOPY_MATCH[SPECIES[cat]]??1)*tier(mins).scale*(.92+island.rnd()*.16);
@@ -201,7 +204,8 @@ export function createForest({assets,islandSurface,speciesScale}){
       if(state==='gone')t.island.obstacles.splice(t.island.obstacles.indexOf(t.obstacle),1);
       return;
     }
-    if(state==='solid'&&prev==='ghost'){t.anim='root';t.mat.depthWrite=true;show(false,true);}
+    if(state==='solid'&&prev==='ghost'&&thirsty?.(t)){t.anim='thirsty';animating.delete(t);show(false,true);return;}
+    if(state==='solid'&&prev==='ghost'){t.anim='root';t.mat.depthWrite=true;show(false,true);onRoot?.(t);}
     else if(state==='gone'){t.anim='drift';show(false,true);}
     else {t.anim=null;show(state==='solid',false);return;}
     animating.add(t);
@@ -299,6 +303,10 @@ export function createForest({assets,islandSurface,speciesScale}){
         u.uPulse.value=t.now&&motion?.5+.5*Math.sin(elapsed*2.4):t.now?.6:0;
       }
     },
+    // a thirsty tree (see the top) takes root: the gardener's water has reached it
+    water(t){if(t.anim!=='thirsty')return;t.anim='root';t.k=0;t.mat.depthWrite=true;animating.add(t);onRoot?.(t);},
+    // where a tree stands, in world units: its foot, the trunk's reach and its height
+    base(t){const p=t.solid.getWorldPosition(new T.Vector3());return {x:p.x,y:p.y,z:p.z,r:.85*t.sc,h:heightOf(t.key)*t.sc};},
     // the tree nearest `pos` on island `id`, as a reveal card for life.js
     near(id,pos){
       const island=islands.find(i=>i.id===id);let best=null;

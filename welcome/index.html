@@ -263,6 +263,10 @@ import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
 import {createPier,PIER} from '../src/pier.js';
 import {GATE as GATE_AT,moveGate} from '../src/gate.js';
 import {createAccount} from '../src/account.js';
+import * as sound from '../src/sound.js';
+// Sound (src/sound.js): the whale calls as it breaks the clouds and hums as it nods goodbye. A browser stays silent
+// until the page has been tapped, so a first visit's arrival is quiet; Replay has it.
+sound.listenForClicks();sound.preload();
 
 const $=id=>document.getElementById(id);
 const REDUCED=matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -576,9 +580,9 @@ const breath=[];for(let i=0;i<44;i++){const c=cloudP(3,0,[0xe8d6f7,0xffe2d2,0xdc
    and a ring of thrown-up cloud hides the cut while it climbs out. */
 const splash=[];for(let i=0;i<(TIER==='low'?20:42);i++){const c=cloudP(10,0,[0xe6cdf6,0xffd2bd,0xd9b9ef,0xfbe4f0,0xc9a6e6][i%5]);c.userData={v:V(),t:0,g:10};splash.push(c);}scene.add(spriteBatch(splash,{renderOrder:9}));
 const flash=new T.Sprite(new T.SpriteMaterial({map:radialTex([[0,'rgba(255,226,240,.95)'],[.3,'rgba(255,150,210,.42)'],[1,'rgba(190,120,255,0)']],128),transparent:true,depthWrite:false,blending:T.AdditiveBlending,opacity:0}));flash.renderOrder=9;flash.userData.t=0;scene.add(flash);
-let breached=false,breachT=-1;
+let breached=false,breachT=-1,hummed=false;
 // the burst: a ring of cloud thrown out across the surface, a column thrown up with the whale, a flash of light, a spray of stardust
-function breach(at,dir){breached=true;breachT=(performance.now()-t0)/1000;const side=V(-dir.z,0,dir.x).normalize();
+function breach(at,dir){breached=true;breachT=(performance.now()-t0)/1000;sound.play('whale_call',{gain:.8});const side=V(-dir.z,0,dir.x).normalize();
   splash.forEach((c,i)=>{const ring=i%3!==0,a=rnd()*Math.PI*2,r=ring?5+rnd()*6:rnd()*5;c.position.set(at.x+Math.cos(a)*r,SEA_Y-3+rnd()*4,at.z+Math.sin(a)*r);
     if(ring)c.userData.v.set(Math.cos(a)*(6+rnd()*13),3+rnd()*9,Math.sin(a)*(6+rnd()*13));else c.userData.v.copy(dir).multiplyScalar(-2+rnd()*6).add(V((rnd()-.5)*6,14+rnd()*20,(rnd()-.5)*6));
     c.userData.t=1;c.userData.g=ring?12+rnd()*12:8+rnd()*9;c.scale.set(c.userData.g,c.userData.g*.62,1);c.material.opacity=0;});
@@ -700,7 +704,7 @@ addEventListener('keydown',e=>{if(e.key!=='Enter'||e.repeat)return;const tag=doc
   if(phase==='landed'){e.preventDefault();enter();}else if(phase==='intro'){e.preventDefault();skip();}});
 function clearTrails(){for(const r of ribbons)r.hist.length=0;for(const d of dust){d.userData.life=0;d.material.opacity=0;}for(const c of breath){c.userData.t=0;c.material.opacity=0;}for(const c of splash){c.userData.t=0;c.material.opacity=0;}flash.userData.t=0;flash.material.opacity=0;whale.userData.breathed=false;}
 function setPanel(on,stages=3){panel.classList.toggle('on',on);for(let i=1;i<=3;i++)panel.classList.toggle('s'+i,on&&i<=stages);}
-function restart(){phase='intro';e0=NaN;t0=performance.now();breached=false;wSmooth.copy(whalePath.getPointAt(0));{const g=whalePath.getTangentAt(.2);wYaw=Math.atan2(-g.z,g.x);}wRate=0;wBank=0;wPrev.copy(whalePath.getPointAt(0));
+function restart(){phase='intro';e0=NaN;t0=performance.now();breached=false;hummed=false;wSmooth.copy(whalePath.getPointAt(0));{const g=whalePath.getTangentAt(.2);wYaw=Math.atan2(-g.z,g.x);}wRate=0;wBank=0;wPrev.copy(whalePath.getPointAt(0));
   $('entry').classList.remove('on');$('warm').classList.remove('on');$('skip').hidden=false;setPanel(false);$('ashore').classList.remove('pressed');$('ashore-label').textContent='Come ashore';
   camPos.copy(camPosAt(0));camLook.copy(gazeAt(0));clearTrails();pmx=pmy=0;hero.userData.look(0,0,1);}
 function skip(){if(phase==='entering'){finishEnter();return;}if(phase!=='intro')return;breached=true;
@@ -764,6 +768,7 @@ function tick(now){
   const yawT=Math.atan2(-tg.z,tg.x);let dy=yawT-wYaw;dy=Math.atan2(Math.sin(dy),Math.cos(dy));const step=dy*Math.min(1,dt*5);wYaw+=step;
   wRate+=((dt>0?step/dt:0)-wRate)*Math.min(1,dt*4);wBank+=(clamp(-wRate*.9,-.3,.3)-wBank)*Math.min(1,dt*3);
   const docked=t>TL.arrive, nod=Math.sin(Math.PI*seg(t,...TL.nod))*.13;
+  if(!hummed&&phase==='intro'&&t>=TL.nod[0]){hummed=true;sound.play('whale_hum',{gain:.7});}
   const settle=smoother(seg(t,ARR+1.9,ARR+4.4));                          // answering the goodbye it bows, sinks a little toward the clouds and drifts off the pier
   whale.position.y+=iy+(CALM?0:Math.sin(time*1.05)*.28)-settle*8;whale.position.addScaledVector(along,SIDE*settle*6);
   whale.rotation.set(wBank,wYaw,tg.y*.9*(1-smooth(seg(t,ARR-.8,ARR)))+nod-Math.sin(Math.PI*settle)*.1);

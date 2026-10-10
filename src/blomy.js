@@ -104,6 +104,7 @@ export function makeGardener(){
    const face=add(can,cone(.072*1.25,.072*1.25,.012,20),M.seam,[-.405,0,.315]);face.rotation.z=.8;
    const h1=new T.Mesh(new T.TorusGeometry(.09,.02,10,24,Math.PI),M.can);h1.position.copy(P(0,0,.27));can.add(h1);
    const h2=new T.Mesh(new T.TorusGeometry(.1,.022,10,24,Math.PI),M.can);h2.position.copy(P(.2,0,.03));h2.rotation.z=-Math.PI/2;can.add(h2);}
+  const spout=new T.Object3D();spout.position.copy(P(-.43,0,.33));can.add(spout);   // just past the rose: where the water leaves
   // rest pose
   arms[0].rotation.set(-.2,0,-.42);arms[1].rotation.set(.08,0,.28);
   head.rotation.set(0,0,0);
@@ -117,9 +118,9 @@ export function makeGardener(){
     arms[0].rotation.x=mix(arms[0].rotation.x,REST.a0[0],k);arms[0].rotation.z=mix(arms[0].rotation.z,REST.a0[2],k);
     arms[1].rotation.x=mix(arms[1].rotation.x,REST.a1[0],k);arms[1].rotation.z=mix(arms[1].rotation.z,REST.a1[2],k);
     chest.rotation.x*=1-k;chest.rotation.z*=1-k;hips.rotation.z*=1-k;hips.rotation.x*=1-k;hips.position.y=mix(hips.position.y,.95,k);head.rotation.z*=1-k;};
-  let blinkAt=2.2,blinkT=-1,glance=0;const eyeBase=eyes.map(e=>e.position.clone());
+  let blinkAt=2.2,blinkT=-1,glance=0,tilt=0;const eyeBase=eyes.map(e=>e.position.clone());
   let lastHeadQ=new T.Quaternion(),sprV=0,sprA=0;const fwd=new T.Vector3();
-  root.userData={legs,arms,head,hips,chest,eyes,sprout,
+  root.userData={legs,arms,head,hips,chest,eyes,sprout,spout,
     // walking: legs swing from the hip, arms swing opposite, a soft body bob; `amount` 0 = standing
     walk(phase,amount=1){const a=.55*amount;legs[0].rotation.x=Math.sin(phase)*a;legs[1].rotation.x=-Math.sin(phase)*a;legs[0].rotation.z=legs[1].rotation.z=0;
       arms[1].rotation.x=.08-Math.sin(phase)*.35*amount;arms[0].rotation.x=-.2+Math.sin(phase)*.15*amount;arms[1].rotation.z=mix(arms[1].rotation.z,.28,.2);arms[0].rotation.z=mix(arms[0].rotation.z,-.42,.2);
@@ -138,6 +139,11 @@ export function makeGardener(){
     wave(p){const up=p<.28?p/.28:p>.78?1-(p-.78)/.22:1,e=up*up*(3-2*up),wag=p>.26&&p<.8?Math.sin((p-.26)/.54*Math.PI*5)*.3*e:0;
       toRest(.2);arms[1].rotation.z=mix(.28,1.9,e)+wag;arms[1].rotation.x=mix(.08,-.9,e)+wag*.35;arms[1].rotation.y=0;arms[0].rotation.x=mix(arms[0].rotation.x,-.1,.2);
       chest.rotation.z=-.06*e;hips.rotation.z=.03*e;head.rotation.z=.08*e;hips.position.y=.95;},
+    // watering a tree on her right: the can comes up and out, tips until the rose points down, pours with a
+    // little sway, and comes back down. k runs 0..1 over the whole thing.
+    water(k,t){const up=k<.2?k/.2:k>.85?1-(k-.85)/.15:1,e=up*up*(3-2*up),sway=Math.sin(t*6)*.05*e;
+      toRest(.2);arms[0].rotation.x=mix(-.2,-.75,e);arms[0].rotation.z=mix(-.42,-1.0,e)+sway;tilt=e*(1.75+sway*2);
+      chest.rotation.z=.07*e;chest.rotation.x=.06*e;head.rotation.x=.16*e;head.rotation.z=-.06*e;hips.position.y=.95;},
     // standing still: breath, a little weight shift, the free hand drifting. Everything else relaxes to rest.
     idle(t){toRest(.12);const br=Math.sin(t*1.45);hips.position.y=.95+br*.008;chest.rotation.x=br*.012+.01;chest.rotation.z=Math.sin(t*.37)*.012;hips.rotation.z=Math.sin(t*.37+1)*.01;
       arms[1].rotation.x=.08+Math.sin(t*1.45+.8)*.035;arms[1].rotation.z=.28+Math.sin(t*.9)*.02;head.rotation.z=Math.sin(t*.31)*.025;},
@@ -145,7 +151,8 @@ export function makeGardener(){
     look(yaw,pitch,k=.1){yaw=Math.max(-.55,Math.min(.55,yaw));pitch=Math.max(-.22,Math.min(.3,pitch));
       head.rotation.y=mix(head.rotation.y,yaw,k);head.rotation.x=mix(head.rotation.x,pitch,k);glance=mix(glance,yaw,k*1.6);},
     // run once per frame after the pose: blinks, eye slide, and the sprout lagging behind head turns
-    after(dt,t){blinkAt-=dt;if(blinkAt<0&&blinkT<0){blinkT=0;blinkAt=2.4+Math.random()*3.2;}
+    after(dt,t){can.rotation.z=tilt;tilt*=Math.exp(-10*dt);   // the can tips only while watering, then settles back
+      blinkAt-=dt;if(blinkAt<0&&blinkT<0){blinkT=0;blinkAt=2.4+Math.random()*3.2;}
       if(blinkT>=0){blinkT+=dt;const k=blinkT/.16;const s=k>=1?1:1-Math.sin(Math.PI*k)*.92;eyes.forEach(e=>e.scale.y=s);if(k>=1)blinkT=-1;}
       eyes.forEach((e,i)=>{e.position.copy(eyeBase[i]);e.position.x+=glance*.05;});
       // sprout: a spring that reacts to how fast the head yaws, then settles
