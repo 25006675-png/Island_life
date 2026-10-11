@@ -109,7 +109,9 @@ function plantIsland(island,group,assets){
 }
 let renderer,scene,camera,controls,composer,atmosphere,gardener,life,forest,watering,sunLight,hemiLight,fillLight;
 const islands=[],bridges=[],keys=new Set();
-let selected='community',mode='overview',ready=false,motion=!matchMedia('(prefers-reduced-motion: reduce)').matches,elapsed=0,last=0,transition=null,noticeTimer;
+// On a phone (the CSS's 600px line) the world starts calmer and smaller: Gentle motion off, UI size 90%. Both can be changed in the menu.
+const PHONE=matchMedia('(max-width: 600px)').matches;
+let selected='community',mode='overview',ready=false,motion=!PHONE&&!matchMedia('(prefers-reduced-motion: reduce)').matches,elapsed=0,last=0,transition=null,noticeTimer;
 const player={position:new T.Vector3(),surface:null,distance:0,hop:0,vy:0,stuck:0};
 const look=new T.Vector3(),targetPosition=new T.Vector3(),cameraOffset=new T.Vector3(0,11,17);
 const raycaster=new T.Raycaster(),pointer=new T.Vector2();
@@ -782,7 +784,7 @@ $('sound-toggle').onclick=()=>{sound.setMuted(!sound.muted());syncSound();};
 // UI size (the menu): every panel and bar over the world grows or shrinks together (style.css --ui); remembered per browser
 const UI_KEY='il-ui-size';
 function setUiSize(v){v=Math.min(1.3,Math.max(.8,+v||1));document.documentElement.style.setProperty('--ui',v);$('ui-size').value=v;$('ui-size-value').textContent=`${Math.round(v*100)}%`;return v;}
-try{setUiSize(localStorage.getItem(UI_KEY)??1);}catch{setUiSize(1);}
+try{setUiSize(localStorage.getItem(UI_KEY)??(PHONE?.9:1));}catch{setUiSize(PHONE?.9:1);}
 $('ui-size').oninput=e=>{const v=setUiSize(e.target.value);try{localStorage.setItem(UI_KEY,String(v));}catch{}};
 // Log out (the menu): signs out of the account, if any, and goes back to the home page (welcome/index.html)
 $('log-out').onclick=async e=>{const b=e.currentTarget;b.disabled=true;b.lastChild.textContent='Logging out…';try{if(backend.configured)await backend.signOut();}catch(err){console.error(err);}location.href=`${import.meta.env.BASE_URL}welcome/`;};
