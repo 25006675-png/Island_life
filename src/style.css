@@ -807,25 +807,37 @@ footer{z-index:2}
 .photo-pick:hover{background:var(--orchid);border-color:var(--orchid);color:#fff;transform:translateY(-1px);box-shadow:0 4px 0 var(--orchid-deep)}
 .photo-pick:active{transform:translateY(1px);box-shadow:0 1px 0 var(--violet-soft)}
 .photo-pick:focus-within{outline:3px solid var(--accent);outline-offset:3px}
-/* phones (a 6" screen is 360px wide and up): the logo on its own line, and under it the six header buttons as round
-   icons in one row that always fits (the words stay inside for screen readers). The dewdrop count shows in the shop
-   only. Everything that hung under the header moves down below the taller header. */
-@media(max-width:600px){
-  header{flex-direction:column;align-items:stretch;gap:8px}
-  .header-actions{display:grid;grid-template-columns:repeat(6,minmax(0,44px));justify-content:space-between;align-items:center;gap:0}
+/* phones and tablets, any common size, portrait or landscape (main.js MOBILE holds the same query): the six header
+   buttons become round icons (the words stay inside for screen readers) and the dewdrop count shows in the shop only.
+   The buttons sit beside the logo when there's room and drop onto their own row under it when there isn't; what hangs
+   under the header follows its height (--header-bottom, set by main.js), and the joystick sits above the island's
+   name (--stick-bottom, main.js liftStick). */
+@media(max-width:600px),(pointer:coarse) and (max-width:1024px),(max-height:500px) and (max-width:1000px){
+  #app{min-height:0}
+  header{flex-wrap:wrap;gap:8px 16px}
+  .header-actions{flex:1 1 auto;max-width:344px;margin-left:auto;display:grid;grid-template-columns:repeat(6,minmax(0,44px));justify-content:space-between;align-items:center;gap:4px}
   .header-actions button,.header-actions .icon-only,.header-actions .dew-capsule button{display:flex;align-items:center;justify-content:center;width:100%;height:auto;aspect-ratio:1;margin:0;padding:0;border-radius:50%;font-size:0}
   .header-actions button span{display:inline;margin:0;font-size:20px;line-height:1}
   .dew-count{display:none}
   .dew-capsule{border-radius:50%}
   .header-actions .dew-capsule button{border-left:2px solid #fff}
   #mood-toggle.has-asks::after{top:1px;right:1px}
-  #settings,#mood-panel{top:118px;max-height:calc(100% - 136px)}
-  #notice,#bridge-banner{top:118px}
-  #guide{top:144px}
-  /* the planner's day list: the time over the title, the words across the whole card, Done and Let go on a row below */
+  #settings,#mood-panel{top:calc(var(--header-bottom,118px) / var(--ui) + 10px);max-height:calc((100svh - var(--header-bottom,118px)) / var(--ui) - 28px)}
+  #notice,#bridge-banner{top:calc(var(--header-bottom,118px) / var(--ui) + 10px)}
+  #golden{top:calc(var(--header-bottom,118px) / var(--ui) + 12px)}
+  #stick{bottom:var(--stick-bottom,calc(96px + env(safe-area-inset-bottom,0px)))}
+}
+/* a phone held sideways: little height, so the header and the bottom bar hug the edges */
+@media(max-height:500px) and (max-width:1000px){
+  header{top:12px}footer{bottom:12px}
+  .brand-logo{height:40px}
+  #stick{width:96px;height:96px}
+}
+/* narrow phones: Blomy's box under the header; the planner's day list puts the time over the title, the words across
+   the whole card, Done and Let go on a row below */
+@media(max-width:600px){
+  #guide{top:calc(var(--header-bottom,118px) / var(--ui) + 36px)}
   .plan-item{flex-wrap:wrap;gap:8px 12px}
   .plan-open{flex:1 1 100%;grid-template-columns:minmax(0,1fr);gap:4px}
   .plan-acts{margin-left:auto}.plan-acts button{white-space:nowrap}
-  /* the joystick sits above the island's name (main.js liftStick) */
-  #stick{bottom:var(--stick-bottom,calc(96px + env(safe-area-inset-bottom,0px)))}
 }
