@@ -354,11 +354,19 @@ const stick={on:false,x:0,y:0,id:null};
   base.addEventListener('pointermove',e=>{if(stick.on&&e.pointerId===stick.id)move(e);});
   const end=e=>{if(e.pointerId!==stick.id)return;stick.on=false;stick.x=stick.y=0;stick.id=null;knob.style.translate='';};
   base.addEventListener('pointerup',end);base.addEventListener('pointercancel',end);}
-let stickShown=false;
+// It steps aside while something is open over the world: a panel, a sheet, a dialog, or the island card unfolded.
+// On a phone it sits just above the island's name (the block bottom left), clear of its words however tall it grows.
+let stickShown=false, onFoot=false;
+const overWorld=()=>!$('settings').hidden||!$('mood-panel').hidden||!$('veil').hidden||$('island-card').open||!!document.querySelector('dialog[open]');
+const placeBox=document.querySelector('.place');
+function liftStick(){$('app').style.setProperty('--stick-bottom',`${Math.round($('app').getBoundingClientRect().bottom-placeBox.getBoundingClientRect().top+12)}px`);}
+new ResizeObserver(liftStick).observe(placeBox);addEventListener('resize',liftStick);
 function showStick(){
-  const want=TOUCH&&mode==='walk'&&!transition;if(want===stickShown)return;stickShown=want;$('stick').hidden=!want;
-  if(want&&innerWidth<600)$('island-card').open=false;
-  if(!want){stick.on=false;stick.x=stick.y=0;}
+  const foot=TOUCH&&mode==='walk'&&!transition;
+  if(foot!==onFoot){onFoot=foot;if(foot&&innerWidth<600)$('island-card').open=false;}
+  const want=foot&&!overWorld();if(want===stickShown)return;stickShown=want;$('stick').hidden=!want;
+  if(want)liftStick();
+  else{stick.on=false;stick.x=stick.y=0;stick.id=null;$('stick').firstElementChild.style.translate='';}
 }
 // The first-time guide (guide.js): come home, walk, hang a feeling, open the planner and your balance, then the
 // bridges. Each step lights up what to touch and waits until you have touched it.
