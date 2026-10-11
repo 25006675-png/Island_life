@@ -109,6 +109,9 @@ function plantIsland(island,group,assets){
 }
 let renderer,scene,camera,controls,composer,atmosphere,gardener,life,forest,watering,sunLight,hemiLight,fillLight;
 const islands=[],bridges=[],keys=new Set();
+// Phones and tablets of any common size, portrait or landscape (the same query as the mobile block in style.css).
+// There the UI starts a little smaller, at 90%; it can be changed in the menu.
+const MOBILE=matchMedia('(max-width: 600px), (pointer: coarse) and (max-width: 1024px), (max-height: 500px) and (max-width: 1000px)');
 let selected='community',mode='overview',ready=false,motion=!matchMedia('(prefers-reduced-motion: reduce)').matches,elapsed=0,last=0,transition=null,noticeTimer;
 const player={position:new T.Vector3(),surface:null,distance:0,hop:0,vy:0,stuck:0};
 const look=new T.Vector3(),targetPosition=new T.Vector3(),cameraOffset=new T.Vector3(0,11,17);
@@ -354,11 +357,22 @@ const stick={on:false,x:0,y:0,id:null};
   base.addEventListener('pointermove',e=>{if(stick.on&&e.pointerId===stick.id)move(e);});
   const end=e=>{if(e.pointerId!==stick.id)return;stick.on=false;stick.x=stick.y=0;stick.id=null;knob.style.translate='';};
   base.addEventListener('pointerup',end);base.addEventListener('pointercancel',end);}
-let stickShown=false;
+// It steps aside while something is open over the world: a panel, a sheet, a dialog, or the island card unfolded.
+// On mobile it sits just above the island's name (the block bottom left), clear of its words however tall it grows,
+// and what hangs under the header (panels, notices) starts below it, however tall it is at this screen size.
+let stickShown=false, onFoot=false;
+const overWorld=()=>!$('settings').hidden||!$('mood-panel').hidden||!$('veil').hidden||$('island-card').open||!!document.querySelector('dialog[open]');
+const placeBox=document.querySelector('.place');
+function liftStick(){const app=$('app');
+  app.style.setProperty('--stick-bottom',`${Math.round(app.getBoundingClientRect().bottom-placeBox.getBoundingClientRect().top+12)}px`);
+  app.style.setProperty('--header-bottom',`${Math.round(document.querySelector('header').getBoundingClientRect().bottom)}px`);}
+{const ro=new ResizeObserver(liftStick);ro.observe(placeBox);ro.observe(document.querySelector('header'));addEventListener('resize',liftStick);}
 function showStick(){
-  const want=TOUCH&&mode==='walk'&&!transition;if(want===stickShown)return;stickShown=want;$('stick').hidden=!want;
-  if(want&&innerWidth<600)$('island-card').open=false;
-  if(!want){stick.on=false;stick.x=stick.y=0;}
+  const foot=TOUCH&&mode==='walk'&&!transition;
+  if(foot!==onFoot){onFoot=foot;if(foot&&MOBILE.matches)$('island-card').open=false;}
+  const want=foot&&!overWorld();if(want===stickShown)return;stickShown=want;$('stick').hidden=!want;
+  if(want)liftStick();
+  else{stick.on=false;stick.x=stick.y=0;stick.id=null;$('stick').firstElementChild.style.translate='';}
 }
 // The first-time guide (guide.js): come home, walk, hang a feeling, open the planner and your balance, then the
 // bridges. Each step lights up what to touch and waits until you have touched it.
@@ -773,8 +787,8 @@ function syncSound(){$('sound-toggle').setAttribute('aria-pressed',String(sound.
 $('sound-toggle').onclick=()=>{sound.setMuted(!sound.muted());syncSound();};
 // UI size (the menu): every panel and bar over the world grows or shrinks together (style.css --ui); remembered per browser
 const UI_KEY='il-ui-size';
-function setUiSize(v){v=Math.min(1.3,Math.max(.8,+v||1));document.documentElement.style.setProperty('--ui',v);$('ui-size').value=v;$('ui-size-value').textContent=`${Math.round(v*100)}%`;return v;}
-try{setUiSize(localStorage.getItem(UI_KEY)??1);}catch{setUiSize(1);}
+function setUiSize(v){v=Math.min(1.3,Math.max(.8,+v||1));document.documentElement.style.setProperty('--ui',v);liftStick();$('ui-size').value=v;$('ui-size-value').textContent=`${Math.round(v*100)}%`;return v;}
+try{setUiSize(localStorage.getItem(UI_KEY)??(MOBILE.matches?.9:1));}catch{setUiSize(MOBILE.matches?.9:1);}
 $('ui-size').oninput=e=>{const v=setUiSize(e.target.value);try{localStorage.setItem(UI_KEY,String(v));}catch{}};
 // Log out (the menu): signs out of the account, if any, and goes back to the home page (welcome/index.html)
 $('log-out').onclick=async e=>{const b=e.currentTarget;b.disabled=true;b.lastChild.textContent='Logging out…';try{if(backend.configured)await backend.signOut();}catch(err){console.error(err);}location.href=`${import.meta.env.BASE_URL}welcome/`;};
