@@ -36,7 +36,7 @@ input[type=text],input[type=time],input[type=date],input[type=email],input[type=
 .moods{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
 .mood{border:1px solid oklch(.85 .02 295);background:oklch(1 0 0);border-radius:18px;padding:8px 12px;font-size:12px}
 .mood::before{content:'';display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--mood);margin-right:7px;vertical-align:-1px}
-.file-line input{display:block;margin-top:8px;font-size:11px}
+
 /* bottom left: what anyone may see of the island you're on */
 
 
@@ -793,3 +793,17 @@ body:has(#planner-sheet:not([hidden]),#balance-sheet:not([hidden])) :is(#guide,#
   font:600 14px var(--display);box-shadow:0 3px 0 var(--violet-soft);transition:transform .14s ease,box-shadow .14s ease,background .14s,color .14s}
 #settings .log-out:hover{background:var(--orchid);border-color:var(--orchid);color:#fff;transform:translateY(-1px);box-shadow:0 4px 0 var(--orchid-deep)}
 #settings .log-out:active{transform:translateY(1px);box-shadow:0 1px 0 var(--violet-soft)}
+/* the bottom bar (island card, view switcher, keys) draws over the islands' name signs (#island-labels, z 1), under the panels and sheets */
+footer{z-index:2}
+/* the altitude gauge and its words share a narrow card: the words wrap, and drop under the gauge when there's no room beside it */
+.ic-val>.ic-alt{flex-wrap:wrap;white-space:normal;min-width:0;row-gap:8px}
+.ic-alt-text{flex:1 1 120px}.ic-alt-text b{white-space:normal}
+/* "Add a photo to your lantern" (How do you feel?): a full-width pill like the menu's Log out; the file input hides inside it */
+.file-line{display:grid;gap:8px;font-size:12px}
+.photo-pick{position:relative;display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:11px 16px;border-radius:22px;border:2px solid var(--violet-soft);background:#fff;color:var(--violet);
+  font:600 14px var(--display);box-shadow:0 3px 0 var(--violet-soft);cursor:pointer;transition:transform .14s ease,box-shadow .14s ease,background .14s,color .14s}
+.photo-pick svg{flex:none}.photo-pick span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.photo-pick input{position:absolute;opacity:0;width:1px;height:1px;pointer-events:none}
+.photo-pick:hover{background:var(--orchid);border-color:var(--orchid);color:#fff;transform:translateY(-1px);box-shadow:0 4px 0 var(--orchid-deep)}
+.photo-pick:active{transform:translateY(1px);box-shadow:0 1px 0 var(--violet-soft)}
+.photo-pick:focus-within{outline:3px solid var(--accent);outline-offset:3px}

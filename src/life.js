@@ -574,14 +574,14 @@ export function initLife({world,islands,camera,texture,player,notice,visit,fores
     b.style.setProperty('--mood',m.color);b.textContent=m.label;b.onclick=()=>checkIn(k);$('moods').append(b);
   }
   let checkinPhoto=null;
-  $('checkin-photo').onchange=e=>{const f=e.target.files[0];checkinPhoto=null;if(f)loadSquare(f).then(c=>{checkinPhoto=c.toDataURL('image/jpeg',.9);});};
+  $('checkin-photo').onchange=e=>{const f=e.target.files[0];checkinPhoto=null;$('checkin-photo-name').textContent=f?f.name:'Choose a photo';if(f)loadSquare(f).then(c=>{checkinPhoto=c.toDataURL('image/jpeg',.9);});};
   function checkIn(k){
     showPresent();
     const entry={day:0,mood:k,time:clock.minutes,photo:checkinPhoto};checkins[ME].push(entry);
     const onMine=player.surface?.kind==='island'&&player.surface.id===ME;
     mood.checkIn(me,entry,onMine?player.position.clone().sub(me.group.position).add(new T.Vector3(0,1.2,0)):null);
     if(LIVE)backend.saveCheckin(world,{mood:k,minute:clock.minutes,photo:checkinPhoto});
-    weather(me);checkinPhoto=null;$('checkin-photo').value='';balance.render();refreshGardener();
+    weather(me);checkinPhoto=null;$('checkin-photo').value='';$('checkin-photo-name').textContent='Choose a photo';balance.render();refreshGardener();
     notice(`A ${MOODS[k].label.toLowerCase()} lantern lights up on your pier.`);
     if(!$('mood-panel').hidden)setMoodPanel(false);
     // then two quick ones about today, if the island has something to learn
