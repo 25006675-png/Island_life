@@ -610,6 +610,12 @@ label:has(> .ed-cat-icon){position:relative}
 #bridge-go:hover{transform:translateY(-1px)}
 .island-label{transition:transform .14s ease}
 .island-label:hover{transform:translate(-50%,-50%) translateY(-2px)}
+/* an empty place in your sky (vacancy.js): a paler sign, a dashed edge; gold and breathing once someone has joined */
+.island-label.vacant{background:oklch(.97 .02 295 / .55);color:#3d2b55;box-shadow:inset 0 0 0 1px oklch(.5 .08 295 / .45);outline:1px dashed oklch(.98 .01 295 / .8);outline-offset:3px;backdrop-filter:blur(3px)}
+.island-label.vacant:hover{background:oklch(.98 .02 295 / .8)}
+.island-label.vacant.warm{background:linear-gradient(160deg,#ffe2a8,#f2bd6c);color:#3a2410;outline-color:#ffe2a8;animation:vacant-warm 1.6s ease-in-out infinite}
+@keyframes vacant-warm{50%{box-shadow:inset 0 0 0 1px oklch(.5 .1 70 / .5),0 0 18px 4px oklch(.88 .12 80 / .7)}}
+@media(prefers-reduced-motion:reduce){.island-label.vacant.warm{animation:none}}
 
 /* "See why" on the gardener's card: a quiet link to Your balance */
 .reveal-more{margin-left:auto;border:0;background:none;padding:4px 2px;font:inherit;font-size:13px;color:inherit;opacity:.85;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
@@ -708,9 +714,14 @@ label:has(> .ed-cat-icon){position:relative}
 .guide-art .keys{display:grid;grid-template-columns:repeat(3,36px);grid-template-rows:36px 36px;gap:5px}
 .guide-art .keys kbd:nth-child(1){grid-area:1/2}.guide-art .keys kbd:nth-child(2){grid-area:2/1}.guide-art .keys kbd:nth-child(3){grid-area:2/2}.guide-art .keys kbd:nth-child(4){grid-area:2/3}
 /* while Blomy is guiding, the world's own cards (the gardener, the gate, a tree) wait */
-body:has(#guide:not([hidden])) #reveal{display:none}
+body:not(.guide-reveal):has(#guide:not([hidden])) #reveal{display:none}
 /* while the planner or your balance is open, Blomy (with the dimming and the hand) steps aside until you close it */
-body:has(#planner-sheet:not([hidden]),#balance-sheet:not([hidden])) :is(#guide,#guide-spot,#guide-hand){display:none}
+body:not(.guide-over):has(#planner-sheet:not([hidden]),#balance-sheet:not([hidden])) :is(#guide,#guide-spot,#guide-hand){display:none}
+body:is(.guide-over,.guide-reveal) #guide{top:84px;bottom:auto}
+/* clear of the header's buttons, so the menu stays reachable while the demo's island sinks below */
+body.guide-high #guide{top:112px;bottom:auto}
+/* over an open sheet Blomy sits top left, clear of the sheet's close button (top right) */
+body.guide-over #guide{left:16px;transform:none}
 .guide-art kbd{display:grid;place-items:center;min-width:36px;height:36px;padding:0 8px;border-radius:9px;background:#fff;border:2px solid var(--violet-soft);box-shadow:0 4px 0 #cdb8ec;
   font:600 15px var(--display);color:var(--violet);transition:transform .08s,box-shadow .08s,background .08s,color .08s}
 .guide-art kbd.wide{min-width:58px;font-size:13px}
@@ -953,6 +964,9 @@ footer{z-index:2}
 .flower-photo input{position:absolute;opacity:0;width:1px;height:1px;pointer-events:none}
 .flower-bubble .fairy-later{margin:0}
 .flower-note{margin:8px 0 0;font-size:11px;line-height:1.45;color:var(--muted)}
+/* the invite window (account.js openInvite) */
+#invite-link{width:100%;margin:6px 0 4px;padding:10px 12px;border:1px solid oklch(.82 .02 295);border-radius:9px;background:oklch(1 0 0);color:var(--ink);font-size:12px}
+#invite-copy{background:var(--accent);color:oklch(.99 .01 60)}
 /* the fairy's and the flower's bubble (bubble.js): never wider than the screen; under or over her (a narrow screen),
    its tail points up or down at her */
 .fairy-bubble{width:min(300px,calc(100vw - 24px))}

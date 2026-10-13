@@ -12,3 +12,10 @@ incoming/
 .env
 .env.*
 !.env.example
+
+# not part of the app: the separate video project, and git bundles passed around by hand
+video/
+*.bundle
+
+# environment variables to upload to Render (built from .env)
+render.env

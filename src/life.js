@@ -4,11 +4,11 @@ import { ME, LIVE, DAWN, NIGHT, CATEGORIES, MOODS, CHECKINS, WARMTH, NOTES, NOTE
 import { reading, weekReading, gardener as gardenerFor, answer as recordAnswer, ANSWERS, forecast } from './readings.js';
 import { FORECAST_WORDS } from './climate.js';
 import * as backend from './backend.js';
-import { mountSkyPanel } from './account.js';
+import { mountSkyPanel, openInvite } from './account.js';
 import { plans, TODAY, addDays, dow, mondayOf, isDone, fromIso, daysBetween } from './plan.js';
 import { HISTORY } from './groves.js';
 import { confirmLetGo } from './confirm.js';
-import { createTimetable, blockStatus, ARCH } from './timetable.js';
+import { createTimetable, blockStatus, ARCH, LEG_MIN } from './timetable.js';
 import { createMood } from './mood.js';
 import { createCarousel, loadSquare } from './photos.js';
 import { createSheets } from './sheets.js';
@@ -33,7 +33,7 @@ const nowMinutes=()=>{const d=new Date();return d.getHours()*60+d.getMinutes()+d
 // Weather is one strain value (0..1); the label is only a name for where it sits.
 export const setStrain=(island,s)=>{island.strain=s;island.weather=weatherLabel(s);island.weatherFx.setStrain(s);};
 
-export function initLife({world,scene,flower,islands,camera,texture,player,notice,visit,forest,getMode,getSelected,setAltitude,setGlow,wear=()=>{},guiding=()=>false}){
+export function initLife({world,scene,flower,islands,camera,texture,player,notice,visit,forest,getMode,getSelected,setAltitude,setGlow,onJoin,wear=()=>{},guiding=()=>false,flowerTurn=()=>false}){
   const me=islands.find(i=>i.id===ME), members=islands.filter(i=>i.owner), community=islands.find(i=>!i.owner);
   // The demo opens at 23:00, after the whole day has happened, so every one of
   // today's trees can be answered with Done. "Live" in Tune the world follows
@@ -102,8 +102,10 @@ export function initLife({world,scene,flower,islands,camera,texture,player,notic
   }
   for(const f of members.filter(i=>i.id!==ME))$('note-to').append(Object.assign(document.createElement('option'),{value:f.id,textContent:f.owner}));
   function writeNote(to){if(to)$('note-to').value=to;$('note-text').value='';$('note-dialog').showModal();$('note-text').focus();}
+  let practiceNote=false, practiceNoted=false;   // the guide's practice note: written and sent, but never delivered
   $('note-form').onsubmit=e=>{
     e.preventDefault();const to=$('note-to').value, text=$('note-text').value.trim();if(!text)return;
+    if(practiceNote){practiceNoted=true;$('note-dialog').close();notice(`A practice note for ${owners[to]}: it wasn’t sent. In your own sky it would wait at their gate.`);return;}
     NOTES.push({from:ME,to,text,day:0,read:false});given.add(to);warm(to,.5);warm(ME,.3);syncNotes();
     if(LIVE)backend.sendNote(world,to,text);
     $('note-dialog').close();notice(`Your note is waiting at ${owners[to]}’s gate.`);
@@ -133,7 +135,7 @@ export function initLife({world,scene,flower,islands,camera,texture,player,notic
   const DAY=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'], dayName=date=>DAY[dow(date)-1];
   const photoSrc=f=>f&&(f.startsWith('data:')?f:`${import.meta.env.BASE_URL}assets/moments/${f}`);
   const finishers=t=>Object.keys(t.done);
-  const earned=t=>t.done[ME]===undefined?0:t.reward+finishers(t).length-1;
+  const earned=t=>t.done[ME]===undefined||t.practice?0:t.reward+finishers(t).length-1;
   const taskDew=()=>TASKS.reduce((a,t)=>a+earned(t),0);
   // joining puts the task on your plan: the first free evening from tomorrow (move it in the planner)
   function planSlot(mins){
@@ -144,7 +146,11 @@ export function initLife({world,scene,flower,islands,camera,texture,player,notic
     }
     return {date:addDays(TODAY,1),start:19*60};
   }
-  const schedule=t=>{const {date,start}=planSlot(t.mins);t.block=plans.add(ME,{date,start,mins:t.mins,cat:t.cat,title:t.title,vis:'open'});};
+  const schedule=t=>{
+    // the guide's practice task goes on today's plan as already over, so Mark done is open at once (never saved, plan.js)
+    if(t.practice){t.block=plans.add(ME,{date:TODAY,start:Math.max(6*60,Math.floor((clock.minutes-30)/5)*5),mins:t.mins,cat:t.cat,title:t.title,vis:'hidden',practice:true});return;}
+    const {date,start}=planSlot(t.mins);t.block=plans.add(ME,{date,start,mins:t.mins,cat:t.cat,title:t.title,vis:'open'});
+  };
   // already joined when the demo opens: done last night, so it waits for an answer
   // (a signed-in student's joined tasks are already on their plan)
   if(!LIVE)for(const t of TASKS)if(t.joined.includes(ME)&&t.done[ME]===undefined){
@@ -154,8 +160,9 @@ export function initLife({world,scene,flower,islands,camera,texture,player,notic
   const happened=b=>!!b&&(b.date<TODAY||(b.date===TODAY&&b.start+b.mins<=clock.minutes));
   function join(t){
     if(!t.joined.includes(ME))t.joined.push(ME);
-    if(LIVE)Promise.resolve(t.saved??t.id).then(id=>id&&backend.joinTask(id));
-    schedule(t);notice(`${t.title} is on your plan for ${dayName(t.block.date)} ${fmt(t.block.start)}. Move it any time in the planner.`);
+    if(LIVE&&!t.practice)Promise.resolve(t.saved??t.id).then(id=>id&&backend.joinTask(id));
+    schedule(t);notice(t.practice?'Joined! A real task would go on your plan. This one is already over, so mark it done.'
+                              :`${t.title} is on your plan for ${dayName(t.block.date)} ${fmt(t.block.start)}. Move it any time in the planner.`);
     renderTasks();
   }
   function finishTask(t){
@@ -163,7 +170,8 @@ export function initLife({world,scene,flower,islands,camera,texture,player,notic
     if(!(t.block&&!t.block.done&&t.block.date===TODAY))sound.play('task_done',{gain:.55,cooldown:.6});
     if(t.block&&!t.block.done)plans.markDone(ME,t.block);
     t.done[ME]=null;
-    if(LIVE)Promise.resolve(t.saved??t.id).then(id=>id&&backend.finishTask(world,id));
+    if(LIVE&&!t.practice)Promise.resolve(t.saved??t.id).then(id=>id&&backend.finishTask(world,id));
+    if(t.practice){notice('Done! Everyone who finishes a real task earns dewdrops, plus one for each friend who finished too.');renderTasks();return;}
     const n=earned(t);notice(`Done. +${n} 💧${n>t.reward?`, ${n-t.reward} of them for friends who finished too`:''}.`);
     renderTasks();
   }
@@ -183,7 +191,7 @@ export function initLife({world,scene,flower,islands,camera,texture,player,notic
     $('goals-list').replaceChildren(...TASKS.map(t=>{
       const mine=t.done[ME]!==undefined, joined=t.joined.includes(ME), fin=finishers(t);
       const li=mk('li',{className:'task'},
-        mk('div',{className:'task-head'},mk('strong',{textContent:t.title}),mk('em',{textContent:`${t.reward} 💧 +1 per friend`})),
+        mk('div',{className:'task-head'},mk('strong',{textContent:t.title}),mk('em',{textContent:t.practice?'Practice · nothing is saved':`${t.reward} 💧 +1 per friend`})),
         mk('span',{className:'task-meta'},catImg(t.cat),`${CATEGORIES[t.cat].label} · ${t.by?`posted by ${who(t.by)}`:'suggested for the group'} · ${t.joined.length} joined`));
       if(fin.length)li.append(mk('div',{className:'task-finishers'},...fin.map(id=>{
         const src=photoSrc(t.done[id]);
@@ -403,7 +411,7 @@ export function initLife({world,scene,flower,islands,camera,texture,player,notic
   // so savings carry over the weeks; anything earned here since its last
   // count shows straight away and asks it again.
   const DEMO_START=536;
-  const earnedHere=()=>(LIVE?0:DEMO_START)+plans.week(ME).filter(isDone).length
+  const earnedHere=()=>(LIVE?0:DEMO_START)+plans.week(ME).filter(b=>isDone(b)&&!b.practice).length   // practice earns nothing
                   +(photos.items.some(i=>i.golden&&i.member.id===ME)?3:0)
                   +NOTES.filter(n=>n.to===ME&&n.read).length+given.size+taskDew();
   const spentHere=()=>demoBought.reduce((a,id)=>a+itemById(id).cost,0);
@@ -514,10 +522,12 @@ export function initLife({world,scene,flower,islands,camera,texture,player,notic
   // ---- sheets: the planner (input) and your balance (analysis + solutions) ---
   const sheets=createSheets();
   const calendar=createCalendar({plans,owner:ME,clock,notice,sheets,live:LIVE?{connection:world.connection,uid:world.uid}:null,
-    rate:{state:b=>rateState(b),answer:(b,v)=>notice(answerDrain(b,v)),done:bs=>{for(const b of bs)fromPlanner.add(String(b.id));fairy.expect(bs);}}});
+    rate:{state:b=>rateState(b),answer:(b,v)=>notice(answerDrain(b,v)),done:bs=>{for(const b of bs)if(!b.practice)fromPlanner.add(String(b.id));fairy.expect(bs);}}});
+  // (not the guide's practice walk: that one waits for the can, so you see it watered and take root once the planner closes)
   // blocks marked done in the planner take root at once: no walk with the watering can (main.js asks, quick); the fairy comes straight out
   const fromPlanner=new Set();
-  const balance=createBalance({plans,me,friends:members.filter(i=>i.id!==ME),clock,checkins:checkins[ME],sheets,notice,dew,warm:id=>warm(id,.8)});
+  const balance=createBalance({plans,me,friends:members.filter(i=>i.id!==ME),clock,checkins:checkins[ME],sheets,notice,dew,warm:id=>warm(id,.8),
+    invite:LIVE?()=>openInvite(world,notice):null});
   // your gardener waits at the left end of an open sheet's top edge; walk it
   // with ← →, jump with Space, turn it with Q E
   const sheetBuddy=sheet=>{
@@ -548,6 +558,7 @@ export function initLife({world,scene,flower,islands,camera,texture,player,notic
   // "How draining was that?" -- asked about a block once you've marked it done (the fairy, and its row in the
   // Planner's Day list). The gardener says what it learned; the island re-reads your week at once.
   const answerDrain=(b,value)=>{
+    if(b.practice)return 'Thanks! That was only practice, so it isn’t kept.';   // the guide's practice block (plan.js)
     const line=recordAnswer(ME,b,value);
     if(LIVE)backend.saveAnswer(ANSWERS[ME].at(-1));
     settle(ME);refreshGardener();balance.render();calendar.render();renderAsks();
@@ -602,7 +613,7 @@ export function initLife({world,scene,flower,islands,camera,texture,player,notic
   const atHome=()=>getMode()==='walk'&&player.surface?.kind==='island'&&player.surface.id===ME;
   const talk=flower?createFlowerTalk({camera,flower,here:atHome,
     near:()=>{if(!atHome())return false;flower.getWorldPosition(flowerAt);return Math.hypot(flowerAt.x-player.position.x,flowerAt.z-player.position.z)<2.4;},
-    rest:()=>{if(guiding())return 0;   // Blomy's guide waits for her question: no resting then
+    rest:()=>{if(flowerTurn())return 0;   // the guide's check-in steps wait for her question: no resting then
       const last=(checkins[ME]??[]).filter(c=>c.day===0).at(-1);if(last?.time==null)return 0;
       return Math.min(FLOWER_REST,Math.max(0,Math.ceil(FLOWER_REST-(clock.minutes-last.time))));},
     resting:min=>notice(`Your flower is resting. She’ll ask how you feel again in ${min} min.`),
@@ -682,7 +693,7 @@ export function initLife({world,scene,flower,islands,camera,texture,player,notic
   // Your own open blocks: Done once it has happened, Let go (after a gentle confirm) any time.
   const letGo=async b=>{if(await confirmLetGo(b.title)){plans.toggleSkip(ME,b);notice(`${b.title} drifted away. Bring it back from the planner any time.`);}};
   const withActions=(card,b)=>{
-    const st=blockStatus(b,clock.minutes);if(!['planned','now','waiting'].includes(st))return card;
+    const st=b.practice&&!b.done?'waiting':blockStatus(b,clock.minutes);if(!['planned','now','waiting'].includes(st))return card;   // practice: Done is always open
     return {...card,...(st==='waiting'?{action:()=>finish(b),actionLabel:'Done'}:{}),letGo:()=>letGo(b)};
   };
   $('reveal-action').onclick=()=>{card?.action?.();reveal(nearest());};
@@ -842,7 +853,8 @@ export function initLife({world,scene,flower,islands,camera,texture,player,notic
       },
       // (what a friend's gardener wears isn't on their island, so it isn't news here)
       purchase:(id,item)=>{if(!itemById(item)||itemById(item).wear)return;gardens[id]?.add(item,{fresh:true});notice(`${owners[id]} grew ${itemById(item).called} on their island.`);},
-      membersChanged:()=>notice('Someone new joined your sky. Reload to see their island.'),
+      membersChanged:id=>notice(onJoin?.(id)?'Someone new joined your sky. Their island is glowing: tap it to welcome them.'
+                                            :'Someone new joined your sky. Reload to see their island.'),
     });
   }
   // a phone prompt opens the app on its question: ?ask=mood (home to your island, where your flower asks), or ?ask=drain (the Planner's Day list,
@@ -983,6 +995,23 @@ export function initLife({world,scene,flower,islands,camera,texture,player,notic
       openPlanner:tab=>{calendar.open(tab);buddies.planner.reset(80);},
       openBalance:()=>{balance.open();buddies.balance.reset(80);},
       markDone:id=>{const b=tables[ME].blocks.find(b=>String(b.id)===String(id));if(b)finish(b);},
+      // the guide's practice block: a Social block, so its tree is a blossom; never saved (plan.js)
+      practice:{
+        title:'Practice tree',
+        // mid-loop, never on the legs by the torii (the rocks and the gate posts are there): before the day's last
+        // hour, and from an hour after dawn, even if that time hasn't come yet (practice: its Done is open anyway)
+        plant:()=>plans.add(ME,{date:TODAY,mins:30,cat:'social',title:'Practice tree',vis:'hidden',practice:true,
+          start:Math.min(NIGHT-LEG_MIN-60,Math.max(DAWN+LEG_MIN+40,Math.floor((clock.minutes-45)/5)*5))}),
+        tree:()=>{const b=plans.all(ME).find(b=>b.practice);return b?forest.crown(b.id):null;},   // where its tree stands (world)
+        done:()=>plans.all(ME).some(b=>b.practice&&b.done),
+        // the friends chapter's practice task (the board) and practice note (a friend's gate)
+        task:()=>{if(!TASKS.some(t=>t.practice))TASKS.unshift({id:'practice-task',title:'Practice: try the task board',cat:'social',mins:15,by:null,reward:0,joined:[],done:{},practice:true});renderTasks();},
+        taskDone:()=>TASKS.some(t=>t.practice&&t.done[ME]!==undefined),
+        note:on=>{practiceNote=on;practiceNoted=false;},
+        noted:()=>practiceNoted,
+        clear:()=>{plans.clearPractice(ME);practiceNote=false;const i=TASKS.findIndex(t=>t.practice);if(i>=0){TASKS.splice(i,1);renderTasks();}},
+      },
+      fairyIdle:()=>fairy.idle(),
       // "Restore this evening": altitude and weather back to what the plan and check-ins say
       resettle:()=>{members.forEach(i=>{settle(i.id);weather(i);delete warmth[i.id];warm(i.id);});},
       photos:()=>photos.items.map(i=>({member:i.member.id,time:i.time,golden:i.golden,caption:i.caption,hung:!!i.pivot})),

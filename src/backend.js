@@ -227,7 +227,7 @@ export function listen(w,handlers){
     handlers.taskMember?.(r.task_id,w.byUser[r.user_id],r.done_at?urls[r.photo_path]??null:undefined);
   });
   on('purchases','INSERT',r=>r.user_id!==w.uid&&w.byUser[r.user_id]&&handlers.purchase?.(w.byUser[r.user_id],r.item));
-  on('sky_members','INSERT',()=>handlers.membersChanged?.());
+  on('sky_members','INSERT',r=>handlers.membersChanged?.(islandOf(r.slot)));
   ch.subscribe();
   return ()=>db.removeChannel(ch);
 }
