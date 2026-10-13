@@ -2,12 +2,12 @@
 
 Island Life turns a student's timetable and feelings into a floating 3D island. A week that is heavy *for you* makes the island sit lower in the sky, while recent mood check-ins shape its weather. This guide provides a simple route through the main experience.
 
-<!-- Submission owner: before sharing this guide, open both links below in an incognito window without a Vercel account and confirm they load. The older island-life-one.vercel.app address is behind Vercel Deployment Protection and asks for a Vercel login, so do not use it. Do not commit judge passwords to this file. -->
+<!-- Submission owner: before sharing this guide, open both links below in an incognito window and confirm they load. The app now lives at island-life.onrender.com. The older Vercel addresses (island-life-one.vercel.app, which asks for a Vercel login, and island-life-r21r.vercel.app) are not the judging links, so do not use them. Do not commit judge passwords to this file. -->
 
 ## Before you begin
 
-- **App:** [https://island-life-r21r.vercel.app/](https://island-life-r21r.vercel.app/) (opens the welcome page first)
-- **Instant demo:** [https://island-life-r21r.vercel.app/?enter=demo](https://island-life-r21r.vercel.app/?enter=demo) (skips the welcome page and goes straight into the demo sky)
+- **App:** [https://island-life.onrender.com/](https://island-life.onrender.com/) (opens the welcome page first)
+- **Instant demo:** [https://island-life.onrender.com/?enter=demo](https://island-life.onrender.com/?enter=demo) (skips the welcome page and goes straight into the demo sky)
 - **Recommended browser:** the latest Chrome or Edge on a laptop or desktop, with the window full-screen. A phone works too; see [On a phone](#on-a-phone).
 - **Suggested test time:** 10–12 minutes
 - Please allow up to one minute for the 3D world to load on the first visit.
@@ -27,7 +27,7 @@ Island Life turns a student's timetable and feelings into a floating 3D island. 
 
 ### 1. Enter Aisha's demo sky
 
-Open the [instant demo link](https://island-life-r21r.vercel.app/?enter=demo). Alternatively, open the [main app](https://island-life-r21r.vercel.app/) and watch a star whale carry Blomy, the gardener, to the pier (or press **Skip** at the top right). Then press **Come ashore** and select **Try the demo island** under the sign-in card.
+Open the [instant demo link](https://island-life.onrender.com/?enter=demo). Alternatively, open the [main app](https://island-life.onrender.com/) and watch a star whale carry Blomy, the gardener, to the pier (or press **Skip** at the top right). Then press **Come ashore** and select **Try the demo island** under the sign-in card.
 
 Wait until the floating islands appear with the message "Welcome to the demo sky. This is Aisha’s island, and her four friends." Blomy then offers a short guided tour.
 
@@ -138,7 +138,7 @@ Friends can see another island's general height, weather, lanterns and permitted
 ## Route B — signed-in account and backend
 
 Use this route after the demo. Select **Continue with Google** or **New here? Make your island**. 
-1. Open the [main app](https://island-life-r21r.vercel.app/), and press **Come ashore** or **Sign in to my island** (or **Skip** the arrival first).
+1. Open the [main app](https://island-life.onrender.com/), and press **Come ashore** or **Sign in to my island** (or **Skip** the arrival first).
 2. Select **Continue with Google**, or create an account.
 3. If this is a new account, choose **Start a new sky**. A friend's invite code can instead be entered under **Invite code from a friend**, then **Join their sky**. A sky holds up to five islands.
 4. Select **Enter your island** if asked.
@@ -161,7 +161,7 @@ A **sky** is you and up to four friends: five islands joined by bridges around T
 
 **Your friend:**
 
-1. Opens the invite link. It looks like `https://island-life-r21r.vercel.app/?join=7F3K9QXA` and opens the welcome page.
+1. Opens the invite link. It looks like `https://island-life.onrender.com/?join=7F3K9QXA` and opens the welcome page.
 2. Watches the arrival or presses **Skip**, then **Come ashore**. Because they came from an invite, the card opens on **Make your island**.
 3. Makes an account with a name, email and password (**Create your island**), or uses **Continue with Google**. A new email account may ask them to confirm by email first, then sign in.
 4. On the next card, the invite code is already filled in under **Invite code from a friend**. They select **Join their sky**. If the box is empty, for example after confirming the email in a new tab, they type the code; capitals don't matter.
@@ -214,9 +214,9 @@ Tick each item as you check it.
 
 | Problem | Suggested action |
 | --- | --- |
-| A Vercel login page appears | You have opened an old, protected address. Use [https://island-life-r21r.vercel.app/](https://island-life-r21r.vercel.app/), or ask the team for the current public link. |
-| The 3D world loads slowly | Wait up to one minute, close heavy browser tabs, and ensure hardware acceleration is enabled. On a slower device, add `&lite` to the demo address (for example `https://island-life-r21r.vercel.app/?enter=demo&lite`). |
-| Sign-in or an external service is unavailable | Continue with the [instant demo](https://island-life-r21r.vercel.app/?enter=demo); the core judging journey does not depend on Supabase, Google or Gemini. |
+| A Vercel login page or an old address appears | You have opened an old address. Use [https://island-life.onrender.com/](https://island-life.onrender.com/), or ask the team for the current public link. |
+| The 3D world loads slowly | Wait up to one minute, close heavy browser tabs, and ensure hardware acceleration is enabled. On a slower device, add `&lite` to the demo address (for example `https://island-life.onrender.com/?enter=demo&lite`). |
+| Sign-in or an external service is unavailable | Continue with the [instant demo](https://island-life.onrender.com/?enter=demo); the core judging journey does not depend on Supabase, Google or Gemini. |
 | I cannot find "How do you feel?" | It is the flower just inside the gate on **My island**, not a button. She only talks while you are walking on your own island. Walk up to her, tap her, or press `T`. |
 | The flower does not ask | After you answer, she rests for an hour; her tag says how long. Reloading the demo page starts her fresh. |
 | The fairy did not appear | She waits until any open sheet or dialog is closed, and asks once per finished activity. |

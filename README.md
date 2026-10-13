@@ -17,8 +17,8 @@
 
 ## Project Links
 
-- **Live app:** [https://island-life-r21r.vercel.app/](https://island-life-r21r.vercel.app/)
-- **Instant demo, no account:** [https://island-life-r21r.vercel.app/?enter=demo](https://island-life-r21r.vercel.app/?enter=demo)
+- **Live app:** [https://island-life.onrender.com/](https://island-life.onrender.com/)
+- **Instant demo, no account:** [https://island-life.onrender.com/?enter=demo](https://island-life.onrender.com/?enter=demo)
 - **User guide for judges:** [USER_GUIDE.md](USER_GUIDE.md)
 - **Video Presentation:** [https://www.youtube.com/watch?v=IwbC7wqz-7Q](https://www.youtube.com/watch?v=IwbC7wqz-7Q)
 - **Presentation Slides:** [https://canva.link/7yl54f1zapatoy0](https://canva.link/7yl54f1zapatoy0)
@@ -214,7 +214,7 @@ The building phase turned the prototype into something a stranger can use with t
 
 ## 3.1 Prototype
 
-**Live app:** [https://island-life-r21r.vercel.app/](https://island-life-r21r.vercel.app/) &nbsp;·&nbsp; **Instant demo, no account:** [?enter=demo](https://island-life-r21r.vercel.app/?enter=demo) &nbsp;·&nbsp; **A route through it:** [USER_GUIDE.md](USER_GUIDE.md)
+**Live app:** [https://island-life.onrender.com/](https://island-life.onrender.com/) &nbsp;·&nbsp; **Instant demo, no account:** [?enter=demo](https://island-life.onrender.com/?enter=demo) &nbsp;·&nbsp; **A route through it:** [USER_GUIDE.md](USER_GUIDE.md)
 
 The demo sky is Aisha's week and her four friends. It runs entirely in the browser, with no account, camera, or calendar needed.
 
@@ -437,7 +437,7 @@ Backend: Supabase Auth + Data API + Realtime + Storage + Edge Functions + Cron
 Database: PostgreSQL with Row-Level Security
 AI: Gemini, advisory only, called from Edge Functions
 Integrations: Google Calendar API + Web Push
-Deployment: Vercel + Supabase
+Deployment: Render + Supabase
 Testing: Node.js Test Runner + Playwright, on GitHub Actions
 Asset pipeline: Blender + Python + GLB/glTF, meshopt-compressed
 ```
@@ -497,7 +497,7 @@ Asset pipeline: Blender + Python + GLB/glTF, meshopt-compressed
 
 | Technology | Role | Reason for Selection | Status |
 |---|---|---|---|
-| **Vercel** | Hosts the built welcome page and app. | The built site is static, so Vercel is a simple fit. | Built |
+| **Render** | Hosts the built welcome page and app at [island-life.onrender.com](https://island-life.onrender.com/). | The built site is static, so a static host is a simple fit. | Built |
 | **Node.js Test Runner** | Runs 25 unit tests for the learned workload, altitude, forecasts, calendar events, the gardener's ideas, and when the island asks. Local suites also check row-level security and the Edge Functions against a local Supabase stack. | Node already includes it, so we can test the core logic without adding another framework. | Built |
 | **Playwright** | Runs the judging journey in a real browser: a check-in with the flower, the balance, a suggestion, and the planner. | It runs the same flows a judge or student would click through. | Built |
 | **GitHub and GitHub Actions** | Every push and pull request runs the unit tests, a production build, and the browser test. | A broken merge is caught before it reaches the live app. | Built |
@@ -596,7 +596,7 @@ flowchart LR
 
 | Week | What we do | Done when |
 |---|---|---|
-| **12 to 18 Oct** | **Production deploy.** The live app at [island-life-r21r.vercel.app](https://island-life-r21r.vercel.app/) with the Supabase production project behind it, backups, and error reporting. | A clean visit from the public URL works with no local setup. |
+| **12 to 18 Oct** | **Production deploy.** The live app at [island-life.onrender.com](https://island-life.onrender.com/) with the Supabase production project behind it, backups, and error reporting. | A clean visit from the public URL works with no local setup. |
 | | **Performance and accessibility.** First-load budget, keyboard path through every screen, visible focus, contrast, reduced motion, and Safari, Firefox and Chrome on desktop and phone. | Every task can be completed without a mouse, and the world holds a steady frame rate on the phones we have. |
 | **19 to 25 Oct** | **Pilot with students outside the team.** Around ten of them for a week: connect a calendar, check in daily, answer the fairy, meet one nudge. We watch the first five minutes without explaining anything. | We can say what people misunderstood, and how many connected a calendar, marked something done, and accepted a suggestion. |
 | **26 to 31 Oct** | **Fix what the pilot found**, then harden the edges: first run with nothing on the plan, a calendar that fails to connect, a friend who never checks in, and an offline start. | The top issues from the pilot are closed, and no empty state is a blank screen. |
