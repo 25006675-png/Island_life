@@ -41,8 +41,10 @@ export function makeFairy(){
   const group=new T.Group();group.name='Fairy';
   const body=new T.Group();body.position.y=-.5;group.add(body);   // feet at y 0 inside, her middle at the group's origin
 
-  // head and face, on a short neck: the head group sits a little above the dress so the neck shows
-  const head=new T.Group();head.position.y=.025;body.add(head);
+  // head and face, on a short neck: the head group is drawn at full size, then shrunk (HEAD) about the top of the
+  // neck and set a little above the dress, so a bit of neck shows between the chin and the collar
+  const HEAD=.88, NECK=.58, LIFT=.04;
+  const head=new T.Group();head.scale.setScalar(HEAD);head.position.y=NECK*(1-HEAD)+LIFT;body.add(head);
   add(head,ball,M.skin,[0,.74,0],[.198,.183,.188]);
   for(const s of [-1,1]){
     add(head,ball,M.skin,[s*.188,.715,.005],[.03,.04,.03]);                                   // ears, mostly under the hair
@@ -58,9 +60,9 @@ export function makeFairy(){
   add(head,ball,M.hair,[.035,.835,.15],[.135,.068,.06],[-.32,0,.38]);
   add(head,ball,M.hair,[-.1,.808,.142],[.088,.056,.05],[-.3,0,-.55]);
   add(head,ball,M.hair,[.135,.79,.12],[.075,.06,.05],[-.25,0,.6]);
-  for(const s of [-1,1])add(head,ball,M.hair,[s*.18,.65,-.015],[.058,.15,.065],[0,0,s*.12]);
-  add(head,ball,M.hairDeep,[0,.6,-.11],[.235,.31,.15]);
-  add(head,ball,M.hair,[0,.66,-.06],[.225,.25,.14]);
+  for(const s of [-1,1])add(head,ball,M.hair,[s*.18,.65,-.035],[.058,.15,.065],[0,0,s*.12]);
+  add(head,ball,M.hairDeep,[0,.6,-.135],[.235,.31,.15]);   // the back of the hair keeps behind the neck
+  add(head,ball,M.hair,[0,.66,-.1],[.225,.25,.13]);
   add(head,ball,M.hairDeep,[-.12,.4,-.12],[.11,.16,.1],[0,0,.22]);
   add(head,ball,M.hair,[.2,.5,-.12],[.11,.2,.1],[0,0,-.3]);                                  // the big lock flowing behind her left shoulder
 
