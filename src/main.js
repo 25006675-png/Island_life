@@ -780,10 +780,10 @@ function setPanel(open){$('settings').hidden=!open;$('settings-toggle').setAttri
 $('settings-toggle').onclick=()=>setPanel($('settings').hidden);$('settings-close').onclick=()=>setPanel(false);
 $('sky-tone').onchange=e=>{atmosphere?.setTone(e.target.value);};
 $('motion').onchange=e=>{motion=e.target.checked;};
-// Sound: the speaker in the header mutes, the slider in the settings sets the volume (both remembered).
+// Sound: the speaker in the header mutes, the sliders in the settings set the music and effects volumes (all remembered).
 const rain=sound.ambient('rain_loop',{gain:.6});
 sound.listenForClicks();
-function syncSound(){$('sound-toggle').setAttribute('aria-pressed',String(sound.muted()));$('sound-toggle').title=sound.muted()?'Sound off':'Sound on';$('volume').value=sound.volume();}
+function syncSound(){$('sound-toggle').setAttribute('aria-pressed',String(sound.muted()));$('sound-toggle').title=sound.muted()?'Sound off':'Sound on';$('volume').value=sound.volume();$('music-volume').value=sound.musicVolume();}
 $('sound-toggle').onclick=()=>{sound.setMuted(!sound.muted());syncSound();};
 // UI size (the menu): every panel and bar over the world grows or shrinks together (style.css --ui); remembered per browser
 const UI_KEY='il-ui-size';
@@ -793,6 +793,7 @@ $('ui-size').oninput=e=>{const v=setUiSize(e.target.value);try{localStorage.setI
 // Log out (the menu): signs out of the account, if any, and goes back to the home page (welcome/index.html)
 $('log-out').onclick=async e=>{const b=e.currentTarget;b.disabled=true;b.lastChild.textContent='Logging out…';try{if(backend.configured)await backend.signOut();}catch(err){console.error(err);}location.href=`${import.meta.env.BASE_URL}welcome/`;};
 $('volume').oninput=e=>{sound.setVolume(+e.target.value);if(sound.muted())sound.setMuted(false);syncSound();};
+$('music-volume').oninput=e=>{sound.setMusicVolume(+e.target.value);if(sound.muted())sound.setMuted(false);syncSound();};
 syncSound();
 $('altitude').oninput=e=>{if(!ready)return;updateAltitude(islands.find(i=>i.id===ME),+e.target.value);syncPanel();};
 $('weather').oninput=e=>{if(!ready)return;setStrain(islands.find(i=>i.id===ME),+e.target.value);syncPanel();};

@@ -1,13 +1,14 @@
 // Sound: the effects in public/assets/sfx (rendered by tools/make_sfx.mjs), played through one Web Audio graph.
 // Browsers keep a page silent until its first tap or key press, so the context waits for that and wakes then;
-// anything played before is simply skipped. Mute and volume are remembered per browser.
+// anything played before is simply skipped. Mute and both volumes (effects, music) are remembered per browser.
 const BASE=`${import.meta.env.BASE_URL}assets/sfx/`, KEY='il-sound';
+const MUSIC=`${import.meta.env.BASE_URL}assets/music/gathering_island_sunlight.mp3`;
 const TAKES={step_grass:4,step_wood:7,step_stone:4,step_water:4};   // footsteps come in several takes, never the same twice running
 const FILES=['click','whale_call','whale_hum','jump','land','sprint','water_pour','task_done','rain_loop',
              ...Object.entries(TAKES).flatMap(([n,k])=>Array.from({length:k},(_,i)=>`${n}_${i+1}`))];
-const prefs={muted:false,volume:.8};
+const prefs={muted:false,volume:.8,music:.5};
 try{Object.assign(prefs,JSON.parse(localStorage.getItem(KEY)??'{}'));}catch{}
-let ctx=null,master=null,loading=null;
+let ctx=null,master=null,loading=null,music=null,musicGain=null;
 const buffers=new Map(), lastTake={}, lastPlayed={};
 
 function context(){
@@ -20,8 +21,22 @@ function load(){
   if(loading||prefs.muted||!context())return;
   loading=Promise.all(FILES.map(n=>fetch(BASE+n+'.wav').then(r=>r.arrayBuffer()).then(b=>ctx.decodeAudioData(b)).then(b=>buffers.set(n,b),()=>{})));
 }
-const wake=()=>{load();if(ctx?.state==='suspended')ctx.resume();};
+// The background music: one looping track, streamed by an <audio> element (not decoded whole: it is three minutes)
+// and played through its own gain beside the effects, so each has its own slider. It fades in the first time,
+// rests while the tab is hidden, and stays off while muted or turned all the way down.
+function startMusic(){
+  if(!ctx||prefs.muted||!prefs.music||document.hidden)return;
+  if(!music){
+    music=new Audio(MUSIC);music.loop=true;musicGain=ctx.createGain();musicGain.gain.value=0;
+    ctx.createMediaElementSource(music).connect(musicGain).connect(ctx.destination);
+    musicGain.gain.setTargetAtTime(prefs.music,ctx.currentTime,1.2);
+  }
+  if(music.paused)music.play().catch(()=>{});
+}
+const stopMusic=()=>music?.pause();
+const wake=()=>{load();if(ctx?.state==='suspended')ctx.resume();startMusic();};
 for(const ev of ['pointerdown','keydown','touchend'])addEventListener(ev,wake,{capture:true,passive:true});
+document.addEventListener('visibilitychange',()=>document.hidden?stopMusic():startMusic());
 const live=()=>ctx?.state==='running'&&!prefs.muted;
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(prefs));}catch{}};
 
@@ -52,8 +67,9 @@ export function ambient(name,{gain=1}={}){
 export function listenForClicks(root=document){
   root.addEventListener('click',e=>{if(e.target.closest?.('button,a[href],summary,select,input[type=checkbox],[role=button],.island-label'))play('click',{gain:.45,rate:.96+Math.random()*.08});},true);
 }
-export const muted=()=>prefs.muted, volume=()=>prefs.volume;
-export function setMuted(m){prefs.muted=m;save();if(m){if(master)master.gain.value=0;return;}wake();master&&(master.gain.value=prefs.volume);}
+export const muted=()=>prefs.muted, volume=()=>prefs.volume, musicVolume=()=>prefs.music;
+export function setMuted(m){prefs.muted=m;save();if(m){if(master)master.gain.value=0;stopMusic();return;}wake();master&&(master.gain.value=prefs.volume);}
 export function setVolume(v){prefs.volume=v;save();if(master&&!prefs.muted)master.gain.setTargetAtTime(v,ctx.currentTime,.05);}
+export function setMusicVolume(v){prefs.music=v;save();if(musicGain)musicGain.gain.setTargetAtTime(v,ctx.currentTime,.05);if(v>0)wake();else stopMusic();}
 // Fetch the sounds ahead of the first press, so the first one is already there. Not while muted.
 export const preload=()=>load();
