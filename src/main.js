@@ -405,7 +405,8 @@ $('guide-again').onclick=()=>{setPanel(false);overview();guide.start(true);};
 const POUR=2.4, LANDS=.4, GIVE_UP=6, CROSS=3.5;   // seconds watering; when in it the tree starts to take root; longest walk; a far tree's walk
 const thirst=[];let chore=null;
 const home=()=>motion&&mode==='walk'&&!transition&&player.surface?.kind==='island'&&player.surface.id===ME;
-const wantsWater=t=>t.island.id===ME&&!t.island.past&&home()&&(thirst.push(t),true);
+// (not for blocks you marked done in the planner: those take root at once and the fairy asks straight away, life.js quick)
+const wantsWater=t=>t.island.id===ME&&!t.island.past&&home()&&!life?.api.quick(t.block)&&(thirst.push(t),true);
 function quench(){if(chore){forest.water(chore.t);chore.sfx?.stop?.();}chore=null;for(const t of thirst.splice(0))forest.water(t);}
 function turnTo(yaw,dt){const turn=yaw-gardener.rotation.y;gardener.rotation.y+=Math.atan2(Math.sin(turn),Math.cos(turn))*(1-Math.exp(-12*dt));}
 // a step of at most `d` toward (ux,uz) on your own island, bending round a trunk in the way
@@ -458,7 +459,7 @@ function tend(dt){
     watering.pour(spoutAt,soil,dt);
   }
   if(k>=LANDS)forest.water(c.t);
-  if(k>=1)chore=null;
+  if(k>=1){life.api.watered(c.t.block??{},new T.Vector3(b.x,b.y+b.h*.75,b.z));chore=null;}   // the fairy flies out of it (life.js)
 }
 function jump(){if(mode==='walk'&&!transition&&!player.hop&&!player.vy){player.vy=6.2;sound.play('jump',{gain:.55});}}
 function walk(dt){
@@ -636,10 +637,12 @@ renderer=new T.WebGLRenderer({canvas,antialias:false,powerPreference:'high-perfo
   const playerRoot=new T.Group();scene.add(playerRoot);gardener=makeBlomy();playerRoot.add(gardener);player.root=playerRoot;
   const shadow=new T.Mesh(new T.CircleGeometry(.43,24),new T.MeshBasicMaterial({color:'#35492f',transparent:true,opacity:.22,depthWrite:false}));shadow.rotation.x=-Math.PI/2;shadow.position.y=.035;playerRoot.add(shadow);
   spawnOn(islands[0]);
-  life=initLife({world,islands,camera,texture:atmosphere.texture,player,notice,visit,forest,guiding:()=>guide.on,getMode:()=>mode,getSelected:()=>selected,
+  life=initLife({world,scene,islands,camera,texture:atmosphere.texture,player,notice,visit,forest,guiding:()=>guide.on,getMode:()=>mode,getSelected:()=>selected,
     wear:(id,on)=>gardener.userData.wear(id,on),
     setAltitude:(id,h)=>{updateAltitude(islands.find(i=>i.id===id),T.MathUtils.clamp(h,LOW,HIGH));syncPanel();},
     setGlow:(id,g)=>{const b=bridges.find(b=>b.id===id);if(!b)return;b.glow=T.MathUtils.clamp(g,.15,3);b.glowMaterial.emissiveIntensity=b.glow*2.2;b.deckMaterial.emissiveIntensity=b.glow*.16;syncPanel();}});
+  // a finished block whose tree waits for the gardener's can: the fairy asks once it's watered, not before
+  life.api.setWaterWatch(b=>[...thirst,...(chore?[chore.t]:[])].some(t=>t.block&&String(t.block.id)===String(b.id)));
   ready=true;sound.preload();peekHelp();
   // first time here (not in tests, unless ?guide): Blomy shows you round, once the welcome has been said
   {const q=new URLSearchParams(location.search);if(!q.has('skiplogin')||q.has('guide'))setTimeout(()=>guide.start(q.has('guide')),2600);}

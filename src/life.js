@@ -20,6 +20,7 @@ import { createShop, itemById } from './shop.js';
 import { createGarden, setGardenDusk } from './garden.js';
 import { createBuddy } from './buddy.js';
 import * as sound from './sound.js';
+import { createFairy } from './fairy.js';
 
 // Everything README.md says the world should show: the timetable path and wisp,
 // emotion lanterns, weather and altitude from the plan, the shared photo
@@ -32,7 +33,7 @@ const nowMinutes=()=>{const d=new Date();return d.getHours()*60+d.getMinutes()+d
 // Weather is one strain value (0..1); the label is only a name for where it sits.
 export const setStrain=(island,s)=>{island.strain=s;island.weather=weatherLabel(s);island.weatherFx.setStrain(s);};
 
-export function initLife({world,islands,camera,texture,player,notice,visit,forest,getMode,getSelected,setAltitude,setGlow,wear=()=>{},guiding=()=>false}){
+export function initLife({world,scene,islands,camera,texture,player,notice,visit,forest,getMode,getSelected,setAltitude,setGlow,wear=()=>{},guiding=()=>false}){
   const me=islands.find(i=>i.id===ME), members=islands.filter(i=>i.owner), community=islands.find(i=>!i.owner);
   // The demo opens at 23:00, after the whole day has happened, so every one of
   // today's trees can be answered with Done. "Live" in Tune the world follows
@@ -512,7 +513,10 @@ export function initLife({world,islands,camera,texture,player,notice,visit,fores
 
   // ---- sheets: the planner (input) and your balance (analysis + solutions) ---
   const sheets=createSheets();
-  const calendar=createCalendar({plans,owner:ME,clock,notice,sheets,live:LIVE?{connection:world.connection,uid:world.uid}:null});
+  const calendar=createCalendar({plans,owner:ME,clock,notice,sheets,live:LIVE?{connection:world.connection,uid:world.uid}:null,
+    rate:{state:b=>rateState(b),answer:(b,v)=>notice(answerDrain(b,v)),done:bs=>{for(const b of bs)fromPlanner.add(String(b.id));fairy.expect(bs);}}});
+  // blocks marked done in the planner take root at once: no walk with the watering can (main.js asks, quick); the fairy comes straight out
+  const fromPlanner=new Set();
   const balance=createBalance({plans,me,friends:members.filter(i=>i.id!==ME),clock,checkins:checkins[ME],sheets,notice,dew,warm:id=>warm(id,.8)});
   // your gardener waits at the left end of an open sheet's top edge; walk it
   // with ← →, jump with Space, turn it with Q E
@@ -552,24 +556,22 @@ export function initLife({world,islands,camera,texture,player,notice,visit,fores
     return line;
   };
   const ask=createAsk({notice,onAnswer:answerDrain});
-  // The same question, any time: today's finished activities sit under "How do you feel?", each one tap to rate
-  // (light, okay, draining), and a dot on that button says some are waiting. Answering is never required.
-  const DRAIN={light:'Light',okay:'Okay',draining:'Draining'};
+  // The same question, any time: today's activities you've marked done ask it on their row in the Planner's Day list
+  // (calendar.js), each one tap to rate (light, okay, draining), and a dot on the Planner button says some wait.
+  // Answering is never required. rateState: undefined when a block can't be rated yet, null unanswered, else the answer.
+  const rateable=b=>!b.skipped&&b.mins>=15&&!!b.done;   // only once you've pressed Done on it
+  const answerOf=b=>(ANSWERS[ME]??[]).filter(a=>a.date===TODAY&&String(a.blockId)===String(b.series?.id??b.id)).at(-1)?.answer??null;
+  function rateState(b){return rateable(b)?answerOf(b):undefined;}
+  // ...and the firefly fairy asks it about each block you just finished: out of its tree once the gardener has
+  // watered it (main.js tells us, fromTree), or in from the edge of the screen when there's no watering
+  let waitingForWater=()=>false;
+  const fairy=createFairy({scene,camera,ask:b=>(b.date??TODAY)===TODAY&&rateState(b)===null,answer:(b,v)=>notice(answerDrain(b,v)),
+    title:b=>b.title||CATEGORIES[b.cat].label,waiting:b=>waitingForWater(b),treeAt:b=>forest.crown(b.id),
+    blocked:()=>guiding()||!!document.querySelector('.sheet:not([hidden]),dialog[open],#login:not([hidden])')});
   function renderAsks(){
-    const answered=new Map((ANSWERS[ME]??[]).filter(a=>a.date===TODAY).map(a=>[String(a.blockId),a.answer]));
-    const ended=plans.on(ME,TODAY).filter(b=>!b.skipped&&b.mins>=15&&['done','waiting'].includes(blockStatus(b,clock.minutes)));
-    const open=ended.filter(b=>!answered.has(String(b.series?.id??b.id))).length;
-    $('mood-toggle').classList.toggle('has-asks',open>0);
-    $('today-asks').hidden=!ended.length;
-    $('ask-list').replaceChildren(...ended.map(b=>{
-      const done=answered.get(String(b.series?.id??b.id));
-      const name=`${b.title||CATEGORIES[b.cat].label} · ${fmt(b.start)}`;
-      const li=mk('li',{className:'ask-row'},catImg(b.cat),mk('span',{className:'ask-name',textContent:name,title:name}));
-      // the choices sit on their own row under the name, so names show in full
-      li.append(mk('span',{className:'ask-picks'},...(done?[mk('span',{className:'ask-done',textContent:DRAIN[done]})]
-        :Object.entries(DRAIN).map(([v,label])=>{const x=mk('button',{type:'button',className:'ask-pick',textContent:label});x.onclick=()=>notice(answerDrain(b,v));return x;}))));
-      return li;
-    }));
+    const open=plans.on(ME,TODAY).filter(b=>rateable(b)&&!answerOf(b)).length;
+    $('planner-toggle').classList.toggle('has-asks',open>0);
+    $('planner-toggle').title=open?`${open} of today's activities to rate`:'';
   }
   const buddies={planner:sheetBuddy($('planner-sheet')),balance:sheetBuddy($('balance-sheet')),shop:sheetBuddy($('shop-sheet'))};
   // any plan edit re-draws that island's path, settles its altitude, refreshes the sheets
@@ -676,7 +678,7 @@ export function initLife({world,islands,camera,texture,player,notice,visit,fores
     $('reveal-more').hidden=!next.more;if(next.more)$('reveal-more').textContent=next.moreLabel??'See why';
   }
   // Your own planned block, finished early: its card offers "Done", and the ghost takes root.
-  const finish=b=>{plans.markDone(ME,b);notice(`${b.title} took root.`);};
+  const finish=b=>{plans.markDone(ME,b);notice(`${b.title} took root.`);fairy.expect([b]);};
   // Your own open blocks: Done once it has happened, Let go (after a gentle confirm) any time.
   const letGo=async b=>{if(await confirmLetGo(b.title)){plans.toggleSkip(ME,b);notice(`${b.title} drifted away. Bring it back from the planner any time.`);}};
   const withActions=(card,b)=>{
@@ -884,6 +886,7 @@ export function initLife({world,islands,camera,texture,player,notice,visit,fores
   return {
     update(dt,elapsed,motion){
       if(clock.live)clock.minutes=nowMinutes();
+      fairy.tick(dt);
       const minute=Math.floor(clock.minutes);
       if(minute!==lastMinute){lastMinute=minute;showClock();settleFriends();calendar.render();refreshGardener();renderAsks();}
       const mode=getMode(), selected=getSelected(), moved=mode!==lastMode||selected!==lastSelected;
@@ -958,6 +961,10 @@ export function initLife({world,islands,camera,texture,player,notice,visit,fores
       return true;
     },
     api:{
+      // the watering (main.js): which finished blocks still wait for it, and the moment one's tree has been watered
+      setWaterWatch:f=>{waitingForWater=f;},
+      quick:b=>!!b&&fromPlanner.has(String(b.id)),
+      watered:(b,top)=>fairy.fromTree(b,top),
       getSchedule:id=>tables[id]?.blocks.map(b=>({...b,status:blockStatus(b,clock.minutes)}))??null,
       week:id=>plans.week(id??ME).map(({id,date,start,mins,cat,title,skipped,priority})=>({id,date,start,mins,cat,title,skipped,priority})),
       setTime:m=>{clock.live=false;clock.minutes=m;showClock();},

@@ -910,3 +910,29 @@ footer{z-index:2}
 .bal-top{align-items:start}
 /* ...except "Small changes" down the left: it runs to the bottom of "What your island has learned", so the two columns end level */
 .bal-focus>.bal-panel:first-child{align-self:stretch}
+/* "How draining was it?" on today's finished blocks in the Planner's Day list (calendar.js renderDay); the dot on the Planner button says some wait */
+.plan-item:has(.plan-rate){flex-wrap:wrap}
+.plan-rate{flex-basis:100%;display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding-top:8px;margin-top:2px;border-top:1px dashed oklch(.9 .015 295)}
+.plan-rate-q{font:500 12px var(--display);color:var(--muted);margin-right:4px}
+.plan-item.done:has(.plan-rate){opacity:1}.plan-item.done:has(.plan-rate)>:not(.plan-rate){opacity:.7}
+#planner-toggle{position:relative}
+#planner-toggle.has-asks::after{content:'';position:absolute;top:6px;right:8px;width:9px;height:9px;border-radius:50%;background:#ff7fb8;box-shadow:0 0 0 2px #fff}
+@media(max-width:600px){#planner-toggle.has-asks::after{top:1px;right:1px}}
+/* the fairy (fairy.js, a 3D figure in the world): her white bubble beside her, and a trail of sparks as she flies */
+.fairy-bubble{position:fixed;z-index:6;width:300px;padding:14px 16px 12px;border-radius:18px;background:#fff;border:3px solid #fff;
+  box-shadow:0 5px 0 rgba(157,99,242,.22),0 22px 40px -20px rgba(60,24,120,.6);opacity:0;scale:.9;transition:opacity .2s,scale .2s}
+.fairy-bubble[hidden]{display:none}
+.fairy-bubble.on{opacity:1;scale:1}
+.fairy-bubble::before{content:'';position:absolute;top:42px;left:-9px;width:14px;height:14px;background:#fff;rotate:45deg;border-radius:3px}   /* the tail points at her */
+.fairy-bubble.flip::before{left:auto;right:-9px}
+.fairy-kicker{position:relative;display:block;font:600 11.5px var(--display);color:var(--orchid);letter-spacing:.01em}
+.fairy-q{position:relative;margin:3px 0 10px;font:600 17px var(--display);color:var(--ink)}
+.fairy-picks{position:relative;display:flex;flex-wrap:wrap;gap:7px}
+.fairy-pick{border:2px solid var(--violet-soft);background:#fff;border-radius:999px;padding:6px 14px;font:600 13px var(--display);color:var(--violet);box-shadow:0 2px 0 var(--violet-soft);transition:transform .14s,background .14s,color .14s,box-shadow .14s}
+.fairy-pick:hover{background:var(--orchid);border-color:var(--orchid);color:#fff;transform:translateY(-1px);box-shadow:0 3px 0 var(--orchid-deep)}
+.fairy-later{display:block;margin:10px 0 0 auto;font-size:12px}
+.fairy-spark{position:fixed;z-index:6;width:6px;height:6px;margin:-3px;border-radius:50%;background:#fff3a6;box-shadow:0 0 8px 2px #ffd84a;pointer-events:none;animation:fairy-spark .9s ease-out forwards}
+@keyframes fairy-spark{to{opacity:0;scale:.2;translate:var(--dx,0) var(--dy,14px)}}
+@media(prefers-reduced-motion:reduce){.fairy-spark{display:none}.fairy-bubble{transition:none}}
+/* while the fairy is out, the walk-up card for the tree she came from steps aside */
+#app.fairy-out #reveal{visibility:hidden}
