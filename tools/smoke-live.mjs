@@ -101,9 +101,11 @@ const { data: ended } = await admin.from('blocks').insert({ owner: aid, date: to
 await a.goto(`${APP}?ask=drain&block=${ended.id}&date=${today}`);
 await a.getByRole('button', { name: 'Enter your island' }).click({ timeout: 20_000 });
 await ready(a);
-await a.locator('#ask-dialog[open]').waitFor({ timeout: 60_000 });
-check('prompt link: the island asks about that block', (await a.textContent('#ask-title')).includes('Problem set'));
-await a.click('#ask-dialog [data-answer="draining"]');
+await a.locator('#planner-sheet:not([hidden])').waitFor({ timeout: 60_000 });
+const problemSet = a.locator('#plan-list .plan-item', { hasText: 'Problem set' });
+check('prompt link: the planner opens on today, with that block', await problemSet.count() > 0);
+await problemSet.locator('.plan-done').click();   // marked done, it asks how draining it was
+await problemSet.locator('.plan-rate .ask-pick', { hasText: 'Draining' }).click();
 await a.waitForTimeout(2500);
 const answers = (await admin.from('drain_answers').select('cat,answer').eq('owner', aid)).data ?? [];
 check('answer: saved, and the gardener replies', answers.some(x => x.answer === 'draining'), await a.textContent('#notice'));
@@ -131,13 +133,10 @@ check('this week: earlier days stand as trees without a tap', new RegExp(`(^|\\D
 await a.waitForTimeout(8000);
 await a.screenshot({ path: `${OUT}/live-grown.png`, timeout: 180_000 });
 
-// the evening check-in, then at most one more "How draining?" (one was answered above)
+// the evening check-in: a lantern, and no questions after it
 await a.evaluate(() => window.islandLife.life.checkIn('calm'));
-await a.locator('#ask-dialog[open]').waitFor({ timeout: 60_000 }).catch(() => {});
-check('evening: after "How are you?" it asks about the least-known activity', (await a.textContent('#ask-title')).includes('Gym'), await a.textContent('#ask-title'));
-await a.click('#ask-dialog [data-answer="light"]');
 await a.waitForTimeout(2500);
-check('evening: two questions a day at most', !(await a.locator('#ask-dialog[open]').count()));
+check('evening: the check-in lights a lantern', /calm lantern/.test(await a.textContent('#notice')), await a.textContent('#notice'));
 
 // past islands
 const altNow = (await a.evaluate(() => window.islandLife.getState())).islands.find(i => i.id === 'sakura').altitude;

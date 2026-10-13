@@ -1,9 +1,8 @@
 // Phone prompts (docs/algorithm.md 5.2), run every 15 minutes by pg_cron.
 //
-//   "How are you?"  once in the evening, unless already answered. The app
-//                   follows it with "How draining was that?" about at most two
-//                   of the day's activities (src/readings.js eveningAsks), so
-//                   the whole day costs one notification.
+//   "How are you?"  once in the evening, unless already answered: the whole
+//                   day costs one notification. (How draining an activity was
+//                   is asked in the app, when you mark it done.)
 //
 // Never between 22:00 and 08:00, never during an activity, and three ignored
 // prompts in a row halve the asking for a week. Tapping the notification opens

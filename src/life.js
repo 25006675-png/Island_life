@@ -1,10 +1,9 @@
 import * as T from 'three';
 import { ME, LIVE, DAWN, NIGHT, CATEGORIES, MOODS, CHECKINS, WARMTH, NOTES, NOTE_PRESETS, TASKS, fmt, hours, toMin,
          deriveStrain, weatherLabel, loadFromAltitude, altitudeFromLoad, catImg, fullness, WEEK, symbolImg } from './data.js';
-import { reading, weekReading, gardener as gardenerFor, eveningAsks, answer as recordAnswer, ANSWERS, forecast } from './readings.js';
+import { reading, weekReading, gardener as gardenerFor, answer as recordAnswer, ANSWERS, forecast } from './readings.js';
 import { FORECAST_WORDS } from './climate.js';
 import * as backend from './backend.js';
-import { createAsk } from './ask.js';
 import { mountSkyPanel } from './account.js';
 import { plans, TODAY, addDays, dow, mondayOf, isDone, fromIso, daysBetween } from './plan.js';
 import { HISTORY } from './groves.js';
@@ -21,6 +20,7 @@ import { createGarden, setGardenDusk } from './garden.js';
 import { createBuddy } from './buddy.js';
 import * as sound from './sound.js';
 import { createFairy } from './fairy.js';
+import { createFlowerTalk } from './flower.js';
 
 // Everything README.md says the world should show: the timetable path and wisp,
 // emotion lanterns, weather and altitude from the plan, the shared photo
@@ -33,7 +33,7 @@ const nowMinutes=()=>{const d=new Date();return d.getHours()*60+d.getMinutes()+d
 // Weather is one strain value (0..1); the label is only a name for where it sits.
 export const setStrain=(island,s)=>{island.strain=s;island.weather=weatherLabel(s);island.weatherFx.setStrain(s);};
 
-export function initLife({world,scene,islands,camera,texture,player,notice,visit,forest,getMode,getSelected,setAltitude,setGlow,wear=()=>{},guiding=()=>false}){
+export function initLife({world,scene,flower,islands,camera,texture,player,notice,visit,forest,getMode,getSelected,setAltitude,setGlow,wear=()=>{},guiding=()=>false}){
   const me=islands.find(i=>i.id===ME), members=islands.filter(i=>i.owner), community=islands.find(i=>!i.owner);
   // The demo opens at 23:00, after the whole day has happened, so every one of
   // today's trees can be answered with Done. "Live" in Tune the world follows
@@ -545,17 +545,14 @@ export function initLife({world,scene,islands,camera,texture,player,notice,visit
     notice(`Blomy: “${item.line}”`);
     return true;
   }});
-  // "How draining was that?" -- straight after the evening's "How are you?",
-  // about the one or two of today's activities the island knows least
-  // (readings.js eveningAsks). The gardener says what it learned; the island
-  // re-reads your week at once.
+  // "How draining was that?" -- asked about a block once you've marked it done (the fairy, and its row in the
+  // Planner's Day list). The gardener says what it learned; the island re-reads your week at once.
   const answerDrain=(b,value)=>{
     const line=recordAnswer(ME,b,value);
     if(LIVE)backend.saveAnswer(ANSWERS[ME].at(-1));
     settle(ME);refreshGardener();balance.render();calendar.render();renderAsks();
     return line;
   };
-  const ask=createAsk({notice,onAnswer:answerDrain});
   // The same question, any time: today's activities you've marked done ask it on their row in the Planner's Day list
   // (calendar.js), each one tap to rate (light, okay, draining), and a dot on the Planner button says some wait.
   // Answering is never required. rateState: undefined when a block can't be rated yet, null unanswered, else the answer.
@@ -588,29 +585,32 @@ export function initLife({world,scene,islands,camera,texture,player,notice,visit
     b.style.setProperty('--mood',m.color);b.textContent=m.label;b.onclick=()=>checkIn(k);$('moods').append(b);
   }
   let checkinPhoto=null;
-  $('checkin-photo').onchange=e=>{const f=e.target.files[0];checkinPhoto=null;$('checkin-photo-name').textContent=f?f.name:'Choose a photo';if(f)loadSquare(f).then(c=>{checkinPhoto=c.toDataURL('image/jpeg',.9);});};
+  $('checkin-photo').onchange=e=>{const f=e.target.files[0];checkinPhoto=null;$('checkin-photo-name').textContent=f?f.name:'Add a photo';if(f)loadSquare(f).then(c=>{checkinPhoto=c.toDataURL('image/jpeg',.9);});};
   function checkIn(k){
     showPresent();
     const entry={day:0,mood:k,time:clock.minutes,photo:checkinPhoto};checkins[ME].push(entry);
     const onMine=player.surface?.kind==='island'&&player.surface.id===ME;
     mood.checkIn(me,entry,onMine?player.position.clone().sub(me.group.position).add(new T.Vector3(0,1.2,0)):null);
     if(LIVE)backend.saveCheckin(world,{mood:k,minute:clock.minutes,photo:checkinPhoto});
-    weather(me);checkinPhoto=null;$('checkin-photo').value='';$('checkin-photo-name').textContent='Choose a photo';balance.render();refreshGardener();
+    weather(me);checkinPhoto=null;$('checkin-photo').value='';$('checkin-photo-name').textContent='Add a photo';balance.render();refreshGardener();
     notice(`A ${MOODS[k].label.toLowerCase()} lantern lights up on your pier.`);
-    if(!$('mood-panel').hidden)setMoodPanel(false);
-    // then two quick ones about today, if the island has something to learn
-    const ended=plans.on(ME,TODAY).filter(b=>['done','waiting'].includes(blockStatus(b,clock.minutes)));
-    // (not while Blomy is guiding: the question would cover what the guide points at; it waits in the panel)
-    if(!guiding())eveningAsks(ME,ended).forEach((b,n)=>setTimeout(()=>ask.ask(b),1600+n*50));
+    talk.close();
   }
-  const PANELS=[['settings','settings-toggle'],['mood-panel','mood-toggle']];
-  const closeOthers=keep=>{for(const [p,t] of PANELS)if(p!==keep){$(p).hidden=true;$(t).setAttribute('aria-expanded','false');}};
-  function setMoodPanel(open){
-    $('mood-panel').hidden=!open;$('mood-toggle').setAttribute('aria-expanded',String(open));
-    if(open){closeOthers('mood-panel');sheets.hide();renderAsks();$('moods').querySelector('button')?.focus();}
-    else $('mood-toggle').focus();
-  }
-  $('mood-toggle').onclick=()=>setMoodPanel($('mood-panel').hidden);$('mood-close').onclick=()=>setMoodPanel(false);
+  // your flower asks how you feel (flower.js), only while you walk your own island: tap her, press T, or walk up to her.
+  // After a check-in she rests FLOWER_REST minutes (island time, from the last one) before she asks again.
+  const FLOWER_REST=60, flowerAt=new T.Vector3();
+  const atHome=()=>getMode()==='walk'&&player.surface?.kind==='island'&&player.surface.id===ME;
+  const talk=flower?createFlowerTalk({camera,flower,here:atHome,
+    near:()=>{if(!atHome())return false;flower.getWorldPosition(flowerAt);return Math.hypot(flowerAt.x-player.position.x,flowerAt.z-player.position.z)<2.4;},
+    rest:()=>{if(guiding())return 0;   // Blomy's guide waits for her question: no resting then
+      const last=(checkins[ME]??[]).filter(c=>c.day===0).at(-1);if(last?.time==null)return 0;
+      return Math.min(FLOWER_REST,Math.max(0,Math.ceil(FLOWER_REST-(clock.minutes-last.time))));},
+    resting:min=>notice(`Your flower is resting. She’ll ask how you feel again in ${min} min.`),
+    blocked:()=>!$('settings').hidden||!!document.querySelector('.sheet:not([hidden]),dialog[open],#login:not([hidden])'),
+    mood:()=>{const c=(checkins[ME]??[]).filter(c=>c.day===0).at(-1);return c?MOODS[c.mood].color:null;}})
+    :{request(){},close(){},update(){},isOpen:false};
+  const PANELS=[['settings','settings-toggle']];
+  const closeOthers=keep=>{for(const [p,t] of PANELS)if(p!==keep){$(p).hidden=true;$(t).setAttribute('aria-expanded','false');}talk.close();};
   $('settings-toggle').addEventListener('click',()=>{closeOthers('settings');sheets.hide();});
   $('planner-toggle').onclick=()=>{closeOthers(null);calendar.open();buddies.planner.reset(80);};
   const openBalance=(from,at)=>{closeOthers(null);balance.open(from,at);buddies.balance.reset(80);};
@@ -845,13 +845,11 @@ export function initLife({world,scene,islands,camera,texture,player,notice,visit
       membersChanged:()=>notice('Someone new joined your sky. Reload to see their island.'),
     });
   }
-  // a phone prompt opens the app on its question: ?ask=drain&block=..&date=.. or ?ask=mood
+  // a phone prompt opens the app on its question: ?ask=mood (home to your island, where your flower asks), or ?ask=drain (the Planner's Day list,
+  // where the blocks you've marked done can be rated)
   const params=new URLSearchParams(location.search);
-  if(params.get('ask')==='mood')setTimeout(()=>setMoodPanel(true),1200);
-  if(params.get('ask')==='drain'){
-    const b=plans.on(ME,params.get('date')??TODAY).find(b=>String(b.series?.id??b.id)===params.get('block'));
-    if(b)setTimeout(()=>ask.ask(b),1200);
-  }
+  if(params.get('ask')==='mood')setTimeout(()=>{if(!atHome())visit(ME);talk.request();},1200);
+  if(params.get('ask')==='drain')setTimeout(()=>calendar.open('day'),1200);
   // the golden window's notification opens the camera: ?golden on a fresh load,
   // or a message from the service worker when the island was already open
   const shareGolden=()=>{if(!$('capture').open)photos.capture();};
@@ -886,7 +884,7 @@ export function initLife({world,scene,islands,camera,texture,player,notice,visit
   return {
     update(dt,elapsed,motion){
       if(clock.live)clock.minutes=nowMinutes();
-      fairy.tick(dt);
+      fairy.tick(dt);talk.update(dt);
       const minute=Math.floor(clock.minutes);
       if(minute!==lastMinute){lastMinute=minute;showClock();settleFriends();calendar.render();refreshGardener();renderAsks();}
       const mode=getMode(), selected=getSelected(), moved=mode!==lastMode||selected!==lastSelected;

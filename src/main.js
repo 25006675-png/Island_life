@@ -20,6 +20,7 @@ import { createForest } from './forest.js';
 import { createPier } from './pier.js';
 import { GATE_POSTS, GATE_OUT as GATE_WAY, moveGate } from './gate.js';
 import { makeGardener } from './blomy.js';
+import { makeFlower } from './flowermodel.js';
 import { createGuide } from './guide.js';
 import { createWatering } from './watering.js';
 import * as sound from './sound.js';
@@ -72,6 +73,19 @@ let definitions=defineIslands(DEMO_PEOPLE);
 // The pier the whale brings Blomy to on the welcome page (src/pier.js): out from the shore in front of each
 // member island's torii, so the landing and the island are the same place. Its deck is walkable (navigation.js).
 const GATE_MID={x:-5.4,z:-5.0}, GATE_OUT=new T.Vector3(-.742,0,-.671);   // model units, the same on every meadow island
+// your talking flower (flower.js): on the grass just inside the gate, to one side of the path in from the pier,
+// facing out to where you arrive; kept clear of trees like the bench and the well
+let flower=null;
+function plantFlower(island){
+  const s=island.scale, side={x:-GATE_OUT.z,z:GATE_OUT.x};
+  for(const [back,a] of [[1.4,1.7],[1.4,-1.7],[2.4,2.2],[2.4,-2.2]]){
+    const mx=GATE_MID.x-GATE_OUT.x*back+side.x*a, mz=GATE_MID.z-GATE_OUT.z*back+side.z*a, h=island.field.height(mx,mz);
+    if(h===null)continue;
+    const f=makeFlower();f.position.set(mx*s,h*s,mz*s);f.rotation.y=Math.atan2(GATE_OUT.x,GATE_OUT.z);
+    island.group.add(f);island.obstacles.push({x:mx,z:mz,r:.45});return f;
+  }
+  return null;
+}
 function buildPier(island){
   const h=d=>island.field.height(GATE_MID.x+GATE_OUT.x*d,GATE_MID.z+GATE_OUT.z*d);
   let d=2.5;while(d<12&&h(d+.1)!==null)d+=.1;d-=.3;             // the last ground before the edge
@@ -361,7 +375,7 @@ const stick={on:false,x:0,y:0,id:null};
 // On mobile it sits just above the island's name (the block bottom left), clear of its words however tall it grows,
 // and what hangs under the header (panels, notices) starts below it, however tall it is at this screen size.
 let stickShown=false, onFoot=false;
-const overWorld=()=>!$('settings').hidden||!$('mood-panel').hidden||!$('veil').hidden||$('island-card').open||!!document.querySelector('dialog[open]');
+const overWorld=()=>!$('settings').hidden||!$('flower-ask').hidden||!$('veil').hidden||$('island-card').open||!!document.querySelector('dialog[open]');
 const placeBox=document.querySelector('.place');
 function liftStick(){const app=$('app');
   app.style.setProperty('--stick-bottom',`${Math.round(app.getBoundingClientRect().bottom-placeBox.getBoundingClientRect().top+12)}px`);
@@ -374,8 +388,9 @@ function showStick(){
   if(want)liftStick();
   else{stick.on=false;stick.x=stick.y=0;stick.id=null;$('stick').firstElementChild.style.translate='';}
 }
-// The first-time guide (guide.js): come home, walk, hang a feeling, open the planner and your balance, then the
-// bridges. Each step lights up what to touch and waits until you have touched it.
+// The first-time guide (guide.js): come home, walk, tell your flower how you feel, the planner (Done grows a tree, and
+// the fairy then asks how draining it was), your balance, then the bridges. Each step lights up what to touch and
+// waits until you have touched it.
 let walkedFrom=0, felt=false;
 $('moods').addEventListener('click',e=>{if(e.target.closest('.mood'))felt=true;});
 const guide=createGuide([
@@ -385,13 +400,18 @@ const guide=createGuide([
                 :'This is home! Try walking: press the keys and watch them light up.',
    art:()=>TOUCH?'stick':'keys',target:()=>TOUCH?$('stick'):null,hand:true,
    start:()=>{walkedFrom=player.distance;},done:()=>player.distance-walkedFrom>8},
-  {say:'How are you feeling right now? Tap here.',target:()=>$('mood-toggle'),hand:true,done:()=>!$('mood-panel').hidden},
-  {say:'Pick the one closest. It hangs as a lantern on your pier, and over a few days your feelings make your island’s weather.',
-   start:()=>{felt=false;},target:()=>$('mood-panel').hidden?null:$('moods'),hand:true,done:()=>felt},
+  // the check-in: your flower asks (flower.js), only on your own island
+  {say:()=>TOUCH?'See the flower by your gate? She asks how you’re feeling. Walk up to her, or tap her.'
+                :'See the flower by your gate? She asks how you’re feeling. Walk up to her, tap her, or press T.',
+   target:()=>$('flower-talk').hidden?null:$('flower-talk'),hand:true,done:()=>!$('flower-ask').hidden},
+  {say:'Pick the one closest. It hangs as a lantern on your pier, and over a few days your feelings make your island’s weather. She’ll rest for an hour, then ask again.',
+   start:()=>{felt=false;},target:()=>$('flower-ask').hidden?null:$('moods'),hand:true,done:()=>felt},
   // an open sheet is yours to read: Blomy steps aside (style.css) and waits until you close it yourself
-  {say:'Your week lives in the Planner. Every activity you finish grows a tree on your island. Open it, look around, and close it when you’re done.',
+  {say:'Your week lives in the Planner. When an activity’s time has passed, press Done and it grows a tree on your island. Open it, look around, and close it when you’re done.',
    target:()=>$('planner-toggle'),hand:true,done:()=>!$('planner-sheet').hidden},
   {say:'Close the planner when you’re done looking.',done:()=>$('planner-sheet').hidden},
+  // the fairy (fairy.js) waits while Blomy talks: anything you marked done above, she asks about once the guide ends
+  {say:'Every time you press Done, a fairy flies out of that tree and asks how draining it was. One tap teaches your island what your week really costs; your answer shows on that block in the Planner too.'},
   {say:'And Your balance shows how heavy your week is, with small changes that would help. Have a look, then close it.',
    target:()=>$('balance-toggle'),hand:true,done:()=>!$('balance-sheet').hidden},
   {say:'Close your balance when you’re done looking.',done:()=>$('balance-sheet').hidden},
@@ -623,6 +643,7 @@ renderer=new T.WebGLRenderer({canvas,antialias:false,powerPreference:'high-perfo
     const model=assets[def.model].clone(true);model.scale.setScalar(def.scale);group.add(model);island.model=model;model.traverse(o=>{o.userData.islandId=def.id;});
     plantIsland(island,group,assets);
     if(def.owner){island.pier=buildPier(island);group.add(island.pier.group);}
+    if(def.id===ME)flower=plantFlower(island);
     // activity trees and today's ghosts
     forest??=createForest({assets,islandSurface,speciesScale:SPECIES_SCALE,thirsty:wantsWater,
       onRoot:t=>{if(ready&&t.island.id===ME)sound.play('task_done',{gain:.55,cooldown:.6});}});   // one chime for "Mark all
@@ -637,7 +658,7 @@ renderer=new T.WebGLRenderer({canvas,antialias:false,powerPreference:'high-perfo
   const playerRoot=new T.Group();scene.add(playerRoot);gardener=makeBlomy();playerRoot.add(gardener);player.root=playerRoot;
   const shadow=new T.Mesh(new T.CircleGeometry(.43,24),new T.MeshBasicMaterial({color:'#35492f',transparent:true,opacity:.22,depthWrite:false}));shadow.rotation.x=-Math.PI/2;shadow.position.y=.035;playerRoot.add(shadow);
   spawnOn(islands[0]);
-  life=initLife({world,scene,islands,camera,texture:atmosphere.texture,player,notice,visit,forest,guiding:()=>guide.on,getMode:()=>mode,getSelected:()=>selected,
+  life=initLife({world,scene,flower,islands,camera,texture:atmosphere.texture,player,notice,visit,forest,guiding:()=>guide.on,getMode:()=>mode,getSelected:()=>selected,
     wear:(id,on)=>gardener.userData.wear(id,on),
     setAltitude:(id,h)=>{updateAltitude(islands.find(i=>i.id===id),T.MathUtils.clamp(h,LOW,HIGH));syncPanel();},
     setGlow:(id,g)=>{const b=bridges.find(b=>b.id===id);if(!b)return;b.glow=T.MathUtils.clamp(g,.15,3);b.glowMaterial.emissiveIntensity=b.glow*2.2;b.deckMaterial.emissiveIntensity=b.glow*.16;syncPanel();}});

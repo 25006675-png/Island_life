@@ -544,11 +544,6 @@ label:has(> .ed-cat-icon){position:relative}
 .login-card .login-or{text-align:center;margin:10px 0;font-size:11px}
 .login-card .login-status{min-height:1.2em;margin:12px 0 0;font-size:12px;color:oklch(.5 .14 30);text-align:center}.login-card .login-status.good{color:oklch(.42 .1 150)}
 .login-card .login-status:empty{min-height:0;margin:0}
-#ask-dialog{width:min(400px,calc(100% - 32px))}
-.ask-what{display:flex;align-items:center;justify-content:center;gap:2px}
-.ask-answers{display:flex;justify-content:center;gap:10px;margin:16px 0 10px}
-dialog.wood .ask-answers .wood-button{flex:1;padding:12px 10px;font-size:15px}
-.ask-why{font-size:12px;text-align:center;opacity:.85}
 .support-list{margin:6px 0 16px;padding-left:18px;font:14px/1.55 'Segoe Print','Bradley Hand',Georgia,serif;color:#2f2116}.support-list li{margin-bottom:8px}
 .wk-forecast{display:block;margin-top:3px;font-size:9px;letter-spacing:.02em;white-space:nowrap}
 .wk-day.fc-light .wk-forecast{color:oklch(.45 .09 150)}
@@ -936,3 +931,23 @@ footer{z-index:2}
 @media(prefers-reduced-motion:reduce){.fairy-spark{display:none}.fairy-bubble{transition:none}}
 /* while the fairy is out, the walk-up card for the tree she came from steps aside */
 #app.fairy-out #reveal{visibility:hidden}
+/* your talking flower (flower.js): an invisible tap target riding on her face, with a name tag on hover; her bubble
+   is the fairy's white bubble with the five moods, an optional photo and "Not now" */
+.flower-talk{position:absolute;z-index:1;width:64px;height:64px;margin:-32px 0 0 -32px;padding:0;border:0;border-radius:50%;background:transparent;cursor:pointer}
+.flower-talk:hover{background:transparent}
+.flower-talk span{position:absolute;bottom:calc(100% - 4px);left:50%;translate:-50% 0;white-space:nowrap;padding:5px 11px;border-radius:999px;background:#fff;color:var(--violet);
+  font:600 12px var(--display);box-shadow:0 3px 0 var(--violet-soft),0 10px 20px -12px rgba(60,24,120,.5);opacity:0;transition:opacity .15s;pointer-events:none}
+.flower-talk:hover span,.flower-talk:focus-visible span{opacity:1}
+.flower-talk:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+#app:has(#login:not([hidden])) .flower-talk{visibility:hidden}
+.flower-bubble .moods{margin:0;gap:7px}
+.flower-bubble .mood{border:2px solid var(--violet-soft);background:#fff;border-radius:999px;padding:6px 13px;font:600 13px var(--display);color:var(--violet);box-shadow:0 2px 0 var(--violet-soft);transition:transform .14s,background .14s,color .14s,box-shadow .14s}
+.flower-bubble .mood:hover{background:var(--orchid);border-color:var(--orchid);color:#fff;transform:translateY(-1px);box-shadow:0 3px 0 var(--orchid-deep)}
+.flower-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:12px}
+.flower-photo{position:relative;display:inline-flex;align-items:center;gap:6px;max-width:180px;padding:5px 12px;border-radius:999px;border:2px dashed var(--violet-soft);color:var(--violet);font:600 12px var(--display);cursor:pointer}
+.flower-photo span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.flower-photo:hover{border-style:solid;background:#f6effd}
+.flower-photo:focus-within{outline:3px solid var(--accent);outline-offset:2px}
+.flower-photo input{position:absolute;opacity:0;width:1px;height:1px;pointer-events:none}
+.flower-bubble .fairy-later{margin:0}
+.flower-note{margin:8px 0 0;font-size:11px;line-height:1.45;color:var(--muted)}
