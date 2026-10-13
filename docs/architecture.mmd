@@ -1,42 +1,45 @@
 flowchart LR
   student([University student])
 
-  subgraph proto["Current visual prototype"]
+  subgraph app["Browser app, desktop and phone"]
     direction LR
-    vite["Vite web application"]
+    vite["Vite web app<br/>welcome page + island<br/>installable, service worker"]
     logic["JavaScript application logic"]
-    rules["Rules, written out in full<br/>hours against capacity to altitude<br/>check-ins to weather<br/>rest ideas ranked against the week"]
+    rules["Rules, written out in full<br/>this week's load against your normal week to altitude<br/>check-ins to weather<br/>which kind of help fits"]
     world["Three.js 3D world"]
-    mock[("Local mock data")]
+    demo[("Demo sky<br/>local data, no account")]
   end
 
-  subgraph prod["Backend, to build in the final phase"]
+  subgraph backend["Supabase backend"]
     direction LR
-    auth["Supabase Auth"]
+    auth["Auth<br/>email and Google"]
     db[("PostgreSQL")]
     rls["Row-level security"]
-    realtime["Supabase Realtime"]
-    storage["Supabase Storage"]
-    cron["Scheduled jobs"]
-    edge["Edge Functions"]
-    ai["AI service, advisory only<br/>name the kind of event<br/>explain the week in plain words<br/>propose rest ideas"]
+    realtime["Realtime"]
+    storage["Storage<br/>photos"]
+    cron["Scheduled jobs<br/>golden window, calendar sync,<br/>prompts, weekly tasks"]
+    edge["Edge Functions<br/>google-calendar, gardener, prompts"]
   end
 
-  cal["Google and Microsoft calendars<br/>ICS feeds, CalDAV"]
+  ai["Gemini, advisory only<br/>sorts event titles into kinds<br/>suggests and words the gardener's idea"]
+  cal["Google Calendar<br/>Outlook, iCloud, Canvas later"]
+  push["Web Push<br/>phone and desktop"]
 
   student --> vite --> logic
   logic --> rules --> world
-  logic --> mock
-  logic -. future migration .-> auth
-  logic -. future migration .-> db
-  logic -. future migration .-> storage
-  logic -. future migration .-> edge
+  logic --> demo
+  logic --> auth
+  logic --> db
+  logic --> storage
+  logic --> edge
   db --> rls
   db --> realtime
+  realtime -->|"live updates from friends"| logic
   cron --> edge
-  edge --> cal
+  edge <--> cal
+  edge --> push
   edge -. asks .-> ai
-  ai -. suggestions only, never writes to the plan .-> edge
+  ai -. suggestions only, checked by the rules .-> edge
 
-  classDef planned stroke-dasharray:6 4;
-  class ai planned;
+  classDef advisory stroke-dasharray:6 4;
+  class ai advisory;

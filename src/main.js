@@ -129,7 +129,7 @@ let renderer,scene,camera,controls,composer,atmosphere,gardener,life,forest,wate
 const islands=[],bridges=[],keys=new Set();
 let openSlots=[];   // a signed-in sky's slots nobody holds yet, each kept in glass (vacancy.js)
 // Phones and tablets of any common size, portrait or landscape (the same query as the mobile block in style.css).
-// There the UI starts a little smaller, at 90%; it can be changed in the menu.
+// There the UI starts smaller, at 80%; it can be changed in the menu.
 const MOBILE=matchMedia('(max-width: 600px), (pointer: coarse) and (max-width: 1024px), (max-height: 500px) and (max-width: 1000px)');
 let selected='community',mode='overview',ready=false,motion=!matchMedia('(prefers-reduced-motion: reduce)').matches,elapsed=0,last=0,transition=null,noticeTimer;
 const player={position:new T.Vector3(),surface:null,distance:0,hop:0,vy:0,stuck:0};
@@ -388,11 +388,12 @@ const stick={on:false,x:0,y:0,id:null};
   base.addEventListener('pointermove',e=>{if(stick.on&&e.pointerId===stick.id)move(e);});
   const end=e=>{if(e.pointerId!==stick.id)return;stick.on=false;stick.x=stick.y=0;stick.id=null;knob.style.translate='';};
   base.addEventListener('pointerup',end);base.addEventListener('pointercancel',end);}
-// It steps aside while something is open over the world: a panel, a sheet, a dialog, or the island card unfolded.
+// It steps aside while something is open over the world: a panel, a sheet, a dialog, the island card unfolded, or
+// the lifted timetable (it doesn't walk there, and would cover the ribbon's labels).
 // On mobile it sits just above the island's name (the block bottom left), clear of its words however tall it grows,
 // and what hangs under the header (panels, notices) starts below it, however tall it is at this screen size.
 let stickShown=false, onFoot=false;
-const overWorld=()=>!$('settings').hidden||!$('flower-ask').hidden||!$('veil').hidden||$('island-card').open||!!document.querySelector('dialog[open]');
+const overWorld=()=>!$('settings').hidden||!$('flower-ask').hidden||!$('veil').hidden||$('island-card').open||!!document.querySelector('dialog[open]')||life?.api.liftAmount()>0;
 const placeBox=document.querySelector('.place');
 function liftStick(){const app=$('app');
   app.style.setProperty('--stick-bottom',`${Math.round(app.getBoundingClientRect().bottom-placeBox.getBoundingClientRect().top+12)}px`);
@@ -933,7 +934,7 @@ $('sound-toggle').onclick=()=>{sound.setMuted(!sound.muted());syncSound();};
 // UI size (the menu): every panel and bar over the world grows or shrinks together (style.css --ui); remembered per browser
 const UI_KEY='il-ui-size';
 function setUiSize(v){v=Math.min(1.3,Math.max(.8,+v||1));document.documentElement.style.setProperty('--ui',v);liftStick();$('ui-size').value=v;$('ui-size-value').textContent=`${Math.round(v*100)}%`;return v;}
-try{setUiSize(localStorage.getItem(UI_KEY)??(MOBILE.matches?.9:1));}catch{setUiSize(MOBILE.matches?.9:1);}
+try{setUiSize(localStorage.getItem(UI_KEY)??(MOBILE.matches?.8:1));}catch{setUiSize(MOBILE.matches?.8:1);}
 $('ui-size').oninput=e=>{const v=setUiSize(e.target.value);try{localStorage.setItem(UI_KEY,String(v));}catch{}};
 // Log out (the menu): signs out of the account, if any, and goes back to the home page (welcome/index.html)
 $('log-out').onclick=async e=>{const b=e.currentTarget;b.disabled=true;b.lastChild.textContent='Logging out…';try{if(backend.configured)await backend.signOut();}catch(err){console.error(err);}location.href=`${import.meta.env.BASE_URL}welcome/`;};

@@ -79,42 +79,47 @@ seed = 11;
   mix(x, mode(.07, 950, .011, .3));
   save('click', biquad(x, 'lp', 8000), .55); }
 
-// The star whale, after an eerie whale-song recording: a nearly pure tone drifting slowly around 335 Hz with faint
-// overtones, a second voice a little sharp of it that beats against it, a third tone above joining later, a slow
-// pulse, a long echo, and the low rumble of the cloud sea. Timed to the welcome page's intro (welcome/index.html):
-// the call starts as the whale breaks the clouds, the hum as it nods goodbye and sinks back.
-const DEEP = .5;   // the whole song an octave below the recording: a whale this big sings low
+// The star whale, after a haunting whale-song recording (traced: it swoops up from ~545 to ~655 Hz, swells on a
+// held ~665 Hz note, then bends down to ~570 Hz and wavers away in a long echo). One voice, nearly a pure tone with
+// a soft overtone and a breath of air in it. A single moving voice in an echo sings; the old version held two
+// steady voices 8% apart an octave down, which beat against each other and droned. Timed to the welcome page's
+// intro (welcome/index.html): the call starts as the whale breaks the clouds, the hum as it nods goodbye and sinks back.
 const smooth = k => { k = Math.min(1, Math.max(0, k)); return k * k * (3 - 2 * k); };
-// a near-sine following path(t), shaped by amp(t), wandering a little in pitch the way a voice does
-function voice(len, path, amp, wander = .005) {
-  const x = buf(len), drift = [[.13, rnd() * TAU], [.31, rnd() * TAU], [.57, rnd() * TAU], [1.1, rnd() * TAU]];
-  let ph = 0;
+const swell = (t, a, b, c, d) => smooth((t - a) / (b - a)) * (1 - smooth((t - c) / (d - c)));   // in over a..b, out over c..d
+// a pitch path through [time, Hz] points, easing from each to the next
+const glide = pts => t => { let i = 1; while (i < pts.length - 1 && t > pts[i][0]) i++; const [t0, f0] = pts[i - 1], [t1, f1] = pts[i]; return f0 + (f1 - f0) * smooth((t - t0) / (t1 - t0)); };
+// one sung phrase: follows path(t) with a slow vibrato of depth vib(t) (a fraction of the pitch), loudness amp(t)
+function sing(len, path, amp, vib = () => .005) {
+  const x = buf(len), air = biquad(noise(len), 'bp', path, 6), drift = rnd() * TAU;
+  let ph = 0, vp = rnd() * TAU;
   for (let i = 0; i < x.length; i++) {
-    const t = i / SR, w = drift.reduce((a, [f, p]) => a + Math.sin(TAU * f * t + p), 0) / 4;
-    ph += TAU * path(t) * (1 + wander * w) / SR;
-    x[i] = (Math.sin(ph) + .09 * Math.sin(2 * ph + .4) + .05 * Math.sin(3 * ph + 1.1))   // a touch more overtone than the recording, so small speakers still carry it
-         * amp(t) * (1 - .13 * (.5 + .5 * Math.sin(TAU * t)));
+    const t = i / SR, v = Math.sin(vp);
+    vp += TAU * (4.3 + .5 * Math.sin(.7 * t + drift)) / SR;   // ~4.5 Hz, never quite regular
+    ph += TAU * path(t) * (1 + vib(t) * v) / SR;
+    x[i] = ((Math.sin(ph) + .1 * Math.sin(2 * ph + .4) + .025 * Math.sin(3 * ph + 1.1)) * (1 + .06 * v) + air[i] * .35) * amp(t);
   }
   return x;
 }
 const rumble = (len, amp) => env(biquad(biquad(biquad(noise(len), 'lp', 90), 'lp', 90), 'hp', 25), amp);
-const swell = (t, a, b, c, d) => smooth((t - a) / (b - a)) * (1 - smooth((t - c) / (d - c)));   // in over a..b, out over c..d
+// the open sky: a long soft echo (a gliding voice keeps the combs from ringing)
+const sky = (x, tail) => reverb(biquad(x, 'lp', 3000), { size: 1.8, fb: .86, damp: .5, wet: .55, tail });
 seed = 21;
-{ const len = 6.4, x = buf(len);
-  const f1 = t => DEEP * (t < 1.2 ? 345 - 15 * smooth(t / 1.2) : t < 2.4 ? 330 + 13 * smooth((t - 1.2) / 1.2) : 343 - 11 * smooth((t - 2.4) / 3.4));
-  mix(x, voice(len, f1, t => (smooth(t / .9) ** 1.5) * (.8 + .2 * swell(t, 1.4, 2.8, 3.4, 4.6)) * (1 - smooth((t - 4.2) / 2.1))));   // rises out of the clouds, peaks in the turn
-  mix(x, voice(len, t => f1(t) * (1.085 + .05 * smooth((t - 2.4) / .6)), t => swell(t, 1.6, 2.6, 3.6, 4.6)), 0, .55);                 // the sharp second voice, beating
-  mix(x, voice(len, () => 474 * DEEP, t => swell(t, 2.9, 3.4, 4.8, 5.8), .004), 0, .45);                                                // a higher tone as it nears the pier
-  mix(x, rumble(len, t => swell(t, 0, .35, .5, 1.8)), 0, 1.6);                                                                     // the cloud sea parting
-  save('whale_call', reverb(biquad(x, 'lp', 3000), { size: 2.3, fb: .83, damp: .6, wet: .38, tail: 3 }), .85, .02); }   // a softer room: a steady tone in a strong echo flutters
+{ const len = 5.4, x = buf(len);
+  mix(x, sing(2.7, glide([[0, 545], [.5, 655], [1.35, 668], [1.9, 572], [2.7, 588]]),                                       // the recording's phrase
+    t => smooth(t / .85) ** 2 * (1 - .25 * swell(t, 1.35, 1.45, 1.5, 1.65)) * (1 - smooth((t - 1.6) / 1.1)),
+    t => .002 + .006 * swell(t, .6, 1, 1.3, 1.5) + .012 * swell(t, 1.5, 1.9, 2.2, 2.7)));
+  mix(x, sing(2.5, glide([[0, 498], [.45, 588], [1, 600], [1.75, 472], [2.5, 458]]),                                       // and a softer, lower answer
+    t => smooth(t / .55) ** 2 * (1 - smooth((t - 1) / 1.5)),
+    t => .003 + .01 * smooth((t - 1) / .8)), 2.85, .5);
+  mix(x, rumble(len, t => swell(t, 0, .35, .5, 1.8)), 0, 1.2);                                                                     // the cloud sea parting
+  save('whale_call', sky(x, 3.2), .45, .02); }   // a 600 Hz voice is far louder to the ear than the old 170 Hz one at the same peak
 seed = 22;
-{ const len = 3.3, x = buf(len);
-  const f1 = t => DEEP * (318 - 18 * smooth(t / 2.4));   // it bows and sinks: the note sinks with it
-  mix(x, voice(len, f1, t => smooth(t / .35) * (1 - smooth((t - 1.2) / 1.4))));
-  mix(x, voice(len, t => f1(t) * 1.09, t => swell(t, .4, .9, 1.4, 2.1)), 0, .35);
-  mix(x, voice(len, () => 451 * DEEP, t => swell(t, .6, .9, 1.1, 1.6), .004), 0, .25);
-  mix(x, rumble(len, t => swell(t, .9, 2, 2.3, 3.3)), 0, 1.4);                                                                     // back into the clouds
-  save('whale_hum', reverb(biquad(x, 'lp', 3000), { size: 2.3, fb: .83, damp: .6, wet: .38, tail: 2.8 }), .75, .02); }
+{ const len = 3, x = buf(len);
+  mix(x, sing(2.8, glide([[0, 600], [.35, 640], [.9, 628], [1.8, 505], [2.8, 482]]),                                       // it bows and sinks: the note sinks with it
+    t => smooth(t / .4) ** 1.5 * (1 - smooth((t - .9) / 1.7)),
+    t => .003 + .011 * smooth((t - .8) / 1)));
+  mix(x, rumble(len, t => swell(t, .9, 2, 2.1, 3)), 0, 1.1);                                                                       // back into the clouds
+  save('whale_hum', sky(x, 2.8), .32, .02); }
 
 // Footsteps: a heel strike then a softer roll onto the toe, four takes of each surface
 function grassStep(s) {   // dry blades crushed underfoot: dense crackle over a soft thud
