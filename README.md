@@ -600,27 +600,10 @@ flowchart LR
 | | **Performance and accessibility.** First-load budget, keyboard path through every screen, visible focus, contrast, reduced motion, and Safari, Firefox and Chrome on desktop and phone. | Every task can be completed without a mouse, and the world holds a steady frame rate on the phones we have. |
 | **19 to 25 Oct** | **Pilot with students outside the team.** Around ten of them for a week: connect a calendar, check in daily, answer the fairy, meet one nudge. We watch the first five minutes without explaining anything. | We can say what people misunderstood, and how many connected a calendar, marked something done, and accepted a suggestion. |
 | **26 to 31 Oct** | **Fix what the pilot found**, then harden the edges: first run with nothing on the plan, a calendar that fails to connect, a friend who never checks in, and an offline start. | The top issues from the pilot are closed, and no empty state is a blank screen. |
-| | **Feature freeze** on 31 October. | Only fixes after this date. |
 
-### Rehearse, 1 to 14 November
 
-A demo that runs from a judge's own calendar, a recorded fallback in case the network fails, and a five-minute script: connect a real timetable, watch the island sink, let the gardener avatar catch it.
 
-### Risks we are planning around
 
-| Risk | What we do about it |
-|---|---|
-| Calendar providers need app approval before the public can connect | Google Calendar already connects. The planner works with no calendar at all, and Outlook and ICS feeds stay after the final. |
-| A 3D world is heavy on cheap phones | Compressed assets and the smoothness governor are in. The pilot tests on a mid-range device rather than ours. |
-| Nobody outside the team has used it | The pilot is scheduled inside the deploy window, not left until the end. |
-| A live demo depends on the venue network | The demo sky runs on local data with no network services at all. |
-
-## 5.4 Beyond the Final
-
-- **More calendars**: Outlook and Microsoft 365, iCloud, and Canvas or Moodle feeds, all already marked *coming soon* in the sync panel.
-- **Hot-air balloons for check-ins**, rising over each island so friends can spot from the sky view who checked in today.
-- **Riding the star whale across a bridge**, so the whale that brought Blomy home also carries her to a friend.
-- **Gentle milestones**, such as a first week in balance or a first slow evening.
 
 # Summary
 
