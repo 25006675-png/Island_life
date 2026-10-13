@@ -4,7 +4,7 @@
 // (docs/algorithm.md section 6). Every call has a plain fallback.
 import { KINDS, keywordKind, type Kind } from './events.ts';
 
-const MODEL = 'gemini-3.5-flash-lite';
+const MODEL = 'gemini-3.1-flash-lite';
 const KEY = Deno.env.get('GEMINI_API_KEY') ?? '';
 
 async function generate(prompt: string, schema: unknown, timeoutMs = 8000): Promise<unknown | null> {

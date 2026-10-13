@@ -29,7 +29,8 @@ function createPlans(){
   const range=(id,from,days)=>{const out=[];for(let i=0;i<days;i++)out.push(...on(id,addDays(from,i)));return out;};
   const changed=id=>{SCHEDULES[id]=on(id,TODAY);for(const f of listeners)f(id);};
   // the viewer's own changes are saved; friends' plans are read-only here
-  const save=(id,b,how)=>{if(persist&&id===owner)persist[how](b);};
+  // (the guide's practice block never leaves this browser)
+  const save=(id,b,how)=>{if(persist&&id===owner&&!b.practice)persist[how](b);};
 
   return {
     on, range,
@@ -54,7 +55,7 @@ function createPlans(){
     persistTo(who,writer){owner=who;persist=writer;},
     add(id,fields){
       const b=fresh(fields);(store[id]??=[]).push(b);changed(id);
-      if(persist&&id===owner)persist.add(b).then(saved=>{if(saved&&saved!==b.id){b.id=saved;changed(id);}});
+      if(persist&&id===owner&&!b.practice)persist.add(b).then(saved=>{if(saved&&saved!==b.id){b.id=saved;changed(id);}});
       return b;
     },
     // Edits land on the series for a repeating block; moving one of its days
@@ -68,6 +69,8 @@ function createPlans(){
       if(b.source==='google'&&f.cat&&f.cat!==b.cat)b.keptCat=true;
       Object.assign(b,f);changed(id);save(id,b,'update');
     },
+    // the guide's practice block goes once its chapter is over, and the week is as it was
+    clearPractice(id){const l=store[id]??[],n=l.length;for(let i=l.length-1;i>=0;i--)if(l[i].practice)l.splice(i,1);if(l.length!==n)changed(id);},
     remove(id,occ){const b=occ.series??occ,l=store[id];l.splice(l.indexOf(b),1);changed(id);save(id,b,'remove');},
     toggleSkip(id,occ){
       if(occ.series){const s=occ.series.skippedOn,i=s.indexOf(occ.date);if(i<0)s.push(occ.date);else s.splice(i,1);}

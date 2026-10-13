@@ -3,19 +3,26 @@
 // W A S D keys press down as you press them, or the joystick moves on a phone. Each step waits until you have
 // done it (`done()`), cheers ("Nice!"), then moves on; steps without `done` wait for the button. Skippable at any
 // point; finished or skipped, it stays away on this device until "Show the guide again" in the settings panel.
-//   step: {say, art?:'keys'|'stick'|'esc', target?:()=>Element|null, hand?:bool, start?(), done?()}
-const KEY='il-guide';
+// It comes in chapters, each remembered on its own, so it can teach a thing when it first matters (the friends
+// chapter waits for a first friend); a finished chapter may lead straight on to the next (`next`).
+//   chapter: {key, steps, next?()=>name|null, end?()}   end() runs however the chapter closes
+//   step: {say, art?:'keys'|'stick'|'esc', target?:()=>Element|null, hand?:bool, when?(), button?, over?, start?(), done?()}
+//   over: Blomy stays in view over an open planner or balance (moved up to the top), for steps that happen in it
+//   free: the world isn't held for Blomy (the fairy may come out and ask)
+//   reveal: the card for what you walk up to stays usable (the board, a gate), and Blomy moves up out of its way
+//   quiet: Blomy's box steps away entirely while something plays out in the world (the watering, the fairy)
+//   high: Blomy's box sits at the top, leaving the lower half of the view clear (the demo's island sinking into it)
+//   flower: the flower asks even if she's resting (the check-in steps); other steps leave her rest alone
 const $=id=>document.getElementById(id);
-const seen=()=>{try{return localStorage.getItem(KEY)==='done';}catch{return false;}};
-const remember=()=>{try{localStorage.setItem(KEY,'done');}catch{}};
+const seen=key=>{try{return localStorage.getItem(key)==='done';}catch{return false;}};
+const remember=key=>{try{localStorage.setItem(key,'done');}catch{}};
 const calm=()=>matchMedia('(prefers-reduced-motion: reduce)').matches;
 const KEYS={KeyW:'w',ArrowUp:'w',KeyA:'a',ArrowLeft:'a',KeyS:'s',ArrowDown:'s',KeyD:'d',ArrowRight:'d',ShiftLeft:'shift',ShiftRight:'shift',Escape:'esc'};
 
-export function createGuide(steps){
+export function createGuide(chapters){
   const box=$('guide'), text=$('guide-text'), dots=$('guide-dots'), next=$('guide-next'), art=$('guide-art');
   const spot=$('guide-spot'), hand=$('guide-hand');
-  let at=-1, step=null, since=0, cheered=false;
-  dots.replaceChildren(...steps.map(()=>document.createElement('i')));
+  let at=-1, step=null, since=0, cheered=false, chapter=null, steps=[];
   // Blomy's line types out like the welcome page's: a span per letter, words kept whole
   const type=line=>{let i=0;text.replaceChildren(...line.split(' ').flatMap((w,k)=>{
     const word=document.createElement('span');word.className='w';
@@ -33,15 +40,26 @@ export function createGuide(steps){
   const show=i=>{
     at=i;step=steps[i];cheered=false;box.classList.remove('yay');
     if(!step){finish(true);return;}
-    since=0;step.start?.();
-    type(typeof step.say==='function'?step.say():step.say);
+    since=0;document.body.classList.toggle('guide-over',!!step.over);document.body.classList.toggle('guide-reveal',!!step.reveal);document.body.classList.toggle('guide-high',!!step.high);step.start?.();
+    type((typeof step.say==='function'?step.say():step.say)??'');   // a quiet step says nothing
     drawArt(typeof step.art==='function'?step.art():step.art);
     [...dots.children].forEach((d,k)=>{d.className=k<i?'done':k===i?'now':'';});
-    next.hidden=!!step.done;next.textContent=i===steps.length-1?'Let’s go!':'Got it';
-    box.hidden=false;box.classList.remove('in');void box.offsetWidth;box.classList.add('in');
+    next.hidden=!!step.done;next.textContent=step.button??(i===steps.length-1?'Let’s go!':'Got it');
+    box.hidden=!!step.quiet;box.classList.remove('in');void box.offsetWidth;box.classList.add('in');
+  };
+  const open=(name,force)=>{
+    const c=chapters[name];if(!c||(!force&&seen(c.key)))return false;
+    chapter=c;steps=c.steps.filter(s=>!s.when||s.when());
+    dots.replaceChildren(...steps.map(()=>document.createElement('i')));
+    show(0);return true;
   };
   const finish=happy=>{
-    box.hidden=true;spot.hidden=true;hand.hidden=true;at=-1;step=null;remember();
+    const c=chapter;
+    box.hidden=true;spot.hidden=true;hand.hidden=true;at=-1;step=null;chapter=null;document.body.classList.remove('guide-over','guide-reveal','guide-high');
+    if(!c)return;
+    remember(c.key);c.end?.();
+    const then=happy&&c.next?.();
+    if(then&&open(then,true))return;   // leading on, the next chapter plays even if seen before: you're mid-way
     if(happy&&!calm())confetti();
   };
   // a handful of sparkles from the middle of the screen, at the very end
@@ -65,7 +83,7 @@ export function createGuide(steps){
     hand.style.left=`${r.left+r.width/2}px`;hand.style.top=`${r.bottom-4}px`;
   };
   return {
-    start(force){if(force||!seen())show(0);},
+    start(name,force){if(!chapter)open(name,force);},
     update(dt){
       if(!step)return;place();
       if(!step.done||!step.done())return;
@@ -73,5 +91,7 @@ export function createGuide(steps){
       since+=dt;if(since>.9)show(at+1);
     },
     get on(){return !!step;},
+    get free(){return !!step?.free;},
+    get flower(){return !!step?.flower;},
   };
 }

@@ -684,7 +684,7 @@ blob.rotation.x=-Math.PI/2;blob.renderOrder=1;scene.add(blob);blob.visible=false
 const EFIX=parseFloat(Q.get('enter'));
 const CALM=REDUCED||Q.has('calm');
 let phase='intro';        // intro · landed · entering · entry
-let t0=0,e0=NaN,last=0,raf=0,hiddenAt=0;
+let t0=0,e0=NaN,last=0,raf=0,hiddenAt=0,steady=0,firstTick=NaN;   // steady/firstTick: the intro waits for steady frames (tick)
 let seatQ=new T.Quaternion();const takeoff=V();
 let wYaw=0,wRate=0,wBank=0,wPh=0,wPrev=DOCK.clone();
 let mx=0,my=0,pmx=0,pmy=0;                                   // pointer, -.5..5, and its eased copy
@@ -724,6 +724,7 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden){hiddenAt=p
 
 /* ---------- start ---------- */
 $('veil-text').textContent='Here it comes.';
+try{renderer.compile(scene,camera);}catch(e){}   // the shaders up front: compiling them on the first frames stalled the start
 restart();
 const seen=sessionStorage.getItem('il-arrived')&&!Q.has('intro');
 if(CALM||seen)skip();
@@ -747,7 +748,11 @@ function govern(ms,now){
 }
 function tick(now){
   raf=requestAnimationFrame(tick);
+  const ms=now-last;
   if(isNaN(FIX))govern(now-last,now);const dt=clamp((now-last)/1000,0,.05);last=now;      // never negative: a frame timestamp can precede the clock read that started the loop
+  // the intro starts once frames come steadily: until then (loading hitches, a slow first frame) its clock stays at 0,
+  // so nobody arrives halfway through the whale's arrival
+  if(phase==='intro'&&isNaN(FIX)&&steady<3){if(isNaN(firstTick))firstTick=now;steady=ms<50?steady+1:0;if(now-firstTick>4000)steady=3;t0=now;}
   if(!isNaN(FIX))t0=now-FIX*1000;
   const t=Math.min((now-t0)/1000,CALM?TL.done+.01:1e9), time=CALM?12.3:(isNaN(FIX)?now/1000:FIX*1.7);
   if(phase==='intro'&&t>=TL.done){phase='landed';$('skip').hidden=true;setPanel(true);sessionStorage.setItem('il-arrived','1');}

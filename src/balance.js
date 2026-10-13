@@ -14,7 +14,7 @@ const el=(tag,props={},...kids)=>{const e=Object.assign(document.createElement(t
 const h1=h=>`${+h.toFixed(1)} h`;
 const list=parts=>parts.length<2?parts.join(''):`${parts.slice(0,-1).join(', ')} and ${parts.at(-1)}`;
 
-export function createBalance({plans,me,friends,clock,checkins,sheets,notice,dew,warm}){
+export function createBalance({plans,me,friends,clock,checkins,sheets,notice,dew,warm,invite}){
   const sheet=$('balance-sheet'), owner=me.id;
   const ahead=b=>!b.done&&(b.date>TODAY||(b.date===TODAY&&b.start>=clock.minutes));
   const when=day=>day===TODAY?'tonight':day===addDays(TODAY,1)?'tomorrow':`on ${DAYS[dow(day)-1]}`;
@@ -42,7 +42,10 @@ export function createBalance({plans,me,friends,clock,checkins,sheets,notice,dew
         apply:()=>plans.add(owner,{date:evening,start:20*60+30,mins:60,cat:'rest',title:'Slow evening',vis:'hidden'}),done:'A slow evening is on your plan.'}
       :{key:'rest',text:'Keep one evening free next week',sub:'Every evening this week is already spoken for.'});
     const friend=friends[0], sat=addDays(monday,5)>=TODAY?addDays(monday,5):addDays(monday,12);
-    out.push({key:'social',text:`Invite ${friend.owner} for a walk ${sat===addDays(monday,5)?'this':'next'} Saturday`,
+    // nobody in your sky yet: the warmth to add is a first friend
+    if(!friend)out.push({key:'social',text:'Invite a friend to your sky',sub:'Their island grows in when they join, with a bridge to yours.',
+      apply:invite,done:'Your invite is ready to send.'});
+    else out.push({key:'social',text:`Invite ${friend.owner} for a walk ${sat===addDays(monday,5)?'this':'next'} Saturday`,
       sub:'A little warmth across the bridge.',
       apply:()=>{plans.add(owner,{date:sat,start:10*60,mins:60,cat:'social',title:`Walk with ${friend.owner}`,vis:'open'});warm?.(friend.id);warm?.(owner);},
       done:`Walk with ${friend.owner} added for Saturday. Your bridges warm a little.`});

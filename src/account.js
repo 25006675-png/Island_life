@@ -32,6 +32,19 @@ export function createAccount({form,enter,handoff}){
   };
   const guest=()=>{const b=el('button',{type:'button',className:'text-button',textContent:'Try the demo island'});b.onclick=demo;return b;};
 
+  // the first card: two ways in. The demo is a sky already full of friends (the way to see everything);
+  // starting fresh is the app as a brand-new student meets it
+  function chooseCard(){
+    const see=el('button',{type:'submit',className:'solid',textContent:'See it with friends'});
+    const fresh=el('button',{type:'button',className:'solid-ghost',textContent:'Start fresh'});
+    const back=el('button',{type:'button',className:'text-button',textContent:'Already have an island? Sign in'});
+    card('Two ways in','Look around a sky that is already lived in, or start your own island from nothing.',
+         see,el('p',{className:'login-or',textContent:'A demo sky: Aisha and four friends, with a week of plans and feelings'}),
+         fresh,el('p',{className:'login-or',textContent:'Make an account and grow your own island, then invite friends'}),back);
+    fresh.onclick=()=>signInCard('up');back.onclick=()=>signInCard('in');
+    main=demo;form.onsubmit=e=>{e.preventDefault();demo();};
+  }
+
   function signInCard(mode='in'){
     const up=mode==='up';
     const [nameRow,name]=field('Your name',{type:'text',maxLength:40,autocomplete:'given-name',placeholder:'What friends call you'});
@@ -107,20 +120,37 @@ export function createAccount({form,enter,handoff}){
   }
 
   // a returning visitor (or one back from Google) starts signed in
-  backend.currentUser().then(user=>user?afterSignIn(user):signInCard(fromLink?'up':'in'));
+  backend.currentUser().then(user=>user?afterSignIn(user):fromLink?signInCard('up'):chooseCard());
   backend.db.auth.onAuthStateChange((event,session)=>{if(event==='SIGNED_IN'&&session&&form.querySelector('#login-form-title')?.textContent==='Visit your island')afterSignIn(session.user);});
   return {enterKey:()=>main()};
 }
 
 // ---- in the world: your sky's invite, phone prompts (signing out is the menu's Log out, main.js) ----
+// the invite window (index.html #invite-dialog): your link to copy or share, and the code to type instead.
+// Every way to invite opens it: a glass island, the balance suggestion, Your sky in the menu.
+// sample: the demo shows the window with a made-up code (the demo sky is full, and isn't a real sky)
+export function openInvite(world,notice,sample=false){
+  const $=id=>document.getElementById(id), link=backend.inviteLink(world.sky.invite_code), dialog=$('invite-dialog');
+  $('invite-link').value=link;
+  $('invite-code').textContent=sample?'This is a sample. In your own sky, the link and the code are yours.'
+                                     :`Or they can type your sky’s code when they sign up: ${world.sky.invite_code}`;
+  const copy=$('invite-copy');copy.textContent='Copy link';
+  copy.onclick=async()=>{
+    try{await navigator.clipboard.writeText(link);}catch{$('invite-link').select();document.execCommand('copy');}
+    copy.textContent='Copied!';notice('Invite link copied. Send it to a friend.');
+  };
+  $('invite-share').hidden=!navigator.share;
+  $('invite-share').onclick=()=>navigator.share({title:'Island Life',text:'Come and float in my sky on Island Life.',url:link}).catch(()=>{});
+  $('invite-close').onclick=()=>dialog.close();
+  dialog.showModal();
+}
 export function mountSkyPanel(world,notice){
   const box=document.getElementById('sky-section');
   if(!world.live){box.hidden=true;return;}
   box.hidden=false;
-  const link=backend.inviteLink(world.sky.invite_code);
   const count=world.people.length;
   const copy=el('button',{type:'button',className:'text-button',textContent:'Copy invite link'});
-  copy.onclick=async()=>{try{await navigator.clipboard.writeText(link);notice('Invite link copied. Send it to a friend.');}catch{prompt('Copy this invite link',link);}};
+  copy.onclick=()=>openInvite(world,notice);
   const push=el('button',{type:'button',className:'text-button'});
   const showPush=async()=>{
     const s=await backend.pushState();

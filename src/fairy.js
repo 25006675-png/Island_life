@@ -127,6 +127,7 @@ export function createFairy({scene,camera,ask,answer,title,blocked=()=>false,wai
     // blocks you just finished: each gets its question, after its watering if there is one
     expect(blocks){for(const b of blocks)if(ask(b)&&!pending.some(p=>same(p.b,b))&&!ready.some(r=>same(r.b,b)))pending.push({b,at:clock});},
     // the gardener has watered this block's tree: she comes out of it (`top`: the crown, world units)
+    idle:()=>!cur&&!ready.length&&!pending.length,   // nobody waiting to be asked about (guide.js waits on this)
     fromTree(b,top){const i=pending.findIndex(p=>same(p.b,b));if(i<0)return;ready.push({b:pending[i].b,from:top.clone(),watered:true});pending.splice(i,1);},
     tick(dt){
       clock+=dt;

@@ -72,6 +72,13 @@
       <p class="panel-note">Letting go is fine. Its ghost tree drifts off and it won’t count this week. You can bring it back from the planner any time.</p>
       <div class="dialog-actions"><button id="letgo-yes" class="solid-small">Let it go</button><button id="letgo-no" class="text-button">Keep it</button></div>
     </dialog>
+    <dialog id="invite-dialog" aria-labelledby="invite-title">
+      <h2 id="invite-title">Invite a friend</h2>
+      <p class="panel-note">Send this link to a friend. When they join, their island grows in where a glass one is waiting, with a bridge to yours. A sky holds you and up to four friends.</p>
+      <input id="invite-link" type="text" readonly aria-label="Your invite link"/>
+      <p id="invite-code" class="panel-note"></p>
+      <div class="dialog-actions"><button id="invite-copy" class="solid-small">Copy link</button><button id="invite-share" class="text-button" hidden>Share…</button><button id="invite-close" class="text-button">Close</button></div>
+    </dialog>
     <dialog id="sync-dialog" aria-labelledby="sync-title">
       <h2 id="sync-title">Sync your calendars</h2>
       <p class="panel-note">Bring in classes, shifts and deadlines so your island carries the whole week. Synced events arrive as blocks you can move or let go.</p>

@@ -15,7 +15,7 @@ import { LIFT_LAYER } from './timetable.js';
 import { HeightField, bridgePoint, bridgeSlope, surfaceAt, islandSurface } from './navigation.js';
 import { createAtmosphere, createWeather, createSinkBank } from './atmosphere.js';
 import { initLife, setStrain } from './life.js';
-import { ME, HIGH, LOW, symbolImg } from './data.js';
+import { ME, HIGH, LOW, symbolImg, SLOT_IDS } from './data.js';
 import { createForest } from './forest.js';
 import { createPier } from './pier.js';
 import { GATE_POSTS, GATE_OUT as GATE_WAY, moveGate } from './gate.js';
@@ -27,6 +27,8 @@ import * as sound from './sound.js';
 import { createLogin } from './login.js';
 import { demoWorld, enterWorld, DEMO_PEOPLE } from './world.js';
 import * as backend from './backend.js';
+import { openInvite } from './account.js';
+import { createVacancies, newArrivals } from './vacancy.js';
 
 const $=id=>document.getElementById(id), canvas=$('world');
 // One activity category = one tree species (groves.js). The gathering
@@ -56,14 +58,16 @@ const COMMUNITY={id:'community',model:'community',name:'The gathering Island',ow
    // between the bridges, clear of every landing
    plantings:[{asset:'mushrooms',n:4,a:1.78,r:16,spread:3},
               {asset:'clover',n:4,a:4.29,r:15,spread:3.5}]};
+// where the island in a slot floats, whether anyone holds it yet or not (vacancy.js)
+function slotPlace(id){
+  const s=SLOTS[id], a=s.angle*Math.PI/180;
+  return {model:s.model,x:+(Math.cos(a)*RING).toFixed(1),z:+(Math.sin(a)*RING).toFixed(1),altitude:s.altitude,scale:2.0};
+}
 // people: [{id, name}] in slot order; ME (data.js) says which one is yours
 function defineIslands(people){
-  return [COMMUNITY,...people.map(p=>{
-    const s=SLOTS[p.id], a=s.angle*Math.PI/180;
-    return {id:p.id,model:s.model,owner:p.name,description:p.description??'',
-            x:+(Math.cos(a)*RING).toFixed(1),z:+(Math.sin(a)*RING).toFixed(1),altitude:s.altitude,scale:2.0,
-            spawn:ARCH_SPAWN,cam:ARCH_CAM,obstacles:TORII_POSTS};
-  })].map(d=>({...d,name:d.id===ME?'My island':d.owner?`${d.owner}’s island`:d.name}));
+  return [COMMUNITY,...people.map(p=>({id:p.id,...slotPlace(p.id),owner:p.name,description:p.description??'',
+            spawn:ARCH_SPAWN,cam:ARCH_CAM,obstacles:TORII_POSTS}))]
+    .map(d=>({...d,name:d.id===ME?'My island':d.owner?`${d.owner}’s island`:d.name}));
 }
 // until someone signs in, the sky view frames the full five
 let definitions=defineIslands(DEMO_PEOPLE);
@@ -121,8 +125,9 @@ function plantIsland(island,group,assets){
     }
   }
 }
-let renderer,scene,camera,controls,composer,atmosphere,gardener,life,forest,watering,sunLight,hemiLight,fillLight;
+let renderer,scene,camera,controls,composer,atmosphere,gardener,life,forest,watering,sunLight,hemiLight,fillLight,vacancies;
 const islands=[],bridges=[],keys=new Set();
+let openSlots=[];   // a signed-in sky's slots nobody holds yet, each kept in glass (vacancy.js)
 // Phones and tablets of any common size, portrait or landscape (the same query as the mobile block in style.css).
 // There the UI starts a little smaller, at 90%; it can be changed in the menu.
 const MOBILE=matchMedia('(max-width: 600px), (pointer: coarse) and (max-width: 1024px), (max-height: 500px) and (max-width: 1000px)');
@@ -255,12 +260,24 @@ function turnCamera(dt){
 const CARD_KEY='il-card-min';
 const cardMinimized=()=>{try{return localStorage.getItem(CARD_KEY)==='1';}catch{return false;}};
 $('island-card').querySelector('summary').addEventListener('click',()=>{const min=$('island-card').open;try{localStorage.setItem(CARD_KEY,min?'1':'0');}catch{}});
-function visit(id){if(!ready)return;selected=id;mode='walk';$('app').dataset.mode=mode;if(innerWidth>=600&&!TOUCH&&!cardMinimized())$('island-card').open=true;const island=islands.find(i=>i.id===id);spawnOn(island);controls.enabled=true;controls.minDistance=6;controls.maxDistance=skyReach();cameraOffset.set(...(island.cam??[0,10,16]));
+function visit(id){if(!ready)return;focus=null;selected=id;mode='walk';$('app').dataset.mode=mode;if(innerWidth>=600&&!TOUCH&&!cardMinimized())$('island-card').open=true;const island=islands.find(i=>i.id===id);spawnOn(island);controls.enabled=true;controls.minDistance=6;controls.maxDistance=skyReach();cameraOffset.set(...(island.cam??[0,10,16]));
   transition={from:camera.position.clone(),targetFrom:controls.target.clone(),time:0};
   arrive(island);
   $('hint').textContent='';   // the island's status shows below instead (life.js)
 $('overview').setAttribute('aria-pressed','false');$('walk').setAttribute('aria-pressed','true');syncPanel();canvas.focus({preventScroll:true});}
-function overview(){if(!ready)return;mode='overview';$('app').dataset.mode=mode;$('island-card').open=false;controls.enabled=true;controls.minDistance=14;controls.maxDistance=skyReach();transition={from:camera.position.clone(),targetFrom:controls.target.clone(),time:0};clearTimeout(arriveTimer);document.querySelector('.place').classList.remove('arriving');document.querySelector('.place-title').style.transform='';$('location-kicker').textContent='Your sky neighborhood';$('location-title').textContent='A world of little wonders.';$('hint').textContent='Choose an island. Stay a little while.';$('overview').setAttribute('aria-pressed','true');$('walk').setAttribute('aria-pressed','false');keys.clear();}
+// The sky view, aimed at one island instead of the whole sky: from outside the ring, a little above, looking at a
+// point some way below it, so the island stays in view as it sinks toward the clouds (the demo's first lesson).
+// The next visit or sky view lets go.
+let focus=null;
+function focusOn(id){
+  const i=islands.find(i=>i.id===id);if(!ready||!i||mode!=='overview')return;
+  // ~110 m out, off to one side, looking down about 30 degrees at a point 22 m below the island: it starts above the
+  // middle of the screen and sinks into the lower half, which the guide keeps clear (guide.js `high`)
+  const L=Math.hypot(i.x,i.z)||1, ox=i.x/L, oz=i.z/L, look=new T.Vector3(i.x,i.altitude-22,i.z);
+  focus={look,pos:look.clone().add(new T.Vector3(ox*85-oz*35,55,oz*85+ox*35))};
+  transition={from:camera.position.clone(),targetFrom:controls.target.clone(),time:0};
+}
+function overview(){if(!ready)return;mode='overview';focus=null;$('app').dataset.mode=mode;$('island-card').open=false;controls.enabled=true;controls.minDistance=14;controls.maxDistance=skyReach();transition={from:camera.position.clone(),targetFrom:controls.target.clone(),time:0};clearTimeout(arriveTimer);document.querySelector('.place').classList.remove('arriving');document.querySelector('.place-title').style.transform='';$('location-kicker').textContent='Your sky neighborhood';$('location-title').textContent='A world of little wonders.';$('hint').textContent='Choose an island. Stay a little while.';$('overview').setAttribute('aria-pressed','true');$('walk').setAttribute('aria-pressed','false');keys.clear();}
 // The sky view may zoom out a little past the framing, never far enough to lose the world.
 const skyReach=()=>overviewPosition().distanceTo(new T.Vector3(0,2,0))*1.25;
 function overviewPosition(){
@@ -270,7 +287,7 @@ function overviewPosition(){
   // a lower look (about 30 degrees) than straight down, so a high island reads as high, not as far away
   const dir=new T.Vector3(0,.5,.87).normalize(),target=new T.Vector3(0,2,0),pts=[];
   // the islands as they float now, once built; before that, the layout's own seeds
-  for(const d of islands.length?islands:definitions){
+  for(const d of [...(islands.length?islands:definitions),...openSlots]){
     const r=15.5*d.scale;
     for(const ox of [-r,r]) for(const oz of [-r,r]) for(const oy of [-3*d.scale,9*d.scale])
       pts.push(new T.Vector3(d.x+ox,d.altitude+oy,d.z+oz));
@@ -388,41 +405,100 @@ function showStick(){
   if(want)liftStick();
   else{stick.on=false;stick.x=stick.y=0;stick.id=null;$('stick').firstElementChild.style.translate='';}
 }
-// The first-time guide (guide.js): come home, walk, tell your flower how you feel, the planner (Done grows a tree, and
-// the fairy then asks how draining it was), your balance, then the bridges. Each step lights up what to touch and
-// waits until you have touched it.
-let walkedFrom=0, felt=false;
+// The first-time guide (guide.js), in chapters. Each step lights up what to touch and waits until you have touched it.
+//   demo     -- the demo sky first shows its idea: a heavy week sinks an island, hard days bring rain
+//   home     -- come home, walk, tell your flower how you feel, plant and finish a practice block (the fairy asks
+//               about it, and nothing is saved), your balance, then (signed in) the glass places that wait for friends
+//   friends  -- once there is a friend: the gathering island, its task board, the golden window, the bridges
+let walkedFrom=0, felt=false, invited=false, guided=null;   // guided: {to()} the guide's walk, along the path (route)
+const tried={};
 $('moods').addEventListener('click',e=>{if(e.target.closest('.mood'))felt=true;});
-const guide=createGuide([
-  {say:'Hi, I’m Blomy! This is your sky: every island is someone’s week, and yours is “My island”. Tap it to come home.',
+for(const b of document.querySelectorAll('[data-scenario]'))b.addEventListener('click',()=>{tried[b.dataset.scenario]=true;});
+$('reset').addEventListener('click',()=>{tried.reset=true;});
+const live=()=>!!world?.live, alone=()=>live()&&world.people.length<2, hasRoom=()=>live()&&vacancies?.list.length>0;
+const inSettings=sel=>({start:()=>document.querySelector(sel)?.scrollIntoView({block:'center'}),target:()=>$('settings').hidden?null:document.querySelector(sel),hand:true});
+const nearPractice=()=>{const t=life.api.practice.tree();return !!t&&Math.hypot(t.x-player.position.x,t.z-player.position.z)<3.5;};
+const guide=createGuide({
+ demo:{key:'il-guide-demo',next:()=>'home',end:()=>setPanel(false),steps:[
+  {say:'Hi, I’m Blomy! This is a demo sky: Aisha’s island and her four friends. Every island floats at the height of its owner’s week. Let me show you.',button:'Show me',
+   start:()=>focusOn(ME)},
+  // the scenario buttons only exist in the demo: say so, so the menu doesn't read as how the app is used
+  {say:'In your own sky, your plans and check-ins move your island over the days. The demo has a shortcut so you can see it now: a few buttons in the menu, just for showing. Open it.',
+   target:()=>$('settings-toggle'),hand:true,done:()=>!$('settings').hidden},
+  {high:true,say:'Press Exam week, and watch Aisha’s island sink toward the clouds.',...inSettings('[data-scenario=exam]'),done:()=>tried.exam},
+  {high:true,say:'A heavy week sinks it, as far as 55 m down into the clouds. A light one lifts it 45 m up. Now press A rough few days.',...inSettings('[data-scenario=rough]'),done:()=>tried.rough},
+  {say:'Tired and stressed check-ins bring cloud, then rain, even when the week isn’t full. Press Back to this evening.',...inSettings('#reset'),done:()=>tried.reset},
+ ]},
+ home:{key:'il-guide',next:()=>world.people.length>1?'friends':null,end:()=>life?.api.practice.clear(),steps:[
+  {say:()=>live()?'Hi, I’m Blomy! This is your sky, and your island is “My island”. Tap it to come home.'
+                 :'For today, Aisha’s island is yours: “My island”. Tap it to go there.',
    target:()=>islands.find(i=>i.id===ME)?.label,hand:true,done:()=>mode==='walk'&&!transition},
   {say:()=>TOUCH?'This is home! Walk with the joystick, and drag with another finger to look around.'
                 :'This is home! Try walking: press the keys and watch them light up.',
    art:()=>TOUCH?'stick':'keys',target:()=>TOUCH?$('stick'):null,hand:true,
    start:()=>{walkedFrom=player.distance;},done:()=>player.distance-walkedFrom>8},
+  // a new island honestly floats high (an empty week is a light one): said, not acted out
+  {when:live,say:'Your island floats high because your week is still light. Busy weeks sink it toward the clouds, and hard days bring rain. This card keeps count.',
+   target:()=>$('island-card'),hand:false},
   // the check-in: your flower asks (flower.js), only on your own island
   {say:()=>TOUCH?'See the flower by your gate? She asks how you’re feeling. Walk up to her, or tap her.'
                 :'See the flower by your gate? She asks how you’re feeling. Walk up to her, tap her, or press T.',
-   target:()=>$('flower-talk').hidden?null:$('flower-talk'),hand:true,done:()=>!$('flower-ask').hidden},
+   flower:true,target:()=>$('flower-talk').hidden?null:$('flower-talk'),hand:true,done:()=>!$('flower-ask').hidden},
   {say:'Pick the one closest. It hangs as a lantern on your pier, and over a few days your feelings make your island’s weather. She’ll rest for an hour, then ask again.',
-   start:()=>{felt=false;},target:()=>$('flower-ask').hidden?null:$('moods'),hand:true,done:()=>felt},
+   flower:true,start:()=>{felt=false;},target:()=>$('flower-ask').hidden?null:$('moods'),hand:true,done:()=>felt},
   // an open sheet is yours to read: Blomy steps aside (style.css) and waits until you close it yourself
-  {say:'Your week lives in the Planner. When an activity’s time has passed, press Done and it grows a tree on your island. Open it, look around, and close it when you’re done.',
+  {say:'Your week lives in the Planner. When an activity’s time has passed, press Done and it grows a tree on your island. Open it.',
    target:()=>$('planner-toggle'),hand:true,done:()=>!$('planner-sheet').hidden},
-  {say:'Close the planner when you’re done looking.',done:()=>$('planner-sheet').hidden},
-  // the fairy (fairy.js) waits while Blomy talks: anything you marked done above, she asks about once the guide ends
-  {say:'Every time you press Done, a fairy flies out of that tree and asks how draining it was. One tap teaches your island what your week really costs; your answer shows on that block in the Planner too.'},
+  // the practice block: planted on OK, the planner closes and Blomy walks straight to its glass tree, Done on the
+  // tree's own card, watered there, asked about by the fairy (her answer isn't kept); gone when the chapter ends
+  {say:'Let’s plant a practice tree. Press OK to plant it.',button:'OK, plant it',over:true},
+  {say:'There it is, still made of glass. Let’s walk over.',
+   start:()=>{life.api.practice.plant();$('planner-sheet').querySelector('.sheet-close')?.click();
+     guided={to:()=>{const t=life.api.practice.tree();return t&&standFor({x:t.x,z:t.z,r:0});}};},   /* 1.5 m out: inside the tree card's reach */
+   done:()=>!guided&&nearPractice()},
+  {say:'Here’s your practice tree. Tap Done to finish it.',reveal:true,target:()=>$('reveal').hidden?null:$('reveal-action'),hand:true,
+   done:()=>life.api.practice.done()},
+  // Blomy's box steps away (`quiet`) for the watering and the fairy (`free`: she may fly while the guide waits)
+  {quiet:true,free:true,done:()=>!chore&&!thirst.length&&life.api.fairyIdle()},
+  {say:'Every time you press Done, the fairy asks. One tap teaches your island what your week really costs, and your answer shows on that block in the Planner too.'},
   {say:'And Your balance shows how heavy your week is, with small changes that would help. Have a look, then close it.',
    target:()=>$('balance-toggle'),hand:true,done:()=>!$('balance-sheet').hidden},
   {say:'Close your balance when you’re done looking.',done:()=>$('balance-sheet').hidden},
-  {say:'That’s your island! Bridges lead to your friends: walk onto one and press Go. Esc takes you up to the sky.',art:'esc'},
-]);
-$('guide-again').onclick=()=>{setPanel(false);overview();guide.start(true);};
+  {when:hasRoom,say:'Now press Sky view to see your whole sky.',target:()=>$('overview'),hand:true,done:()=>mode==='overview'&&!transition},
+  {when:hasRoom,say:'Those glass islands are places waiting for friends. Tap one to invite someone.',
+   start:()=>{invited=false;},target:()=>vacancies.list.find(v=>!v.label.hidden)?.label,hand:true,done:()=>invited&&!$('invite-dialog').open},
+  // the demo sky is full, so there is nothing to invite: the window is shown with a sample link instead
+  {when:()=>!live(),say:'In your own sky, empty places wait as glass islands. Tap one to invite a friend, and a window like this opens.',
+   button:'Show me'},
+  {when:()=>!live(),say:'Close the window when you’ve had a look.',start:()=>openInvite({sky:{invite_code:'SAMPLE12'}},notice,true),
+   done:()=>!$('invite-dialog').open},
+  {say:()=>alone()?'When a friend joins, their island grows in right there, and I’ll show you what you can do together.'
+                  :'That’s your island! Bridges lead to your friends: walk onto one and press Go. Esc takes you up to the sky.',
+   art:()=>alone()?null:'esc'},
+ ]},
+ friends:{key:'il-guide-friends',end:()=>life?.api.practice.clear(),steps:[
+  {say:()=>live()?'Your first friend is here! The gathering island in the middle belongs to everyone. Tap it.'
+                 :'The gathering island in the middle belongs to everyone in the sky. Tap it.',
+   start:()=>{if(mode==='walk')overview();},target:()=>islands[0]?.label,hand:true,done:()=>mode==='walk'&&selected==='community'&&!transition},
+  // practice: a task on the board and a note at a friend's gate, neither saved (life.js practice)
+  {say:'This board holds small things to do together. I’ve pinned a practice task on it. Walk up to the board and open it.',
+   start:()=>life.api.practice.task(),reveal:true,target:()=>$('reveal').hidden?null:$('reveal-action'),hand:true,done:()=>$('goals-dialog').open},
+  {say:'Press Join on the practice task, then Mark done, then close the board.',done:()=>life.api.practice.taskDone()&&!$('goals-dialog').open},
+  {say:'One more thing about this island: the golden window. Once a day, at a moment nobody knows in advance, the sky turns gold for a few minutes. Everyone snaps a photo of wherever they are, and the photos hang here together.'},
+  {say:'Bridges lead to each friend’s island. Walk onto one and press Go.',art:'esc',
+   done:()=>mode==='walk'&&selected!=='community'&&selected!==ME&&!transition},
+  {say:'Here’s their gate. Walk up to the sign and press Write to leave a note. This one is practice, so it won’t be sent.',
+   start:()=>life.api.practice.note(true),reveal:true,target:()=>$('reveal').hidden?null:$('reveal-action'),hand:true,done:()=>$('note-dialog').open},
+  {say:'Write a few words, or pick one, and send it.',done:()=>life.api.practice.noted()&&!$('note-dialog').open},
+  {say:'That’s everything. Enjoy your sky!'},
+ ]},
+});
+$('guide-again').onclick=()=>{setPanel(false);overview();guide.start(world?.live?'home':'demo',true);};
 // Watering. Done on your own island while you walk it leaves the tree glass for a moment (forest.js "thirsty"):
 // the gardener walks over with her can, the tree on her right, and pours; it takes root as the water lands. Trees
 // wait while a sheet covers the view, so you see her go once the planner is closed, and are watered nearest first.
 // Any walking key, leaving the island or turning motion off takes the controls back: the rest take root at once.
-const POUR=2.4, LANDS=.4, GIVE_UP=6, CROSS=3.5;   // seconds watering; when in it the tree starts to take root; longest walk; a far tree's walk
+const POUR=2.4, LANDS=.4, GIVE_UP=9, CROSS=3.5;   // seconds watering; when in it the tree starts to take root; longest walk; a far tree's walk
 const thirst=[];let chore=null;
 const home=()=>motion&&mode==='walk'&&!transition&&player.surface?.kind==='island'&&player.surface.id===ME;
 // (not for blocks you marked done in the planner: those take root at once and the fairy asks straight away, life.js quick)
@@ -440,6 +516,28 @@ function stepToward(ux,uz,d,dt){
   return false;
 }
 // where to stand: a step out from the trunk, on the side you come from if that is open ground
+// Walking somewhere for you (the guide's walk to a tree, the watering can): straight there, and whatever blocks her
+// on the way (no headway for 0.7 s: a rock, a torii post) she hops.
+function route(to){
+  const pts=[new T.Vector3(to.x,0,to.z)];
+  return {pts,k:0,check:0,from:Infinity,at:0,length:pts.reduce((l,p,i)=>l+(i?p.distanceTo(pts[i-1]):Math.hypot(p.x-player.position.x,p.z-player.position.z)),0)};
+}
+// one frame along a route; true once she stands at its end
+function follow(r,pace,dt){
+  const dist=p=>Math.hypot(p.x-player.position.x,p.z-player.position.z);
+  while(r.k<r.pts.length-1&&dist(r.pts[r.k])<.7)r.k++;
+  const p=r.pts[r.k],d=dist(p);
+  if(r.k===r.pts.length-1&&d<.6)return true;
+  if((r.check+=dt)>=.7){
+    if(r.at===r.k&&r.from-d<.5){   // no headway: hop to the point she was making for
+      const f=surfaceAt(islands,bridges,p.x,p.z);
+      if(f?.kind==='island'&&f.id===ME){player.position.set(f.x,f.y,f.z);player.surface=f;}else if(r.k<r.pts.length-1)r.k++;else return true;
+    }
+    r.at=r.k;r.from=dist(r.pts[r.k]);r.check=0;
+  }
+  stepToward((p.x-player.position.x)/d,(p.z-player.position.z)/d,Math.min(d,pace*dt),dt);
+  return false;
+}
 function standFor(b){
   const a0=Math.atan2(player.position.z-b.z,player.position.x-b.x), R=b.r+1.5;
   for(const da of [0,.4,-.4,.8,-.8,1.2,-1.2,1.6,-1.6,2.2,-2.2,Math.PI]){
@@ -456,16 +554,16 @@ function tend(dt){
     const d=t=>{const b=forest.base(t);return Math.hypot(b.x-player.position.x,b.z-player.position.z);};
     thirst.sort((a,b)=>d(a)-d(b));const t=thirst.shift();
     if(t.anim!=='thirsty')return;   // undone, or let go, meanwhile
-    chore={t,b:forest.base(t),time:0,stuck:0,pouring:false};chore.stand=standFor(chore.b);
-    chore.pace=Math.min(WALK*RUN*1.5,Math.max(WALK,Math.hypot(chore.stand.x-player.position.x,chore.stand.z-player.position.z)/CROSS));   // far: she runs
+    chore={t,b:forest.base(t),time:0,pouring:false};chore.stand=standFor(chore.b);chore.route=route(chore.stand);
+    chore.pace=Math.min(WALK*RUN*1.5,Math.max(WALK,chore.route.length/CROSS));   // far: she runs
   }
   const c=chore,b=c.b=forest.base(c.t);c.time+=dt;   // re-read: the island may still be gliding to a new altitude
   if(!c.pouring){
     if(c.t.anim!=='thirsty'){chore=null;return;}
-    const dx=c.stand.x-player.position.x,dz=c.stand.z-player.position.z,d=Math.hypot(dx,dz);
     player.running=c.pace>WALK*1.2;
-    if(d>.25&&c.time<GIVE_UP){if(!stepToward(dx/d,dz/d,Math.min(d,c.pace*dt),dt)&&(c.stuck+=dt)>.6)c.time=GIVE_UP;return;}
-    c.pouring=true;c.time=0;   // there (or as close as she gets): water from here
+    if(c.time<GIVE_UP&&!follow(c.route,c.pace,dt))return;
+    if(c.time>=GIVE_UP){const f=surfaceAt(islands,bridges,c.stand.x,c.stand.z);if(f?.kind==='island'&&f.id===ME){player.position.set(f.x,f.y,f.z);player.surface=f;}}   // never a walk without end
+    c.pouring=true;c.time=0;   // there: water from here
   }
   const toTree=Math.atan2(b.x-player.position.x,b.z-player.position.z);
   turnTo(toTree+.75,dt);   // the can is in her right hand
@@ -493,6 +591,11 @@ function walk(dt){
   if(stick.on&&Math.hypot(stick.x,stick.y)>.15){ix=stick.x;iz=stick.y;}   // the touch joystick, analog
   if(travel&&(ix||iz))travel=null;   // any walking key takes the controls back from Go
   if(chore||thirst.length){if(ix||iz||travel)quench();else{tend(dt);return;}}   // ...and from the watering
+  if(guided){   // ...and from the guide's walk, which waits (up to 3 s) for where it's going: a new tree plants next frame
+    if(ix||iz||travel)guided=null;
+    else{if(!guided.r){const to=guided.to();if(to)guided.r=route(to);else if((guided.wait=(guided.wait??0)+dt)>3)guided=null;}
+         if(guided?.r&&follow(guided.r,WALK,dt))guided=null;return;}
+  }
   if(travel){crossBridge(dt);return;}
   if(!ix&&!iz)return;
   // Camera-relative: W always walks away from the camera, wherever it has been dragged.
@@ -637,6 +740,8 @@ renderer=new T.WebGLRenderer({canvas,antialias:false,powerPreference:'high-perfo
   // whose sky: the islands are built only once that is known
   world=await worldReady;
   definitions=defineIslands(world.people);
+  // empty places wait level with the gathering island, at a normal week's height
+  openSlots=world.live?SLOT_IDS.filter(id=>!world.people.some(p=>p.id===id)).map(id=>({id,...slotPlace(id),altitude:0})):[];
   camera.position.copy(overviewPosition());controls.maxDistance=skyReach();controls.update();
   for(const def of definitions){const island={...def,weather:'clear',field:fields[def.model],obstacles:[...(def.obstacles??[])]};
     const group=new T.Group();group.position.set(def.x,def.altitude,def.z);scene.add(group);island.group=group;
@@ -654,19 +759,32 @@ renderer=new T.WebGLRenderer({canvas,antialias:false,powerPreference:'high-perfo
     islands.push(island);
   }
   for(const island of islands.slice(1))buildBridge(island);
+  vacancies=createVacancies({scene,assets,places:openSlots,labels:$('island-labels'),onInvite:()=>{invited=true;openInvite(world,notice);}});
   watering=createWatering(scene);
   const playerRoot=new T.Group();scene.add(playerRoot);gardener=makeBlomy();playerRoot.add(gardener);player.root=playerRoot;
   const shadow=new T.Mesh(new T.CircleGeometry(.43,24),new T.MeshBasicMaterial({color:'#35492f',transparent:true,opacity:.22,depthWrite:false}));shadow.rotation.x=-Math.PI/2;shadow.position.y=.035;playerRoot.add(shadow);
   spawnOn(islands[0]);
-  life=initLife({world,scene,flower,islands,camera,texture:atmosphere.texture,player,notice,visit,forest,guiding:()=>guide.on,getMode:()=>mode,getSelected:()=>selected,
+  life=initLife({world,scene,flower,islands,camera,texture:atmosphere.texture,player,notice,visit,forest,guiding:()=>guide.on&&!guide.free,flowerTurn:()=>guide.flower,getMode:()=>mode,getSelected:()=>selected,
     wear:(id,on)=>gardener.userData.wear(id,on),
     setAltitude:(id,h)=>{updateAltitude(islands.find(i=>i.id===id),T.MathUtils.clamp(h,LOW,HIGH));syncPanel();},
-    setGlow:(id,g)=>{const b=bridges.find(b=>b.id===id);if(!b)return;b.glow=T.MathUtils.clamp(g,.15,3);b.glowMaterial.emissiveIntensity=b.glow*2.2;b.deckMaterial.emissiveIntensity=b.glow*.16;syncPanel();}});
+    setGlow:(id,g)=>{const b=bridges.find(b=>b.id===id);if(!b)return;b.glow=T.MathUtils.clamp(g,.15,3);b.glowMaterial.emissiveIntensity=b.glow*2.2;b.deckMaterial.emissiveIntensity=b.glow*.16;syncPanel();},
+    onJoin:id=>vacancies.warm(id)});
   // a finished block whose tree waits for the gardener's can: the fairy asks once it's watered, not before
   life.api.setWaterWatch(b=>[...thirst,...(chore?[chore.t]:[])].some(t=>t.block&&String(t.block.id)===String(b.id)));
   ready=true;sound.preload();peekHelp();
-  // first time here (not in tests, unless ?guide): Blomy shows you round, once the welcome has been said
-  {const q=new URLSearchParams(location.search);if(!q.has('skiplogin')||q.has('guide'))setTimeout(()=>guide.start(q.has('guide')),2600);}
+  // a friend's island you haven't seen yet waits in gold glass, then grows in, once the welcome has been said
+  const arrivals=world.live?newArrivals(world.sky,world.people,ME):[];
+  arrivals.forEach((id,n)=>{
+    const i=islands.find(i=>i.id===id),wait=3.2+n*1.6;vacancies.arrive(i,slotPlace(id),wait);
+    setTimeout(()=>{notice(`${i.owner}’s island arrived in your sky.`);sound.play('whale_call',{gain:.5});},wait*1000);
+  });
+  // first time here (not in tests, unless ?guide): Blomy shows you round, once the welcome has been said; the
+  // demo starts with what a week does to an island. A first friend's island, once it has grown in, opens the
+  // friends chapter (unless the first-visit chapter is still running: that one leads on to it).
+  {const q=new URLSearchParams(location.search);if(!q.has('skiplogin')||q.has('guide')){
+    setTimeout(()=>guide.start(world.live?'home':'demo',q.has('guide')),2600);
+    if(arrivals.length)setTimeout(()=>guide.start('friends'),(3.2+arrivals.length*1.6)*1000+3000);
+  }}
   // pieces too small to throw a visible shadow (beads, buttons, little props) stop casting one: each was a draw in the shadow pass
   {const ws=new T.Vector3();scene.traverse(o=>{if(!o.isMesh||!o.castShadow)return;const g=o.geometry;if(!g.boundingSphere)g.computeBoundingSphere();o.getWorldScale(ws);if(g.boundingSphere.radius*Math.max(ws.x,ws.y,ws.z)<.3)o.castShadow=false;});}
   const want=new URLSearchParams(location.search).get('island');
@@ -742,13 +860,15 @@ const labelAt=new T.Vector3();
 const EDGE_X=.9, EDGE_TOP=.78, EDGE_BOTTOM=-.55, LEFT_ZONE=-.3, LEFT_FLOOR=.18, GAP=36;
 function placeLabels(){
   const edges=[];
-  for(const island of islands){
+  for(const island of [...islands,...vacancies.list]){
     const el=island.label;
     if(mode==='walk'){if(!el.hidden)el.hidden=true;continue;}
-    const p=labelAt.set(island.x,island.altitude+.7,island.z+8*island.scale).project(camera);
+    const p=labelAt.set(island.x,island.altitude+.7,island.z+(island.vacant?0:8)*island.scale).project(camera);   /* an empty place's label sits on its middle */
     let x=p.x,y=p.y;const behind=p.z>1;if(behind){x=-x;y=-y;}   // behind the camera the projection flips
     const k=Math.max(Math.abs(x)/EDGE_X,y>0?y/EDGE_TOP:y/EDGE_BOTTOM);
-    const edge=behind||k>1;
+    let edge=behind||k>1;
+    // an empty place labels itself only when it is in or near the view, pulled inside the frame, with no arrow
+    if(edge&&island.vacant){if(behind||k>1.4){if(!el.hidden)el.hidden=true;continue;}x/=k;y/=k;edge=false;}
     if(edge){x/=Math.max(k,1e-6);y/=Math.max(k,1e-6);if(x<LEFT_ZONE&&y<LEFT_FLOOR)y=LEFT_FLOOR;}
     el.hidden=false;el.classList.toggle('edge',edge);
     if(edge){el.style.setProperty('--toward',`${Math.atan2(-p.y*(behind?-1:1),p.x*(behind?-1:1))}rad`);edges.push({el,px:(x*.5+.5)*innerWidth,py:(-y*.5+.5)*innerHeight});}
@@ -771,14 +891,14 @@ function frame(time){
 
   govern(time-last,time);const dt=Math.min((time-last)/1000,.04);last=time;if(document.hidden)return;if(motion)elapsed+=dt;
   turnCamera(dt);walk(dt);pose(dt);footsteps();bridgeBanner();showStick();guide.update(dt);player.root.position.copy(player.position);atmosphere.update(elapsed,camera);glideAltitudes(dt);atmosphere.setHoles(islands);for(const i of islands){i.weatherFx.update(elapsed,camera);i.sink.update(elapsed,camera);}
-  if(transition){transition.time+=dt;const a=motion?Math.min(transition.time/1.2,1):1,e=1-Math.pow(1-a,4);look.copy(mode==='walk'?player.position:new T.Vector3(0,2,0));if(mode==='walk')look.y+=1;targetPosition.copy(mode==='walk'?player.position.clone().add(cameraOffset):overviewPosition());camera.position.lerpVectors(transition.from,targetPosition,e);controls.target.lerpVectors(transition.targetFrom,look,e);camera.lookAt(controls.target);if(a===1)transition=null;}
+  if(transition){transition.time+=dt;const a=motion?Math.min(transition.time/1.2,1):1,e=1-Math.pow(1-a,4);look.copy(mode==='walk'?player.position:focus?.look??new T.Vector3(0,2,0));if(mode==='walk')look.y+=1;targetPosition.copy(mode==='walk'?player.position.clone().add(cameraOffset):focus?.pos??overviewPosition());camera.position.lerpVectors(transition.from,targetPosition,e);controls.target.lerpVectors(transition.targetFrom,look,e);camera.lookAt(controls.target);if(a===1)transition=null;}
   // walk: orbit controls around the gardener -- drag to turn, scroll to zoom -- carried along as they move
   // (no collision pull-in: the camera stays exactly where the user put it)
   else if(mode==='walk'){look.copy(player.position);look.y+=1;camera.position.add(look).sub(controls.target);controls.target.copy(look);controls.autoRotate=false;controls.update(dt);}
-  else {controls.autoRotate=motion;controls.autoRotateSpeed=.1;controls.update(dt);}
+  else {controls.autoRotate=motion&&!focus;controls.autoRotateSpeed=.1;controls.update(dt);}
   life.update(dt,elapsed,motion);
   {const i=islands.find(i=>i.id===selected);rain.set(Math.min(1,Math.max(0,((i?.strain??0)-.55)/.4))*(mode==='walk'?1:.4));}   // atmosphere.js: rain from .55
-  forest.update(dt,elapsed,motion,id=>life.api.getSchedule(id));watering.update(dt);
+  forest.update(dt,elapsed,motion,id=>life.api.getSchedule(id));watering.update(dt);vacancies.update(dt,elapsed,motion);
   followSun();treeDetail();shadeLight(dt);pierDetail();
   placeLabels();
   liftBlur(life.api.liftAmount());
@@ -787,7 +907,7 @@ function frame(time){
 
 let down=null;
 canvas.addEventListener('pointerdown',e=>{down=[e.clientX,e.clientY];});
-canvas.addEventListener('pointerup',e=>{if(!ready||!down||Math.hypot(e.clientX-down[0],e.clientY-down[1])>5)return;down=null;pointer.set(e.clientX/innerWidth*2-1,-e.clientY/innerHeight*2+1);raycaster.setFromCamera(pointer,camera);if(life.pick(raycaster))return;if(mode!=='overview')return;const hit=raycaster.intersectObjects(islands.map(i=>i.group),true).find(h=>h.object.userData.islandId);if(hit)visit(hit.object.userData.islandId);});
+canvas.addEventListener('pointerup',e=>{if(!ready||!down||Math.hypot(e.clientX-down[0],e.clientY-down[1])>5)return;down=null;pointer.set(e.clientX/innerWidth*2-1,-e.clientY/innerHeight*2+1);raycaster.setFromCamera(pointer,camera);if(life.pick(raycaster))return;if(mode!=='overview')return;const hit=raycaster.intersectObjects([...islands.map(i=>i.group),...vacancies.groups()],true).find(h=>h.object.userData.islandId||h.object.userData.vacant);if(hit?.object.userData.vacant)vacancies.choose(hit.object.userData.vacant);else if(hit)visit(hit.object.userData.islandId);});
 window.addEventListener('keydown',e=>{if(['INPUT','SELECT','TEXTAREA','BUTTON'].includes(document.activeElement.tagName))return;if(e.code==='Escape'){overview();return;}if(e.code==='Space'&&mode==='walk'){e.preventDefault();jump();return;}if(/^(Key[WASDQERFZX]|Arrow(Up|Down|Left|Right)|Shift(Left|Right))$/.test(e.code)){if(mode==='walk'||/^Key[QERFZX]$/.test(e.code))e.preventDefault();keys.add(e.code);}});
 window.addEventListener('keyup',e=>keys.delete(e.code));window.addEventListener('blur',()=>{keys.clear();helpKeys(null);});
 // the key card at the bottom right (index.html .help) presses down with your keys
