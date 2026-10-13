@@ -2,13 +2,13 @@
 # Island Life
 
 <p align="center">
-  <a href="docs/videos/hero.mp4"><img src="docs/images/Banner.png" alt="Banner" width="100%" /></a>
+  <a href="docs/videos/sky-neighbourhood.mp4"><img src="docs/images/Banner.png" alt="Banner" width="100%" /></a>
   <br/><br/>
-  <a href="docs/videos/hero.mp4"><img src="docs/images/clips/hero.webp" alt="The sky neighbourhood, turning a full circle" width="100%"/></a>
-  <br/><sub>Your sky neighbourhood, a full turn &nbsp;·&nbsp; <a href="docs/videos/hero.mp4">full clip</a></sub>
+  <a href="docs/videos/sky-neighbourhood.mp4"><img src="docs/images/clips/sky-neighbourhood.webp" alt="The sky neighbourhood, turning a full circle" width="100%"/></a>
+  <br/><sub>Your sky neighbourhood, a full turn &nbsp;·&nbsp; <a href="docs/videos/sky-neighbourhood.mp4">full clip</a></sub>
   <br/><br/>
-  <a href="docs/videos/character.mp4"><img src="docs/images/clips/character.webp" alt="Walking the bridge, pulling back to The Gathering Island" width="100%"/></a>
-  <br/><sub>Crossing to The Gathering Island &nbsp;·&nbsp; <a href="docs/videos/character.mp4">full clip</a></sub>
+  <a href="docs/videos/bridge-crossing.mp4"><img src="docs/images/clips/bridge-crossing.webp" alt="Walking onto the bridge from My island, pulling back as it crosses to The Gathering Island" width="100%"/></a>
+  <br/><sub>Crossing to The Gathering Island &nbsp;·&nbsp; <a href="docs/videos/bridge-crossing.mp4">full clip</a></sub>
 </p>
 
 **Team:** Codenected  
@@ -17,9 +17,11 @@
 
 ## Project Links
 
+- **Live app:** [https://island-life-r21r.vercel.app/](https://island-life-r21r.vercel.app/)
+- **Instant demo, no account:** [https://island-life-r21r.vercel.app/?enter=demo](https://island-life-r21r.vercel.app/?enter=demo)
+- **User guide for judges:** [USER_GUIDE.md](USER_GUIDE.md)
 - **Video Presentation:** [https://www.youtube.com/watch?v=IwbC7wqz-7Q](https://www.youtube.com/watch?v=IwbC7wqz-7Q)
 - **Presentation Slides:** [https://canva.link/7yl54f1zapatoy0](https://canva.link/7yl54f1zapatoy0)
-- **Prototype:** [https://island-life-one.vercel.app/](https://island-life-one.vercel.app/)
 
 ## Island Life in 30 seconds
 
@@ -28,6 +30,13 @@
 | <img src="public/assets/icons/social.webp" width="52" alt="A blossom tree"/> | <img src="public/assets/icons/sky-rain.webp" width="52" alt="A rain cloud"/> | <img src="public/assets/icons/island.webp" width="52" alt="A floating island"/> | <img src="public/assets/icons/bridge.webp" width="52" alt="A light bridge"/> | <img src="public/assets/icons/gardener.webp" width="52" alt="The leaf gardener"/> |
 |:---:|:---:|:---:|:---:|:---:|
 | Activities become trees | Mood becomes weather | Workload controls altitude | Friends connect without seeing your calendar | Your gardener avatar suggests rest when the week looks heavy |
+
+**New since the preliminary round**
+
+- **Check-ins live in the world.** A flower by your gate asks how you feel. A fairy flies out of each finished activity's tree to ask how draining it was, and your island learns what a heavy week means *for you*. See [Checking in, inside the world](#checking-in-inside-the-world).
+- **Real accounts and real friends.** Sign in with email or Google, share a sky with up to four friends, connect Google Calendar, and get phone notifications when the golden window opens. See [Your own sky, with your real friends](#your-own-sky-with-your-real-friends).
+- **A dewdrop shop.** Grow decorations on your island and dress Blomy, your gardener. See [Dewdrops, spent on your island](#dewdrops-spent-on-your-island).
+- **A world that feels alive.** Blomy waters each finished tree, a star whale brings her home on the welcome page, there is music and sound, and the app works on a phone with a touch joystick. See [Arrival, sound and phone](#arrival-sound-and-phone).
 
 
 
@@ -72,14 +81,15 @@ Island Life turns a student's week into a floating **3D island** that makes over
 
 Island Life
 
-- Converts scheduled commitments across **seven activity categories** into growing trees.
-- Uses the island’s physical **altitude** to represent weekly workload density.
-- Turns emotional check-ins into the island's **weather**.
-- Uses a **gardener avatar** to suggest pre-scheduled, single-tap rest activities rather than enforcing rigid study marathons.
-- Opens a daily **2-minute "Golden Window"** where friends share one unedited photo of what they are doing.
+- Converts scheduled commitments across **seven activity categories** into growing trees, imported from **Google Calendar** or added in its own planner.
+- Uses the island’s physical **altitude** to show how heavy the week is *for you*, against your own normal week.
+- Asks how draining each finished activity was, through a **fairy** that flies out of its tree, so the island learns what each kind of time costs you.
+- Turns emotional check-ins with the **flower by your gate** into the island's **weather**.
+- Uses a **gardener avatar** to suggest a single-tap change at a free time, rather than enforcing rigid study marathons.
+- Opens a daily **2-minute "Golden Window"** where friends share one unedited photo of what they are doing, with a phone notification when it opens.
 - Connects peer islands through **privacy-first bridges** that display emotional weather rather than private calendars.
 - Replaces streak penalties with a guilt-free **"Let Go"** mechanic.
-- Values and rewards **rest equally with work**.
+- Values and rewards **rest equally with work**, with **dewdrops** that can only be spent on decorations and costumes.
 
 Island Life makes a heavy week visible early, and makes doing something about it a single tap.
 
@@ -96,12 +106,12 @@ These were the main ideas we tested, kept, changed, or dropped.
 | **Personalized 3D Island World (3D Sky Island)** | **Chosen** | A dashboard made the week feel like homework. A floating island let us show the same data physically: height for load, weather for mood, trees for planned time. |
 | **1-Tap Photo Check-Ins ("The Golden Window")** | **Chosen** | We liked the honesty of BeReal: one quick photo of what is happening now. The photos sit on The Gathering Island carousel, so the group sees real moments instead of fake focus timers. |
 | **Shared Peer Bridges & Gathering Island** | **Chosen** | Bridges gave the social part a shape. Friends can see weather, altitude, notes, and shared tasks, but not the private details of someone else's plan. |
-| **AI-assisted gardener avatar** | **Chosen** | The gardener avatar watches mood check-ins and weekly load. Clear rules decide when it speaks and what kind of help fits. Gemini reads a summary of the week and suggests the idea, choosing only from free times the app has found, and the app checks it before showing it. If Gemini is unavailable, the app's own ideas take over: tea, a walk, early sleep, or a slow evening. |
+| **AI-assisted gardener avatar** | **Chosen** | The gardener avatar watches mood check-ins and weekly load. Clear rules decide when it speaks and what kind of help fits. Gemini reads a summary of the week and suggests the idea, choosing only from free times the app has found, and the app checks it before showing it. If Gemini is unavailable, the app's own ideas take over: an early night, a walk, tea with a friend, or a slow evening. |
 | **Guilt-Free "Let Go" & Balanced Rewards** | **Chosen** | We did not want streaks or dead trees. If you let go of a task, its glass tree drifts away. Rest earns the same reward as studying: **Dewdrops 💧**. |
 | **Visual Activity Trees & Timetable Clock Path** | **Chosen** | Each activity type became its own tree, so a study-heavy week looks different from a social-heavy one. Today's plan became a clock-face path with a light walking through it. |
 | **Blender MCP Server Pipeline** | **Chosen** | We needed a lot of matching 3D assets quickly. Python scripts controlling Blender let us regenerate islands, trees, props, and renders after changes. |
 | **Bee Colony & Honeycomb World** | **Dropped** | An alternative way to draw the same data: a honeycomb whose cells fill as the week fills, and nectar earned by turning up for the group. It mapped cleanly, but the team found it busier and more industrious than the floating island, and the calmer world suited an app about not overworking. |
-| **One Mascot Per Member** | **Reshaped** | Early idea of a personal creature for each student. It became one gardener avatar who tends your island, with costumes kept back as a reward in the long-term plan, so the world stays readable rather than crowded. |
+| **One Mascot Per Member** | **Reshaped** | Early idea of a personal creature for each student. It became one gardener avatar, Blomy, who tends your island. Costumes came later as a reward in the dewdrop shop, so the world stays readable rather than crowded. |
 | **Forest-Style Single-Player Tree Planting** | **Dropped** | Forest depends on a timer, and a timer can reward someone for leaving a phone alone while doing nothing. Killing trees for stopping early also felt wrong for a burnout project. |
 | **Crypto-Reward / Tokenomics Concept** | **Dropped** | Mentor Zach advised us to drop it. Crypto rewards are common in hackathon pitches, add friction, and pull attention away from the wellness idea. |
 | **Traditional Virtual Garden Concept** | **Dropped** | Mentor Zach also challenged the garden idea because it felt too familiar. The sky island kept the calm feeling but made the data clearer: altitude, weather, trees, and bridges each mean something. |
@@ -172,6 +182,19 @@ Thirty-six commits over three days. These were the main product decisions during
 | **Active rest reminder** | The rest suggestion first sat on a sign by the windmill, and a nudge that waits to be found is not a nudge. Your gardener avatar now speaks when you get home, and the sign keeps the offer. | A passive signpost, which would make the reminder too easy to miss when someone is already tired. |
 | **User-confirmed scheduling** | Taking a suggestion used to put a slow evening on your plan at a time we chose. Now it offers free times, or hands you the planner. | Deciding someone's evening for them, which is the behaviour students already resent in productivity apps. |
 
+### 5 to 13 October, from prototype to product
+
+The building phase turned the prototype into something a stranger can use with their own week. These were the decisions that changed it most.
+
+| Decision | Why we made it | What we turned down |
+|---|---|---|
+| **Real accounts, skies of five** | A demo that forgets you on refresh cannot be piloted. A sky is you and up to four friends, joined with an invite code, and friends only ever receive derived values: weather, lanterns, height, and the kind and size of what you share. | Open friend lists and follower counts, which invite comparison. |
+| **Altitude that learns** | The same lecture is easy for one student and draining for another. One tap on "How draining was it?" teaches the island what an hour of each kind costs *you*, so the island compares this week with your own normal week. The method is written up in [docs/algorithm.md](docs/algorithm.md). | One fixed weight per category, which would call the same week heavy for everyone. |
+| **Questions inside the world** | The check-in moved from a header button to a flower by your gate, and the drain question from a pop-up to a fairy who flies out of the tree you just grew. Each question now lives where it is about. | Forms and modal dialogs, which feel like homework. |
+| **Watering before a tree takes root** | Finishing something should feel like a moment. When you press Done on your island, Blomy walks over with her can and waters the glass tree. From the planner it takes root at once, so a backlog stays quick. | A colour change alone, which made finishing feel like ticking a box. |
+| **A shop that only decorates** | Dewdrops buy decorations and costumes, never anything that changes your workload, and they can only be earned by living the week. | Buying dewdrops, timers, or limited-time pressure. |
+| **Google Calendar, read first** | Most students already keep their timetable there. Import is read-only. Two-way sync is opt-in and writes only to a separate calendar named "Island Life". | Writing into the student's own calendars. |
+
 ## 2.4 Mentor Consultation
 
 <p align="left">
@@ -191,10 +214,9 @@ Thirty-six commits over three days. These were the main product decisions during
 
 ## 3.1 Prototype
 
-**Live Prototype:**  
-[https://island-life-one.vercel.app/](https://island-life-one.vercel.app/)
+**Live app:** [https://island-life-r21r.vercel.app/](https://island-life-r21r.vercel.app/) &nbsp;·&nbsp; **Instant demo, no account:** [?enter=demo](https://island-life-r21r.vercel.app/?enter=demo) &nbsp;·&nbsp; **A route through it:** [USER_GUIDE.md](USER_GUIDE.md)
 
-
+The demo sky is Aisha's week and her four friends. It runs entirely in the browser, with no account, camera, or calendar needed.
 
 ---
 
@@ -202,24 +224,24 @@ Thirty-six commits over three days. These were the main product decisions during
 
 <table>
 <tr>
-<td width="50%"><a href="docs/videos/trees.mp4"><img src="docs/images/clips/trees.webp" alt="Marking a block done, and its glass tree taking root"/></a><br/><sub>Mark it done, and the glass tree takes root &nbsp;·&nbsp; <a href="docs/videos/trees.mp4">full clip</a></sub></td>
-<td width="50%"><a href="docs/videos/sinking.mp4"><img src="docs/images/clips/sinking.webp" alt="An island sinking toward the clouds as the week fills up"/></a><br/><sub>The island sinks as the week fills up &nbsp;·&nbsp; <a href="docs/videos/sinking.mp4">full clip</a></sub></td>
+<td width="50%"><a href="docs/videos/watering-trees.mp4"><img src="docs/images/clips/watering-trees.webp" alt="Pressing Done on a path stop: Blomy walks to the glass tree with her watering can, waters it, it takes root, and the fairy asks how draining it was"/></a><br/><sub>Press Done, and Blomy waters the glass tree until it takes root &nbsp;·&nbsp; <a href="docs/videos/watering-trees.mp4">full clip</a></sub></td>
+<td width="50%"><a href="docs/videos/island-sinking.mp4"><img src="docs/images/clips/island-sinking.webp" alt="An island gliding down toward the cloud sea as the week fills up"/></a><br/><sub>The island sinks as the week fills up &nbsp;·&nbsp; <a href="docs/videos/island-sinking.mp4">full clip</a></sub></td>
 </tr>
 <tr>
 <td valign="top"><h3>Everything you do grows into a tree</h3>
-Seven kinds of activity, seven kinds of tree. What's coming up stands as a glass tree. Mark it done, and it takes root in full colour. Let it go, and the glass tree drifts away quietly. Every Monday the island starts fresh, and the weeks before wait under Past weeks.</td>
-<td valign="top"><h3>A full week sinks your island</h3>
-Your island floats high when your week has room, and sinks toward the clouds as you take more on. You feel it's too much before you've said yes to one more thing.</td>
+Seven kinds of activity, seven kinds of tree. What's coming up stands as a glass tree. When its time has passed, press Done on its stop along the path, and Blomy walks over with her watering can until it takes root in full colour. Let it go, and the glass tree drifts away quietly. Every Monday the island starts fresh, and the weeks before wait under Past weeks.</td>
+<td valign="top"><h3>A heavy week sinks your island</h3>
+In a normal week for you, your island floats level with The Gathering Island. Lighter weeks rise as high as 45 m, and heavier ones sink toward the cloud sea, down to 55 m below. "Heavy" means heavy for you: the island learns what each kind of activity costs you, and the planner marks heavy days before they arrive.</td>
 </tr>
 <tr>
-<td><a href="docs/videos/weather.mp4"><img src="docs/images/clips/weather.webp" alt="An island's sky turning from clear to rain"/></a><br/><sub>Heavy days gather cloud, then rain &nbsp;·&nbsp; <a href="docs/videos/weather.mp4">full clip</a></sub></td>
-<td><a href="docs/videos/visiting_friend.mp4"><img src="docs/images/clips/visiting_friend.webp" alt="Crossing the glowing bridge to a friend's island"/></a><br/><sub>Cross a bridge to a friend's island &nbsp;·&nbsp; <a href="docs/videos/visiting_friend.mp4">full clip</a></sub></td>
+<td><a href="docs/videos/weather-rain.mp4"><img src="docs/images/clips/weather-rain.webp" alt="An island's sky turning from clear to cloud, then rain"/></a><br/><sub>Heavy days gather cloud, then rain &nbsp;·&nbsp; <a href="docs/videos/weather-rain.mp4">full clip</a></sub></td>
+<td><a href="docs/videos/visit-friend.mp4"><img src="docs/images/clips/visit-friend.webp" alt="Crossing the glowing bridge to Ben's island, with its weather and height shown in words on arrival"/></a><br/><sub>Cross a bridge to a friend's island &nbsp;·&nbsp; <a href="docs/videos/visit-friend.mp4">full clip</a></sub></td>
 </tr>
 <tr>
 <td valign="top"><h3>Your feelings become the weather</h3>
-Tell your island how you feel, and a coloured lantern rises into its sky. A few tired, stressed or low days gather cloud, then rain. Calm and happy days clear it again.</td>
+Tell your flower how you feel, and a coloured lantern lights up on your pier. A few tired, stressed or low days gather cloud, then rain. Calm and happy days clear it again. The weather is never predicted, and never compared with your normal week.</td>
 <td valign="top"><h3>Your friends are a bridge away</h3>
-Friends' islands connect to yours through The Gathering Island. You see their weather and how high they float, never their hours or plans. A rainy island is your cue to leave a note at their gate.</td>
+Friends' islands connect to yours through The Gathering Island. Walk onto a bridge and press Go. On arrival you see their weather and how high they float, in words, never their hours or plans. A rainy island is your cue to leave a note at their gate.</td>
 </tr>
 </table>
 
@@ -229,7 +251,7 @@ Friends' islands connect to yours through The Gathering Island. You see their we
 
 The same little trees mark each kind of activity everywhere in the app, so you can spot a study-heavy week from across the sky.
 
-**How you feel** hangs as a lantern in your island's sky, one colour per feeling.
+**How you feel** hangs as a lantern on your pier, one colour per feeling.
 
 | <img src="public/assets/icons/lantern-calm.webp" width="34" alt=""/> | <img src="public/assets/icons/lantern-happy.webp" width="34" alt=""/> | <img src="public/assets/icons/lantern-tired.webp" width="34" alt=""/> | <img src="public/assets/icons/lantern-stressed.webp" width="34" alt=""/> | <img src="public/assets/icons/lantern-low.webp" width="34" alt=""/> |
 |:---:|:---:|:---:|:---:|:---:|
@@ -243,18 +265,49 @@ The same little trees mark each kind of activity everywhere in the app, so you c
 
 ---
 
-### A nudge before you burn out
+### Checking in, inside the world
 
-Burnout creeps up, so Island Life watches for it. When your check-ins keep coming back tired, stressed or low, or your week gets too full, it nudges you on its own, with a way to unwind picked from your own week.
+Two short questions, each asked by someone who lives on your island. Questions about *you* change the sky. Questions about *things* move the island.
 
 <table>
 <tr>
-<td width="50%"><a href="docs/videos/nudge.mp4"><img src="docs/images/clips/nudge.webp" alt="The gardener avatar noticing a run of heavy days and suggesting a way to unwind"/></a><br/><sub>Your gardener avatar speaks up, and you pick a time &nbsp;·&nbsp; <a href="docs/videos/nudge.mp4">full clip</a></sub></td>
-<td width="50%"><img src="docs/images/balance.jpg" alt="The analysis page, with the week by area and small changes that would help"/></td>
+<td width="50%"><a href="docs/videos/flower.mp4"><img src="docs/images/clips/flower.webp" alt="Blomy walks up to the flower by the gate; she asks how you feel, and a calm check-in lights a lantern on the pier"/></a><br/><sub>Walk up to your flower, and she asks how you feel &nbsp;·&nbsp; <a href="docs/videos/flower.mp4">full clip</a></sub></td>
+<td width="50%"><a href="docs/videos/fairy.mp4"><img src="docs/images/clips/fairy.webp" alt="A fairy hovers by the newly watered tree and asks: How draining was it? Light, Okay or Draining"/></a><br/><sub>A fairy flies out of the new tree with one question &nbsp;·&nbsp; <a href="docs/videos/fairy.mp4">full clip</a></sub></td>
 </tr>
 <tr>
-<td valign="top"><b>Your gardener avatar speaks up.</b> After a run of tired, stressed or low days, your gardener notices the moment you get home and suggests a way to unwind: tea with the friend you've seen least, a walk if you've barely moved, an early night after late ones, or a slow evening. It has already found a free time. One tap puts it on your plan, or ask for another idea.</td>
-<td valign="top"><b>The analysis page.</b> Time, mental, physical, social and errands, each read from your week and put in plain words. Next to them are changes made for you, like pushing the two blocks you marked "can wait" to next week. Each one applies in one tap.</td>
+<td valign="top"><b>Your flower asks how you feel.</b> A flower grows just inside your gate. Walk up to her, tap her, or press T, and she asks how you feel right now: Calm, Happy, Tired, Stressed or Low, with an optional photo. Your answer lights a lantern on your pier and colours her petals. Over a few days the lanterns make your island's weather. Then she rests for an hour. Signed in, she also asks once in the evening by phone notification.</td>
+<td valign="top"><b>A fairy asks how draining it was.</b> Every time you finish something, a fairy flies out of its tree and asks one question: Light, Okay or Draining. One tap teaches your island what that kind of time costs you, so a heavy week means heavy <i>for you</i>. Your balance shows what it has learned. Friends never see these answers.</td>
+</tr>
+</table>
+
+---
+
+### A nudge before you burn out
+
+Burnout creeps up, so Island Life watches for it. When your week gets heavier than usual, a day ahead looks heavy, or your check-ins keep coming back tired, stressed or low, it nudges you on its own, with one idea that fits your week.
+
+<table>
+<tr>
+<td width="50%"><a href="docs/videos/gardener-nudge.mp4"><img src="docs/images/clips/gardener-nudge.webp" alt="Arriving home, the gardener speaks up; asking for another idea brings a slow evening, then two free times to choose from"/></a><br/><sub>Blomy speaks up when you get home, and you pick a time &nbsp;·&nbsp; <a href="docs/videos/gardener-nudge.mp4">full clip</a></sub></td>
+<td width="50%"><img src="docs/images/balance-page.jpg" alt="Your balance: how full the week is, five areas in plain words, small changes that would help, done so far, and what your island has learned"/></td>
+</tr>
+<tr>
+<td valign="top"><b>Your gardener avatar speaks up.</b> The moment you get home, Blomy offers one idea: move something you marked <i>can wait</i> to next week, an early night, a walk, tea with the friend you've seen least, or a slow evening. Say yes and choose between two free times, or pick your own in the planner. Nothing lands on your plan until you choose. Ask for another idea, say not now, or press See why. If your sky has been grey for two weeks, she points you gently to real support instead.</td>
+<td valign="top"><b>Your balance.</b> How full the week is for you, five areas in plain words (time, mental, physical, social and errands), and small changes that apply in one tap, like pushing a block you marked "can wait" to next week. Below them are how much is done and what your island has learned from your answers. <b>Show your stats</b> opens where your time goes and how you've felt.</td>
+</tr>
+</table>
+
+---
+
+### Dewdrops, spent on your island
+
+<table>
+<tr>
+<td width="50%"><a href="docs/videos/shop.mp4"><img src="docs/images/clips/shop.webp" alt="Opening the dewdrop shop, choosing the straw sun hat, and Blomy putting it on"/></a><br/><sub>A straw sun hat for Blomy &nbsp;·&nbsp; <a href="docs/videos/shop.mp4">full clip</a></sub></td>
+<td width="50%"><img src="docs/images/shop.jpg" alt="The dewdrop shop: a flower bed, garden bench, stone lanterns, kite and little well for your island; a flower scarf, ribbon bow and straw sun hat for Blomy"/></td>
+</tr>
+<tr>
+<td colspan="2" valign="top">Dewdrops drip in from finished blocks, golden-window moments, notes between friends and shared tasks, and a finished rest block earns the same as a finished study block. Spend them on things that grow by your windmill (a flower bed, a garden bench, stone lanterns, a kite or a little well), which friends see when they visit. Or spend them on something for Blomy to wear: a flower scarf, a ribbon bow or a straw sun hat. Tap one you own to put it on or take it off. Dewdrops can't be bought, and nothing in the shop touches your workload.</td>
 </tr>
 </table>
 
@@ -264,47 +317,77 @@ Burnout creeps up, so Island Life watches for it. When your check-ins keep comin
 
 <table>
 <tr>
-<td><img src="docs/images/golden.jpg" alt="The carousel on The Gathering Island, and today's album with the golden window photos"/></td>
-<td><img src="docs/images/tasks.jpg" alt="The shared task board, with a walk outside, a proper dinner and an evening with no screens"/></td>
+<td><img src="docs/images/golden-window.jpg" alt="The golden window ringing on your island, and today's album with the golden window photos"/></td>
+<td><img src="docs/images/task-board.jpg" alt="The task board on The Gathering Island, and its list of small shared tasks"/></td>
 </tr>
 <tr>
-<td valign="top"><b>The golden window.</b> Once a day, everyone gets two minutes to share one photo of right now. The photos hang on the carousel on The Gathering Island, and the day's album keeps them all.</td>
-<td valign="top"><b>Small things, together.</b> Anyone can post a small task, like a walk outside or an evening with no screens. You earn more when friends finish too.</td>
+<td valign="top"><b>The golden window.</b> Once a day, everyone gets two minutes to share one photo of right now, with a notification on your phone the minute it opens. The photos hang on the carousel on The Gathering Island, and the day's album keeps them all.</td>
+<td valign="top"><b>Small things, together.</b> Anyone can post a small task, like a walk outside or an evening with no screens, on the board by the pond. You earn more when friends finish too.</td>
 </tr>
 </table>
 
-- **Today is a path.** Your day is a glowing path laid out like a clock face, and a little light walks it in real time.
+- **Today is a path.** Your day is a glowing path laid out like a clock face, and a little light walks it in real time. **Schedule** lifts it into a timeline you can read at a glance.
 - **Notes wait at your gate.** Friends leave a few words on a wooden sign, and you read them when you get home.
-- **A planner that feels normal.** Day, week and month views, with drag to add and move, Done, and a guilt-free Let go.
-- **Dewdrops.** Small rewards for finishing things, resting and showing up for friends. You spend them on garden props and lanterns.
+- **A planner that feels normal.** Day, week and month views, drag to add, move and resize, blocks that repeat weekly, Done, and a guilt-free Let go. Each day is marked light, usual or heavy for you.
+- **Past weeks.** Every Monday your island starts fresh, and you can walk back through the islands of the weeks before.
 
+---
 
+### Your own sky, with your real friends
+
+<p align="center"><img src="docs/images/accounts.jpg" alt="Signing in to your island, and connecting Google Calendar" width="80%"/></p>
+
+- **Sign in** with email or Google. A **sky** is you and up to four friends: start one and share the invite link, or join a friend's with their code.
+- **Google Calendar** brings in classes, shifts and deadlines, and re-syncs every three hours. Import is read-only. Two-way sync is off by default, and when on it writes only to a separate calendar named "Island Life". Outlook, iCloud and Canvas or Moodle feeds are marked *coming soon*.
+- **Live with friends.** Check-ins, notes, tasks, photos and decorations arrive on friends' islands as they happen.
+- **Phone notifications**, if you allow them: the golden window the minute it opens, one "How are you?" in the evening, and "How draining was that?" after an activity, never between 22:00 and 08:00.
+
+---
+
+### Arrival, sound and phone
+
+<table>
+<tr>
+<td width="50%"><a href="docs/videos/welcome.mp4"><img src="docs/images/clips/welcome.webp" alt="The welcome page: a star whale carries Blomy through the clouds to the pier, and she says Welcome home"/></a><br/><sub>A star whale brings Blomy home &nbsp;·&nbsp; <a href="docs/videos/welcome.mp4">full clip</a></sub></td>
+<td width="50%"><img src="docs/images/phone.jpg" alt="Island Life on a phone: the sky view, walking with the touch joystick, and the planner"/></td>
+</tr>
+<tr>
+<td valign="top"><b>A welcome, not a form.</b> The first visit opens with a star whale carrying Blomy through the clouds to your pier. Come ashore to sign in or try the demo, or skip it. Blomy then shows you round your island once, and you can bring the guide back from the menu.</td>
+<td valign="top"><b>On a phone.</b> A touch joystick to walk and a second finger to look around, the same planner and balance as on desktop, and a lighter render for weaker devices. It can be installed to the home screen. Calm background music and small sounds (footsteps that change on wood, grass, stone and water, rain, the watering can) each have their own volume.</td>
+</tr>
+</table>
+
+---
 
 ### Design choices
 
 - **No streaks, no guilt.** Letting go of a plan is fine. Its glass tree drifts away and stops counting this week. You can bring it back any time.
-- **It rewards balance, not hustle.** A finished rest block earns the same as a finished study block.
-- **Private by default.** Friends see your weather and how high you float, in words. Your hours, plans and check-ins stay yours. For each block, you choose whether friends see the whole thing, only its kind and size, or nothing.
+- **It rewards balance, not hustle.** A finished rest block earns the same as a finished study block, and dewdrops only ever decorate.
+- **Private by default.** Friends see your weather, your lanterns, and how high you float, in words. Your hours, plans and "How draining was it?" answers stay yours. For each block, you choose whether friends see the whole thing, only its kind and size, or nothing.
+- **AI suggests, rules decide.** Gemini only sorts imported event titles into kinds, and suggests and words the gardener's idea from options the app offers and then checks. Every number on the island comes from plain arithmetic.
 
 
 ## 3.2 How it works
 
-Every part of the world is driven by something the student did, not by decoration.
+Every part of the world is driven by something the student did, not by decoration. The full method, with its references, is in [docs/algorithm.md](docs/algorithm.md), and the research behind it in plain words is in [docs/science.md](docs/science.md).
 
 <details>
 <summary><b>The full mapping, element by element</b></summary>
 
 | In the world | What it means | What drives it |
 |---|---|---|
-| **Altitude** | How full your week is | Planned hours this week against what you can give. Very full weeks sit just above the cloud sea. |
+| **Altitude** | How heavy this week is for you | This week's load (hours × how draining each kind of activity is for you) against your own normal week. A normal week sits level with The Gathering Island; lighter weeks rise to 45 m, heavier ones sink to 55 m below, into the cloud sea. |
 | **Weather** | How you've been feeling | Your check-ins this week, with recent days counting for more. Tired, stressed and low bring cloud and rain. Calm and happy clear it. |
+| **The flower by your gate** | Today's check-in | Droops until you check in, then takes the colour of your feeling |
+| **The fairy** | How draining an activity was | Your Light, Okay or Draining answer after you finish something. It teaches altitude, never the weather. |
 | **Glass trees** | What's coming up | Future blocks, one species per kind of activity |
 | **Solid trees** | What you did this week | Today's blocks you marked Done, and earlier days' blocks you didn't let go. Fresh every Monday. |
 | **Glowing path** | Today's timetable | Your blocks from 07:00 to 22:00, laid out like a clock face |
 | **The light on the path** | Right now | It walks the path in real time |
-| **Lanterns in your sky** | Your feelings | Each check-in you make this week |
-| **Bridge glow** | Warmth with your friends | Notes, shared moments and time together |
+| **Lanterns on your pier** | Your feelings | Each check-in you make this week |
+| **Bridge glow** | Warmth with your friends | Notes, shared moments, visits and time together |
 | **Carousel photos** | The day's shared moments | One photo per person from the golden window, plus moments through the day |
+| **Decorations and costumes** | What you chose to grow | Dewdrops spent in the shop |
 | **Dewdrops** 💧 | A gentle reward | Done blocks, notes, moments and group tasks |
 
 </details>
@@ -313,30 +396,30 @@ Every part of the world is driven by something the student did, not by decoratio
 
 ```mermaid
 flowchart LR
-    Island["<b>Your island</b><br/>your week at a glance:<br/>how much is planned, how you have felt,<br/>what you have finished"]
-    Gardener["<b>Your gardener avatar</b><br/>reminds you when the week turns heavy,<br/>and offers a way to unwind"]
-    Balance["<b>The analysis page</b><br/>you open it to see<br/>which part of life is crowded"]
+    Island["<b>Your island</b><br/>your week at a glance:<br/>how heavy it is for you, how you have felt,<br/>what you have finished"]
+    Gardener["<b>Your gardener avatar</b><br/>speaks up when the week turns heavy,<br/>and offers one idea at a free time"]
+    Balance["<b>Your balance</b><br/>you open it to see<br/>which part of life is crowded"]
     Planner["<b>The planner</b><br/>an ordinary calendar:<br/>add, move, mark finished,<br/>or drop something"]
 
     Island -- "the week turns heavy" --> Gardener
     Island -- "you go looking" --> Balance
-    Gardener -- "suggests a rest<br/><i>e.g. a walk, at a free time</i>" --> Planner
+    Gardener -- "suggests a change<br/><i>e.g. a walk, at a free time</i>" --> Planner
     Balance -- "suggests a change<br/><i>e.g. move something to next week</i>" --> Planner
     Planner -- "the week is lighter,<br/>so your island rises" --> Island
 ```
 
 # 4. What Makes It Different
 
-Island Life differs in three ways: the week is read as a **3D place** rather than a chart, the island **speaks up when the week looks heavy**, and friends see **how you are without seeing your calendar**.
+Island Life differs in three ways: the week is read as a **3D place** rather than a chart, the island **speaks up when the week looks heavy for you**, and friends see **how you are without seeing your calendar**.
 
 ## Competitive Comparison
 
 | Feature | **Island Life** | **Forest** | **Pensus** | **Pomodoro** | **Operator Uplift** |
 |---|---|---|---|---|---|
 | **World and visuals** | A 3D island in Three.js. Its height, light, trees, bridges, and weather change with the week. | A top-down 2D forest grid. | Dashboards with numbers, rings, and charts. | A timer, usually with a countdown or progress bar. | Workspace screens with task logs, lists, and feeds. |
-| **Optional Photo Check-In** | **1-Tap Photo Check-In.** Share a photo of any moment on the group's carousel, whenever you like. Once a day, BeReal-style, a two-minute golden window opens for everyone at once. Sharing is optional. | Passive countdown timer. Trees grow even if the phone sits idle on a desk while the user watches TV or sleeps. | Mechanical background timer, with nothing shared with anyone. | Mechanical background timer, with nothing shared with anyone. | Mechanical background timer, with nothing shared with anyone. |
-| **Burnout and rest** | The gardener avatar watches for heavy weeks or repeated tired, stressed, and low check-ins. Rest can be added in one tap and earns **Dewdrops 💧** too. | Stopping early can kill a tree, which can make a bad study day feel worse. | Tracks energy, but mostly shows it as logs and metrics. | Uses fixed 25/5-minute intervals, even when the student needs a different rhythm. | Focuses on task execution and planning, not emotional load. |
-| **Friends** | Friends visit through bridges, see weather and altitude, leave gate notes, and finish small group tasks together. Private calendar details stay hidden. | Mostly single-player. Shared rooms mainly synchronize a timer. | No built-in social space. | No built-in social space. | Team feeds and shared workspaces, built more for work than student wellbeing. |
+| **Optional Photo Check-In** | **1-Tap Photo Check-In.** Share a photo of any moment on the group's carousel, whenever you like. Once a day, BeReal-style, a two-minute golden window opens for everyone at once, with a phone notification. Sharing is optional. | Passive countdown timer. Trees grow even if the phone sits idle on a desk while the user watches TV or sleeps. | Mechanical background timer, with nothing shared with anyone. | Mechanical background timer, with nothing shared with anyone. | Mechanical background timer, with nothing shared with anyone. |
+| **Burnout and rest** | The island learns how draining each kind of activity is for you, and the gardener avatar speaks up for heavy weeks or repeated tired, stressed, and low check-ins. Rest can be added in one tap and earns **Dewdrops 💧** too. | Stopping early can kill a tree, which can make a bad study day feel worse. | Tracks energy, but mostly shows it as logs and metrics. | Uses fixed 25/5-minute intervals, even when the student needs a different rhythm. | Focuses on task execution and planning, not emotional load. |
+| **Friends** | A private sky of up to five friends. Visit through bridges, see weather and altitude, leave gate notes, and finish small group tasks together. Private calendar details stay hidden. | Mostly single-player. Shared rooms mainly synchronize a timer. | No built-in social space. | No built-in social space. | Team feeds and shared workspaces, built more for work than student wellbeing. |
 
 
 
@@ -345,76 +428,79 @@ Island Life differs in three ways: the week is read as a **3D place** rather tha
 
 ## 5.1 Tech Stack
 
-Island Life is currently a **browser-based visual prototype**. The frontend renders the 3D world and keeps demo data locally. For production, Supabase would handle accounts, storage, real-time friend updates, and server-side work that should not run in the browser.
+Island Life runs in the browser, on desktop and phone, with a **Supabase** backend for accounts, friends, storage, live updates and scheduled work. The demo sky runs entirely in the browser with local data, so it works with no account and no network services.
 
-The demo works on **rule-based calculation**: altitude, weather, tree species and rest suggestions are plain functions anyone can read. In the building phase before the final we add an **LLM** for the parts a model is genuinely better at, naming the kind of activity behind a calendar entry, putting a heavy week into plain words, and drafting rest ideas. The rules still decide what happens, and nothing reaches a student's plan until they tap it.
+Everything that decides something is **rule-based**: altitude, weather, forecasts, and which kind of help the gardener offers are plain functions anyone can read and test. **Gemini** is used only where a model is genuinely better: sorting imported event titles into the app's kinds of activity, and suggesting and wording the gardener's idea from the free times and *can wait* blocks the app offers. The app checks every suggestion, and nothing reaches a student's plan until they tap it.
 ```
-Frontend: HTML5 + CSS3 + JavaScript + Three.js + Vite
-Backend: Supabase Auth + Data API + Realtime + Edge Functions + Cron
+Frontend: HTML5 + CSS3 + JavaScript (ES modules) + Three.js + Vite
+Backend: Supabase Auth + Data API + Realtime + Storage + Edge Functions + Cron
 Database: PostgreSQL with Row-Level Security
-Storage: Supabase Storage
-Integrations: Google Calendar API + Microsoft Graph + ICS + CalDAV
+AI: Gemini, advisory only, called from Edge Functions
+Integrations: Google Calendar API + Web Push
 Deployment: Vercel + Supabase
-Testing: Playwright + Node.js Test Runner
-Asset pipeline: Blender + Python + GLB/glTF
+Testing: Node.js Test Runner + Playwright, on GitHub Actions
+Asset pipeline: Blender + Python + GLB/glTF, meshopt-compressed
 ```
 
 ### Frontend
 
 | Technology | Role | Reason for Selection | Status |
 |---|---|---|---|
-| **HTML5** | Defines the interface: navigation, planner sheets, forms, dialogs, and accessibility labels. | The project does not need a UI framework for the demo, and plain HTML keeps the screens easy to inspect. | In the current demo |
-| **CSS3** | Handles responsive layout, visual styling, transitions, animations, and reduced-motion behaviour. | Native CSS gives us enough control for the painterly interface around the 3D world. | In the current demo |
-| **JavaScript with ES Modules** | Runs the planner, mood check-ins, social actions, rewards, and Three.js scene updates. | ES modules let us split the prototype into focused files while still running directly in the browser. | In the current demo |
-| **Rule-based logic** | Reads simple signals: mood check-ins, how long each activity takes, how many hours are planned, and how mixed the week is. From those it works out the island's altitude, its weather, and which rest idea to offer. | Rules are enough for counting and comparing, and they can be read and tested. | In the current demo |
-| **Three.js** | Renders the islands, trees, bridges, weather, timetable path, character, lighting, and post-processing. | Three.js handles the WebGL work for us, and it can load the GLB files we export from Blender. | In the current demo |
-| **GLTFLoader** | Loads the island, tree, character, and decoration models into the scene. | GLB/glTF keeps the models compact and carries across the geometry, materials, and textures we need. | In the current demo |
-| **OrbitControls** | Lets users rotate and zoom the camera around the islands and player. | The controls already feel familiar on mouse and touch, so we did not have to build that layer ourselves. | In the current demo |
-| **EffectComposer and UnrealBloomPass** | Adds bloom to paths, bridges, lanterns, and atmospheric lighting. | The glow is part of the visual language, especially for the bridge and timetable path. | In the current demo |
-| **Browser Media APIs** | Opens the user's camera or uploaded images for mood lanterns and community moments. | The browser already has the capture tools we need for the prototype. | In the current demo |
-| **Vite** | Runs the local dev server, handles ES modules, and builds the production bundle. | It starts quickly and fits a plain JavaScript and Three.js project. | In the current demo |
+| **HTML5** | Defines the interface: navigation, planner sheets, forms, dialogs, and accessibility labels. | The project does not need a UI framework, and plain HTML keeps the screens easy to inspect. | Built |
+| **CSS3** | Handles responsive layout for desktop and phone, visual styling, transitions, animations, a UI size setting, and reduced-motion behaviour. | Native CSS gives us enough control for the painterly interface around the 3D world. | Built |
+| **JavaScript with ES Modules** | Runs the planner, check-ins, social actions, rewards, the shop, and Three.js scene updates. | ES modules let us split the app into focused files while still running directly in the browser. | Built |
+| **Rule-based logic** | Works out this week's load against your own normal week (learned from "How draining was it?" answers), the weather from check-ins, the forecast for each day, and which kind of help to offer. | Rules are enough for counting and comparing, and they can be read and tested. | Built |
+| **Three.js** | Renders the islands, trees, bridges, weather, timetable path, Blomy, the flower and the fairy, lighting, and post-processing. | Three.js handles the WebGL work for us, and it can load the GLB files we export from Blender. | Built |
+| **GLTFLoader with meshopt** | Loads the compressed island, tree, and decoration models, with lighter copies for distant trees. | Compression took the models from 125 MB to 19 MB, so the world loads on an ordinary connection. | Built |
+| **OrbitControls** | Lets users rotate and zoom the camera around the islands and player, alongside keyboard and touch controls. | The controls already feel familiar on mouse and touch, so we did not have to build that layer ourselves. | Built |
+| **EffectComposer and UnrealBloomPass** | Adds bloom to paths, bridges, lanterns, and atmospheric lighting. A smoothness governor drops glow and shadow detail before resolution on slower devices. | The glow is part of the visual language, especially for the bridge and timetable path. | Built |
+| **Web Audio API** | Plays the background music and sound effects on separate volume controls: footsteps by surface, rain, the watering can, and chimes. | The browser mixes it all with no extra library. | Built |
+| **Browser Media APIs** | Opens the user's camera or uploaded images for check-in photos and golden-window moments. | The browser already has the capture tools we need. | Built |
+| **Service worker and Web App Manifest** | Receives push notifications and lets the app be installed to a phone's home screen. | Standard web features, with no app store needed. | Built |
+| **Vite** | Runs the local dev server, handles ES modules, and builds the welcome page and the app. | It starts quickly and fits a plain JavaScript and Three.js project. | Built |
 
 ### 3D Asset Production
 
 | Technology | Role | Reason for Selection | Status |
 |---|---|---|---|
-| **Blender** | Creates the islands, trees, gardener character, decorations, and rendered interface artwork. | It gives us modelling, materials, lighting, animation, and GLB export in one tool. | In the current demo |
-| **Python** | Generates Blender models, renders, inspections, and exports. | Scripts keep the assets repeatable. If a tree shape changes, we can rebuild the set instead of fixing each file by hand. | In the current demo |
-| **GLB/glTF, WebP, PNG, and JPEG** | Deliver 3D models, icons, character sprites, artwork, and photographs. | These formats work across modern browsers and keep file sizes reasonable for the demo. | In the current demo |
+| **Blender** | Creates the islands, trees, gardener character, decorations, and rendered interface artwork. | It gives us modelling, materials, lighting, animation, and GLB export in one tool. | Built |
+| **Python** | Generates Blender models, renders, inspections, and exports. | Scripts keep the assets repeatable. If a tree shape changes, we can rebuild the set instead of fixing each file by hand. | Built |
+| **GLB/glTF, WebP, PNG, JPEG, MP3 and WAV** | Deliver 3D models, icons, character sprites, artwork, photographs, music, and sound effects. | These formats work across modern browsers and keep file sizes reasonable. | Built |
 
-### Proposed Backend and Database
+### Backend and Database
 
 | Technology | Role | Reason for Selection | Status |
 |---|---|---|---|
-| **Supabase** | Backend platform for the production version. | It gives the team Postgres, auth, storage, realtime, APIs, and edge functions without running separate services for each one. | Planned for the final |
-| **PostgreSQL** | Stores profiles, friendships, blocks, recurrences, check-ins, notes, shared tasks, rewards, moments, and calendar metadata. | The data is relational: friends connect to profiles, blocks create weekly load, and privacy rules depend on who is asking. | Planned for the final |
-| **Supabase Auth** | Handles registration, login, password recovery, sessions, and Google OAuth. | Auth records can link directly to profile rows and database policies. | Planned for the final |
-| **Row-Level Security (RLS)** | Keeps private schedules and mood records visible only to the owner. | Friend views should come from permitted summary values, not accidental access to raw calendar rows. | Planned for the final |
-| **Supabase Data API** | Lets the browser read and write approved database rows. | The client library fits the current JavaScript code and avoids a separate CRUD API at the first production stage. | Planned for the final |
-| **Supabase Realtime** | Updates friend status, notes, shared tasks, community photos, and derived island changes between users. | Friend islands should change while people are using the app, without asking them to refresh. | Planned for the final |
-| **Supabase Storage** | Stores profile images, mood photos, and golden-window submissions. | These files need the same account-based privacy as the rest of the product. | Planned for the final |
-| **Supabase Edge Functions** | Runs calendar OAuth, calendar API calls, notifications, and other privileged work. | API secrets and refresh tokens should stay on the server. | Planned for the final |
-| **Supabase Cron** | Runs scheduled calendar sync, recovery nudges, and the daily golden window. | Those jobs need to happen even when nobody has the app open. | Planned for the final |
+| **Supabase** | Backend platform for accounts, data, files, live updates, and server-side work. | It gives the team Postgres, auth, storage, realtime, APIs, and edge functions without running separate services for each one. | Built |
+| **PostgreSQL** | Stores profiles, skies, blocks, check-ins, drain answers, island status, notes, shared tasks, golden windows, moments, calendar connections, push subscriptions, prompts, and shop purchases. | The data is relational: friends share a sky, blocks create weekly load, and privacy rules depend on who is asking. | Built |
+| **Supabase Auth** | Handles registration, login, password recovery, sessions, and Google sign-in. | Auth records link directly to profile rows and database policies. | Built |
+| **Row-Level Security (RLS)** | Keeps private schedules and drain answers visible only to the owner. | Friends read only the summary each owner's app publishes (how far the island sinks, how heavy the sky is), never raw calendar rows. | Built |
+| **Supabase Data API** | Lets the browser read and write approved database rows. | The client library fits the JavaScript code and avoids a separate CRUD API. | Built |
+| **Supabase Realtime** | Updates friend status, check-ins, notes, shared tasks, carousel photos, and decorations between users. | Friend islands change while people are using the app, without a refresh. | Built |
+| **Supabase Storage** | Stores check-in photos, golden-window photos, and task photos. | These files need the same account-based privacy as the rest of the product. | Built |
+| **Supabase Edge Functions** | `google-calendar` for calendar OAuth and sync, `gardener` for Gemini, and `prompts` for phone notifications. | API secrets and refresh tokens stay on the server. | Built |
+| **Supabase Cron** | Schedules each day's golden window and rings it, re-syncs calendars every three hours, sends prompts every fifteen minutes, and suggests shared tasks each Monday. | Those jobs need to happen even when nobody has the app open. | Built |
 
 ### APIs and External Services
 
 | Technology | Role | Reason for Selection | Status |
 |---|---|---|---|
-| **Google Calendar API** | Imports Google Calendar events, with updates planned later. | Many students already keep classes and deadlines there, including repeating events. | Planned for the final |
-| **Microsoft Graph Calendar API** | Connects Outlook, Microsoft 365, and supported university calendars. | This matters for schools that run on Microsoft 365. | Planned for the final |
-| **ICS Calendar Feeds** | Imports classes, coursework, and deadlines from Canvas, Moodle, Blackboard, and similar systems. | ICS links are common and do not require app approval, which makes them a practical first import path. | Planned for the final |
-| **CalDAV** | Leaves room for iCloud Calendar and other compatible calendars later. | It is useful for broader calendar support after the final. | Planned for the final |
-| **Google Classroom API** | Imports coursework due dates from Google Classroom. | Some coursework never reaches the student's personal calendar. | Planned for the final |
-| **External LLM API** | Helps map calendar entries to the app's activity kinds, and suggests rest based on what the student has been doing lately. The student can correct it, and nothing is added to a plan until they tap it. | Reading messy event titles and wording a suggestion are what a model does well. | Planned for the final |
+| **Google Calendar API** | Imports classes, shifts and deadlines, including repeating events. Optional two-way sync writes only to a separate "Island Life" calendar. | Many students already keep their timetable there. | Built |
+| **Gemini API** | Sorts imported event titles into the app's kinds of activity, and suggests and words the gardener's idea. The app checks the choice, and falls back to its own ideas if Gemini is unavailable. | Reading messy event titles and wording a suggestion are what a model does well. | Built |
+| **Web Push** | Rings the golden window, asks "How are you?" in the evening, and asks "How draining was that?" after an activity, outside quiet hours. | Reaches the student without an app store. | Built |
+| **Microsoft Graph Calendar API** | Connects Outlook, Microsoft 365, and supported university calendars. | This matters for schools that run on Microsoft 365. | Planned, shown as *coming soon* |
+| **ICS Calendar Feeds** | Imports coursework and deadlines from Canvas, Moodle, Blackboard, and similar systems. | ICS links are common and need no app approval. | Planned, shown as *coming soon* |
+| **CalDAV** | Connects iCloud Calendar and other compatible calendars. | Broader calendar support. | Planned, shown as *coming soon* |
+| **Google Classroom API** | Imports coursework due dates from Google Classroom. | Some coursework never reaches the student's personal calendar. | Planned after the final |
 
 ### Hosting, Testing, and Delivery
 
 | Technology | Role | Reason for Selection | Status |
 |---|---|---|---|
-| **Vercel** | Hosts the Vite frontend and preview deployments. | The built site is static, so Vercel is a simple fit for the demo and final deployment. | In the current demo |
-| **Playwright** | Tests login flows, planner interactions, keyboard controls, dialogs, and browser rendering. | It runs the same flows a judge or student would click through in a real browser. | In the current demo |
-| **Node.js Test Runner** | Runs unit tests for workload, altitude, weather, recurrence, and reward calculations. | Node already includes it, so we can test the core logic without adding another framework. | Planned for the final |
-| **GitHub and GitHub Actions** | Handles source control, builds, and test runs. | The repo is already on GitHub; Actions would let every push run the same checks. | GitHub in use, Actions planned for the final |
+| **Vercel** | Hosts the built welcome page and app. | The built site is static, so Vercel is a simple fit. | Built |
+| **Node.js Test Runner** | Runs 25 unit tests for the learned workload, altitude, forecasts, calendar events, the gardener's ideas, and when the island asks. Local suites also check row-level security and the Edge Functions against a local Supabase stack. | Node already includes it, so we can test the core logic without adding another framework. | Built |
+| **Playwright** | Runs the judging journey in a real browser: a check-in with the flower, the balance, a suggestion, and the planner. | It runs the same flows a judge or student would click through. | Built |
+| **GitHub and GitHub Actions** | Every push and pull request runs the unit tests, a production build, and the browser test. | A broken merge is caught before it reaches the live app. | Built |
 
 
 ---
@@ -424,121 +510,123 @@ Asset pipeline: Blender + Python + GLB/glTF
 flowchart LR
   student([University student])
 
-  subgraph proto["Current visual prototype"]
+  subgraph app["Browser app, desktop and phone"]
     direction LR
-    vite["Vite web application"]
+    vite["Vite web app<br/>welcome page + island<br/>installable, service worker"]
     logic["JavaScript application logic"]
-    rules["Rules, written out in full<br/>hours against capacity to altitude<br/>check-ins to weather<br/>rest ideas ranked against the week"]
+    rules["Rules, written out in full<br/>this week's load against your normal week to altitude<br/>check-ins to weather<br/>which kind of help fits"]
     world["Three.js 3D world"]
-    mock[("Local mock data")]
+    demo[("Demo sky<br/>local data, no account")]
   end
 
-  subgraph prod["Backend, to build in the final phase"]
+  subgraph backend["Supabase backend"]
     direction LR
-    auth["Supabase Auth"]
+    auth["Auth<br/>email and Google"]
     db[("PostgreSQL")]
     rls["Row-level security"]
-    realtime["Supabase Realtime"]
-    storage["Supabase Storage"]
-    cron["Scheduled jobs"]
-    edge["Edge Functions"]
-    ai["AI service, advisory only<br/>name the kind of event<br/>explain the week in plain words<br/>propose rest ideas"]
+    realtime["Realtime"]
+    storage["Storage<br/>photos"]
+    cron["Scheduled jobs<br/>golden window, calendar sync,<br/>prompts, weekly tasks"]
+    edge["Edge Functions<br/>google-calendar, gardener, prompts"]
   end
 
-  cal["Google and Microsoft calendars<br/>ICS feeds, CalDAV"]
+  ai["Gemini, advisory only<br/>sorts event titles into kinds<br/>suggests and words the gardener's idea"]
+  cal["Google Calendar<br/>Outlook, iCloud, Canvas later"]
+  push["Web Push<br/>phone and desktop"]
 
   student --> vite --> logic
   logic --> rules --> world
-  logic --> mock
-  logic -. future migration .-> auth
-  logic -. future migration .-> db
-  logic -. future migration .-> storage
-  logic -. future migration .-> edge
+  logic --> demo
+  logic --> auth
+  logic --> db
+  logic --> storage
+  logic --> edge
   db --> rls
   db --> realtime
+  realtime -->|"live updates from friends"| logic
   cron --> edge
-  edge --> cal
+  edge <--> cal
+  edge --> push
   edge -. asks .-> ai
-  ai -. suggestions only, never writes to the plan .-> edge
+  ai -. suggestions only, checked by the rules .-> edge
 
-  classDef planned stroke-dasharray:6 4;
-  class ai planned;
+  classDef advisory stroke-dasharray:6 4;
+  class ai advisory;
 ```
 
-<sub>Source: <a href="docs/architecture.mmd">docs/architecture.mmd</a>. The rules box is the part that decides anything today, and it is plain code rather than a model. The AI service is dashed because it is planned, and it only ever advises.</sub>
+<sub>Source: <a href="docs/architecture.mmd">docs/architecture.mmd</a>. The rules box is the part that decides anything, and it is plain code rather than a model. Gemini is dashed because it only ever advises.</sub>
+
 ## 5.3 Build Plan for the Final
 
-The plan follows the competition's own phases. The order is deliberate: import proves the idea on a judge's own timetable, accounts make a demo survive a refresh, and the phone is where a student would actually keep it open.
+The plan follows the competition's own phases. The building phase is done, and the deploy phase has begun.
 
 ```mermaid
 flowchart LR
-    A["21-27 Sep<br/>Import + accounts"]
-    B["28 Sep-4 Oct<br/>Database + friends"]
-    C["5-11 Oct<br/>Phone + tests"]
+    A["21 Sep-11 Oct<br/>Build ✓"]
     D["12-18 Oct<br/>Deploy + accessibility"]
     E["19-25 Oct<br/>Student pilot"]
     F["26-31 Oct<br/>Fixes + feature freeze"]
     G["1-14 Nov<br/>Rehearse demo"]
     H["15 Nov<br/>Grand final"]
 
-    A --> B --> C --> D --> E --> F --> G --> H
+    A --> D --> E --> F --> G --> H
 ```
 
 | Window | Focus |
 |---|---|
-| **21 Sep to 11 Oct** | Building: turn the prototype into something a stranger can use with their own week |
+| **21 Sep to 11 Oct** | Building: turn the prototype into something a stranger can use with their own week. **Done.** |
 | **12 Oct to 31 Oct** | Deploy: make it fast, reachable, and tested by people who are not us |
 | **1 Nov to 14 Nov** | Rehearse: fix what the pilot found and make the demo dependable |
 | **15 Nov** | Grand final |
 
-### Building, 21 September to 11 October
+### Done in the building phase
 
-| Week | What we build | Done when |
-|---|---|---|
-| **21 to 27 Sep** | **Timetable import.** Parse an ICS feed, turn each event into a block, expand weekly repeats, and guess a category from the event title with a manual override. Store the link so it can be refreshed. | A pasted Canvas, Moodle or Google link fills a week on the island, and re-importing does not create duplicates. |
-| | **Database and accounts.** Supabase project, schema for profiles, blocks, check-ins, notes, tasks and moments, row-level security, email and Google sign-in. | A signed-in student reads and writes only their own rows, proven by a failing query from another account. |
-| **28 Sep to 4 Oct** | **Plans move to the database.** The existing plan store reads and writes Postgres instead of mock data, with the interface updating immediately and reconciling after. | Add, move, finish and let go survive a refresh and appear on a second device. |
-| | **Friends for real.** Invite by link, a friendship table, and friend-facing values derived on the server so hours and titles never leave the owner's account. | A friend sees weather and altitude in words, and a direct query for anything else returns nothing. |
-| | **Import in the planner.** The sync panel stops being a demo: paste a link, preview what will arrive, choose which calendars to keep. | A student can import, see what changed, and undo it. |
-| **5 to 11 Oct** | **Phone pass.** One-thumb movement, larger touch targets, sheets and the island card laid out for a narrow screen, and a lighter quality tier for weaker devices. | The full flow works on a mid-range Android phone at a steady frame rate. |
-| | **Lighter world.** Compressed meshes and textures, and islands loaded as they are needed rather than all at once. | First meaningful view under five seconds on a normal connection. |
-| | **Tests.** Unit tests for load, altitude, weather and recurrence; Playwright for sign-in, import, planner and the nudge. | The suite runs on every push and blocks a broken merge. |
+| Area | What we built |
+|---|---|
+| **Accounts and data** | Supabase project, a schema for profiles, skies, blocks, check-ins, drain answers, notes, tasks, moments and purchases, row-level security, and email and Google sign-in. Plans, check-ins, notes, the task board and the carousel read and write the database and survive a refresh. |
+| **Friends for real** | Skies of up to five, joined with an invite link or code. Each island publishes only how far it sinks and how heavy its sky is, so hours and titles never leave the owner's account, and friends' changes arrive live. |
+| **Calendar import** | Google Calendar, connected for real: read-only import, repeating events, a re-sync every three hours, and optional two-way sync into a separate calendar. Gemini sorts event titles into kinds. |
+| **An island that learns** | "How draining was that?", asked by the fairy and by phone, teaches each student's own normal week. The planner forecasts heavy days, and the gardener chooses between a schedule fix, rest, or support. |
+| **Phone pass** | Touch joystick, icon-only header, sheets and the island card laid out for a narrow screen, a UI size setting, and an installable app with push notifications. |
+| **Lighter world** | Models compressed from 125 MB to 19 MB, low-detail far trees, merged meshes, and a smoothness governor for weaker devices. |
+| **Tests** | 25 unit tests and a browser test of the judging journey, run by GitHub Actions on every push. |
+| **Beyond the plan** | The welcome page's star-whale arrival, Blomy's first-time guide, the flower and the fairy, watering, the dewdrop shop and wardrobe, music and sound effects, and golden-window notifications. |
 
 ### Deploy, 12 October to 31 October
 
 | Week | What we do | Done when |
 |---|---|---|
-| **12 to 18 Oct** | **Production deploy.** Vercel with the Supabase production project behind it, environment separation, backups, and error reporting. | A clean install from the public URL works with no local setup. |
+| **12 to 18 Oct** | **Production deploy.** The live app at [island-life-r21r.vercel.app](https://island-life-r21r.vercel.app/) with the Supabase production project behind it, backups, and error reporting. | A clean visit from the public URL works with no local setup. |
 | | **Performance and accessibility.** First-load budget, keyboard path through every screen, visible focus, contrast, reduced motion, and Safari, Firefox and Chrome on desktop and phone. | Every task can be completed without a mouse, and the world holds a steady frame rate on the phones we have. |
-| **19 to 25 Oct** | **Pilot with students outside the team.** Around ten of them for a week: import a timetable, check in daily, meet one nudge. We watch the first five minutes without explaining anything. | We can say what people misunderstood, and how many imported, marked something done, and accepted a suggestion. |
-| **26 to 31 Oct** | **Fix what the pilot found**, then harden the edges: first run with nothing on the plan, an import that fails, a friend who never checks in, and an offline start. | The top issues from the pilot are closed, and no empty state is a blank screen. |
+| **19 to 25 Oct** | **Pilot with students outside the team.** Around ten of them for a week: connect a calendar, check in daily, answer the fairy, meet one nudge. We watch the first five minutes without explaining anything. | We can say what people misunderstood, and how many connected a calendar, marked something done, and accepted a suggestion. |
+| **26 to 31 Oct** | **Fix what the pilot found**, then harden the edges: first run with nothing on the plan, a calendar that fails to connect, a friend who never checks in, and an offline start. | The top issues from the pilot are closed, and no empty state is a blank screen. |
 | | **Feature freeze** on 31 October. | Only fixes after this date. |
 
 ### Rehearse, 1 to 14 November
 
-A demo that runs from a judge's own calendar link, a recorded fallback in case the network fails, and a five-minute script: import a real timetable, watch the island sink, let the gardener avatar catch it.
+A demo that runs from a judge's own calendar, a recorded fallback in case the network fails, and a five-minute script: connect a real timetable, watch the island sink, let the gardener avatar catch it.
 
 ### Risks we are planning around
 
 | Risk | What we do about it |
 |---|---|
-| Google and Microsoft sign-in approval takes weeks | The final depends on ICS links, which need no approval. Two-way sync stays after the final. |
-| A 3D world is heavy on cheap phones | A lighter quality tier and compressed assets in the building phase, tested on a mid-range device rather than ours. |
+| Calendar providers need app approval before the public can connect | Google Calendar already connects. The planner works with no calendar at all, and Outlook and ICS feeds stay after the final. |
+| A 3D world is heavy on cheap phones | Compressed assets and the smoothness governor are in. The pilot tests on a mid-range device rather than ours. |
 | Nobody outside the team has used it | The pilot is scheduled inside the deploy window, not left until the end. |
-| A live demo depends on the venue network | The fallback runs on local data with no network at all. |
+| A live demo depends on the venue network | The demo sky runs on local data with no network services at all. |
 
 ## 5.4 Beyond the Final
 
-- **Two-way calendar sync** with Google Calendar and Microsoft Graph, so a slow evening added on the island travels back to the calendar it came from.
-- **Live weather between friends**, updating as check-ins land rather than at the next reload.
+- **More calendars**: Outlook and Microsoft 365, iCloud, and Canvas or Moodle feeds, all already marked *coming soon* in the sync panel.
+- **Hot-air balloons for check-ins**, rising over each island so friends can spot from the sky view who checked in today.
+- **Riding the star whale across a bridge**, so the whale that brought Blomy home also carries her to a friend.
 - **Gentle milestones**, such as a first week in balance or a first slow evening.
-- **Island decorations and gardener avatar costumes**, bought with dewdrops, cosmetic only, and earned as easily by resting as by studying.
 
 # Summary
 
 **Island Life** is a stress and workload manager that reads as a place rather than a dashboard.
 
-Instead of another timer or checklist, it puts a student's schedule, workload, feelings and rest into one small **3D island** they can see.
+Instead of another timer or checklist, it puts a student's schedule, workload, feelings and rest into one small **3D island** they can see, and it learns what a heavy week means for each student.
 
 The goal is not to help students **do more**. It is to help them see when they are doing **too much**, and to make the next small step easy.
 
