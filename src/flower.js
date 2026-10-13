@@ -1,4 +1,5 @@
 import * as T from 'three';
+import { placeBubble } from './bubble.js';
 
 // Talking to your flower (flowermodel.js) is how you check in: she asks "How do you feel?" in a bubble beside her
 // (index.html #flower-ask, the mood buttons and the optional photo). She talks only while you're walking on your own
@@ -8,7 +9,7 @@ import * as T from 'three';
 //   here(): you're walking on your own island   near(): you're standing by her
 //   blocked(): a sheet, dialog or panel covers the world   mood(): today's mood colour, or null before the check-in
 //   rest(): minutes until she asks again (0: ready)   resting(min): you asked while she rests
-const BUBBLE=300, GAP=46;   // the bubble's width (style.css .flower-bubble), and from her face to its edge
+const GAP=46;   // from her face to her bubble's edge
 
 export function createFlowerTalk({camera,flower,here=()=>false,near=()=>false,blocked=()=>false,mood=()=>null,rest=()=>0,resting=()=>{}}){
   const $=id=>document.getElementById(id);
@@ -20,13 +21,7 @@ export function createFlowerTalk({camera,flower,here=()=>false,near=()=>false,bl
     flower.userData.head.getWorldPosition(v).project(camera);
     return v.z<1&&Math.abs(v.x)<1.02&&Math.abs(v.y)<1.02?{x:(v.x*.5+.5)*innerWidth,y:(-v.y*.5+.5)*innerHeight}:null;
   }
-  function place(){
-    const W=innerWidth,H=innerHeight, at=face()??{x:W*.55,y:H*.36};
-    const flip=at.x+GAP+BUBBLE>W-16;
-    box.classList.toggle('flip',flip);
-    box.style.left=`${Math.max(12,flip?at.x-GAP-BUBBLE:at.x+GAP)}px`;
-    box.style.top=`${Math.min(Math.max(at.y-64,90),H-box.offsetHeight-16)}px`;
-  }
+  function place(){placeBubble(box,face()??{x:innerWidth*.55,y:innerHeight*.36},{gap:GAP,rise:64});}
   function setOpen(on,byWalking=false){
     if(on===open)return;
     open=on;auto=on&&byWalking;flower.userData.setTalking(on);

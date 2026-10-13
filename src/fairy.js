@@ -1,5 +1,6 @@
 import * as T from 'three';
 import { makeFairy } from './fairymodel.js';
+import { placeBubble } from './bubble.js';
 
 // The fairy: after you finish a block (Done in the planner, "Mark all as done", the walk-up card), she flies out of
 // that block's tree -- a real 3D figure in the world (fairymodel.js) -- and hovers by you, about TALL pixels high, to
@@ -55,10 +56,8 @@ export function createFairy({scene,camera,ask,answer,title,blocked=()=>false,wai
     // where she hovers (her middle, in px): beside and above her tree, clear of the top bar and the bottom controls
     const rest=seen?.in?{x:Math.min(Math.max(seen.x+80,56),W-56),y:Math.min(Math.max(seen.y-120,200),H-220)}
                        :{x:Math.max(56,Math.min(W*.6,W-56-BUBBLE-70)),y:Math.max(H*.32,200)};
-    const flip=rest.x+GAP+BUBBLE>W-16;   // the bubble on her left near the right edge
     const start=from?from.clone():hoverAt(W+120,H*.3,new T.Vector3());
-    cur={b,phase:'out',t:0,start,rest,flip,from:start.clone()};
-    bubble.classList.toggle('flip',flip);
+    cur={b,phase:'out',t:0,start,rest,from:start.clone()};
     bubble.querySelector('.fairy-kicker').textContent=watered?`You watered ${title(b)}!`:`You finished ${title(b)}!`;
     bubble.querySelector('.fairy-picks').replaceChildren(...Object.entries(CHOICES).map(([val,label])=>{
       const x=document.createElement('button');x.type='button';x.className='fairy-pick';x.textContent=label;
@@ -80,11 +79,8 @@ export function createFairy({scene,camera,ask,answer,title,blocked=()=>false,wai
     if(still())done();
   }
   function done(){model.visible=false;cur=null;document.getElementById('app').classList.remove('fairy-out');}
-  // the bubble sits beside her on screen
-  function place(){
-    const r=cur.rest;bubble.style.top=`${Math.max(12,r.y-58)}px`;
-    bubble.style.left=`${cur.flip?r.x-GAP-BUBBLE:r.x+GAP}px`;
-  }
+  // the bubble sits beside her on screen (bubble.js), or under her on a narrow screen
+  function place(){placeBubble(bubble,cur.rest,{gap:GAP,rise:58});}
 
   // one frame of her: where she is, how big, which way she faces
   const at=new T.Vector3(), end=new T.Vector3(), mid=new T.Vector3(), up=new T.Vector3();

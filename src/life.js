@@ -932,8 +932,16 @@ export function initLife({world,scene,flower,islands,camera,texture,player,notic
       const ro=table?Math.max(0,table.lift*4-3):0;
       if(ro!==ribbonO){ribbonO=ro;$('ribbon-labels').style.opacity=ro;}
       if(table&&table.lift>.75){
-        labels.forEach(({el,block},i)=>{
-          table.ribbonPoint(block.start+block.mins/2,.35+(i%2)*1.1,v).project(camera);
+        // the labels alternate between two rows under the ribbon; one that would still overlap a neighbour (a narrow
+        // screen squeezes the day) drops to the next free row below
+        const ends=[];
+        labels.forEach((l,i)=>{
+          const {el,block}=l, mid=block.start+block.mins/2;l.w??=el.offsetWidth;
+          table.ribbonPoint(mid,.35,v).project(camera);const x=(v.x*.5+.5)*innerWidth;
+          let row=[i%2,1-i%2].find(r=>!(x-l.w/2<(ends[r]??-Infinity)+4));
+          if(row===undefined){row=2;while(x-l.w/2<(ends[row]??-Infinity)+4)row++;}
+          ends[row]=x+l.w/2;
+          table.ribbonPoint(mid,.35+row*1.1,v).project(camera);
           el.style.left=`${(v.x*.5+.5)*innerWidth}px`;el.style.top=`${(-v.y*.5+.5)*innerHeight}px`;
         });
         labels.forEach(({el,block})=>el.classList.toggle('here',clock.minutes>=block.start&&clock.minutes<block.start+block.mins));

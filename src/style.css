@@ -806,21 +806,23 @@ footer{z-index:2}
 .photo-pick:hover{background:var(--orchid);border-color:var(--orchid);color:#fff;transform:translateY(-1px);box-shadow:0 4px 0 var(--orchid-deep)}
 .photo-pick:active{transform:translateY(1px);box-shadow:0 1px 0 var(--violet-soft)}
 .photo-pick:focus-within{outline:3px solid var(--accent);outline-offset:3px}
-/* phones and tablets, any common size, portrait or landscape (main.js MOBILE holds the same query): the six header
-   buttons become round icons (the words stay inside for screen readers) and the dewdrop count shows in the shop only.
-   The buttons sit beside the logo when there's room and drop onto their own row under it when there isn't; what hangs
-   under the header follows its height (--header-bottom, set by main.js), and the joystick sits above the island's
-   name (--stick-bottom, main.js liftStick). */
+/* phones and tablets, any common size, portrait or landscape (main.js MOBILE holds the same query): the header
+   buttons become round icons (the words stay inside for screen readers) on the logo's row, shrinking a little when
+   the screen is narrow, and the dewdrop count shows in the shop only. What hangs under the header follows its height
+   (--header-bottom, set by main.js), and the joystick sits above the island's name (--stick-bottom, main.js liftStick). */
 @media(max-width:600px),(pointer:coarse) and (max-width:1024px),(max-height:500px) and (max-width:1000px){
   #app{min-height:0}
-  header{flex-wrap:wrap;gap:8px 16px}
-  .header-actions{flex:1 1 auto;max-width:344px;margin-left:auto;display:grid;grid-template-columns:repeat(6,minmax(0,44px));justify-content:space-between;align-items:center;gap:4px}
+  header{flex-wrap:nowrap;gap:12px}
+  .brand{flex:none}
+  .header-actions{flex:1 1 auto;min-width:0;display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,44px);justify-content:end;align-items:center;gap:6px}
   .header-actions button,.header-actions .icon-only,.header-actions .dew-capsule button{display:flex;align-items:center;justify-content:center;width:100%;height:auto;aspect-ratio:1;margin:0;padding:0;border-radius:50%;font-size:0}
   .header-actions button span{display:inline;margin:0;font-size:20px;line-height:1}
   .dew-count{display:none}
   .dew-capsule{border-radius:50%}
   .header-actions .dew-capsule button{border-left:2px solid #fff}
-  #mood-toggle.has-asks::after{top:1px;right:1px}
+  #planner-toggle.has-asks::after{top:1px;right:1px}
+  /* the lifted timetable's labels stay narrow, so a squeezed day needs fewer rows (life.js) */
+  .ribbon-label strong{max-width:84px}
   #settings,#mood-panel{top:calc(var(--header-bottom,118px) / var(--ui) + 10px);max-height:calc((100svh - var(--header-bottom,118px)) / var(--ui) - 28px)}
   #notice,#bridge-banner{top:calc(var(--header-bottom,118px) / var(--ui) + 10px)}
   #golden{top:calc(var(--header-bottom,118px) / var(--ui) + 12px)}
@@ -951,3 +953,9 @@ footer{z-index:2}
 .flower-photo input{position:absolute;opacity:0;width:1px;height:1px;pointer-events:none}
 .flower-bubble .fairy-later{margin:0}
 .flower-note{margin:8px 0 0;font-size:11px;line-height:1.45;color:var(--muted)}
+/* the fairy's and the flower's bubble (bubble.js): never wider than the screen; under or over her (a narrow screen),
+   its tail points up or down at her */
+.fairy-bubble{width:min(300px,calc(100vw - 24px))}
+.fairy-bubble.under::before,.fairy-bubble.over::before{left:var(--tail);right:auto;margin-left:-7px}
+.fairy-bubble.under::before{top:-7px}
+.fairy-bubble.over::before{top:auto;bottom:-7px}
