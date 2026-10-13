@@ -32,7 +32,7 @@ const nowMinutes=()=>{const d=new Date();return d.getHours()*60+d.getMinutes()+d
 // Weather is one strain value (0..1); the label is only a name for where it sits.
 export const setStrain=(island,s)=>{island.strain=s;island.weather=weatherLabel(s);island.weatherFx.setStrain(s);};
 
-export function initLife({world,islands,camera,texture,player,notice,visit,forest,getMode,getSelected,setAltitude,setGlow,guiding=()=>false}){
+export function initLife({world,islands,camera,texture,player,notice,visit,forest,getMode,getSelected,setAltitude,setGlow,wear=()=>{},guiding=()=>false}){
   const me=islands.find(i=>i.id===ME), members=islands.filter(i=>i.owner), community=islands.find(i=>!i.owner);
   // The demo opens at 23:00, after the whole day has happened, so every one of
   // today's trees can be answered with Done. "Live" in Tune the world follows
@@ -225,6 +225,16 @@ export function initLife({world,islands,camera,texture,player,notice,visit,fores
   const bought=LIVE?world.purchases??[]
     :[...demoBought.map(item=>({member:ME,item})),...Object.entries(DEMO_GARDENS).flatMap(([member,list])=>member===ME?[]:list.map(item=>({member,item})))];
   for(const b of bought)gardens[b.member]?.add(b.item);
+  // ...and what you bought for Blomy to wear (blomy.js). What she has on is
+  // kept in this browser: only you see her up close, so the server needn't know.
+  const wardrobe=new Set(bought.filter(b=>b.member===ME&&itemById(b.item)?.wear).map(b=>b.item));
+  const WEAR_KEY=`island-wearing-${LIVE?world.uid:'demo'}`;
+  let wearing=new Set();try{wearing=new Set(JSON.parse(localStorage.getItem(WEAR_KEY))??[]);}catch{}
+  const dress=(id,on)=>{
+    if(on)wearing.add(id);else wearing.delete(id);wear(id,on);
+    try{localStorage.setItem(WEAR_KEY,JSON.stringify([...wearing]));}catch{}
+  };
+  for(const id of wearing)if(wardrobe.has(id))wear(id,true);
 
   // The gardener's offer (docs/algorithm.md 5.1). The rules pick which kind of
   // help fits -- never a reason, only an offer -- and a sign appears by your
@@ -512,20 +522,22 @@ export function initLife({world,islands,camera,texture,player,notice,visit,fores
       el.style.left=`${x}px`;el.style.translate=`-50% ${-lift}px`;el.classList.toggle('walking',walking);return x;
     }});
   };
-  const shop=createShop({sheets,dew,notice,owns:id=>gardens[ME].has(id),buy:async item=>{
+  const shop=createShop({sheets,dew,notice,owns:id=>gardens[ME].has(id)||wardrobe.has(id),
+    wearing:id=>wearing.has(id),wear:(item,on)=>dress(item.id,on),buy:async item=>{
     if(LIVE){
       const r=await backend.buy(item.id);
       if(r.error){
-        notice(r.error==='short'?'That needs a few more dewdrops than you have right now.':r.error==='owned'?'That’s already on your island.'
+        notice(r.error==='short'?'That needs a few more dewdrops than you have right now.':r.error==='owned'?item.wear?'Blomy already has that.':'That’s already on your island.'
               :'The shop couldn’t reach your island. Try again in a moment.');
         if(r.error!=='failed')askServer();
         return false;
       }
       serverDew-=item.cost;askServer();
     }else{demoBought.push(item.id);try{localStorage.setItem(SHOP_KEY,JSON.stringify(demoBought));}catch{}}
-    gardens[ME].add(item.id,{fresh:true});
-    // home to see it grow in
-    sheets.hide();if(getMode()!=='walk'||getSelected()!==ME)visit(ME);
+    // something to wear goes straight on, and she's with you wherever you walk;
+    // anything else, home to see it grow in
+    if(item.wear){wardrobe.add(item.id);dress(item.id,true);sheets.hide();if(getMode()!=='walk')visit(ME);}
+    else{gardens[ME].add(item.id,{fresh:true});sheets.hide();if(getMode()!=='walk'||getSelected()!==ME)visit(ME);}
     notice(`Blomy: “${item.line}”`);
     return true;
   }});
@@ -826,7 +838,8 @@ export function initLife({world,islands,camera,texture,player,notice,visit,fores
         if(photo!==undefined)t.done[id]=photo;
         renderTasks();
       },
-      purchase:(id,item)=>{if(!itemById(item))return;gardens[id]?.add(item,{fresh:true});notice(`${owners[id]} grew ${itemById(item).called} on their island.`);},
+      // (what a friend's gardener wears isn't on their island, so it isn't news here)
+      purchase:(id,item)=>{if(!itemById(item)||itemById(item).wear)return;gardens[id]?.add(item,{fresh:true});notice(`${owners[id]} grew ${itemById(item).called} on their island.`);},
       membersChanged:()=>notice('Someone new joined your sky. Reload to see their island.'),
     });
   }

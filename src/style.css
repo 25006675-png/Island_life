@@ -77,6 +77,10 @@ input[type=text],input[type=time],input[type=date],input[type=email],input[type=
 .shop-card.owned{background:oklch(.97 .03 150)}.shop-card.owned em{color:oklch(.45 .1 150)}
 .shop-card.short{background:oklch(.985 .005 295)}.shop-card.short .icon{opacity:.6}.shop-card.short em{color:var(--muted)}
 .shop-card:not(.owned):not(.short):hover{box-shadow:0 0 0 2px oklch(.8 .08 225)}
+/* the shop's two shelves; Blomy's things stay tappable once bought (on and off), and the one she has on is ringed */
+.shop-group{font:normal 15px var(--display);color:var(--muted);margin:0 0 10px}.shop-grid+.shop-group{margin-top:20px}
+.shop-card[aria-pressed]:hover{box-shadow:0 0 0 2px oklch(.72 .1 150)}
+.shop-card.worn{box-shadow:inset 0 0 0 2px oklch(.72 .1 150)}.shop-card.worn:hover{box-shadow:inset 0 0 0 2px oklch(.72 .1 150),0 0 0 2px oklch(.72 .1 150)}
 .shop-card[aria-busy=true]{opacity:.6}
 /* mock sign-in: a peach sky, three cards above a cloud line, and the gardener
    walking in front of them */
@@ -841,3 +845,40 @@ footer{z-index:2}
   .plan-open{flex:1 1 100%;grid-template-columns:minmax(0,1fr);gap:4px}
   .plan-acts{margin-left:auto}.plan-acts button{white-space:nowrap}
 }
+/* Balance: the three things you can act on lead, big and side by side (Small changes, Done so far, What your island has learned);
+   the stats fold away under "Show your stats" (balance.js remembers it open or shut) */
+.bal-focus{grid-column:1/-1;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-top:16px;align-items:stretch}
+.bal-focus .bal-panel{margin-top:0;padding:20px 20px 22px;border-radius:18px;background:#fff;border:2px solid var(--violet-soft);box-shadow:0 4px 0 var(--violet-soft)}
+.balance-body .bal-focus .bal-panel h3{margin:0 0 14px;font-size:19px;line-height:1.25;color:var(--ink)}
+.bal-focus .bal-suggest li{flex-direction:column;align-items:stretch;gap:10px;background:oklch(.97 .01 295)}
+.bal-focus .bal-suggest li div{font-size:14.5px;gap:4px}.bal-focus .bal-suggest li span{font-size:13px}
+.bal-focus .bal-suggest .bal-apply{align-self:flex-start}
+.bal-focus .bal-progress-line{font-size:15px}
+.bal-focus .bal-learned li{font-size:14px;padding:8px 11px}
+.bal-focus .bal-note-line,.bal-focus .bal-dew{font-size:13.5px}
+.bal-focus .bal-days-key{font-size:12px}
+.bal-stats{grid-column:1/-1;margin-top:18px}
+.bal-stats summary{list-style:none;display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:11px 16px;border-radius:22px;border:2px solid var(--violet-soft);background:#fff;color:var(--violet);
+  font:600 14px var(--display);box-shadow:0 3px 0 var(--violet-soft);cursor:pointer;transition:transform .14s ease,box-shadow .14s ease,background .14s,color .14s}
+.bal-stats summary::-webkit-details-marker{display:none}
+.bal-stats summary:hover{background:var(--orchid);border-color:var(--orchid);color:#fff;transform:translateY(-1px);box-shadow:0 4px 0 var(--orchid-deep)}
+.bal-stats summary:active{transform:translateY(1px);box-shadow:0 1px 0 var(--violet-soft)}
+.bal-stats summary:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+.bal-stats .chev{transition:transform .2s}.bal-stats[open] .chev{transform:rotate(180deg)}
+.bal-stats .when-open,.bal-stats[open] .when-closed{display:none}.bal-stats[open] .when-open{display:inline}
+.bal-stats-body{display:grid;grid-template-columns:1fr 1fr;gap:0 36px;align-items:start}
+@media(max-width:900px){.bal-focus,.bal-stats-body{grid-template-columns:1fr}}
+/* Balance as a floating panel with room all round (not a sheet pulled up from the bottom), the sheets' usual size, centred */
+#balance-sheet{top:50%;bottom:auto;transform:translate(-50%,-50%);width:min(1060px,calc(100% - 48px));max-height:calc(86svh / var(--ui));border-radius:24px;border-bottom:3px solid #fff;
+  box-shadow:0 6px 0 rgba(157,99,242,.18),0 24px 60px -16px rgba(60,24,120,.5);animation:panel-in .32s cubic-bezier(.2,.8,.2,1)}
+@keyframes panel-in{from{opacity:0;transform:translate(-50%,calc(-50% + 18px)) scale(.98)}}
+#balance-sheet .sheet-handle{display:none}
+#balance-sheet .balance{padding-top:22px}
+#balance-sheet .sheet-close{top:16px;right:18px}
+/* the three you can act on: Small changes down the left, Done so far across the top right, What your island has learned across the bottom right */
+.bal-focus{grid-template-columns:minmax(280px,1fr) 2fr}
+.bal-focus>section:first-child{grid-row:1/3}
+.bal-focus #bal-learned{grid-template-columns:repeat(auto-fill,minmax(220px,1fr))}
+@media(max-width:900px){.bal-focus{grid-template-columns:1fr}.bal-focus>section:first-child{grid-row:auto}}
+/* the game layer never scrolls: things parked off its edge (the tucked key card) must not let focus or scrollIntoView slide the whole screen sideways */
+#app{overflow:clip}

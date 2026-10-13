@@ -81,13 +81,14 @@ export function makeGardener(){
   // the fringe: one smooth shell over the brow, its lower edge a soft wave rather than two cut halves
   add(head,shell(56,24,(x,y,z)=>y>.15||z<-.3,(v)=>{const w=Math.cos(v.x*4.2)*.035;v.z-=.07*Math.exp(-Math.pow((Math.abs(v.x)-.55)/.45,2))*(v.z<0?1:.2);v.z+=w*(v.z<0?1:.2);},1.05),M.hair,[0,-.33,.66],[.6,.42,.42]);
   for(const s of[-1,1])add(head,shell(32,18,()=>false,(v)=>{if(v.z<-.1)v.z=-.1+(v.z+.1)*.8;}),M.hair,[.6*s,-.18,.26],[.25,.33,.44]);
-  // ---- the leaf hat
+  // ---- the leaf hat (its own group: the straw sun hat from the shop takes its place while worn)
+  const leafHat=new T.Group();head.add(leafHat);
   for(const s of[-1,1]){
-    add(head,hatLeaf(s),M.leaf,[0,0,0]);                                      // (no ink shell on an open surface: its winding flips side to side)
-    const under=add(head,hatLeaf(s,.975),M.leafDark,[0,0,0]);under.castShadow=false;      // the shaded underside, seen where the leaf lifts off the hair
+    add(leafHat,hatLeaf(s),M.leaf,[0,0,0]);                                   // (no ink shell on an open surface: its winding flips side to side)
+    const under=add(leafHat,hatLeaf(s,.975),M.leafDark,[0,0,0]);under.castShadow=false;   // the shaded underside, seen where the leaf lifts off the hair
     // the vein: a thin tube laid along the leaf's centre line, just above the surface
     const pts=[];for(let i=0;i<=20;i++){const u=i/20,phi=-.12+u*1.7,droop=Math.max(0,u-.75)*.6,r=HAT_R+.05;pts.push(new T.Vector3(s*(r*Math.sin(phi)+droop*.2),HAT_Z+r*Math.cos(phi)-droop,0));}
-    const vein=new T.Mesh(new T.TubeGeometry(new T.CatmullRomCurve3(pts),24,.014,6),M.leaf2);head.add(vein);
+    const vein=new T.Mesh(new T.TubeGeometry(new T.CatmullRomCurve3(pts),24,.014,6),M.leaf2);leafHat.add(vein);
   }
   // the sprout: a short stem on the crown with three small leaves, like a seedling
   const sprout=new T.Group();sprout.position.copy(P(0,.02,1.3+(HAT_Z-.5)+(HAT_R-.8)));head.add(sprout);
@@ -105,6 +106,47 @@ export function makeGardener(){
    const h1=new T.Mesh(new T.TorusGeometry(.09,.02,10,24,Math.PI),M.can);h1.position.copy(P(0,0,.27));can.add(h1);
    const h2=new T.Mesh(new T.TorusGeometry(.1,.022,10,24,Math.PI),M.can);h2.position.copy(P(.2,0,.03));h2.rotation.z=-Math.PI/2;can.add(h2);}
   const spout=new T.Object3D();spout.position.copy(P(-.43,0,.33));can.add(spout);   // just past the rose: where the water leaves
+  // ---- her wardrobe, from the dewdrop shop (shop.js). Each piece is built here but joins her only while worn
+  // (`wear` below), so when it's off it costs nothing and never changes her size or framing.
+  Object.assign(M,{straw:mat('#f4d48a',{roughness:.85,sheen:.6,sheenColor:new T.Color('#fff4c8'),side:T.DoubleSide}),
+    ribbon:mat('#e14d6a',{roughness:.38,clearcoat:.55,sheen:.6,sheenColor:new T.Color('#ffc4d0'),side:T.DoubleSide}),
+    satin:mat('#2e9b5a',{roughness:.38,clearcoat:.55,sheen:.6,sheenColor:new T.Color('#c4f2d2'),side:T.DoubleSide}),   // the bow: an emerald that stands out on her gold hair
+    knit:mat('#8fcf8a',{roughness:.95,sheen:.9,sheenColor:new T.Color('#eaffe6')}),   // the scarf: a soft mint, lighter than her overallscream:mat('#fff4e2',{roughness:.9}),
+    petal:mat('#fffaf2',{roughness:.6}),blossom:mat('#f7a8c0',{roughness:.6}),heart:mat('#f6b93b',{roughness:.5})});
+  const outfit={};
+  // the straw sun hat: one lathe from the brim's edge to the top of the crown, the braid's rings pressed in, tipped
+  // back a little so the brim lifts off her face. The leaf hat comes off and the sprout pokes through the top.
+  {const g=new T.Group();g.position.copy(P(0,0,.96));g.rotation.x=-.08;
+   const BR=1.08,CR=.6,CH=.48,pts=[];
+   outfit.sunhat={on:head,g,top:new T.Vector3(0,CH-.03,0).applyEuler(g.rotation).add(g.position)};   // where the sprout comes through
+   for(let i=0;i<=48;i++){const r=BR-(BR-CR)*i/48;pts.push(new T.Vector2(r,.07*Math.pow(Math.max(0,(r-.88)/(BR-.88)),2)+.005*Math.sin(r*110)));}
+   for(let i=1;i<=32;i++){const a=i/32*Math.PI/2,c=Math.pow(Math.cos(a),2/3),s=Math.pow(Math.sin(a),2/3),y=CH*s;pts.push(new T.Vector2(i===32?0:CR*c+.004*Math.sin(y*130)*(1-s*s),y));}
+   const hat=new T.Mesh(new T.LatheGeometry(pts,64),M.straw);hat.castShadow=true;g.add(hat);
+   const rim=new T.Mesh(new T.TorusGeometry(BR,.026,8,72),M.straw);rim.rotation.x=Math.PI/2;rim.position.y=.07;g.add(rim);
+   const band=new T.Mesh(new T.CylinderGeometry(CR+.012,CR+.02,.12,64,1,true),M.ribbon);band.position.y=.1;g.add(band);
+   for(const [a,y,m,n,sz] of[[1.7,.13,M.petal,8,.2],[1.42,.11,M.blossom,5,.15],[2.0,.1,M.blossom,5,.13]]){   // a cluster on her free-hand side, seen from in front and behind
+     const f=flower(m,M.heart,n,sz);f.position.set(Math.sin(a)*(CR+.03),y,Math.cos(a)*(CR+.03));f.rotation.y=a;g.add(f);}}
+  // the ribbon bow: two satin loops and a knot on the back of her bob, the tails free to sway
+  const bowTails=[];
+  {const g=new T.Group();g.position.copy(P(0,.74,.52));g.rotation.y=Math.PI;outfit.bow={on:head,g};   // its +z faces out from the back of her head
+   const lobe=lobeGeo(.36,.24,.1);
+   for(const s of[-1,1]){const l=new T.Mesh(lobe,M.satin);l.rotation.set(0,s<0?Math.PI:0,.3);l.position.x=.02*s;g.add(l);}
+   const knot=new T.Mesh(sph,M.satin);knot.scale.set(.085,.095,.075);knot.position.z=.03;g.add(knot);
+   for(const s of[-1,1]){const p=new T.Group();p.position.set(.02*s,-.04,.01);g.add(p);bowTails.push(p);
+     p.add(new T.Mesh(ribbonGeo(.46,.09,.13,.06,.07),M.satin));}}
+  // the flower scarf: a ribbed knit ring round her neck, dipping at the front, knotted to one side with a daisy on
+  // the knot and one striped, fringed end hanging over the bib
+  {const g=new T.Group();g.position.copy(P(0,0,.39));outfit.scarf={on:chest,g};
+   const ring=new T.Mesh(knitRing(.41,.1,44),M.knit);ring.rotation.x=Math.PI/2+.16;ring.scale.y=.86;ring.castShadow=true;g.add(ring);
+   const knot=new T.Mesh(sph,M.knit);knot.scale.set(.12,.11,.1);knot.position.set(.19,-.05,.33);g.add(knot);
+   const end=new T.Group();end.position.set(.2,-.09,.4);end.rotation.set(-.38,0,.08);g.add(end);
+   const tail=new T.Mesh(rbox(.17,.05,.36,.025),M.knit);tail.position.y=-.18;end.add(tail);
+   for(const y of[-.27,-.31]){const st=new T.Mesh(rbox(.172,.054,.018,.008),M.cream);st.position.y=y;end.add(st);}
+   for(let i=0;i<5;i++){const fr=new T.Mesh(cone(.012,.008,.06,5),M.knit);fr.position.set(-.068+i*.034,-.38,0);end.add(fr);}
+   const daisy=flower(M.petal,M.heart,8,.17);daisy.position.set(.2,-.04,.43);daisy.rotation.y=.5;g.add(daisy);}
+  for(const {g} of Object.values(outfit)){
+    g.traverse(o=>{if(o.isMesh)o.receiveShadow=false;});mergeStatic(g);}   // only the hat and the scarf ring are big enough to cast a shadow
+  const sproutAt=sprout.position.clone();
   // rest pose
   arms[0].rotation.set(-.2,0,-.42);arms[1].rotation.set(.08,0,.28);
   head.rotation.set(0,0,0);
@@ -158,7 +200,14 @@ export function makeGardener(){
       // sprout: a spring that reacts to how fast the head yaws, then settles
       const q=new T.Quaternion();head.getWorldQuaternion(q);fwd.set(0,0,1).applyQuaternion(q);const yaw=Math.atan2(fwd.x,fwd.z);
       const f2=new T.Vector3(0,0,1).applyQuaternion(lastHeadQ);const d=Math.atan2(Math.sin(yaw-Math.atan2(f2.x,f2.z)),Math.cos(yaw-Math.atan2(f2.x,f2.z)));lastHeadQ.copy(q);
-      const rate=dt>0?d/dt:0;sprV+=(-sprA*38-sprV*7-rate*.9)*dt;sprA+=sprV*dt;sprA=Math.max(-.45,Math.min(.45,sprA));sprout.rotation.z=sprA;sprout.rotation.x=sprA*.3;}};
+      const rate=dt>0?d/dt:0;sprV+=(-sprA*38-sprV*7-rate*.9)*dt;sprA+=sprV*dt;sprA=Math.max(-.45,Math.min(.45,sprA));sprout.rotation.z=sprA;sprout.rotation.x=sprA*.3;
+      // the bow's tails drift a little, and swing out with the same spring when she turns her head
+      bowTails.forEach((p,i)=>{p.rotation.z=(i?.3:-.3)+Math.sin(t*1.8+i*1.3)*.05-sprA*.6;p.rotation.x=-.06-Math.sin(t*1.25+i)*.04;});},
+    // put on or take off something from the shop: 'sunhat', 'bow' or 'scarf'
+    wear(id,on=true){const w=outfit[id];if(!w)return;
+      if(on)w.on.add(w.g);else w.on.remove(w.g);
+      if(id==='sunhat'){leafHat.visible=!on;sprout.position.copy(on?w.top:sproutAt);}},
+    wearing:id=>!!outfit[id]?.g.parent};
   mergeStatic(root);                                            // one draw per part and material: the parts still move
   return root;
 }
@@ -182,4 +231,25 @@ function hatLeaf(s,k=1){
 }
 function leafGeo(){const g=new T.SphereGeometry(1,20,10);const p=g.attributes.position;
   for(let i=0;i<p.count;i++){let x=p.getX(i),y=p.getY(i),z=p.getZ(i);const bz=y,by=-z;const t=Math.abs(bz);const nx=x*((1-Math.pow(t,1.6))*.9+.1);let ny=by*.16;ny+=bz*bz*.25-.1;p.setXYZ(i,nx,bz,-ny);}
+  g.computeVertexNormals();return g;}
+// ---- wardrobe shapes, in three's own axes (y up, +z toward the viewer)
+// a little flower facing +z: n rounded petals round a domed heart
+const BUD=new T.SphereGeometry(1,14,10);
+function flower(petal,heart,n,size){const g=new T.Group(),w=n>6?.17:.27;
+  for(let i=0;i<n;i++){const a=i/n*Math.PI*2,p=new T.Mesh(BUD,petal);p.position.set(Math.cos(a)*size*.5,Math.sin(a)*size*.5,0);p.rotation.z=a;p.scale.set(size*.4,size*w,size*.06);g.add(p);}
+  const c=new T.Mesh(BUD,heart);c.position.z=size*.05;c.scale.set(size*.22,size*.22,size*.12);g.add(c);return g;}
+// one loop of a satin bow, from its pinched end at the knot (x=0) out to a rounded tip at x=L
+function lobeGeo(L,H,D){const g=new T.SphereGeometry(1,28,18);const p=g.attributes.position;
+  for(let i=0;i<p.count;i++){const x=p.getX(i),y=p.getY(i),z=p.getZ(i),t=(x+1)/2,w=.3+.7*t;
+    p.setXYZ(i,t*L,y*w*H,z*w*D*(1-.4*Math.exp(-((t-.55)**2*14+y*y*4))));}   // pressed in at the middle, where the loop folds
+  g.computeVertexNormals();return g;}
+// a hanging ribbon tail: tapers from w0 to w1 over len, a V cut into its end, bowed out by curl
+function ribbonGeo(len,w0,w1,notch,curl){const g=new T.PlaneGeometry(1,1,2,16);const p=g.attributes.position;
+  for(let i=0;i<p.count;i++){const u=p.getX(i)*2,v=.5-p.getY(i),w=w0+(w1-w0)*v;
+    p.setXYZ(i,u*w/2,-v*(len-notch*(1-Math.abs(u))),curl*Math.sin(v*Math.PI*.8));}
+  g.computeVertexNormals();return g;}
+// a ribbed knit ring: a torus whose tube swells and dips `ribs` times round its length (ribs even, so the seam meets)
+function knitRing(R,r,ribs){const g=new T.TorusGeometry(R,r,14,ribs*4);const p=g.attributes.position;
+  for(let i=0;i<p.count;i++){const x=p.getX(i),y=p.getY(i),z=p.getZ(i),a=Math.atan2(y,x),cx=R*Math.cos(a),cy=R*Math.sin(a),k=1+.1*Math.cos(a*ribs);
+    p.setXYZ(i,cx+(x-cx)*k,cy+(y-cy)*k,z*k);}
   g.computeVertexNormals();return g;}

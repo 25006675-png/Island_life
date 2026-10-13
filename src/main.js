@@ -637,6 +637,7 @@ renderer=new T.WebGLRenderer({canvas,antialias:false,powerPreference:'high-perfo
   const shadow=new T.Mesh(new T.CircleGeometry(.43,24),new T.MeshBasicMaterial({color:'#35492f',transparent:true,opacity:.22,depthWrite:false}));shadow.rotation.x=-Math.PI/2;shadow.position.y=.035;playerRoot.add(shadow);
   spawnOn(islands[0]);
   life=initLife({world,islands,camera,texture:atmosphere.texture,player,notice,visit,forest,guiding:()=>guide.on,getMode:()=>mode,getSelected:()=>selected,
+    wear:(id,on)=>gardener.userData.wear(id,on),
     setAltitude:(id,h)=>{updateAltitude(islands.find(i=>i.id===id),T.MathUtils.clamp(h,LOW,HIGH));syncPanel();},
     setGlow:(id,g)=>{const b=bridges.find(b=>b.id===id);if(!b)return;b.glow=T.MathUtils.clamp(g,.15,3);b.glowMaterial.emissiveIntensity=b.glow*2.2;b.deckMaterial.emissiveIntensity=b.glow*.16;syncPanel();}});
   ready=true;sound.preload();peekHelp();
