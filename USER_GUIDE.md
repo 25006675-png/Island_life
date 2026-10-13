@@ -110,6 +110,8 @@ Friends can see another island's general height, weather and permitted activity 
 
 **Expected result:** dewdrops are deducted and Blomy says a line about the new decoration. The decoration grows near the windmill at the centre of your island's clock-face path. Walk there to see it. Dewdrops are earned through healthy participation such as finishing blocks, notes between friends and shared tasks; they cannot be purchased.
 
+The shop's **For Blomy** shelf dresses your gardener: **Flower scarf** (35), **Ribbon bow** (45) or **Straw sun hat** (55), confirmed with **Get it**. She puts it on straight away and the view switches to the walk so you can see her; the sun hat takes the place of her leaf hat. Select a card you own to take it off or put it back on. What she wears is remembered in this browser and is shown on the 3D island only.
+
 ## Route B — signed-in account and backend
 
 Use this route after the demo. If the team provided a judge account, use those credentials. Otherwise, select **Continue with Google** or **New here? Make your island**. A newly created email account may require email confirmation.

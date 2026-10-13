@@ -20,7 +20,9 @@ const STATUS={done:'done',now:'happening now',planned:'planned',skipped:'let go'
 const el=(tag,props={},...kids)=>{const e=Object.assign(document.createElement(tag),props);e.append(...kids);return e;};
 const option=(value,text)=>el('option',{value,textContent:text});
 
-export function createCalendar({plans,owner,clock,notice,sheets,live=null}){
+// rate: {state(b), answer(b,value), done(blocks)} -- today's finished blocks ask "How draining was it?" in the Day list (life.js);
+// done hears the blocks you just marked done (the firefly fairy asks about them)
+export function createCalendar({plans,owner,clock,notice,sheets,live=null,rate=null}){
   const sheet=$('planner-sheet');
   // a coming day's heaviness, in words; past days have already happened
   const ahead=date=>{if(date<TODAY)return null;const f=dayReading(owner,date);return f.label==='usual'?null:f;};
@@ -145,6 +147,7 @@ export function createCalendar({plans,owner,clock,notice,sheets,live=null}){
   }
 
   // ---- Day -------------------------------------------------------------------------
+  const DRAIN={light:'Light',okay:'Okay',draining:'Draining'};
   function renderDay(){
     const list=$('plan-list'), blocks=plans.on(owner,date);list.replaceChildren();
     if(!blocks.length)list.append(el('li',{className:'plan-empty',textContent:'Nothing planned. A quiet day.'}));
@@ -164,16 +167,25 @@ export function createCalendar({plans,owner,clock,notice,sheets,live=null}){
       else if(st==='skipped')act('Bring back',()=>plans.toggleSkip(owner,b));
       else{
         // Done only once it has happened; upcoming blocks can still be let go
-        const d=act('Done',()=>plans.markDone(owner,b),'plan-done');
+        const d=act('Done',()=>{plans.markDone(owner,b);rate?.done?.([b]);},'plan-done');
         if(st!=='waiting'){d.disabled=true;d.title='You can mark it done once it has happened';}
         act('Let go',async()=>{if(await confirmLetGo(b.title))plans.toggleSkip(owner,b);});
       }
-      li.append(acts);list.append(li);
+      li.append(acts);
+      // "How draining was it?": today's blocks you've pressed Done on, one tap each (light, okay, draining); then the word you picked
+      const felt=date===TODAY&&rate?rate.state(b):undefined;
+      if(felt!==undefined){
+        const row=el('div',{className:'plan-rate'},el('span',{className:'plan-rate-q',textContent:felt?'Felt':'How draining was it?'}));
+        if(felt)row.append(el('span',{className:'ask-done',textContent:DRAIN[felt]}));
+        else for(const [v,label] of Object.entries(DRAIN)){const x=el('button',{type:'button',className:'ask-pick',textContent:label});x.onclick=()=>rate.answer(b,v);row.append(x);}
+        li.append(row);
+      }
+      list.append(li);
     }
     // today's blocks whose time has passed wait for an answer; one tap answers them all
     const waiting=blocks.filter(b=>statusOn(b)==='waiting');
     $('mark-all').hidden=!waiting.length;$('mark-all').textContent=`Mark all as done (${waiting.length})`;
-    $('mark-all').onclick=()=>{for(const b of waiting)plans.markDone(owner,b);notice(`${waiting.length} block${waiting.length===1?'':'s'} took root.`);};
+    $('mark-all').onclick=()=>{for(const b of waiting)plans.markDone(owner,b);rate?.done?.(waiting);notice(`${waiting.length} block${waiting.length===1?'':'s'} took root.`);};
   }
 
   // ---- Week ------------------------------------------------------------------------

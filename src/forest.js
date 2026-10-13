@@ -305,6 +305,8 @@ export function createForest({assets,islandSurface,speciesScale,thirsty,onRoot})
     },
     // a thirsty tree (see the top) takes root: the gardener's water has reached it
     water(t){if(t.anim!=='thirsty')return;t.anim='root';t.k=0;t.mat.depthWrite=true;animating.add(t);onRoot?.(t);},
+    // the crown of a block's tree (world units), or null when it has none (the fairy flies out of it, life.js)
+    crown(blockId){const t=byBlock.get(blockId);if(!t||t.state==='gone')return null;const p=t.solid.getWorldPosition(new T.Vector3());p.y+=heightOf(t.key)*t.sc*.75;return p;},
     // where a tree stands, in world units: its foot, the trunk's reach and its height
     base(t){const p=t.solid.getWorldPosition(new T.Vector3());return {x:p.x,y:p.y,z:p.z,r:.85*t.sc,h:heightOf(t.key)*t.sc};},
     // the tree nearest `pos` on island `id`, as a reveal card for life.js

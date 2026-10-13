@@ -34,9 +34,6 @@ page.on('console', m => { if (m.type() === 'error' && !allowed(m.location().url 
 const notice = page.locator('#notice');
 const week = () => page.evaluate(() => window.islandLife.life.week());
 const walks = blocks => blocks.filter(b => b.title.startsWith('Walk with'));
-// a wait on the page's own timers: they run late under software rendering, but in order
-const pageDelay = ms => page.evaluate(ms => new Promise(done => setTimeout(done, ms)), ms);
-let skipped = 0;
 
 try {
   await page.clock.setFixedTime(NOW);
@@ -50,23 +47,21 @@ try {
   });
 
   await step('mood: a stressed check-in lights a lantern', async () => {
-    await page.click('#mood-toggle');
-    await page.locator('#moods .mood', { hasText: 'Stressed' }).click();
+    // your flower asks only while you walk your own island (src/life.js atHome): go home first. The island's
+    // label is drawn in 3D, so this goes through the page's own API, as tools/perf.mjs does.
+    await page.evaluate(() => window.islandLife.visit('sakura'));
+    await page.waitForFunction(() => { const s = window.islandLife.getState(); return s.mode === 'walk' && s.player.surface?.id === 'sakura'; });
+    // talk to her (src/flower.js): T toggles, and she may also open on her own when you arrive by her
+    const ask = page.locator('#flower-ask');
+    await expect(async () => {
+      if (await ask.isHidden()) await page.keyboard.press('t');
+      await expect(ask).toBeVisible({ timeout: 10_000 });
+    }).toPass({ timeout: 90_000 });
+    // her bubble follows her face every frame (flower.js place()), so it never holds still for a click while
+    // the camera settles: answer from the keyboard, which goes to the same button
+    await page.locator('#moods .mood', { hasText: 'Stressed' }).press('Enter');
     await expect(notice).toHaveText('A stressed lantern lights up on your pier.');
-    await expect(page.locator('#mood-panel')).toBeHidden();
-    // The check-in may follow up with up to two "How draining was …?" questions on 1.6 s timers (src/life.js
-    // checkIn); whether it does is random (src/readings.js eveningAsks). A timer set now fires after theirs.
-    // A queued question opens 500 ms after the one before closes (src/ask.js 'close' listener); the wait
-    // after each skip starts from a 'close' listener added later, so it runs after that one. Skip each one.
-    await pageDelay(2000);
-    for (let n = 0; n < 4 && await page.locator('#ask-dialog[open]').count(); n++) {
-      await page.evaluate(() => { window.askSettled = new Promise(done => document.getElementById('ask-dialog')
-        .addEventListener('close', () => setTimeout(done, 1000), { once: true })); });
-      await page.click('#ask-skip');
-      await page.evaluate(() => window.askSettled);
-      skipped++;
-    }
-    await expect(page.locator('#ask-dialog[open]')).toHaveCount(0);
+    await expect(ask).toBeHidden();
   });
 
   await step('balance: the sheet opens with three suggestions', async () => {
@@ -104,5 +99,5 @@ try {
 }
 
 const failed = results.filter(r => !r.ok).length;
-console.log(`\n${results.length - failed} passed, ${failed} failed (${skipped} "How draining" question${skipped === 1 ? '' : 's'} skipped). Screenshot: ${OUT}/journey.png`);
+console.log(`\n${results.length - failed} passed, ${failed} failed. Screenshot: ${OUT}/journey.png`);
 process.exitCode = failed ? 1 : 0;

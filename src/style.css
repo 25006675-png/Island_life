@@ -77,6 +77,10 @@ input[type=text],input[type=time],input[type=date],input[type=email],input[type=
 .shop-card.owned{background:oklch(.97 .03 150)}.shop-card.owned em{color:oklch(.45 .1 150)}
 .shop-card.short{background:oklch(.985 .005 295)}.shop-card.short .icon{opacity:.6}.shop-card.short em{color:var(--muted)}
 .shop-card:not(.owned):not(.short):hover{box-shadow:0 0 0 2px oklch(.8 .08 225)}
+/* the shop's two shelves; Blomy's things stay tappable once bought (on and off), and the one she has on is ringed */
+.shop-group{font:normal 15px var(--display);color:var(--muted);margin:0 0 10px}.shop-grid+.shop-group{margin-top:20px}
+.shop-card[aria-pressed]:hover{box-shadow:0 0 0 2px oklch(.72 .1 150)}
+.shop-card.worn{box-shadow:inset 0 0 0 2px oklch(.72 .1 150)}.shop-card.worn:hover{box-shadow:inset 0 0 0 2px oklch(.72 .1 150),0 0 0 2px oklch(.72 .1 150)}
 .shop-card[aria-busy=true]{opacity:.6}
 /* mock sign-in: a peach sky, three cards above a cloud line, and the gardener
    walking in front of them */
@@ -540,11 +544,6 @@ label:has(> .ed-cat-icon){position:relative}
 .login-card .login-or{text-align:center;margin:10px 0;font-size:11px}
 .login-card .login-status{min-height:1.2em;margin:12px 0 0;font-size:12px;color:oklch(.5 .14 30);text-align:center}.login-card .login-status.good{color:oklch(.42 .1 150)}
 .login-card .login-status:empty{min-height:0;margin:0}
-#ask-dialog{width:min(400px,calc(100% - 32px))}
-.ask-what{display:flex;align-items:center;justify-content:center;gap:2px}
-.ask-answers{display:flex;justify-content:center;gap:10px;margin:16px 0 10px}
-dialog.wood .ask-answers .wood-button{flex:1;padding:12px 10px;font-size:15px}
-.ask-why{font-size:12px;text-align:center;opacity:.85}
 .support-list{margin:6px 0 16px;padding-left:18px;font:14px/1.55 'Segoe Print','Bradley Hand',Georgia,serif;color:#2f2116}.support-list li{margin-bottom:8px}
 .wk-forecast{display:block;margin-top:3px;font-size:9px;letter-spacing:.02em;white-space:nowrap}
 .wk-day.fc-light .wk-forecast{color:oklch(.45 .09 150)}
@@ -841,3 +840,114 @@ footer{z-index:2}
   .plan-open{flex:1 1 100%;grid-template-columns:minmax(0,1fr);gap:4px}
   .plan-acts{margin-left:auto}.plan-acts button{white-space:nowrap}
 }
+/* Balance: the three things you can act on lead, big and side by side (Small changes, Done so far, What your island has learned);
+   the stats fold away under "Show your stats" (balance.js remembers it open or shut) */
+.bal-focus{grid-column:1/-1;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-top:16px;align-items:stretch}
+.bal-focus .bal-panel{margin-top:0;padding:20px 20px 22px;border-radius:18px;background:#fff;border:2px solid var(--violet-soft);box-shadow:0 4px 0 var(--violet-soft)}
+.balance-body .bal-focus .bal-panel h3{margin:0 0 14px;font-size:19px;line-height:1.25;color:var(--ink)}
+.bal-focus .bal-suggest li{flex-direction:column;align-items:stretch;gap:10px;background:oklch(.97 .01 295)}
+.bal-focus .bal-suggest li div{font-size:14.5px;gap:4px}.bal-focus .bal-suggest li span{font-size:13px}
+.bal-focus .bal-suggest .bal-apply{align-self:flex-start}
+.bal-focus .bal-progress-line{font-size:15px}
+.bal-focus .bal-learned li{font-size:14px;padding:8px 11px}
+.bal-focus .bal-note-line,.bal-focus .bal-dew{font-size:13.5px}
+.bal-focus .bal-days-key{font-size:12px}
+.bal-stats-body{display:grid;grid-template-columns:1fr 1fr;gap:0 36px;align-items:start}
+@media(max-width:900px){.bal-focus,.bal-stats-body{grid-template-columns:1fr}}
+/* the three you can act on: Small changes down the left, Done so far across the top right, What your island has learned across the bottom right */
+.bal-focus{grid-template-columns:minmax(280px,1fr) 2fr}
+.bal-focus>section:first-child{grid-row:1/3}
+.bal-focus #bal-learned{grid-template-columns:repeat(auto-fill,minmax(220px,1fr))}
+@media(max-width:900px){.bal-focus{grid-template-columns:1fr}.bal-focus>section:first-child{grid-row:auto}}
+/* the game layer never scrolls: things parked off its edge (the tucked key card) must not let focus or scrollIntoView slide the whole screen sideways */
+#app{overflow:clip}
+/* Balance on one page: the Planner's frame (86% of the screen, rising from the bottom), and nothing inside scrolls.
+   Title row (stats switch, Week/Month) · the yellow box beside "by area" · then the cards, or the stats in their place, share what's left */
+#balance-sheet{height:auto}
+#balance-sheet .balance{flex:1;min-height:0;overflow:auto;padding:0 26px 20px}
+#balance-sheet .balance-body{display:flex;flex-direction:column;align-items:stretch;gap:12px}
+#balance-sheet .bal-stats-toggle{margin-left:auto}
+#balance-sheet .bal-head{margin:0;justify-content:flex-start}
+.bal-stats-toggle{margin-left:auto;display:inline-flex;align-items:center;gap:7px;padding:7px 14px;border-radius:18px;border:2px solid var(--violet-soft);background:#fff;color:var(--violet);
+  font:600 13px var(--display);box-shadow:0 2px 0 var(--violet-soft);transition:transform .14s ease,box-shadow .14s ease,background .14s,color .14s}
+.bal-stats-toggle:hover,.bal-stats-toggle[aria-pressed=true]{background:var(--orchid);border-color:var(--orchid);color:#fff;box-shadow:0 3px 0 var(--orchid-deep)}
+.bal-stats-toggle:hover{transform:translateY(-1px)}
+.bal-head .tabs{margin-left:0}
+.bal-top{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,2fr);gap:12px}
+.bal-top:has(#bal-areas[hidden]){grid-template-columns:1fr}
+#balance-sheet .bal-top .load-head{padding:12px 16px}
+#balance-sheet .bal-top .load-head strong{font-size:15px}
+#balance-sheet .bal-top .bal-areas{grid-column:auto;margin:0;padding:12px 16px}
+#balance-sheet .bal-top .bal-areas h3{margin:0 0 8px;font-size:13px}
+/* every card is as tall as what it holds: no stretching to fill the sheet, no blank space under the content */
+.bal-focus,#bal-stats{margin:0;align-items:start}
+.bal-focus{grid-template-rows:auto auto}
+.bal-focus .bal-panel{padding:14px 18px 16px}
+.balance-body .bal-focus .bal-panel h3{margin:0 0 10px;font-size:17px}
+.bal-focus .bal-suggest{gap:8px}
+.bal-focus .bal-suggest li{flex-direction:row;align-items:center;gap:12px;padding:10px 12px}
+.bal-focus .bal-suggest li div{font-size:14px}.bal-focus .bal-suggest li span{font-size:12.5px}
+.bal-focus .bal-suggest .bal-apply{align-self:center;flex:none}
+.bal-focus .bal-progress-line{margin:0 0 10px;font-size:14px}
+.bal-focus .day-bar{height:64px}
+.bal-focus .bal-days-key{margin-top:8px}
+.bal-focus .bal-learned{margin-top:8px;gap:6px}
+.bal-focus .bal-learned li{font-size:13.5px;padding:7px 10px}
+.bal-focus .bal-note-line{margin:0;font-size:13px}
+#bal-stats{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+#bal-stats[hidden],.bal-focus[hidden]{display:none}
+#bal-stats .bal-panel{margin:0}
+@media(max-width:900px){
+  .bal-top,#bal-stats{grid-template-columns:1fr}
+  .bal-focus .bal-suggest li{flex-direction:column;align-items:stretch}.bal-focus .bal-suggest .bal-apply{align-self:flex-start}
+}
+.bal-focus .bal-panel,#bal-stats .bal-panel{align-self:start}
+.bal-top{align-items:start}
+/* ...except "Small changes" down the left: it runs to the bottom of "What your island has learned", so the two columns end level */
+.bal-focus>.bal-panel:first-child{align-self:stretch}
+/* "How draining was it?" on today's finished blocks in the Planner's Day list (calendar.js renderDay); the dot on the Planner button says some wait */
+.plan-item:has(.plan-rate){flex-wrap:wrap}
+.plan-rate{flex-basis:100%;display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding-top:8px;margin-top:2px;border-top:1px dashed oklch(.9 .015 295)}
+.plan-rate-q{font:500 12px var(--display);color:var(--muted);margin-right:4px}
+.plan-item.done:has(.plan-rate){opacity:1}.plan-item.done:has(.plan-rate)>:not(.plan-rate){opacity:.7}
+#planner-toggle{position:relative}
+#planner-toggle.has-asks::after{content:'';position:absolute;top:6px;right:8px;width:9px;height:9px;border-radius:50%;background:#ff7fb8;box-shadow:0 0 0 2px #fff}
+@media(max-width:600px){#planner-toggle.has-asks::after{top:1px;right:1px}}
+/* the fairy (fairy.js, a 3D figure in the world): her white bubble beside her, and a trail of sparks as she flies */
+.fairy-bubble{position:fixed;z-index:6;width:300px;padding:14px 16px 12px;border-radius:18px;background:#fff;border:3px solid #fff;
+  box-shadow:0 5px 0 rgba(157,99,242,.22),0 22px 40px -20px rgba(60,24,120,.6);opacity:0;scale:.9;transition:opacity .2s,scale .2s}
+.fairy-bubble[hidden]{display:none}
+.fairy-bubble.on{opacity:1;scale:1}
+.fairy-bubble::before{content:'';position:absolute;top:42px;left:-9px;width:14px;height:14px;background:#fff;rotate:45deg;border-radius:3px}   /* the tail points at her */
+.fairy-bubble.flip::before{left:auto;right:-9px}
+.fairy-kicker{position:relative;display:block;font:600 11.5px var(--display);color:var(--orchid);letter-spacing:.01em}
+.fairy-q{position:relative;margin:3px 0 10px;font:600 17px var(--display);color:var(--ink)}
+.fairy-picks{position:relative;display:flex;flex-wrap:wrap;gap:7px}
+.fairy-pick{border:2px solid var(--violet-soft);background:#fff;border-radius:999px;padding:6px 14px;font:600 13px var(--display);color:var(--violet);box-shadow:0 2px 0 var(--violet-soft);transition:transform .14s,background .14s,color .14s,box-shadow .14s}
+.fairy-pick:hover{background:var(--orchid);border-color:var(--orchid);color:#fff;transform:translateY(-1px);box-shadow:0 3px 0 var(--orchid-deep)}
+.fairy-later{display:block;margin:10px 0 0 auto;font-size:12px}
+.fairy-spark{position:fixed;z-index:6;width:6px;height:6px;margin:-3px;border-radius:50%;background:#fff3a6;box-shadow:0 0 8px 2px #ffd84a;pointer-events:none;animation:fairy-spark .9s ease-out forwards}
+@keyframes fairy-spark{to{opacity:0;scale:.2;translate:var(--dx,0) var(--dy,14px)}}
+@media(prefers-reduced-motion:reduce){.fairy-spark{display:none}.fairy-bubble{transition:none}}
+/* while the fairy is out, the walk-up card for the tree she came from steps aside */
+#app.fairy-out #reveal{visibility:hidden}
+/* your talking flower (flower.js): an invisible tap target riding on her face, with a name tag on hover; her bubble
+   is the fairy's white bubble with the five moods, an optional photo and "Not now" */
+.flower-talk{position:absolute;z-index:1;width:64px;height:64px;margin:-32px 0 0 -32px;padding:0;border:0;border-radius:50%;background:transparent;cursor:pointer}
+.flower-talk:hover{background:transparent}
+.flower-talk span{position:absolute;bottom:calc(100% - 4px);left:50%;translate:-50% 0;white-space:nowrap;padding:5px 11px;border-radius:999px;background:#fff;color:var(--violet);
+  font:600 12px var(--display);box-shadow:0 3px 0 var(--violet-soft),0 10px 20px -12px rgba(60,24,120,.5);opacity:0;transition:opacity .15s;pointer-events:none}
+.flower-talk:hover span,.flower-talk:focus-visible span{opacity:1}
+.flower-talk:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+#app:has(#login:not([hidden])) .flower-talk{visibility:hidden}
+.flower-bubble .moods{margin:0;gap:7px}
+.flower-bubble .mood{border:2px solid var(--violet-soft);background:#fff;border-radius:999px;padding:6px 13px;font:600 13px var(--display);color:var(--violet);box-shadow:0 2px 0 var(--violet-soft);transition:transform .14s,background .14s,color .14s,box-shadow .14s}
+.flower-bubble .mood:hover{background:var(--orchid);border-color:var(--orchid);color:#fff;transform:translateY(-1px);box-shadow:0 3px 0 var(--orchid-deep)}
+.flower-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:12px}
+.flower-photo{position:relative;display:inline-flex;align-items:center;gap:6px;max-width:180px;padding:5px 12px;border-radius:999px;border:2px dashed var(--violet-soft);color:var(--violet);font:600 12px var(--display);cursor:pointer}
+.flower-photo span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.flower-photo:hover{border-style:solid;background:#f6effd}
+.flower-photo:focus-within{outline:3px solid var(--accent);outline-offset:2px}
+.flower-photo input{position:absolute;opacity:0;width:1px;height:1px;pointer-events:none}
+.flower-bubble .fairy-later{margin:0}
+.flower-note{margin:8px 0 0;font-size:11px;line-height:1.45;color:var(--muted)}
