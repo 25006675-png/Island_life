@@ -278,7 +278,6 @@ export function createBalance({plans,me,friends,clock,checkins,sheets,notice,dew
     }else{const m=monthData();monthHead(m);mix(m.byCat,'month');moodMonth(m);weeksBars(m);}
     $('bal-weather').textContent=weatherLine();
     renderLearned();renderList();
-    $('bal-dew').textContent=`💧 ${dew()} dewdrops, a slow drip from finished blocks, golden-window moments and notes between friends. They grew the windmill in the middle of your island; spend the rest in the shop.`;
   }
   // the last four weeks and this one, as loads (the demo's earlier weeks are given)
   function lastWeeks(r){
@@ -287,10 +286,17 @@ export function createBalance({plans,me,friends,clock,checkins,sheets,notice,dew
     return [-21,-14,-7].map(n=>weekReading(owner,addDays(monday,n)).week).concat(r.week);
   }
   for(const t of sheet.querySelectorAll('[data-span]'))t.onclick=()=>{span=t.dataset.span;render();};
+  // the stats (where the time goes, how you've felt) swap in for the three things you can act on, so the sheet never scrolls;
+  // which one shows is remembered per browser
+  const STATS_KEY='il-bal-stats';
+  const showStats=on=>{$('bal-stats').hidden=!on;sheet.querySelector('.bal-focus').hidden=on;
+    $('bal-stats-toggle').setAttribute('aria-pressed',String(on));$('bal-stats-toggle').lastChild.textContent=on?'Back to what you can change':'Show your stats';};
+  try{showStats(localStorage.getItem(STATS_KEY)==='1');}catch{showStats(false);}
+  $('bal-stats-toggle').onclick=()=>{const on=$('bal-stats').hidden;showStats(on);try{localStorage.setItem(STATS_KEY,on?'1':'0');}catch{}};
   return {
     // at: 'suggest' opens straight at "Small changes that would help" (the gardener's "See why"), lit for a moment
     open(from,at){current=suggest();applied.clear();sheets.show(sheet,from??$('balance-toggle'));render();
-      if(at==='suggest'){const panel=$('bal-suggest-title').closest('.bal-panel');
+      if(at==='suggest'){showStats(false);const panel=$('bal-suggest-title').closest('.bal-panel');
         setTimeout(()=>{panel.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'});
           panel.classList.remove('lit');void panel.offsetWidth;panel.classList.add('lit');},380);}},
     render,

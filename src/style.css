@@ -857,24 +857,8 @@ footer{z-index:2}
 .bal-focus .bal-learned li{font-size:14px;padding:8px 11px}
 .bal-focus .bal-note-line,.bal-focus .bal-dew{font-size:13.5px}
 .bal-focus .bal-days-key{font-size:12px}
-.bal-stats{grid-column:1/-1;margin-top:18px}
-.bal-stats summary{list-style:none;display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:11px 16px;border-radius:22px;border:2px solid var(--violet-soft);background:#fff;color:var(--violet);
-  font:600 14px var(--display);box-shadow:0 3px 0 var(--violet-soft);cursor:pointer;transition:transform .14s ease,box-shadow .14s ease,background .14s,color .14s}
-.bal-stats summary::-webkit-details-marker{display:none}
-.bal-stats summary:hover{background:var(--orchid);border-color:var(--orchid);color:#fff;transform:translateY(-1px);box-shadow:0 4px 0 var(--orchid-deep)}
-.bal-stats summary:active{transform:translateY(1px);box-shadow:0 1px 0 var(--violet-soft)}
-.bal-stats summary:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
-.bal-stats .chev{transition:transform .2s}.bal-stats[open] .chev{transform:rotate(180deg)}
-.bal-stats .when-open,.bal-stats[open] .when-closed{display:none}.bal-stats[open] .when-open{display:inline}
 .bal-stats-body{display:grid;grid-template-columns:1fr 1fr;gap:0 36px;align-items:start}
 @media(max-width:900px){.bal-focus,.bal-stats-body{grid-template-columns:1fr}}
-/* Balance as a floating panel with room all round (not a sheet pulled up from the bottom), the sheets' usual size, centred */
-#balance-sheet{top:50%;bottom:auto;transform:translate(-50%,-50%);width:min(1060px,calc(100% - 48px));max-height:calc(86svh / var(--ui));border-radius:24px;border-bottom:3px solid #fff;
-  box-shadow:0 6px 0 rgba(157,99,242,.18),0 24px 60px -16px rgba(60,24,120,.5);animation:panel-in .32s cubic-bezier(.2,.8,.2,1)}
-@keyframes panel-in{from{opacity:0;transform:translate(-50%,calc(-50% + 18px)) scale(.98)}}
-#balance-sheet .sheet-handle{display:none}
-#balance-sheet .balance{padding-top:22px}
-#balance-sheet .sheet-close{top:16px;right:18px}
 /* the three you can act on: Small changes down the left, Done so far across the top right, What your island has learned across the bottom right */
 .bal-focus{grid-template-columns:minmax(280px,1fr) 2fr}
 .bal-focus>section:first-child{grid-row:1/3}
@@ -882,3 +866,47 @@ footer{z-index:2}
 @media(max-width:900px){.bal-focus{grid-template-columns:1fr}.bal-focus>section:first-child{grid-row:auto}}
 /* the game layer never scrolls: things parked off its edge (the tucked key card) must not let focus or scrollIntoView slide the whole screen sideways */
 #app{overflow:clip}
+/* Balance on one page: the Planner's frame (86% of the screen, rising from the bottom), and nothing inside scrolls.
+   Title row (stats switch, Week/Month) · the yellow box beside "by area" · then the cards, or the stats in their place, share what's left */
+#balance-sheet{height:auto}
+#balance-sheet .balance{flex:1;min-height:0;overflow:auto;padding:0 26px 20px}
+#balance-sheet .balance-body{display:flex;flex-direction:column;align-items:stretch;gap:12px}
+#balance-sheet .bal-stats-toggle{margin-left:auto}
+#balance-sheet .bal-head{margin:0;justify-content:flex-start}
+.bal-stats-toggle{margin-left:auto;display:inline-flex;align-items:center;gap:7px;padding:7px 14px;border-radius:18px;border:2px solid var(--violet-soft);background:#fff;color:var(--violet);
+  font:600 13px var(--display);box-shadow:0 2px 0 var(--violet-soft);transition:transform .14s ease,box-shadow .14s ease,background .14s,color .14s}
+.bal-stats-toggle:hover,.bal-stats-toggle[aria-pressed=true]{background:var(--orchid);border-color:var(--orchid);color:#fff;box-shadow:0 3px 0 var(--orchid-deep)}
+.bal-stats-toggle:hover{transform:translateY(-1px)}
+.bal-head .tabs{margin-left:0}
+.bal-top{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,2fr);gap:12px}
+.bal-top:has(#bal-areas[hidden]){grid-template-columns:1fr}
+#balance-sheet .bal-top .load-head{padding:12px 16px}
+#balance-sheet .bal-top .load-head strong{font-size:15px}
+#balance-sheet .bal-top .bal-areas{grid-column:auto;margin:0;padding:12px 16px}
+#balance-sheet .bal-top .bal-areas h3{margin:0 0 8px;font-size:13px}
+/* every card is as tall as what it holds: no stretching to fill the sheet, no blank space under the content */
+.bal-focus,#bal-stats{margin:0;align-items:start}
+.bal-focus{grid-template-rows:auto auto}
+.bal-focus .bal-panel{padding:14px 18px 16px}
+.balance-body .bal-focus .bal-panel h3{margin:0 0 10px;font-size:17px}
+.bal-focus .bal-suggest{gap:8px}
+.bal-focus .bal-suggest li{flex-direction:row;align-items:center;gap:12px;padding:10px 12px}
+.bal-focus .bal-suggest li div{font-size:14px}.bal-focus .bal-suggest li span{font-size:12.5px}
+.bal-focus .bal-suggest .bal-apply{align-self:center;flex:none}
+.bal-focus .bal-progress-line{margin:0 0 10px;font-size:14px}
+.bal-focus .day-bar{height:64px}
+.bal-focus .bal-days-key{margin-top:8px}
+.bal-focus .bal-learned{margin-top:8px;gap:6px}
+.bal-focus .bal-learned li{font-size:13.5px;padding:7px 10px}
+.bal-focus .bal-note-line{margin:0;font-size:13px}
+#bal-stats{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+#bal-stats[hidden],.bal-focus[hidden]{display:none}
+#bal-stats .bal-panel{margin:0}
+@media(max-width:900px){
+  .bal-top,#bal-stats{grid-template-columns:1fr}
+  .bal-focus .bal-suggest li{flex-direction:column;align-items:stretch}.bal-focus .bal-suggest .bal-apply{align-self:flex-start}
+}
+.bal-focus .bal-panel,#bal-stats .bal-panel{align-self:start}
+.bal-top{align-items:start}
+/* ...except "Small changes" down the left: it runs to the bottom of "What your island has learned", so the two columns end level */
+.bal-focus>.bal-panel:first-child{align-self:stretch}
