@@ -63,6 +63,30 @@ A line the app would otherwise use: "${fallback}"`;
   return typeof line === 'string' && line.length > 8 && line.length < 200 ? line.trim() : fallback;
 }
 
+type Offer = {
+  mode: string; week: unknown; slots: { day: string; time: string; part?: string; with?: string[] }[];
+  canWait: { kind: string; day: string; hours: number; title?: string }[]; friends: string[];
+  plan?: { day: string; time: string; title: string; kind: string; hours: number }[];
+  feelings?: { day: string; mood: string }[]; grey?: string[];
+};
+// What both prompts know about the week: the summary, the plan and feelings when shared, the numbered free times
+// (with who is free then too) and "can wait" blocks, and the friends.
+function weekFacts(f: Offer): string {
+  const lines = [`Their week (kinds of activity in hours, and how each coming day looks for them): ${JSON.stringify(f.week)}`];
+  if (f.plan?.length) lines.push(`Their plan for the coming days: ${f.plan.map(b => `${b.day} ${b.time} ${b.title} (${b.kind}, ${b.hours} h)`).join('; ')}`);
+  if (f.feelings?.length) lines.push(`How they have felt lately: ${f.feelings.map(x => `${x.day} ${x.mood}`).join(', ')}`);
+  lines.push(`Free times (for type "add", give the number): ${f.slots.map((s, i) => `${i}. ${s.day} ${s.time}${s.part ? ` (${s.part})` : ''}${s.with?.length ? `, ${s.with.join(' and ')} free too` : ''}`).join('; ') || 'none'}`);
+  lines.push(`Activities marked "can wait" (for type "move", give the number): ${f.canWait.map((c, i) => `${i}. ${c.title ? `${c.title}, ` : ''}${c.kind}, ${c.day}, ${c.hours} h`).join('; ') || 'none'}`);
+  lines.push(`Friends in their sky, least recently in touch first: ${f.friends.join(', ') || 'none'}`);
+  if (f.grey?.length) lines.push(`Friends whose sky has been grey for a few days (a kind check-in could help): ${f.grey.join(', ')}`);
+  return lines.join('\n');
+}
+const FRIEND_RULE = `For time with a friend, use a free time when that friend is free too, if the list shows one. A short
+check-in with a friend whose sky has been grey (a call, a message, a walk) is a good idea when it fits. Never guess
+anyone's gender: use their name, or "they".`;
+const PLAN_RULE = `If their plan is given, make ideas fit around it and you may name their activities (for example "Move
+Library returns to next week", or a walk the evening before a heavy day), but keep the sentence kind and short.`;
+
 const IDEA_SCHEMA = {
   type: 'OBJECT',
   properties: {
@@ -76,10 +100,7 @@ const IDEA_SCHEMA = {
 
 // Three different small ideas for Your balance's "Other ideas", from the same offer as gardenerIdea below, none
 // repeating what the student has already been shown (avoid: their titles). checkIdea (idea.ts) checks each one.
-export async function gardenerIdeas(facts: {
-  mode: string; week: unknown; slots: { day: string; time: string; part?: string }[];
-  canWait: { kind: string; day: string; hours: number }[]; friends: string[];
-}, avoid: string[]): Promise<unknown[] | null> {
+export async function gardenerIdeas(facts: Offer, avoid: string[]): Promise<unknown[] | null> {
   const prompt = `You are the gardener on a student's floating island in a calm wellbeing app. Suggest THREE different,
 small, kind things they could do this week, each written as one warm sentence. Make them truly different from each
 other: for example one for rest, one for moving or time outdoors, one with a friend, or moving something that can wait.
@@ -91,10 +112,9 @@ give its number) helps most; prefer moving errands, study or other things, never
 offer rest, time outdoors, or time with a friend.`
     : `Their week looks ordinary. Do not move anything (type "add" only): offer small things that keep it balanced,
 like rest, moving their body, time outdoors, or time with a friend.`}
-Their week (kinds of activity in hours, and how each coming day looks for them): ${JSON.stringify(facts.week)}
-Free times (for type "add", give the number): ${facts.slots.map((s, i) => `${i}. ${s.day} ${s.time}${s.part ? ` (${s.part})` : ''}`).join('; ') || 'none'}
-Activities marked "can wait" (for type "move", give the number): ${facts.canWait.map((c, i) => `${i}. ${c.kind}, ${c.day}, ${c.hours} h`).join('; ') || 'none'}
-Friends in their sky, least recently in touch first: ${facts.friends.join(', ') || 'none'}
+${weekFacts(facts)}
+${FRIEND_RULE}
+${PLAN_RULE}
 Already suggested, so do not repeat these or anything much like them: ${avoid.join('; ') || 'nothing yet'}
 These are things to do in their real life: never mention the island, the sky, clouds drifting past or anything floating.
 A title fits the time it goes at (no "afternoon nap" in the evening) and is in sentence case, like "Walk by the river".
@@ -110,10 +130,7 @@ never mention numbers, hours, times, percentages or the app, no emoji, plain kin
 // The gardener's own idea: one small thing for this week, picked from the free
 // times and "can wait" blocks the app offers. Facts are kinds, hours, day names
 // and friends' first names; never titles. checkIdea (idea.ts) has the last word.
-export async function gardenerIdea(facts: {
-  mode: string; week: unknown; slots: { day: string; time: string }[];
-  canWait: { kind: string; day: string; hours: number }[]; friends: string[];
-}): Promise<unknown | null> {
+export async function gardenerIdea(facts: Offer): Promise<unknown | null> {
   const prompt = `You are the gardener on a student's floating island in a calm wellbeing app. Suggest ONE small,
 kind thing they could do this week, and write it as one warm sentence.
 ${facts.mode === 'schedule'
@@ -122,10 +139,9 @@ ${facts.mode === 'schedule'
 a slow evening, a short walk (type "add").`
     : `Their sky has been heavy lately, but their schedule is not unusually full, so it may not be the schedule.
 Do not move anything. Offer rest, time outdoors, or time with a friend (type "add").`}
-Their week (kinds of activity in hours, and how each coming day looks for them): ${JSON.stringify(facts.week)}
-Free times (for type "add", give the number): ${facts.slots.map((s, i) => `${i}. ${s.day} ${s.time}`).join('; ') || 'none'}
-Activities marked "can wait" (for type "move", give the number): ${facts.canWait.map((c, i) => `${i}. ${c.kind}, ${c.day}, ${c.hours} h`).join('; ') || 'none'}
-Friends in their sky, least recently in touch first: ${facts.friends.join(', ') || 'none'}
+${weekFacts(facts)}
+${FRIEND_RULE}
+${PLAN_RULE}
 Rules: for "add", the kind is rest, exercise, social or other, never study or work; 15 to 90 minutes; a title of
 2 to 5 words such as "Walk by the river"; a button of 2 to 4 words such as "Add the walk"; pick the free time that
 fits best, preferring the heaviest days or the evening before them. If you suggest seeing a friend, use their name

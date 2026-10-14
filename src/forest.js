@@ -180,7 +180,7 @@ export function createForest({assets,islandSurface,speciesScale,thirsty,onRoot})
     if(block){
       tree.mat=ghostMaterial(CATEGORIES[cat].color);
       tree.ghost=solid.clone(true);
-      tree.ghost.traverse(o=>{if(o.isMesh){o.material=tree.mat;o.castShadow=false;}});
+      tree.ghost.traverse(o=>{if(o.isMesh){o.material=tree.mat;o.castShadow=false;o.renderOrder=3;}});   // after the timetable path (2): neither writes depth, so the later one paints on top
       island.group.add(tree.ghost);
       tree.state=null;tree.solid.visible=false;   // settled by the first sync
       byBlock.set(block.id,tree);

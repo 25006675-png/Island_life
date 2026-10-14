@@ -24,14 +24,23 @@ Deno.serve(async req => {
 
   if (body.week) {
     if (mode === 'support') return json({ idea: null });
-    // only coarse facts reach the model: kinds, hours, day names, first names; never titles
+    // what reaches the model: kinds, hours, day names, first names; and, only when the student has "Let Blomy read
+    // my plan" on, their own titles for the coming week and their feeling words from the past one. Friends: first
+    // names, when they are free too (times only), and whose sky has been grey; never anything from their plans.
+    const friends = list(body.friends, 4).map((f: unknown) => str(f, 30)).filter(Boolean);
+    const named = (v: unknown, max: number) => list(v, max).map((f: unknown) => str(f, 30)).filter((f: string) => friends.includes(f));
     const offered = {
       mode, week: JSON.stringify(body.week).length <= 3000 ? body.week : {},
-      slots: list(body.slots, 16).map((s: any) => ({ day: str(s?.day, 20), time: str(s?.time, 5), part: str(s?.part, 10) })),
+      slots: list(body.slots, 16).map((s: any) => ({ day: str(s?.day, 20), time: str(s?.time, 5), part: str(s?.part, 10), with: named(s?.with, 4) })),
+      plan: list(body.plan, 30).map((b: any) => ({ day: str(b?.day, 20), time: str(b?.time, 5), title: str(b?.title, 40), kind: str(b?.kind, 10), hours: Math.round((Number(b?.hours) || 0) * 2) / 2 })),
+      feelings: list(body.feelings, 14).map((f: any) => ({ day: str(f?.day, 20), mood: str(f?.mood, 12) })),
+      grey: named(body.grey, 4),
       // only a heavy schedule may move a block, so only then are blocks offered
-      canWait: mode === 'schedule' ? list(body.canWait, 8).map((c: any) => ({ kind: str(c?.kind, 10), day: str(c?.day, 20), hours: Math.round((Number(c?.hours) || 0) * 2) / 2 })) : [],
-      friends: list(body.friends, 4).map((f: unknown) => str(f, 30)).filter(Boolean),
+      canWait: mode === 'schedule' ? list(body.canWait, 8).map((c: any) => ({ kind: str(c?.kind, 10), day: str(c?.day, 20), hours: Math.round((Number(c?.hours) || 0) * 2) / 2, title: str(c?.title, 40) })) : [],
+      friends,
     };
+    // an idea with a friend must use a free time that friend has too (when the app said who is free when)
+    const together = (i: any) => i.type !== 'add' || !i.friend || !offered.slots.some(s => s.with.length) || offered.slots[i.slot].with.includes(i.friend);
     const offer = { slots: offered.slots.length, canWait: offered.canWait.length, friends: offered.friends, mode };
     if (body.ideas) {
       // three, each checked; a free time or a block used twice is dropped the second time
@@ -41,14 +50,14 @@ Deno.serve(async req => {
       if (!raw) return json({ ideas: null });   // Gemini unreachable (no key, no credits, a timeout): the app says so
       const used = new Set<string>(), ideas = [];
       for (const r of raw ?? []) {
-        const i = checkIdea(r, offer);if (!i || (i.type === 'add' && shown(i.title))) continue;
+        const i = checkIdea(r, offer);if (!i || !together(i) || (i.type === 'add' && shown(i.title))) continue;
         const k = i.type === 'move' ? `m${i.move}` : `s${i.slot}`;if (used.has(k)) continue;
         used.add(k);ideas.push(i);if (ideas.length === 3) break;
       }
       return json({ ideas });
     }
-    const raw = await gardenerIdea(offered).catch(() => null);
-    return json({ idea: checkIdea(raw, offer) });
+    const raw = await gardenerIdea(offered).catch(() => null), idea = checkIdea(raw, offer);
+    return json({ idea: idea && together(idea) ? idea : null });
   }
 
   if (typeof fallback !== 'string' || !fallback) return json({ error: 'bad request' }, 400);

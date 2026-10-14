@@ -295,20 +295,49 @@ export function initLife({world,scene,flower,islands,camera,texture,player,notic
     .sort((a,b)=>(b.date===gardenerNow.heavyDay)-(a.date===gardenerNow.heavyDay));
   const byWarmth=()=>members.filter(i=>i.id!==ME).sort((a,b)=>(warmth[a.id]??1.2)-(warmth[b.id]??1.2));
   let smart={key:null,idea:null};
-  // what Gemini is told about the week (kinds and hours, never titles), and the free times, "can wait" blocks and
-  // friends it may pick from, by number
+  const AI_PLAN='il-ai-plan';
+  // What Gemini is told about the week: kinds and hours per day; free times across the whole week (up to two a day),
+  // each with the friends who are free then too; "can wait" blocks; friends by first name, and whose sky has been
+  // grey. With "Let Blomy read my plan" on (the menu; on unless turned off), also the titles of the coming week and
+  // the feeling words of the past one. Never anything from a friend's plan. It picks free times and blocks by number.
+  const readsPlan=()=>{try{return localStorage.getItem(AI_PLAN)!=='0';}catch{return true;}};
+  const dayLabel=date=>dayName(date)+(date===TODAY?' (today)':'');
+  const freeAt=(id,date,start,mins)=>!plans.on(id,date).some(b=>!b.skipped&&b.start<start+mins&&b.start+b.mins>start);
+  function weekSlots(){
+    const out=[];
+    for(let d=0;d<7;d++){
+      const date=addDays(TODAY,d);let n=0;
+      for(const start of [17*60+30,12*60+30,19*60,8*60,20*60+30,21*60+30]){
+        if(n===2)break;if(d===0&&start<clock.minutes+30)continue;
+        if(freeAt(ME,date,start,60)){out.push({date,start});n++;}
+      }
+    }
+    return out.sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:a.start-b.start);
+  }
   function geminiOffer(mode){
     const hrs=list=>{const h={};for(const b of list)h[b.cat]=Math.round(((h[b.cat]??0)+b.mins/60)*2)/2;return h;};
-    const week=plans.week(ME).filter(b=>!b.skipped);
+    const week=plans.week(ME).filter(b=>!b.skipped), reads=readsPlan();
     const days=reading(ME).days.filter(d=>d.date>=TODAY&&d.date<addDays(TODAY,7))
-      .map(d=>({day:`${dayName(d.date)}${d.date===TODAY?' (today)':''}`,looks:FORECAST_WORDS[d.label],hours:hrs(plans.on(ME,d.date).filter(b=>!b.skipped))}));
-    const slots=freeSlots([8*60,12*60+30,17*60+30,19*60,20*60+30,21*60+30],60,14), waits=canWait().slice(0,6), friends=byWarmth().slice(0,4);
+      .map(d=>({day:dayLabel(d.date),looks:FORECAST_WORDS[d.label],hours:hrs(plans.on(ME,d.date).filter(b=>!b.skipped))}));
+    const slots=weekSlots(), waits=canWait().slice(0,6), friends=byWarmth().slice(0,4);
+    const ahead=[];for(let d=0;d<7;d++){const date=addDays(TODAY,d);ahead.push(...plans.on(ME,date).filter(b=>!b.skipped&&!b.practice));}
     return {slots,waits,friends,summary:{mode,
       week:{sky:me.weather,island:shortBand(loadFromAltitude(me.altitude)),lateNights:week.filter(b=>b.start+b.mins>=22*60).length,hours:hrs(week),days},
-      slots:slots.map(s=>({day:dayName(s.date)+(s.date===TODAY?' (today)':''),time:fmt(s.start),
-        part:s.start<12*60?'morning':s.start<14*60?'midday':s.start<17*60?'afternoon':s.start<21*60?'evening':'night'})),
-      canWait:waits.map(b=>({kind:b.cat,day:dayName(b.date),hours:b.mins/60})),friends:friends.map(f=>f.owner)}};
+      slots:slots.map(s=>({day:dayLabel(s.date),time:fmt(s.start),
+        part:s.start<12*60?'morning':s.start<14*60?'midday':s.start<17*60?'afternoon':s.start<21*60?'evening':'night',
+        with:friends.filter(f=>freeAt(f.id,s.date,s.start,60)).map(f=>f.owner)})),
+      canWait:waits.map(b=>({kind:b.cat,day:dayName(b.date),hours:b.mins/60,...(reads?{title:b.title}:{})})),
+      friends:friends.map(f=>f.owner),
+      grey:friends.filter(f=>(f.derivedStrain??f.strain??0)>.55).map(f=>f.owner),
+      ...(reads?{
+        plan:ahead.slice(0,30).map(b=>({day:dayLabel(b.date),time:fmt(b.start),title:b.title||CATEGORIES[b.cat].label,kind:b.cat,hours:b.mins/60})),
+        feelings:(checkins[ME]??[]).filter(c=>c.day<=6).slice(-14).map(c=>({day:dayName(addDays(TODAY,-c.day)),mood:MOODS[c.mood].label.toLowerCase()})),
+      }:{})}};
   }
+  // the menu's switch for the above (signed in: the demo has no Gemini)
+  $('ai-plan-row').hidden=!LIVE;$('ai-plan').checked=readsPlan();
+  $('ai-plan').onchange=e=>{try{localStorage.setItem(AI_PLAN,e.target.checked?'1':'0');}catch{}
+    notice(e.target.checked?'Blomy’s ideas can use your plan’s titles and your recent feelings.':'Blomy’s ideas now see only hours and kinds of activity.');};
   function askGemini(){
     const key=`${nudgeWhy}|${TODAY}`;
     if(!LIVE||!['schedule','rest'].includes(nudgeWhy)||smart.key===key)return;
