@@ -493,27 +493,35 @@ export function initLife({world,scene,flower,islands,camera,texture,player,notic
   // carry an eye; the private rows below them only ever appear on your own island.
   const SKY={'Clear':'clear','Light cloud':'light-cloud','Cloudy':'cloudy','Drizzle':'drizzle','Rain':'rain'};
   const shortBand=l=>l<.35?'Floating high':l<.65?'Mid-sky':l<.85?'Sinking low':'Low';
+  // a feeling as a small flower in its colour, like the blooms in the bed round your flower (mood.js)
+  const bloomIcon=hex=>{const s=mk('span',{className:'ic-bloom'});s.setAttribute('aria-hidden','true');
+    s.innerHTML=`<svg viewBox="0 0 20 20" width="15" height="15"><g fill="${hex}">${[0,1,2,3,4].map(k=>{const a=k/5*Math.PI*2-Math.PI/2;
+      return `<circle cx="${(10+Math.cos(a)*5).toFixed(1)}" cy="${(10+Math.sin(a)*5).toFixed(1)}" r="4.2"/>`;}).join('')}</g><circle cx="10" cy="10" r="2.8" fill="#ffd23c"/></svg>`;return s;};
   const feelNodes=d=>{
     const moods=Object.keys(MOODS).filter(m=>d.feel[m]);
-    return moods.length?moods.map(m=>mk('span',{},symbolImg(`lantern-${m}`,'mi-lantern'),`${d.feel[m]} ${MOODS[m].label.toLowerCase()}`))
-                       :[mk('span',{textContent:'no check-ins yet'})];
+    return moods.length?moods.map(m=>mk('span',{className:'ic-feel'},...Array.from({length:Math.min(4,d.feel[m])},()=>bloomIcon(MOODS[m].color)),
+                                     `${d.feel[m]} ${MOODS[m].label.toLowerCase()}`))
+                       :[mk('span',{className:'ic-dim',textContent:'No check-ins yet. Your flower by the gate will ask.'})];
   };
   const treeNodes=d=>d.trees.map(t=>{
     const name=CATEGORIES[t.c].label, it=mk('div',{className:`mi-tree${t.done+t.glass?'':' none'}`,title:`${name}: ${t.done} grown, ${t.glass} still glass`},
       catImg(t.c,'mi-icon'),mk('b',{textContent:String(t.done)}),mk('small',{textContent:t.glass?`+${t.glass}`:''}));
     it.setAttribute('role','listitem');it.setAttribute('aria-label',it.title);return it;
   });
-  // Altitude, said once and plainly: metres from your usual height (0 m, level with the gathering island), an
-  // upright scale -- lighter weeks up top, heavier ones down by the clouds -- with your island on it, and what it means.
+  // Height, said once and plainly: metres from your usual (0 m, level with the gathering island), what that means,
+  // and a thin bar from heavier (−55 m, by the clouds) to lighter (45 m). The sky view's altitude rail (altrail.js)
+  // compares every island; this says what yours means, on foot too, where the rail isn't.
   const altWords=(m,long)=>Math.abs(m)<2?(long?'At your usual height':'usual height'):`${Math.round(Math.abs(m))} m ${m>0?'above':'below'}${long?' your usual':''}`;
-  const altMeaning=l=>l<.35?'Your week is lighter than usual, so your island floats higher.'
-                      :l<.6?'A usual week for you: your island floats level with the gathering island.'
-                      :l<.85?'Your week is heavier than usual, so your island sits lower. A lighter day lifts it.'
-                      :'Much heavier than usual: your island is down by the cloud sea. Rest lifts it.';
-  const gauge=l=>{const g=mk('span',{className:'ic-gauge',role:'img',ariaLabel:altMeaning(l)},mk('i',{className:'ic-gauge-dot'}),
-      mk('small',{},mk('b',{textContent:'45 m'}),' lighter'),mk('small',{},mk('b',{textContent:'0 m'}),' usual'),mk('small',{},mk('b',{textContent:'−55 m'}),' heavier'));
-    g.style.setProperty('--at',`${Math.round(Math.min(1,Math.max(0,l))*100)}%`);return g;};
-  const altRow=(m,l)=>mk('span',{className:'ic-alt'},gauge(l),mk('span',{className:'ic-alt-text'},mk('b',{textContent:altWords(m,true)}),mk('span',{className:'ic-note',textContent:altMeaning(l)})));
+  const altMeaning=l=>l<.35?'A lighter week than usual, so it floats higher.'
+                      :l<.6?'A usual week: level with the gathering island.'
+                      :l<.85?'A heavier week than usual, so it sits lower. A lighter day lifts it.'
+                      :'Much heavier than usual: down by the clouds. Rest lifts it.';
+  const altRow=(m,l)=>{
+    const bar=mk('span',{className:'ic-meter',role:'img',ariaLabel:`${altWords(m,true)}, on a scale from 55 m below to 45 m above`},mk('i'));
+    bar.style.setProperty('--at',`${Math.round((1-Math.min(1,Math.max(0,l)))*100)}%`);
+    return mk('span',{className:'ic-alt'},mk('b',{textContent:altWords(m,true)}),mk('span',{className:'ic-note',textContent:altMeaning(l)}),bar,
+      mk('span',{className:'ic-meter-ends'},mk('small',{textContent:'heavier'}),mk('small',{textContent:'usual'}),mk('small',{textContent:'lighter'})));
+  };
   function cardRows(i,d){
     if(!i?.owner){                                   // the gathering island: what the group shares
       const n=photos.items.length, f=TASKS.reduce((a,t)=>a+finishers(t).length,0);
@@ -522,7 +530,7 @@ export function initLife({world,scene,flower,islands,camera,texture,player,notic
     }
     const own=i.id===ME;
     const rows=[
-      {name:'Altitude',eye:own,val:own?[altRow(d.altitude,d.load)]
+      {name:'Height',eye:own,val:own?[altRow(d.altitude,d.load)]
                                      :[band(loadFromAltitude(i.altitude))]},
       {name:'Sky',eye:own,val:[mk('b',{textContent:i.weather}),mk('span',{className:'ic-dim',textContent:trend(i.strain??0)})]},
     ];
@@ -536,10 +544,10 @@ export function initLife({world,scene,flower,islands,camera,texture,player,notic
     const sky=w=>symbolImg(`sky-${SKY[w]??'clear'}`,'ic-mini');
     let strip=[];
     if(own){
-      const top=Object.entries(d.feel).sort((a,b)=>b[1]-a[1])[0];
+      const top=(checkins[ME]??[]).filter(c=>c.day===0).at(-1)?.mood??Object.entries(d.feel).sort((a,b)=>b[1]-a[1])[0]?.[0];   // today's, else the week's most
       strip=[glance(sky(i.weather),i.weather),
              glance(symbolImg('altitude','ic-mini'),altWords(d.altitude)),
-             top?glance(symbolImg(`lantern-${top[0]}`,'ic-mini'),MOODS[top[0]].label.toLowerCase()):null,
+             top?glance(bloomIcon(MOODS[top].color),MOODS[top].label.toLowerCase()):null,
              glance(symbolImg('trees','ic-mini'),`${d.trees.reduce((a,t)=>a+t.done,0)} grown`)].filter(Boolean);
     }else if(i?.owner){
       strip=[glance(sky(i.weather),i.weather),

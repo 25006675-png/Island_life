@@ -484,7 +484,6 @@ label:has(> .ed-cat-icon){position:relative}
 @media(max-width:600px){.mi-tree{min-width:32px}.mi-tree .mi-icon{width:22px;height:22px}}
 .mi-words{color:var(--muted)}
 .mi-sky-icon{width:24px;height:24px;object-fit:contain;align-self:center}
-.mi-lantern{width:17px;height:17px;object-fit:contain;vertical-align:-4px;margin-right:2px}
 .mi-feel{gap:4px 14px}
 /* the drawn wordmark, top left */
 .brand-logo{height:82px;width:auto;display:block}
@@ -518,7 +517,6 @@ label:has(> .ed-cat-icon){position:relative}
 .ic-val{gap:3px 8px}
 .ic-val .mi-tree{min-width:28px}
 .ic-val .mi-tree .mi-icon{width:21px;height:21px}
-.ic-val .mi-lantern{width:15px;height:15px}
 .ic-val .mi-feel span,.ic-val>span{white-space:nowrap}
 .ic-note{flex-basis:100%;font-size:11px;line-height:1.4;color:var(--muted);white-space:normal}
 .ic-sep{grid-column:1/-1;height:1px;background:oklch(.89 .015 295);margin:1px 0}
@@ -653,17 +651,6 @@ label:has(> .ed-cat-icon){position:relative}
 
 /* the altitude scale on the island card: upright, lighter weeks up top, heavier ones down by the clouds, a tick at
    your usual height and a dot for this week (life.js gauge) */
-.ic-alt{display:flex;gap:12px;align-items:stretch}
-.ic-alt-text{display:grid;align-content:center;gap:4px;min-width:0}
-.ic-alt-text .ic-note{white-space:normal;line-height:1.45}
-.ic-gauge{position:relative;flex:none;display:grid;grid-template-rows:1fr 1fr 1fr;align-items:center;width:96px;height:84px;padding-left:16px}
-.ic-gauge small b{font-weight:700;color:var(--ink);margin-right:3px}
-.ic-gauge::before{content:'';position:absolute;left:3px;top:0;bottom:0;width:6px;border-radius:3px;background:linear-gradient(#b9e3ff,#efe4fb 50%,#c9b2ef 75%,#9d63f2)}
-.ic-gauge::after{content:'';position:absolute;left:0;top:50%;width:12px;height:2px;margin-top:-1px;background:#fff;box-shadow:0 0 0 1px var(--violet-soft)}
-.ic-gauge-dot{position:absolute;left:-1px;top:var(--at);width:14px;height:14px;margin-top:-7px;border-radius:50%;background:var(--orchid);border:2px solid #fff;box-shadow:0 2px 4px rgba(79,42,153,.4);z-index:1}
-.ic-gauge small{font-size:10.5px;line-height:1;color:var(--muted)}
-.ic-gauge small:first-of-type{align-self:start}
-.ic-gauge small:last-of-type{align-self:end}
 
 /* the touch joystick (main.js), bottom left on foot */
 #stick{position:absolute;left:max(24px,env(safe-area-inset-left));bottom:calc(110px + env(safe-area-inset-bottom,0px));z-index:3;width:120px;height:120px;border-radius:50%;
@@ -806,8 +793,6 @@ body.guide-over #guide{left:16px;transform:none}
 /* the bottom bar (island card, view switcher, keys) draws over the islands' name signs (#island-labels, z 1), under the panels and sheets */
 footer{z-index:2}
 /* the altitude gauge and its words share a narrow card: the words wrap, and drop under the gauge when there's no room beside it */
-.ic-val>.ic-alt{flex-wrap:wrap;white-space:normal;min-width:0;row-gap:8px}
-.ic-alt-text{flex:1 1 120px}.ic-alt-text b{white-space:normal}
 /* "Add a photo to your lantern" (How do you feel?): a full-width pill like the menu's Log out; the file input hides inside it */
 .file-line{display:grid;gap:8px;font-size:12px}
 .photo-pick{position:relative;display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:11px 16px;border-radius:22px;border:2px solid var(--violet-soft);background:#fff;color:var(--violet);
@@ -1042,3 +1027,12 @@ footer{z-index:2}
 @media(prefers-reduced-motion:reduce){.wood-button.pulse{animation:none;outline:3px solid oklch(.75 .15 300)}}
 /* a card step with the card high on the screen (a gate's sign, the board): Blomy's box goes to the bottom (guide.js dodge) */
 body.guide-reveal.guide-low #guide{top:auto;bottom:calc(96px + env(safe-area-inset-bottom,0px))}
+/* the island card (life.js): height as one line and a thin bar, heavier to lighter; feelings as small blooms */
+.ic-alt{display:grid;gap:3px;min-width:0;white-space:normal}
+.ic-alt .ic-note{line-height:1.45}
+.ic-meter{position:relative;display:block;height:6px;margin:6px 0 1px;border-radius:3px;background:linear-gradient(90deg,#9d63f2,#c9b2ef 25%,#efe4fb 50%,#b9e3ff)}
+.ic-meter::after{content:'';position:absolute;left:50%;top:-3px;width:2px;height:12px;margin-left:-1px;background:#fff;box-shadow:0 0 0 1px var(--violet-soft)}
+.ic-meter i{position:absolute;top:50%;left:var(--at);width:13px;height:13px;margin:-6.5px 0 0 -6.5px;border-radius:50%;background:var(--orchid);border:2px solid #fff;box-shadow:0 2px 4px rgba(79,42,153,.4);z-index:1}
+.ic-meter-ends{display:flex;justify-content:space-between}.ic-meter-ends small{font-size:10.5px;color:var(--muted)}
+.ic-bloom{display:inline-flex;vertical-align:-3px;margin-right:1px}
+.ic-feel{display:inline-flex;align-items:center;gap:1px;margin-right:10px}.ic-feel>.ic-bloom:last-of-type{margin-right:5px}
