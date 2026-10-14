@@ -14,15 +14,22 @@ const el=(tag,props={},...kids)=>{const e=Object.assign(document.createElement(t
 const h1=h=>`${+h.toFixed(1)} h`;
 const list=parts=>parts.length<2?parts.join(''):`${parts.slice(0,-1).join(', ')} and ${parts.at(-1)}`;
 
-export function createBalance({plans,me,friends,clock,checkins,sheets,notice,dew,warm,invite,more}){
+export function createBalance({plans,me,friends,clock,checkins,sheets,notice,dew,warm,invite,more,shared}){
   const sheet=$('balance-sheet'), owner=me.id;
   const ahead=b=>!b.done&&(b.date>TODAY||(b.date===TODAY&&b.start>=clock.minutes));
   const when=day=>day===TODAY?'tonight':day===addDays(TODAY,1)?'tomorrow':`on ${DAYS[dow(day)-1]}`;
   let current=[], span='week';
   const applied=new Set();
 
-  // three scripted suggestions for the v1 demo: rebalance, rest, social
+  // the gardener's suggestions (life.js ideas), the same the windmill card offers; the scripted three below only
+  // when there are none, or to invite a first friend into an empty sky
   function suggest(){
+    const list=shared?.()??[];
+    if(list.length){if(!friends.length&&list.length<3)list.push(scripted().find(s=>s.key==='social'));return list.filter(Boolean);}
+    return scripted();
+  }
+  // three scripted suggestions: rebalance, rest, social
+  function scripted(){
     const week=plans.week(owner).filter(b=>!b.skipped), monday=mondayOf(TODAY), out=[];
     const lows=week.filter(b=>b.priority==='low'&&ahead(b)).slice(0,2);
     out.push(lows.length

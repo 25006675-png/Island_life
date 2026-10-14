@@ -973,3 +973,37 @@ footer{z-index:2}
 .fairy-bubble.under::before,.fairy-bubble.over::before{left:var(--tail);right:auto;margin-left:-7px}
 .fairy-bubble.under::before{top:-7px}
 .fairy-bubble.over::before{top:auto;bottom:-7px}
+
+/* the altitude rail (altrail.js): down the left of the sky view, from under the logo to the place title, in the keys
+   card's frosted style and the island card gauge's colours -- lighter weeks up top, heavier ones down by the cloud sea,
+   0 m (the gathering island) in the middle. It fades in with the sky view, and steps aside on a phone or a short
+   window, where the left edge belongs to the islands. */
+#altitude-rail{position:absolute;z-index:2;left:36px;top:calc(var(--header-bottom,112px) + 30px);bottom:calc(var(--stick-bottom,240px) + 14px);width:200px;
+  display:flex;flex-direction:column;gap:6px;pointer-events:none;text-shadow:0 1px 0 #fff,0 0 6px rgb(255 255 255 / .85);
+  opacity:0;visibility:hidden;transition:opacity .4s,visibility 0s .4s}
+#altitude-rail.on{opacity:1;visibility:visible;transition:opacity .4s}
+#app:has(#login:not([hidden])) #altitude-rail{visibility:hidden}
+.rail-kicker{font:600 15px var(--display);color:var(--ink)}
+.rail-end{padding-left:28px;font-size:11px;color:var(--muted)}
+.rail-end b{margin-right:4px;font:600 12px var(--display);color:var(--ink)}
+.rail-body{position:relative;flex:1;min-height:0;display:flex;gap:10px;margin:10px 0}
+/* a white-edged bar with a deeper fill than the card gauge, so it holds on a pale sky as well as a dark one */
+.rail-track{position:relative;flex:none;width:12px;margin-left:5px;border-radius:6px;border:2px solid #fff;box-shadow:0 2px 0 var(--violet-soft),0 4px 12px -4px rgba(79,42,153,.45);
+  background:linear-gradient(#7cc6f2,#a9b3f0 30%,#b79cee 50%,#9d63f2 75%,#6a3fc4)}
+.rail-names{position:relative;flex:1;min-width:0}
+.rail-dot{position:absolute;left:50%;width:12px;height:12px;translate:-50% -50%;border-radius:50%;background:#fff;border:2px solid var(--orchid);box-shadow:0 2px 4px rgba(79,42,153,.3);transition:scale .15s}
+.rail-dot.me{z-index:1;width:18px;height:18px;background:var(--orchid);border:3px solid #fff;box-shadow:0 2px 6px rgba(79,42,153,.45)}
+.rail-dot.lit{scale:1.35}
+.rail-zero{position:absolute;left:-7px;width:22px;height:3px;margin-top:-1.5px;border-radius:2px;background:#fff;box-shadow:0 1px 2px rgba(79,42,153,.4)}
+.rail-tag{position:absolute;left:0;max-width:100%;translate:0 -50%;display:flex;align-items:baseline;gap:6px;padding:3px 9px;border:0;border-radius:999px;background:transparent;
+  color:var(--ink);font:600 13px var(--display);white-space:nowrap;text-align:left;pointer-events:auto}
+.rail-tag b{min-width:0;overflow:hidden;text-overflow:ellipsis;font-weight:600}
+.rail-tag:hover{background:#fff}
+.rail-tag.me{background:var(--orchid);color:#fff;box-shadow:0 2px 0 var(--orchid-deep);text-shadow:none}
+.rail-tag.me:hover{background:var(--orchid);filter:brightness(1.08)}
+.rail-tag.zero{color:var(--muted);font-weight:500;font-size:12px}
+.rail-note{font:500 11px 'Nunito Sans','Segoe UI',sans-serif;opacity:.88}
+@media(max-width:700px),(max-height:520px){#altitude-rail{display:none}}
+@media(prefers-reduced-motion:reduce){#altitude-rail,.rail-dot{transition:none}}
+/* a name on the rail lifts its island's sign, as hovering the sign itself does */
+.island-label.pointed{background:repeating-linear-gradient(94deg,transparent 0 6px,oklch(.3 .05 60 / .06) 6px 8px),linear-gradient(160deg,#eed4ae,#d8b286);transform:translate(-50%,-50%) translateY(-2px)}

@@ -33,7 +33,6 @@ page.on('requestfailed', r => { if (!allowed(r.url())) errors.push(`requestfaile
 page.on('console', m => { if (m.type() === 'error' && !allowed(m.location().url || APP)) errors.push(`console: ${m.text()} ${m.location().url}`); });
 const notice = page.locator('#notice');
 const week = () => page.evaluate(() => window.islandLife.life.week());
-const walks = blocks => blocks.filter(b => b.title.startsWith('Walk with'));
 
 try {
   await page.clock.setFixedTime(NOW);
@@ -46,7 +45,7 @@ try {
     catch { console.log('… not ready yet, reloading once'); await page.reload({ timeout: 180_000 }); await ready(); }
   });
 
-  await step('mood: a stressed check-in lights a lantern', async () => {
+  await step('mood: a stressed check-in opens a bloom', async () => {
     // your flower asks only while you walk your own island (src/life.js atHome): go home first. The island's
     // label is drawn in 3D, so this goes through the page's own API, as tools/perf.mjs does.
     await page.evaluate(() => window.islandLife.visit('sakura'));
@@ -60,7 +59,7 @@ try {
     // her bubble follows her face every frame (flower.js place()), so it never holds still for a click while
     // the camera settles: answer from the keyboard, which goes to the same button
     await page.locator('#moods .mood', { hasText: 'Stressed' }).press('Enter');
-    await expect(notice).toHaveText('A stressed lantern lights up on your pier.');
+    await expect(notice).toHaveText('A stressed bloom opens beside your flower.');
     await expect(ask).toBeHidden();
   });
 
@@ -70,16 +69,18 @@ try {
     await expect(page.locator('#bal-suggest > li')).toHaveCount(3);
   });
 
-  await step('suggestion: "Invite … for a walk" adds one walk to the week', async () => {
+  // the same suggestions as the windmill card (life.js ideas): "<what>, <when>", and Apply puts exactly that on the plan
+  await step('suggestion: Apply adds what it says to the week', async () => {
     const before = await week();
-    const social = () => page.locator('#bal-suggest > li').filter({ hasText: /Invite .* for a walk/ }).locator('.bal-apply');
-    await social().click();
-    await expect(social()).toHaveText('Done ✓');
-    await expect(social()).toBeDisabled();
-    await expect(notice).toContainText(/^Walk with .+ added/);
+    const item = page.locator('#bal-suggest > li').filter({ hasNotText: /^Move / }).filter({ hasText: /, (today|tomorrow|\w{3}) at \d\d:\d\d/ }).first();
+    const title = (await item.locator('strong').textContent()).split(', ')[0];
+    await item.locator('.bal-apply').click();
+    await expect(item.locator('.bal-apply')).toHaveText('Done ✓');
+    await expect(item.locator('.bal-apply')).toBeDisabled();
+    await expect(notice).toContainText(`${title} is on your plan`);
     const after = await week();
     expect(after.length, 'blocks in the week').toBe(before.length + 1);
-    expect(walks(after).length, 'walks in the week').toBe(walks(before).length + 1);
+    expect(after.filter(b => b.title === title).length, `"${title}" in the week`).toBe(before.filter(b => b.title === title).length + 1);
   });
 
   await step('planner: the sheet opens', async () => {

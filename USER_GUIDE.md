@@ -55,11 +55,11 @@ Tip: press **Sky view** at the bottom to watch the island move. When you are wal
 1. Go to **My island**: select its label in the sky view, or press **Take a walk** at the bottom.
 2. A flower grows just inside your gate, to the left of the path from the pier. Walk up to her, tap her (a small "How do you feel?" tag rides on her face), or press `T`.
 3. She asks **How do you feel right now?** Choose **Calm**, **Happy**, **Tired**, **Stressed** or **Low**. **Add a photo** is optional, and **Not now** closes her question.
-4. Look for the message "A calm lantern lights up on your pier." and, in the **At a glance** card, the updated feeling and sky.
+4. Look for the message "A calm bloom opens beside your flower." and, in the **At a glance** card, the updated feeling and sky.
 
 <img src="docs/images/flower-ask.jpg" alt="Blomy beside the flower, whose bubble asks How do you feel right now? with five feelings to choose from" width="560"/>
 
-**Expected result:** the check-in is recorded immediately. One check-in lights a lantern on your pier and colours the flower's petals; several recent check-ins gradually change the island's weather. Afterwards she rests for an hour: her tag then reads "Resting · asks again in … min".
+**Expected result:** the check-in is recorded immediately. One check-in opens a small bloom in that feeling's colour in the bed around her and colours her petals (the bed keeps the last seven days); several recent check-ins gradually change the island's weather. Afterwards she rests for an hour: her tag then reads "Resting · asks again in … min".
 
 ### 4. Finish an activity, and meet the fairy
 
@@ -122,7 +122,7 @@ Notes:
 | Return to sky view | `Esc` |
 | Look around | Drag with the mouse or use touch |
 
-Friends can see another island's general height, weather, lanterns and permitted activity silhouettes, but not private timetable details. A block you mark *Nothing* is not sent to friends at all.
+Friends can see another island's general height, weather, feeling blooms and permitted activity silhouettes, but not private timetable details. A block you mark *Nothing* is not sent to friends at all.
 
 ### 8. Decorate the island and dress Blomy
 
@@ -167,7 +167,7 @@ A **sky** is you and up to four friends: five islands joined by bridges around T
 4. On the next card, the invite code is already filled in under **Invite code from a friend**. They select **Join their sky**. If the box is empty, for example after confirming the email in a new tab, they type the code; capitals don't matter.
 5. Their island opens in your sky, with its own bridge to The Gathering Island.
 
-**Back on your side:** you see "Someone new joined your sky. Reload to see their island." Reload the page, and your friend's island appears with their name. From then on their check-ins, notes, tasks, carousel photos and decorations reach you as they happen. You see their weather, lanterns and height, never their plans or hours.
+**Back on your side:** the glass island where they will live turns gold, with "Someone new joined your sky. Their island is glowing: tap it to welcome them." Tap it: the page reloads and their island grows in out of the glass, with their name. From then on their check-ins, notes, tasks, carousel photos and decorations reach you as they happen. You see their weather, lanterns and height, never their plans or hours.
 
 Good to know:
 - **One sky per account.** Someone who has already started or joined a sky opens their own sky when they sign in, and cannot join a second one with the same account.
@@ -198,7 +198,7 @@ Tick each item as you check it.
 **Demo island (Route A)**
 
 - [ ] A heavy timetable lowers the island; a lighter week raises it. *(step 2)*
-- [ ] Recent feelings, given to the flower by your gate, influence weather and appear as lanterns. *(step 3)*
+- [ ] Recent feelings, given to the flower by your gate, influence weather and appear as blooms around her. *(step 3)*
 - [ ] Finishing an activity grows its tree, and the fairy's "How draining was it?" answer changes what the island has learned. *(step 4)*
 - [ ] The planner supports day, week and month views plus editable, repeating activity blocks. *(step 5)*
 - [ ] Balance recommendations and the gardener's offers update the planner in one action, and only after the student chooses. *(step 6)*

@@ -23,7 +23,7 @@ import { createFairy } from './fairy.js';
 import { createFlowerTalk } from './flower.js';
 
 // Everything README.md says the world should show: the timetable path and wisp,
-// emotion lanterns, weather and altitude from the plan, the shared photo
+// feeling blooms, weather and altitude from the plan, the shared photo
 // carousel, proximity reveal, and the planner and balance sheets. main.js calls
 // initLife() once the islands exist, then life.update() every frame.
 const $=id=>document.getElementById(id);
@@ -73,8 +73,8 @@ export function initLife({world,scene,flower,islands,camera,texture,player,notic
   const checkins=Object.fromEntries(members.map(i=>[i.id,[...(CHECKINS[i.id]??[])]]));
   const weather=i=>{i.derivedStrain=deriveStrain(checkins[i.id]);setStrain(i,i.derivedStrain);if(i===me)publish();};   // feelings only; load is altitude
   members.forEach(weather);
-  const mood=createMood(texture);
-  for(const i of members)mood.addIsland(i,checkins[i.id]);
+  const mood=createMood();
+  for(const i of members)mood.addIsland(i,checkins[i.id],i.flowerSpot);
   const photos=createCarousel({island:community,members:members.map(({id,owner})=>({id,owner})),me:ME,notice,view,time:()=>clock.minutes,
     live:LIVE?{moments:world.moments,golden:world.golden,hang:shot=>backend.hangMoment(world,shot)}:null});
   // the board by the arrival spot carries the group's shared goals (below)
@@ -257,8 +257,10 @@ export function initLife({world,scene,flower,islands,camera,texture,player,notic
   // and suggests the idea itself, choosing from free times and "can wait" blocks
   // the app offers; it is shown only while that time is still free. The ideas
   // below are the fallback, and Gemini words them. Support is never AI-written.
-  const NUDGE_AT=[-.93,-2.23];   // gate side of the windmill, seen on arrival
-  const nudgeSign=createGateSign(me,{at:NUDGE_AT,face:-2.3});
+  // The windmill in the middle of your island is where your week lives: walk up to it for a card with today from
+  // the planner (or, when the week is heavy, the gardener's idea), Open planner and See your balance; tap it to open
+  // the planner. It replaced a small sign that stood beside it.
+  const MILL=[0,0];   // model units: the windmill (decor.js), the middle of the clock-face path
   const DAYS_LONG=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
   let nudgeOn=false, nudgeTaken=false, nudgeWhy=null, ideaAt=0, gardenerNow={mode:null};
   const refreshGardener=()=>{gardenerNow=gardenerFor(ME,checkins[ME],me.derivedStrain??0);};
@@ -399,13 +401,19 @@ export function initLife({world,scene,flower,islands,camera,texture,player,notic
     }).filter(Boolean);
   }
   const whenText=s=>`${s.date===TODAY?'today':s.date===addDays(TODAY,1)?'tomorrow':dayName(s.date)} at ${fmt(s.start)}`;
-  const slotLabel=s=>`${s.date===TODAY?'Today':s.date===addDays(TODAY,1)?'Tomorrow':dayName(s.date)} ${fmt(s.start)}`;
+  // One suggestion as the windmill card and Your balance both show it: what to do and when (the title), why, and
+  // Apply, which does exactly what it says. Both read the same list (ideas), so they always agree.
+  function asSuggestion(i){
+    const text=i.move?`Move “${i.move.title}” to next week`:`${i.title}, ${whenText(i.slot)}`;
+    return {key:i.move?`m${i.move.id}`:`a${i.title}${i.slot.date}${i.slot.start}`,text,sub:i.line??i.why,ai:!!i.ai,
+            apply:()=>takeIdea(i,i.slot),done:i.move?`${i.move.title} moved to next week.`:`${i.title} is on your plan for ${whenText(i.slot)}.`};
+  }
   const idea=()=>{const l=ideas();return l.length?l[ideaAt%l.length]:null;};
   // Gemini's wording for the current offer, fetched once per offer (signed in only)
   const worded={};
   function wording(i){
     if(i.line)return i.line;
-    const fallback=`${i.why} How about ${i.label}?`, key=`${nudgeWhy}|${i.title}`;
+    const fallback=i.why, key=`${nudgeWhy}|${i.title}`;
     if(!LIVE)return fallback;
     if(!(key in worded)){
       worded[key]=fallback;
@@ -417,8 +425,6 @@ export function initLife({world,scene,flower,islands,camera,texture,player,notic
   function checkNudge(){
     const mode=nudgeTaken&&gardenerNow.mode!=='support'?null:gardenerNow.mode, on=!!mode&&(mode==='support'||!!idea()), was=nudgeOn;
     if(on===nudgeOn&&mode===nudgeWhy)return;nudgeOn=on;nudgeWhy=mode;if(on)askGemini();
-    nudgeSign.set(on?{head:'From your island',body:mode==='support'?'A heavy couple of weeks. There’s help nearby.':`${nudgeTitle()}. Here’s an idea.`,
-                      foot:'walk up to read it'}:null);
     if(on&&!was)notice(mode==='support'?'Your gardener has left you a note by the windmill.':`${nudgeTitle()}. Your gardener has an idea.`);
   }
   function takeIdea(i,slot=i.slot){
@@ -428,13 +434,6 @@ export function initLife({world,scene,flower,islands,camera,texture,player,notic
     nudgeTaken=true;checkNudge();
     notice(`${i.title} is on your plan for ${whenText(slot)}.`);
   }
-  // Saying yes opens a second step: which free time suits you, or pick your own
-  // in the planner. Nothing lands on the plan until you choose.
-  let asking=false;
-  function pickOwnTime(i,slot){
-    nudgeTaken=true;checkNudge();
-    calendar.edit(null,{date:slot.date,start:slot.start,mins:i.mins,cat:i.cat,title:i.title,vis:i.vis});
-  }
   // the gardener's advice comes from the same reading as Your balance: "See why" opens it
   const seeWhy={more:()=>openBalance($('balance-toggle'),'suggest'),moreLabel:'See why'};
   function nudgeCard(key,kicker,at,dismiss){
@@ -443,17 +442,9 @@ export function initLife({world,scene,flower,islands,camera,texture,player,notic
               action:()=>{$('support-dialog').showModal();nudgeTaken=true;},actionLabel:'Where to find support',
               ...(dismiss?{letGo:dismiss,letGoLabel:'Not now'}:{}),...seeWhy,at};
     const i=idea();if(!i)return null;
-    if(asking&&!i.move){
-      const slots=i.ai?[i.slot,...freeSlots(i.starts,i.mins,3).filter(s=>s.date!==i.slot.date)].slice(0,2):freeSlots(i.starts,i.mins,2);
-      if(slots.length)return {key:`${key}when${ideaAt}`,wood:true,kicker,title:i.title,sub:'When suits you?',
-        action:()=>{asking=false;takeIdea(i,slots[0]);},actionLabel:slotLabel(slots[0]),
-        ...(slots[1]?{alt:()=>{asking=false;takeIdea(i,slots[1]);},altLabel:slotLabel(slots[1])}:{}),
-        letGo:()=>{asking=false;pickOwnTime(i,slots[0]);},letGoLabel:'Pick a time',at};
-      asking=false;
-    }
-    const sub=wording(i);
-    return {key:`${key}${ideaAt}${nudgeWhy}${i.title}${sub.length}`,wood:true,kicker,title:nudgeTitle(),sub,
-            action:i.move?()=>takeIdea(i):()=>{asking=true;},actionLabel:i.button,alt:()=>{ideaAt++;},altLabel:'Another idea',
+    const s=asSuggestion(i), sub=wording(i);
+    return {key:`${key}${ideaAt}${nudgeWhy}${s.key}${sub.length}`,wood:true,kicker:`${kicker} · ${nudgeTitle()}`,title:s.text,sub,
+            action:s.apply,actionLabel:'Apply',alt:()=>{ideaAt++;},altLabel:'Another idea',
             ...(dismiss?{letGo:dismiss,letGoLabel:'Not now'}:{}),...seeWhy,at};
   }
   $('support-close').onclick=()=>$('support-dialog').close();
@@ -501,7 +492,7 @@ export function initLife({world,scene,flower,islands,camera,texture,player,notic
   const feelNodes=d=>{
     const moods=Object.keys(MOODS).filter(m=>d.feel[m]);
     return moods.length?moods.map(m=>mk('span',{},symbolImg(`lantern-${m}`,'mi-lantern'),`${d.feel[m]} ${MOODS[m].label.toLowerCase()}`))
-                       :[mk('span',{textContent:'no lanterns yet'})];
+                       :[mk('span',{textContent:'no check-ins yet'})];
   };
   const treeNodes=d=>d.trees.map(t=>{
     const name=CATEGORIES[t.c].label, it=mk('div',{className:`mi-tree${t.done+t.glass?'':' none'}`,title:`${name}: ${t.done} grown, ${t.glass} still glass`},
@@ -564,7 +555,7 @@ export function initLife({world,scene,flower,islands,camera,texture,player,notic
 
   $('mi-balance').onclick=()=>openBalance($('mi-balance'));
 
-  // ---- viewer (carousel photos and emotion lanterns) ------------------------
+  // ---- viewer (carousel photos and feeling blooms) ------------------------
   function view({src,title,sub}){
     $('viewer-img').hidden=!src;if(src){$('viewer-img').src=src;$('viewer-img').alt=title;}
     $('viewer-title').textContent=title;$('viewer-sub').textContent=sub??'';$('viewer').showModal();
@@ -579,7 +570,8 @@ export function initLife({world,scene,flower,islands,camera,texture,player,notic
   // blocks marked done in the planner take root at once: no walk with the watering can (main.js asks, quick); the fairy comes straight out
   const fromPlanner=new Set();
   const balance=createBalance({plans,me,friends:members.filter(i=>i.id!==ME),clock,checkins:checkins[ME],sheets,notice,dew,warm:id=>warm(id,.8),
-    invite:LIVE?()=>openInvite(world,notice):null,more:LIVE&&backend.configured?avoid=>moreIdeas(avoid):null});
+    invite:LIVE?()=>openInvite(world,notice):null,more:LIVE&&backend.configured?avoid=>moreIdeas(avoid):null,
+    shared:()=>ideas().slice(0,3).map(asSuggestion)});
   // your gardener waits at the left end of an open sheet's top edge; walk it
   // with ← →, jump with Space, turn it with Q E
   const sheetBuddy=sheet=>{
@@ -656,7 +648,7 @@ export function initLife({world,scene,flower,islands,camera,texture,player,notic
     mood.checkIn(me,entry,onMine?player.position.clone().sub(me.group.position).add(new T.Vector3(0,1.2,0)):null);
     if(LIVE)backend.saveCheckin(world,{mood:k,minute:clock.minutes,photo:checkinPhoto});
     weather(me);checkinPhoto=null;$('checkin-photo').value='';$('checkin-photo-name').textContent='Add a photo';balance.render();refreshGardener();
-    notice(`A ${MOODS[k].label.toLowerCase()} lantern lights up on your pier.`);
+    notice(`A ${MOODS[k].label.toLowerCase()} bloom opens beside your flower.`);
     talk.close();
   }
   // your flower asks how you feel (flower.js), only while you walk your own island: tap her, press T, or walk up to her.
@@ -664,7 +656,7 @@ export function initLife({world,scene,flower,islands,camera,texture,player,notic
   const FLOWER_REST=60, flowerAt=new T.Vector3();
   const atHome=()=>getMode()==='walk'&&player.surface?.kind==='island'&&player.surface.id===ME;
   const talk=flower?createFlowerTalk({camera,flower,here:atHome,
-    near:()=>{if(!atHome())return false;flower.getWorldPosition(flowerAt);return Math.hypot(flowerAt.x-player.position.x,flowerAt.z-player.position.z)<2.4;},
+    near:()=>{if(!atHome())return false;flower.getWorldPosition(flowerAt);return Math.hypot(flowerAt.x-player.position.x,flowerAt.z-player.position.z)<3.2;},
     rest:()=>{if(flowerTurn())return 0;   // the guide's check-in steps wait for her question: no resting then
       const last=(checkins[ME]??[]).filter(c=>c.day===0).at(-1);if(last?.time==null)return 0;
       return Math.min(FLOWER_REST,Math.max(0,Math.ceil(FLOWER_REST-(clock.minutes-last.time))));},
@@ -781,27 +773,42 @@ export function initLife({world,scene,flower,islands,camera,texture,player,notic
     if(bubble&&Math.hypot(player.position.x-bubble.x,player.position.z-bubble.z)>4)bubble=null;
     if(!bubble)return null;
     return nudgeCard('bubble','Your gardener',new T.Vector3(player.position.x,player.position.y+1.7,player.position.z),
-                     ()=>{bubble=null;asking=false;notice('It’ll wait on the sign by the windmill.');});
+                     ()=>{bubble=null;notice('It’ll wait at the windmill.');});
   }
+  // the windmill's card: today, from the planner
+  const today=()=>plans.on(ME,TODAY).filter(b=>!b.skipped&&!b.practice);
+  const millHead=()=>{const t=today();return `Your week · ${t.length?`${t.filter(b=>b.done).length} of ${t.length} done today`:'nothing planned today'}`;};
+  const openPlanner=()=>{closeOthers(null);calendar.open();buddies.planner.reset(80);};   // as the header's Planner button does
+  function millCard(at){
+    const t=today(), waiting=t.filter(b=>blockStatus(b,clock.minutes)==='waiting'), next=t.find(b=>!b.done&&b.start>=clock.minutes);
+    const name=b=>b.title||CATEGORIES[b.cat].label;
+    return {key:`mill${t.length}${t.filter(b=>b.done).length}${waiting.length}${next?.id}`,wood:true,kicker:millHead(),at,
+            title:waiting.length?`${waiting.length===1?name(waiting[0]):`${waiting.length} activities`} waiting for Done`
+                 :next?`Next: ${name(next)}`:t.length?'All done for today':'A quiet day',
+            sub:waiting.length?'Finish them in the planner, and they grow trees':next?`${fmt(next.start)} · ${CATEGORIES[next.cat].label}`:'Your planner holds the whole week',
+            action:openPlanner,actionLabel:'Open planner',more:()=>openBalance($('balance-toggle')),moreLabel:'See your balance'};
+  }
+  const bloomWhen=e=>`${e.day===0?'Today':e.day===1?'Yesterday':dayName(addDays(TODAY,-e.day))}${e.time!=null?` · ${fmt(e.time)}`:''}`;
   function nearest(){
     const said=gardenerBubble();if(said)return said;
     if(getMode()!=='walk')return null;
     const here=islands.find(i=>i.id===getSelected());
-    if(nudgeOn&&!pastWeek&&here?.id===ME&&Math.hypot(player.position.x-me.x-NUDGE_AT[0]*me.scale,player.position.z-me.z-NUDGE_AT[1]*me.scale)<3.2){
-      const c=nudgeCard('nudge','From your island',new T.Vector3(me.x+NUDGE_AT[0]*me.scale,me.altitude+(me.field.height(...NUDGE_AT)??.35)*me.scale+2.4,me.z+NUDGE_AT[1]*me.scale));
-      if(c)return c;
+    if(!pastWeek&&here?.id===ME&&Math.hypot(player.position.x-me.x-MILL[0]*me.scale,player.position.z-me.z-MILL[1]*me.scale)<3.6){
+      const at=new T.Vector3(me.x+MILL[0]*me.scale,me.altitude+(me.field.height(...MILL)??.35)*me.scale+1.8,me.z+MILL[1]*me.scale);   /* level with the tower, clear of the header */
+      return (nudgeOn&&nudgeCard('nudge',millHead(),at))||millCard(at);
     }
     if(here?.owner&&Math.hypot(player.position.x-here.x-ARCH.x*here.scale,player.position.z-here.z-ARCH.z*here.scale)<3.9){
       const gy=here.altitude+(here.field.height(ARCH.x,ARCH.z)??.35)*here.scale;
       return {...gateCard(here),at:new T.Vector3(here.x+ARCH.x*here.scale,gy+5.6,here.z+ARCH.z*here.scale)};   // above the torii beam
     }
-    // a lantern on the pier, within reach: whose feeling, and when
-    if(here?.owner){const l=mood.near(here.id,player.position);if(l){
-      const m=MOODS[l.entry.mood],whose=l.island.id===ME?'Your':`${l.island.owner}’s`;
-      return {key:`ln${l.island.id}${l.entry.time}${l.entry.mood}`,color:m.color,kicker:l.entry.time!=null?`Checked in at ${fmt(l.entry.time)}`:'Today',
-              title:`${whose} ${m.label.toLowerCase()} lantern`,sub:l.island.id===ME?'How you felt, hung on your pier':'How they felt today',
-              ...(l.entry.photo?{action:()=>view({src:l.entry.photo,title:`${whose} ${m.label.toLowerCase()} lantern`,sub:'Today'}),actionLabel:'View photo'}:{}),
-              at:l.g.getWorldPosition(new T.Vector3()).add(new T.Vector3(0,1.4,0))};}}
+    // a bloom in the feelings bed, within reach: whose feeling, and when (not while your flower is asking)
+    if(here?.owner&&!(here.id===ME&&talk?.isOpen)){const l=mood.near(here.id,player.position);if(l){
+      const m=MOODS[l.entry.mood],mine=l.island.id===ME,when=bloomWhen(l.entry);
+      return {key:`ln${l.island.id}${l.entry.day}${l.entry.time}${l.entry.mood}`,color:m.color,kicker:when,
+              title:mine?`You felt ${m.label.toLowerCase()}`:`${l.island.owner} felt ${m.label.toLowerCase()}`,
+              sub:mine?'A bloom in your feelings bed':'From their feelings bed, this week',
+              ...(l.entry.photo?{action:()=>view({src:l.entry.photo,title:`${m.label}, ${when.toLowerCase()}`,sub:mine?'Yours':l.island.owner}),actionLabel:'View photo'}:{}),
+              at:l.at.add(new T.Vector3(0,1.2,0))};}}
     const table=tables[getSelected()];
     if(table){
       // a path stop wins; otherwise the nearest tree's activity (forest.js near)
@@ -858,7 +865,7 @@ export function initLife({world,scene,flower,islands,camera,texture,player,notic
     const weeks=pastMondays().map(weekOf);
     $('past-list').replaceChildren(...(weeks.length?weeks.map(w=>{
       const b=mk('button',{type:'button'},mk('strong',{textContent:weekRange(w.monday)}),
-        mk('span',{textContent:`${shortBand(w.sink)} · ${w.lanterns.length?weatherLabel(w.strain):'no lanterns'} · ${plural(w.blocks.length,'tree')}`}));
+        mk('span',{textContent:`${shortBand(w.sink)} · ${w.lanterns.length?weatherLabel(w.strain):'no check-ins'} · ${plural(w.blocks.length,'tree')}`}));
       b.onclick=()=>showPast(w);
       return mk('li',{},b);
     }):[mk('li',{className:'past-empty',textContent:'No earlier weeks yet. Next Monday, this one will be here.'})]));
@@ -891,7 +898,7 @@ export function initLife({world,scene,flower,islands,camera,texture,player,notic
       status:(id,r)=>{status[id]={sink:r.sink,strain:r.strain};settle(id);},
       checkin:(id,entry)=>{
         checkins[id].push(entry);const i=members.find(m=>m.id===id);
-        mood.checkIn(i,entry,null);weather(i);notice(`A ${MOODS[entry.mood].label.toLowerCase()} lantern lights up on ${i.owner}’s pier.`);
+        mood.checkIn(i,entry,null);weather(i);notice(`A ${MOODS[entry.mood].label.toLowerCase()} bloom opens in ${i.owner}’s feelings bed.`);
       },
       note:n=>{NOTES.push(n);syncNotes();notice(`${owners[n.from]} left a note at your gate.`);},
       moment:m=>photos.receive(m),
@@ -1025,9 +1032,11 @@ export function initLife({world,scene,flower,islands,camera,texture,player,notic
     },
     pick(raycaster){
       if(photos.pick(raycaster))return true;
+      const mill=windmills[members.indexOf(me)]?.group;
+      if(mill&&getSelected()===ME&&raycaster.intersectObject(mill,true).length){openPlanner();return true;}
       const l=mood.pick(raycaster);if(!l)return false;
-      const whose=l.island.id===ME?'Your':`${l.island.owner}’s`;
-      view({src:l.entry.photo,title:`${whose} ${MOODS[l.entry.mood].label.toLowerCase()} lantern`,sub:l.entry.time!=null?`Checked in at ${fmt(l.entry.time)}`:'Today'});
+      const felt=MOODS[l.entry.mood].label.toLowerCase();
+      view({src:l.entry.photo,title:l.island.id===ME?`You felt ${felt}`:`${l.island.owner} felt ${felt}`,sub:bloomWhen(l.entry)});
       return true;
     },
     api:{
@@ -1068,7 +1077,7 @@ export function initLife({world,scene,flower,islands,camera,texture,player,notic
       resettle:()=>{members.forEach(i=>{settle(i.id);weather(i);delete warmth[i.id];warm(i.id);});},
       photos:()=>photos.items.map(i=>({member:i.member.id,time:i.time,golden:i.golden,caption:i.caption,hung:!!i.pivot})),
       openAlbum:()=>photos.openAlbum(),
-      nudge:()=>({on:nudgeOn,taken:nudgeTaken,why:nudgeWhy,idea:idea()?.title,bubble:!!bubble,x:me.x+NUDGE_AT[0]*me.scale,z:me.z+NUDGE_AT[1]*me.scale}),
+      nudge:()=>({on:nudgeOn,taken:nudgeTaken,why:nudgeWhy,idea:idea()?.title,bubble:!!bubble,x:me.x+MILL[0]*me.scale,z:me.z+MILL[1]*me.scale}),
     },
   };
 }

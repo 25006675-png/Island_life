@@ -28,6 +28,7 @@ import { demoWorld, enterWorld, DEMO_PEOPLE } from './world.js';
 import * as backend from './backend.js';
 import { openInvite } from './account.js';
 import { createVacancies, newArrivals } from './vacancy.js';
+import { createAltitudeRail } from './altrail.js';
 
 const $=id=>document.getElementById(id), canvas=$('world');
 // One activity category = one tree species (groves.js). The gathering
@@ -76,18 +77,24 @@ let definitions=defineIslands(DEMO_PEOPLE);
 // The pier the whale brings Blomy to on the welcome page (src/pier.js): out from the shore in front of each
 // member island's torii, so the landing and the island are the same place. Its deck is walkable (navigation.js).
 const GATE_MID={x:-5.4,z:-5.0}, GATE_OUT=new T.Vector3(-.742,0,-.671);   // model units, the same on every meadow island
-// your talking flower (flower.js): on the grass just inside the gate, to one side of the path in from the pier,
-// facing out to where you arrive; kept clear of trees like the bench and the well
+// The feelings bed (mood.js) on every member island: on the grass just inside the gate, to one side of the path in
+// from the pier, kept clear of trees like the bench and the well. On your island your talking flower (flower.js)
+// stands in the middle of it, twice her model's size so she reads from the walking camera, facing out to where you
+// arrive. Friends' islands have the bed only (a flower each would be ~40 more draws per island).
 let flower=null;
-function plantFlower(island){
+const FLOWER_SIZE=2;
+function flowerSpot(island){
   const s=island.scale, side={x:-GATE_OUT.z,z:GATE_OUT.x};
-  for(const [back,a] of [[1.4,1.7],[1.4,-1.7],[2.4,2.2],[2.4,-2.2]]){
+  for(const [back,a] of [[1.4,1.9],[1.4,-1.9],[2.4,2.4],[2.4,-2.4]]){
     const mx=GATE_MID.x-GATE_OUT.x*back+side.x*a, mz=GATE_MID.z-GATE_OUT.z*back+side.z*a, h=island.field.height(mx,mz);
-    if(h===null)continue;
-    const f=makeFlower();f.position.set(mx*s,h*s,mz*s);f.rotation.y=Math.atan2(GATE_OUT.x,GATE_OUT.z);
-    island.group.add(f);island.obstacles.push({x:mx,z:mz,r:.45});return f;
+    if(h!==null)return {mx,mz,at:new T.Vector3(mx*s,h*s,mz*s)};
   }
   return null;
+}
+function plantFlower(island,spot){
+  if(!spot)return null;
+  const f=makeFlower();f.position.copy(spot.at);f.scale.setScalar(FLOWER_SIZE);f.rotation.y=Math.atan2(GATE_OUT.x,GATE_OUT.z);
+  island.group.add(f);island.obstacles.push({x:spot.mx,z:spot.mz,r:.85});return f;
 }
 function buildPier(island){
   const h=d=>island.field.height(GATE_MID.x+GATE_OUT.x*d,GATE_MID.z+GATE_OUT.z*d);
@@ -444,7 +451,7 @@ const guide=createGuide({
   {say:()=>TOUCH?'See the flower by your gate? She asks how you’re feeling. Walk up to her, or tap her.'
                 :'See the flower by your gate? She asks how you’re feeling. Walk up to her, tap her, or press T.',
    flower:true,target:()=>$('flower-talk').hidden?null:$('flower-talk'),hand:true,done:()=>!$('flower-ask').hidden},
-  {say:'Pick the one closest. It hangs as a lantern on your pier, and over a few days your feelings make your island’s weather. She’ll rest for an hour, then ask again.',
+  {say:'Pick the one closest. A bloom in that colour opens beside her, and over a few days your feelings make your island’s weather. She’ll rest for an hour, then ask again.',
    flower:true,start:()=>{felt=false;},target:()=>$('flower-ask').hidden?null:$('moods'),hand:true,done:()=>felt},
   // an open sheet is yours to read: Blomy steps aside (style.css) and waits until you close it yourself
   {say:'Your week lives in the Planner. When an activity’s time has passed, press Done and it grows a tree on your island. Open it.',
@@ -745,7 +752,7 @@ renderer=new T.WebGLRenderer({canvas,antialias:false,powerPreference:'high-perfo
     const model=assets[def.model].clone(true);model.scale.setScalar(def.scale);group.add(model);island.model=model;model.traverse(o=>{o.userData.islandId=def.id;});
     plantIsland(island,group,assets);
     if(def.owner){island.pier=buildPier(island);group.add(island.pier.group);}
-    if(def.id===ME)flower=plantFlower(island);
+    if(def.owner){const spot=flowerSpot(island);island.flowerSpot=spot?.at??null;if(def.id===ME)flower=plantFlower(island,spot);}
     // activity trees and today's ghosts
     forest??=createForest({assets,islandSurface,speciesScale:SPECIES_SCALE,thirsty:wantsWater,
       onRoot:t=>{if(ready&&t.island.id===ME)sound.play('task_done',{gain:.55,cooldown:.6});}});   // one chime for "Mark all
@@ -850,9 +857,11 @@ function shadeLight(dt){
 const pierAt=new T.Vector3();
 function pierDetail(){for(const i of islands)if(i.pier)i.pier.detail.visible=pierAt.copy(i.pier.tip).add(i.group.position).distanceTo(camera.position)<70;}
 const labelAt=new T.Vector3();
+const rail=createAltitudeRail($('app'),{visit});   // altrail.js: everyone's height, down the left of the sky view
 // Island labels never vanish in the sky view: an island off screen, or behind you, keeps its label at the edge of
 // the screen with an arrow pointing toward it, so you always know where everyone is. Edge labels stay inside a safe
-// frame -- above the bottom bar, and on the left above the place title and the island card -- and are spread
+// frame -- above the bottom bar, on the left above the place title and the island card and right of the altitude
+// rail -- and are spread
 // apart so none covers another. Clicking still visits.
 const EDGE_X=.9, EDGE_TOP=.78, EDGE_BOTTOM=-.55, LEFT_ZONE=-.3, LEFT_FLOOR=.18, GAP=36;
 function placeLabels(){
@@ -873,7 +882,7 @@ function placeLabels(){
   }
   // whole label on screen; then spread labels that share a side, each at least GAP px below the one above it, and
   // if that runs a column past its floor (the bottom bar, or the title on the left), lift the column back up
-  for(const e of edges){const w=e.el.offsetWidth/2+8;e.px=Math.min(innerWidth-w,Math.max(w,e.px));}
+  for(const e of edges){const w=e.el.offsetWidth/2+8;e.px=Math.min(innerWidth-w,Math.max(w+rail.clear(),e.px));}
   edges.sort((a,b)=>a.py-b.py);
   for(let i=1;i<edges.length;i++)for(let j=0;j<i;j++){const a=edges[j],b=edges[i];if(Math.abs(a.px-b.px)<160&&b.py-a.py<GAP)b.py=a.py+GAP;}
   const floorAt=px=>(-(px<(LEFT_ZONE*.5+.5)*innerWidth?LEFT_FLOOR:EDGE_BOTTOM)*.5+.5)*innerHeight;
@@ -897,7 +906,7 @@ function frame(time){
   {const i=islands.find(i=>i.id===selected);rain.set(Math.min(1,Math.max(0,((i?.strain??0)-.55)/.4))*(mode==='walk'?1:.4));}   // atmosphere.js: rain from .55
   forest.update(dt,elapsed,motion,id=>life.api.getSchedule(id));watering.update(dt);vacancies.update(dt,elapsed,motion);
   followSun();treeDetail();shadeLight(dt);pierDetail();
-  placeLabels();
+  placeLabels();rail.update(islands,ready&&mode==='overview');
   liftBlur(life.api.liftAmount());
   renderer.info.reset();composer.render();   // counted over every pass of the frame (autoReset is off)
 }

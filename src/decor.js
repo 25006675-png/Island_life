@@ -111,5 +111,5 @@ export function createWindmill(island,{at=[0,0],face=0}={}){
   g.add(tower,roof,door,hub);
   g.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;}});
   island.obstacles.push({x:at[0],z:at[1],r:1.1/island.scale});
-  return {update(dt,motion){if(motion)hub.rotation.z-=dt*.6;}};
+  return {group:g,update(dt,motion){if(motion)hub.rotation.z-=dt*.6;}};   // group: tapped, it opens your planner (life.js)
 }

@@ -1,65 +1,95 @@
 import * as T from 'three';
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { MOODS } from './data.js';
-import { TIPR } from './pier.js';
 
-// Emotion lanterns = feelings. Today's check-ins hang as coloured lanterns along the island's pier (main.js
-// buildPier), from its top rail between the posts, clear of the shore's bushes, where you can walk up to them and
-// read each one (near); past the boardwalk's six they go round the round deck. Earlier days have settled high above as stars.
-const HANG=.5, RAIL=.92;   // lantern centre and rail top, above the deck
-export function createMood(texture){
-  const skies=new Map(), lanterns=[], body=new T.CylinderGeometry(.27,.21,.56,10), cord=new T.MeshBasicMaterial({color:'#4a3322'});
-  const cordGeo=new T.CylinderGeometry(.012,.012,RAIL-HANG-.2,4);
-  // island-local: where lantern n hangs on this island's pier (or, with no pier, low over the gate side)
-  function slot(island,n){
-    const p=island.pier;
-    if(!p){const a=n*2.399;return new T.Vector3(-10+Math.cos(a)*4,3,-10+Math.sin(a)*4);}
-    if(n<6)return p.pierAt(3.5+(n>>1)*2.04).addScaledVector(p.along,(n%2?-1:1)*1.62).add(new T.Vector3(0,HANG,0));
-    const a=(n-6)*.7+Math.atan2(p.along.z,p.along.x);return p.tip.clone().add(new T.Vector3(Math.cos(a)*(TIPR+.15),HANG,Math.sin(a)*(TIPR+.15)));
+// Feelings = blooms. Every check-in of the last seven days opens a small flower in its feeling's colour, in a bed
+// round the spot just inside the gate (main.js flowerSpot): on your island your talking flower stands in the middle
+// of it (flowermodel.js), and a friend's bed shows how their week has felt when you visit. Today's blooms are a
+// little bigger; a new one grows in. The weather still comes from the same check-ins (life.js).
+// Each island's bed is three instanced draws (stems, petals, centres), however many blooms it holds.
+const MAX=14;                       // the newest fourteen, a week of two a day
+const SIZE=1.8;                     // a bloom about a metre tall, readable beside the talking flower
+const UP=new T.Vector3(0,1,0);
+function petalsGeo(){               // five round petals round a point, facing up, about 0.5 across
+  const parts=[];
+  for(let k=0;k<5;k++){
+    const g=new T.SphereGeometry(.13,10,6);g.scale(1,.32,.62);
+    const a=k/5*Math.PI*2;g.translate(Math.cos(a)*.13,0,Math.sin(a)*.13);g.rotateY(-a);parts.push(g);
   }
+  return mergeGeometries(parts);
+}
+const STEM=new T.CylinderGeometry(.022,.028,1,6).translate(0,.5,0), PETALS=petalsGeo(), CENTRE=new T.SphereGeometry(.07,10,8).scale(1,.6,1);
+const stemMat=new T.MeshStandardMaterial({color:'#6f9e43',roughness:.8});
+const petalMat=new T.MeshStandardMaterial({color:'#ffffff',roughness:.7});
+const centreMat=new T.MeshStandardMaterial({color:'#ffd23c',roughness:.6,emissive:'#5a4300',emissiveIntensity:.25});
+const easeOutBack=k=>1+2.70158*(k-1)**3+1.70158*(k-1)**2;
 
-  function lantern(island,entry,from){
-    const c=new T.Color(MOODS[entry.mood].color), sky=skies.get(island.id), n=sky.count++;
-    const g=new T.Group();
-    const mesh=new T.Mesh(body,new T.MeshStandardMaterial({color:c,emissive:c,emissiveIntensity:1.8,roughness:1}));
-    const glow=new T.Sprite(new T.SpriteMaterial({map:texture,color:c,transparent:true,depthWrite:false,blending:T.AdditiveBlending,opacity:.8}));
-    const string=new T.Mesh(cordGeo,cord);string.position.y=(RAIL-HANG)/2+.1;
-    glow.scale.setScalar(1.8);g.add(mesh,glow,string);
-    const home=slot(island,n);
-    const item={g,home,from:(from??home).clone(),age:from?0:99,entry,island,phase:n*1.7};
-    g.position.copy(item.from);sky.group.add(g);mesh.userData.moodLantern=item;lanterns.push(item);
-    return item;
+export function createMood(){
+  const beds=new Map(), m=new T.Matrix4(), q=new T.Quaternion(), s=new T.Vector3(), p=new T.Vector3(), c=new T.Color(), v=new T.Vector3();
+  // where bloom n stands, island-local: a loose spiral round the bed's middle, clear of the talking flower's leaves
+  function spot(bed,n){
+    const a=n*2.399+.6, r=1.5+.16*n;
+    for(let t=0;t<6;t++){
+      const x=bed.at.x+Math.cos(a+t*.5)*r, z=bed.at.z+Math.sin(a+t*.5)*r, h=bed.island.field.height(x/bed.island.scale,z/bed.island.scale);
+      if(h!==null)return new T.Vector3(x,h*bed.island.scale,z);
+    }
+    return bed.at.clone();
   }
-
+  function layout(bed){
+    const list=bed.items.slice(-MAX);
+    bed.stems.count=bed.heads.count=bed.centres.count=list.length;
+    list.forEach((it,n)=>{
+      it.n=n;it.home??=spot(bed,n);
+      const grow=Math.max(.001,it.age<1.4?easeOutBack(Math.min(1,it.age/1.4)):1), big=SIZE*(it.entry.day===0?1.25:1)*grow;
+      const h=(.42+(n%3)*.06)*big;
+      m.compose(it.home,q.identity(),s.set(big,h,big));bed.stems.setMatrixAt(n,m);
+      p.copy(it.home).y+=h;q.setFromAxisAngle(UP,n*1.3);
+      m.compose(p,q,s.setScalar(big));bed.heads.setMatrixAt(n,m);
+      p.y+=.03*big;m.compose(p,q,s.setScalar(big));bed.centres.setMatrixAt(n,m);
+      bed.heads.setColorAt(n,c.set(MOODS[it.entry.mood].color));
+    });
+    for(const im of [bed.stems,bed.heads,bed.centres]){im.instanceMatrix.needsUpdate=true;im.computeBoundingSphere();}
+    if(bed.heads.instanceColor)bed.heads.instanceColor.needsUpdate=true;
+  }
+  function bloom(bed,entry,grow){
+    const it={entry,island:bed.island,age:grow?0:99};bed.items.push(it);
+    if(bed.items.length>MAX){bed.items.shift();for(const x of bed.items)x.home=null;}   // the oldest goes; the rest re-settle
+    layout(bed);return it;
+  }
+  const visible=bed=>bed.group.visible;
   return {
-    addIsland(island,checkins){
-      const group=new T.Group();island.group.add(group);skies.set(island.id,{group,count:0});
-      const past=checkins.filter(c=>c.day>0), pos=new Float32Array(past.length*3), col=new Float32Array(past.length*3);
-      past.forEach((c,i)=>{
-        const a=i*2.399+1.1, r=6+(i*3.7)%12;
-        pos.set([Math.cos(a)*r,24+(i*1.9)%7,Math.sin(a)*r],i*3);
-        const k=new T.Color(MOODS[c.mood].color);col.set([k.r,k.g,k.b],i*3);
-      });
-      const geo=new T.BufferGeometry();
-      geo.setAttribute('position',new T.BufferAttribute(pos,3));geo.setAttribute('color',new T.BufferAttribute(col,3));
-      group.add(new T.Points(geo,new T.PointsMaterial({size:1.7,map:texture,vertexColors:true,transparent:true,depthWrite:false,blending:T.AdditiveBlending})));
-      for(const c of checkins.filter(c=>c.day===0))lantern(island,c);
+    // at: the bed's middle, island-local (main.js flowerSpot), or null to keep it just inside the gate
+    addIsland(island,checkins,at){
+      const group=new T.Group();island.group.add(group);
+      const make=(geo,mat)=>{const im=new T.InstancedMesh(geo,mat,MAX);im.count=0;im.castShadow=true;im.receiveShadow=true;group.add(im);return im;};
+      const bed={island,group,at:at??new T.Vector3(-4*island.scale,(island.field.height(-4,-4)??.35)*island.scale,-4*island.scale),items:[],
+                 stems:make(STEM,stemMat),heads:make(PETALS,petalMat),centres:make(CENTRE,centreMat)};
+      bed.heads.userData.moodBed=bed;
+      beds.set(island.id,bed);
+      for(const e of checkins.filter(e=>e.day<=6).sort((a,b)=>b.day-a.day||(a.time??0)-(b.time??0)))bloom(bed,e,false);
     },
-    // `from` is island-local; the lantern rises from there to its place in the sky
-    checkIn(island,entry,from){return lantern(island,entry,from);},
-    show(id,on){const sky=skies.get(id);if(sky)sky.group.visible=on;},   // hidden while the island shows a past week
-    update(t,dt,motion){
-      for(const l of lanterns){
-        l.age+=dt;const e=1-Math.pow(1-Math.min(1,l.age/5),3);
-        l.g.position.lerpVectors(l.from,l.home,e);
-        if(motion){l.g.rotation.z=Math.sin(t*.9+l.phase)*.06*e;l.g.rotation.y=Math.sin(t*.4+l.phase)*.3;}   // a little sway on its cord
+    // a new check-in: its bloom grows in (`from` is no longer used: blooms grow where they stand)
+    checkIn(island,entry){const bed=beds.get(island.id);return bed?bloom(bed,entry,true):null;},
+    show(id,on){const bed=beds.get(id);if(bed)bed.group.visible=on;},   // hidden while the island shows a past week
+    update(t,dt){
+      for(const bed of beds.values()){
+        let moving=false;for(const it of bed.items)if(it.age<1.5){it.age+=dt;moving=true;}
+        if(moving)layout(bed);
       }
     },
-    // the lantern within reach of a world point on this island, if any (life.js shows its card)
-    near(id,p,reach=2){const v=new T.Vector3();let best=null,bd=reach;
-      for(const l of lanterns){if(l.island.id!==id||l.age<5||!skies.get(id).group.visible)continue;const d=l.g.getWorldPosition(v).setY(p.y).distanceTo(p);if(d<bd){bd=d;best=l;}}
-      return best;},
+    // the bloom within reach of a world point on this island, if any (life.js shows its card): {entry, island, at}
+    near(id,pt,reach=2){
+      const bed=beds.get(id);if(!bed||!visible(bed))return null;let best=null,bd=reach;
+      for(const it of bed.items){if(!it.home)continue;const d=v.copy(it.home).add(bed.island.group.position).setY(pt.y).distanceTo(pt);if(d<bd){bd=d;best=it;}}
+      return best&&{...best,at:best.home.clone().add(bed.island.group.position)};
+    },
     pick(raycaster){
-      return raycaster.intersectObjects(lanterns.filter(l=>skies.get(l.island.id).group.visible).map(l=>l.g.children[0]),false)[0]?.object.userData.moodLantern??null;
+      for(const bed of beds.values()){
+        if(!visible(bed))continue;
+        const hit=raycaster.intersectObject(bed.heads,false)[0];
+        if(hit){const it=bed.items.slice(-MAX)[hit.instanceId];if(it)return {...it,at:it.home.clone().add(bed.island.group.position)};}
+      }
+      return null;
     },
   };
 }
