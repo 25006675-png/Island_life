@@ -389,6 +389,7 @@ export function createCarousel({island,members,me,notice,view,time,live=null}){
         i.pivot.rotation.x=motion?Math.sin(t*.6+i.phase*1.3)*.03:0;
       }
     },
+    centre:()=>root.getWorldPosition(new T.Vector3()),   // where it stands (the guide walks you there)
     near(world,radius){
       root.getWorldPosition(wp);
       const d=Math.hypot(world.x-wp.x,world.z-wp.z);

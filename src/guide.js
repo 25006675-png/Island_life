@@ -57,7 +57,7 @@ export function createGuide(chapters){
   };
   const finish=happy=>{
     const c=chapter;
-    box.hidden=true;spot.hidden=true;hand.hidden=true;at=-1;step=null;chapter=null;document.body.classList.remove('guide-over','guide-reveal','guide-high');
+    box.hidden=true;spot.hidden=true;hand.hidden=true;at=-1;step=null;chapter=null;document.body.classList.remove('guide-over','guide-reveal','guide-high','guide-low');
     if(!c)return;
     remember(c.key);c.end?.();
     const then=happy&&c.next?.();
@@ -75,7 +75,11 @@ export function createGuide(chapters){
   const press=(e,down)=>{const k=KEYS[e.code];if(!k||box.hidden)return;art.querySelector(`[data-k="${k}"]`)?.classList.toggle('down',down);};
   addEventListener('keydown',e=>press(e,true));addEventListener('keyup',e=>press(e,false));
   // the spotlight and the hand follow their target (labels move with the camera), every frame
-  const place=()=>{
+  // a card step (`reveal`): Blomy's box sits at the edge of the screen away from the card (it floats by what it's
+  // about, high or low), so its buttons are never under her
+  const dodge=()=>{const r=$('reveal'),high=!!step?.reveal&&!r.hidden&&(()=>{const b=r.getBoundingClientRect();return b.top+b.height/2<innerHeight*.5;})();
+    if(document.body.classList.contains('guide-low')!==high)document.body.classList.toggle('guide-low',high);};
+  const place=()=>{dodge();
     const el=step?.target?.(), r=el&&!el.hidden&&el.getClientRects().length?el.getBoundingClientRect():null;
     const lit=!!r&&!cheered;
     spot.hidden=!lit;hand.hidden=!(lit&&step.hand);
@@ -89,8 +93,8 @@ export function createGuide(chapters){
     update(dt){
       if(!step)return;place();
       if(step.back?.()&&at>0){show(at-1);return;}
-      if(!step.done||!step.done())return;
-      if(!cheered){cheered=true;box.classList.add('yay');spot.hidden=true;hand.hidden=true;}
+      // once done it moves on, even if what it watched is undone in the meantime (a note sent within the cheer)
+      if(!cheered){if(!step.done||!step.done())return;cheered=true;box.classList.add('yay');spot.hidden=true;hand.hidden=true;}
       since+=dt;if(since>.9)show(at+1);
     },
     get on(){return !!step;},

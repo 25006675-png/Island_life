@@ -18,7 +18,7 @@ import { initLife, setStrain } from './life.js';
 import { ME, HIGH, LOW, symbolImg, SLOT_IDS } from './data.js';
 import { createForest } from './forest.js';
 import { createPier } from './pier.js';
-import { GATE_POSTS, GATE_OUT as GATE_WAY, moveGate } from './gate.js';
+import { GATE, GATE_POSTS, GATE_OUT as GATE_WAY, moveGate } from './gate.js';
 import { makeGardener } from './blomy.js';
 import { makeFlower } from './flowermodel.js';
 import { createGuide } from './guide.js';
@@ -431,6 +431,9 @@ function showStick(){
 let walkedFrom=0, felt=false, invited=false, guided=null, boardAgain=false;   // guided: {to()} the guide's walk, along the path (route)
 $('moods').addEventListener('click',e=>{if(e.target.closest('.mood'))felt=true;});
 const live=()=>!!world?.live, alone=()=>live()&&world.people.length<2, hasRoom=()=>live()&&vacancies?.list.length>0;
+// the friend's bridge nearest you (not your own), and whose island it leads to
+const nearestBridge=()=>bridges.filter(b=>b.id!==ME).sort((a,b)=>a.start.distanceTo(player.position)-b.start.distanceTo(player.position))[0]??null;
+const bridgeFriend=()=>{const b=nearestBridge();return b?islands.find(i=>i.id===b.id):null;};
 const nearPractice=()=>{const t=life.api.practice.tree();return !!t&&Math.hypot(t.x-player.position.x,t.z-player.position.z)<3.5;};
 const guide=createGuide({
  demo:{key:'il-guide-demo',next:()=>'home',steps:[
@@ -505,10 +508,26 @@ const guide=createGuide({
    reveal:true,target:()=>$('reveal').hidden?null:$('reveal-action'),hand:true,done:()=>$('goals-dialog').open},
   {say:'Follow the notes on the practice task, then close the board.',done:()=>life.api.practice.taskDone()&&!$('goals-dialog').open,
    back:()=>!$('goals-dialog').open&&!life.api.practice.taskDone()&&(boardAgain=true)},
-  {say:'One more thing about this island: the golden window. Once a day, at a moment nobody knows in advance, the sky turns gold for a few minutes. Everyone snaps a photo of wherever they are, and the photos hang here together.'},
-  {say:'Bridges lead to each friend’s island. Walk onto one and press Go.',art:'esc',
+  // the golden window: in the demo Blomy rings one (the rehearsal: the banner, the timer, friends' golden photos
+  // arriving) and walks you to the carousel; a real sky only hears about it (its windows are the server's)
+  {when:()=>!live(),say:'One more thing about this island: the golden window. Once a day, at a moment nobody knows in advance, the sky turns gold for a few minutes. Let me ring one for you.',
+   button:'Ring it',act:()=>life.api.ringGoldenWindow()},
+  {when:()=>!live(),say:'Everyone snaps a photo of wherever they are, and the photos hang together on the carousel by the pond. Let’s walk over.',
+   start:()=>{guided={to:()=>{const c=life.api.carousel(),dx=player.position.x-c.x,dz=player.position.z-c.z,d=Math.hypot(dx,dz)||1;return new T.Vector3(c.x+dx/d*2.8,0,c.z+dz/d*2.8);}};},
+   done:()=>{if(guided)return false;const c=life.api.carousel();return Math.hypot(player.position.x-c.x,player.position.z-c.z)<6;}},
+  {when:()=>!live(),say:'Your friends’ golden photos are arriving now. Tap Share to add yours, or just watch them hang.'},
+  {when:live,say:'One more thing about this island: the golden window. Once a day, at a moment nobody knows in advance, the sky turns gold for a few minutes. Everyone snaps a photo of wherever they are, and the photos hang here together.'},
+  // the bridges: Blomy walks you onto the nearest friend's, then Go crosses it
+  {say:()=>`Bridges lead to each friend’s island. Let’s go and see ${bridgeFriend()?.owner??'a friend'}.`,
+   start:()=>{const b=nearestBridge();if(b)guided={to:()=>b.start,onto:()=>bridgePoint(b,.05)};},
+   done:()=>!guided&&player.surface?.kind==='bridge'},
+  {say:()=>`Press Go to cross to ${bridgeFriend()?.owner??'their'}’s island.`,target:()=>$('bridge-go').hidden?null:$('bridge-go'),hand:true,
    done:()=>mode==='walk'&&selected!=='community'&&selected!==ME&&!transition},
-  {say:'Here’s their gate. Walk up to the sign and press Write to leave a note. This one is practice, so it won’t be sent.',
+  // their gate: Blomy walks you there (just inside the torii), then Write; a real sky's practice note isn't sent
+  {say:()=>`Here’s ${islands.find(i=>i.id===selected)?.owner??'their'}’s island. Let’s walk to their gate.`,
+   start:()=>{const i=islands.find(i=>i.id===selected);if(i)guided={to:()=>new T.Vector3(i.x+(GATE.x+GATE_WAY.x*-1.2)*i.scale,0,i.z+(GATE.z+GATE_WAY.z*-1.2)*i.scale)};},
+   done:()=>!guided&&!$('reveal').hidden&&$('reveal-kicker').textContent.includes('gate')},
+  {say:()=>`Press Write to leave them a note.${live()?' This one is practice, so it won’t be sent.':''}`,
    start:()=>life.api.practice.note(true),reveal:true,target:()=>$('reveal').hidden?null:$('reveal-action'),hand:true,done:()=>$('note-dialog').open},
   {say:'Write a few words, or pick one, and send it.',done:()=>life.api.practice.noted()&&!$('note-dialog').open},
   {say:'That’s everything. Enjoy your sky!'},
@@ -527,21 +546,60 @@ const wantsWater=t=>t.island.id===ME&&!t.island.past&&home()&&!life?.api.quick(t
 function quench(){if(chore){forest.water(chore.t);chore.sfx?.stop?.();}chore=null;for(const t of thirst.splice(0))forest.water(t);}
 function turnTo(yaw,dt){const turn=yaw-gardener.rotation.y;gardener.rotation.y+=Math.atan2(Math.sin(turn),Math.cos(turn))*(1-Math.exp(-12*dt));}
 // a step of at most `d` toward (ux,uz) on your own island, bending round a trunk in the way
-function stepToward(ux,uz,d,dt){
+function stepToward(ux,uz,d,dt,onto=false){   // onto: may step off the island onto a bridge
   for(const a of [0,.5,-.5,1,-1,1.5,-1.5]){
     const c=Math.cos(a),s=Math.sin(a),vx=ux*c-uz*s,vz=ux*s+uz*c,n=Math.max(1,Math.ceil(d/.1));let moved=false;
     for(let k=0;k<n;k++){const f=surfaceAt(islands,bridges,player.position.x+vx*d/n,player.position.z+vz*d/n);
-      if(f?.kind!=='island'||f.id!==player.surface?.id||Math.abs(f.y-player.position.y)>=.65)break;player.position.set(f.x,f.y,f.z);player.surface=f;moved=true;}   /* the island you stand on */
+      if(!((f?.kind==='island'&&f.id===player.surface?.id)||(onto&&f?.kind==='bridge'))||Math.abs(f.y-player.position.y)>=.65)break;player.position.set(f.x,f.y,f.z);player.surface=f;moved=true;}   /* the island you stand on */
     if(moved){player.distance+=d;player.moving=true;turnTo(Math.atan2(vx,vz),dt);return true;}
   }
   return false;
 }
 // where to stand: a step out from the trunk, on the side you come from if that is open ground
-// Walking somewhere for you (the guide's walk to a tree, the watering can): straight there, and whatever blocks her
-// on the way (no headway for 0.7 s: a rock, a torii post) she hops.
-function route(to){
-  const pts=[new T.Vector3(to.x,0,to.z)];
-  return {pts,k:0,check:0,from:Infinity,at:0,length:pts.reduce((l,p,i)=>l+(i?p.distanceTo(pts[i-1]):Math.hypot(p.x-player.position.x,p.z-player.position.z)),0)};
+// Walking somewhere for you (the guide's walks, the watering can). The way is found on the island you stand on: A*
+// over a half-metre grid of walkable ground (surfaceAt: never the pond, a tree, the plinth or the board), steps no
+// taller than she climbs, then pulled straight between the corners it needs. `onto` adds a last step off the island
+// (onto a bridge). With no way found she heads straight, and whatever still blocks her for 0.7 s she hops.
+const PATH_G=.5;
+function findPath(to){
+  const id=player.surface?.kind==='island'?player.surface.id:null;if(!id)return null;
+  const G=PATH_G, cell=v=>Math.round(v/G), K=(i,j)=>`${i},${j}`, memo=new Map();
+  const ground=(i,j)=>{const k=K(i,j);if(!memo.has(k)){const f=surfaceAt(islands,bridges,i*G,j*G);memo.set(k,f?.kind==='island'&&f.id===id?f.y:null);}return memo.get(k);};
+  let ti=cell(to.x),tj=cell(to.z);
+  if(ground(ti,tj)===null){   // the spot itself is blocked (beside the plinth, say): the nearest ground to it
+    let best=null;for(let r=1;r<=8&&!best;r++)for(let a=-r;a<=r&&!best;a++)for(const [i,j] of [[ti+a,tj-r],[ti+a,tj+r],[ti-r,tj+a],[ti+r,tj+a]])if(!best&&ground(i,j)!==null)best=[i,j];
+    if(!best)return null;[ti,tj]=best;
+  }
+  const si=cell(player.position.x),sj=cell(player.position.z), h=(i,j)=>{const dx=Math.abs(i-ti),dz=Math.abs(j-tj);return (Math.max(dx,dz)+.414*Math.min(dx,dz))*G;};
+  const yAt=(i,j)=>i===si&&j===sj?player.position.y:ground(i,j);
+  // a small binary heap of [f, i, j]
+  const heap=[], push=e=>{heap.push(e);let n=heap.length-1;while(n){const p=(n-1)>>1;if(heap[p][0]<=e[0])break;heap[n]=heap[p];n=p;}heap[n]=e;};
+  const pop=()=>{const top=heap[0],last=heap.pop();if(heap.length){let n=0;for(;;){let c=2*n+1;if(c>=heap.length)break;if(c+1<heap.length&&heap[c+1][0]<heap[c][0])c++;if(heap[c][0]>=last[0])break;heap[n]=heap[c];n=c;}heap[n]=last;}return top;};
+  const g=new Map([[K(si,sj),0]]), came=new Map();push([h(si,sj),si,sj]);let n=0,end=null;
+  while(heap.length&&n++<40000){
+    const [,i,j]=pop(),gi=g.get(K(i,j));if(i===ti&&j===tj){end=[i,j];break;}
+    const y=yAt(i,j);
+    for(const [di,dj] of [[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]]){
+      const ni=i+di,nj=j+dj,ny=ground(ni,nj);if(ny===null||Math.abs(ny-y)>=.6)continue;
+      if(di&&dj&&(ground(i+di,j)===null||ground(i,j+dj)===null))continue;   // no corner-cutting past a blocked cell
+      const ng=gi+(di&&dj?1.414:1)*G, k=K(ni,nj);
+      if(ng<(g.get(k)??Infinity)){g.set(k,ng);came.set(k,[i,j]);push([ng+h(ni,nj),ni,nj]);}
+    }
+  }
+  if(!end)return null;
+  const cells=[end];for(let c=end;came.has(K(...c));){c=came.get(K(...c));cells.unshift(c);}
+  // pulled straight: from each corner, on to the farthest cell still in plain sight (every quarter metre walkable)
+  const sight=(a,b)=>{const ax=a[0]*G,az=a[1]*G,bx=b[0]*G,bz=b[1]*G,d=Math.hypot(bx-ax,bz-az),n=Math.ceil(d/.25);let py=yAt(...a);
+    for(let s=1;s<=n;s++){const y=ground(cell(ax+(bx-ax)*s/n),cell(az+(bz-az)*s/n));if(y===null||Math.abs(y-py)>=.6)return false;py=y;}return true;};
+  const pts=[];let a=0;
+  while(a<cells.length-1){let b=cells.length-1;while(b>a+1&&!sight(cells[a],cells[b]))b--;pts.push(new T.Vector3(cells[b][0]*G,0,cells[b][1]*G));a=b;}
+  if(ground(cell(to.x),cell(to.z))!==null)pts.push(new T.Vector3(to.x,0,to.z));
+  return pts.length?pts:null;
+}
+function route(to,onto=null){
+  const pts=findPath(to)??[new T.Vector3(to.x,0,to.z)];
+  if(onto)pts.push(new T.Vector3(onto.x,0,onto.z));
+  return {pts,k:0,check:0,from:Infinity,at:0,onto:!!onto,length:pts.reduce((l,p,i)=>l+(i?p.distanceTo(pts[i-1]):Math.hypot(p.x-player.position.x,p.z-player.position.z)),0)};
 }
 // one frame along a route; true once she stands at its end
 function follow(r,pace,dt){
@@ -552,11 +610,11 @@ function follow(r,pace,dt){
   if((r.check+=dt)>=.7){
     if(r.at===r.k&&r.from-d<.5){   // no headway: hop to the point she was making for
       const f=surfaceAt(islands,bridges,p.x,p.z);
-      if(f?.kind==='island'&&f.id===player.surface?.id){player.position.set(f.x,f.y,f.z);player.surface=f;}else if(r.k<r.pts.length-1)r.k++;else return true;
+      if((f?.kind==='island'&&f.id===player.surface?.id)||(r.onto&&f?.kind==='bridge')){player.position.set(f.x,f.y,f.z);player.surface=f;}else if(r.k<r.pts.length-1)r.k++;else return true;
     }
     r.at=r.k;r.from=dist(r.pts[r.k]);r.check=0;
   }
-  stepToward((p.x-player.position.x)/d,(p.z-player.position.z)/d,Math.min(d,pace*dt),dt);
+  stepToward((p.x-player.position.x)/d,(p.z-player.position.z)/d,Math.min(d,pace*dt),dt,r.onto);
   return false;
 }
 function standFor(b){
@@ -614,7 +672,7 @@ function walk(dt){
   if(chore||thirst.length){if(ix||iz||travel)quench();else{tend(dt);return;}}   // ...and from the watering
   if(guided){   // ...and from the guide's walk, which waits (up to 3 s) for where it's going: a new tree plants next frame
     if(ix||iz||travel)guided=null;
-    else{if(!guided.r){const to=guided.to();if(to)guided.r=route(to);else if((guided.wait=(guided.wait??0)+dt)>3)guided=null;}
+    else{if(!guided.r){const to=guided.to();if(to)guided.r=route(to,guided.onto?.());else if((guided.wait=(guided.wait??0)+dt)>3)guided=null;}
          if(guided?.r&&follow(guided.r,WALK,dt))guided=null;return;}
   }
   if(travel){crossBridge(dt);return;}

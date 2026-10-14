@@ -1040,3 +1040,5 @@ footer{z-index:2}
 .wood-button.pulse{animation:board-pulse 1.3s ease-in-out infinite}
 @keyframes board-pulse{50%{box-shadow:0 0 0 6px oklch(.75 .15 300 / .45)}}
 @media(prefers-reduced-motion:reduce){.wood-button.pulse{animation:none;outline:3px solid oklch(.75 .15 300)}}
+/* a card step with the card high on the screen (a gate's sign, the board): Blomy's box goes to the bottom (guide.js dodge) */
+body.guide-reveal.guide-low #guide{top:auto;bottom:calc(96px + env(safe-area-inset-bottom,0px))}

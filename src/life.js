@@ -105,7 +105,7 @@ export function initLife({world,scene,flower,islands,camera,texture,player,notic
   let practiceNote=false, practiceNoted=false;   // the guide's practice note: written and sent, but never delivered
   $('note-form').onsubmit=e=>{
     e.preventDefault();const to=$('note-to').value, text=$('note-text').value.trim();if(!text)return;
-    if(practiceNote){practiceNoted=true;$('note-dialog').close();notice(`A practice note for ${owners[to]}: it wasn’t sent. In your own sky it would wait at their gate.`);return;}
+    if(practiceNote){practiceNoted=true;$('note-dialog').close();notice(LIVE?`A practice note for ${owners[to]}: it wasn’t sent. In your own sky it would wait at their gate.`:`Your note is waiting at ${owners[to]}’s gate.`);return;}   // the demo sends nothing anyway
     NOTES.push({from:ME,to,text,day:0,read:false});given.add(to);warm(to,.5);warm(ME,.3);syncNotes();
     if(LIVE)backend.sendNote(world,to,text);
     $('note-dialog').close();notice(`Your note is waiting at ${owners[to]}’s gate.`);
@@ -191,7 +191,7 @@ export function initLife({world,scene,flower,islands,camera,texture,player,notic
     $('goals-list').replaceChildren(...TASKS.map(t=>{
       const mine=t.done[ME]!==undefined, joined=t.joined.includes(ME), fin=finishers(t);
       const li=mk('li',{className:'task'},
-        mk('div',{className:'task-head'},mk('strong',{textContent:t.title}),mk('em',{textContent:t.practice?'Practice · nothing is saved':`${t.reward} 💧 +1 per friend`})),
+        mk('div',{className:'task-head'},mk('strong',{textContent:t.title}),mk('em',{textContent:t.practice?(LIVE?'Practice · nothing is saved':'Practice'):`${t.reward} 💧 +1 per friend`})),
         mk('span',{className:'task-meta'},catImg(t.cat),`${CATEGORIES[t.cat].label} · ${t.by?`posted by ${who(t.by)}`:'suggested for the group'} · ${t.joined.length} joined`));
       if(fin.length)li.append(mk('div',{className:'task-finishers'},...fin.map(id=>{
         const src=photoSrc(t.done[id]);
@@ -203,7 +203,7 @@ export function initLife({world,scene,flower,islands,camera,texture,player,notic
       // the guide's practice task says what to press, right here (Blomy's box is behind this window), and the
       // button to press next breathes
       if(t.practice)li.append(mk('p',{className:'task-hint',textContent:mine?'Blomy: well done! Close the board to go on.'
-        :joined?'Blomy: now press Mark done.':'Blomy: press Join, then Mark done. Nothing is saved.'}));
+        :joined?'Blomy: now press Mark done.':`Blomy: press Join, then Mark done.${LIVE?' Nothing is saved.':''}`}));   // the demo saves nothing anyway
       if(mine){
         act.append(mk('span',{className:'task-status',textContent:t.practice?'Done · practice':`Done · +${earned(t)} 💧`}));
         if(!t.done[ME]&&!t.practice){const b=mk('button',{type:'button',className:'text-button',textContent:'Add a photo (optional)'});b.onclick=()=>{photoFor=t;$('task-photo').click();};act.append(b);}
@@ -1078,6 +1078,7 @@ export function initLife({world,scene,flower,islands,camera,texture,player,notic
       },
       fairyIdle:()=>fairy.idle(),
       // where to stand to read the task board: a few steps out in front of it (the way it faces)
+      carousel:()=>photos.centre(),
       boardSpot:()=>{const p=board.group.getWorldPosition(new T.Vector3()),f=board.group.rotation.y;return p.add(new T.Vector3(Math.sin(f)*2.6,0,Math.cos(f)*2.6));},
       // "Restore this evening": altitude and weather back to what the plan and check-ins say
       resettle:()=>{members.forEach(i=>{settle(i.id);weather(i);delete warmth[i.id];warm(i.id);});},
