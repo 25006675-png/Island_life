@@ -1023,3 +1023,8 @@ footer{z-index:2}
   .island-label.edge{padding-right:22px}.island-label.edge::after{font-size:11px;right:7px}
   body.guide-reveal #guide{top:auto;bottom:calc(84px + env(safe-area-inset-bottom,0px))}
 }
+/* Your balance: an applied suggestion shows Done for a moment, then folds away (balance.js renderList) */
+.bal-suggest li.done{animation:bal-fold .3s ease 1.3s forwards}
+@keyframes bal-fold{to{opacity:0;transform:translateY(-6px)}}
+.bal-suggest li.all-done{background:none;border:1px dashed oklch(.85 .03 295)}
+@media(prefers-reduced-motion:reduce){.bal-suggest li.done{animation:none}}

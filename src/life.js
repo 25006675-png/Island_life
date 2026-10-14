@@ -571,7 +571,7 @@ export function initLife({world,scene,flower,islands,camera,texture,player,notic
   const fromPlanner=new Set();
   const balance=createBalance({plans,me,friends:members.filter(i=>i.id!==ME),clock,checkins:checkins[ME],sheets,notice,dew,warm:id=>warm(id,.8),
     invite:LIVE?()=>openInvite(world,notice):null,more:LIVE&&backend.configured?avoid=>moreIdeas(avoid):null,
-    shared:()=>ideas().slice(0,3).map(asSuggestion)});
+    pool:()=>ideas().map(asSuggestion)});
   // your gardener waits at the left end of an open sheet's top edge; walk it
   // with ← →, jump with Space, turn it with Q E
   const sheetBuddy=sheet=>{

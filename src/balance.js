@@ -14,7 +14,7 @@ const el=(tag,props={},...kids)=>{const e=Object.assign(document.createElement(t
 const h1=h=>`${+h.toFixed(1)} h`;
 const list=parts=>parts.length<2?parts.join(''):`${parts.slice(0,-1).join(', ')} and ${parts.at(-1)}`;
 
-export function createBalance({plans,me,friends,clock,checkins,sheets,notice,dew,warm,invite,more,shared}){
+export function createBalance({plans,me,friends,clock,checkins,sheets,notice,dew,warm,invite,more,pool}){
   const sheet=$('balance-sheet'), owner=me.id;
   const ahead=b=>!b.done&&(b.date>TODAY||(b.date===TODAY&&b.start>=clock.minutes));
   const when=day=>day===TODAY?'tonight':day===addDays(TODAY,1)?'tomorrow':`on ${DAYS[dow(day)-1]}`;
@@ -24,7 +24,7 @@ export function createBalance({plans,me,friends,clock,checkins,sheets,notice,dew
   // the gardener's suggestions (life.js ideas), the same the windmill card offers; the scripted three below only
   // when there are none, or to invite a first friend into an empty sky
   function suggest(){
-    const list=shared?.()??[];
+    const list=pool?.().slice(0,3)??[];
     if(list.length){if(!friends.length&&list.length<3)list.push(scripted().find(s=>s.key==='social'));return list.filter(Boolean);}
     return scripted();
   }
@@ -264,13 +264,21 @@ export function createBalance({plans,me,friends,clock,checkins,sheets,notice,dew
       return li;
     }):[el('li',{className:'none',textContent:'Nothing yet. After a few activities, answer “How draining was that?” and your island starts to learn.'})]));
   }
-  // "Other ideas" (signed in): three new ones from Gemini per tap, never one already shown, three taps a week's look.
-  // Gemini takes 10-20 s, so the next three are asked for as soon as the sheet opens and again after each tap
-  // (`next`); a tap usually finds them ready, and otherwise waits with "Blomy is thinking…".
+  // "Other ideas": three new ones per tap, never one already shown, three taps a week's look. Signed in they come
+  // from Gemini, which takes 10-20 s, so the next three are asked for as soon as the sheet opens and again after each
+  // tap (`next`); a tap usually finds them ready, and otherwise waits with "Blomy is thinking…". In the demo (no
+  // Gemini) they are the next of the gardener's own ideas for this week (`pool`), until there are no more.
   let asked=0, seen=[], next=null;
   const prefetch=()=>{if(!more||asked>=3)return;seen.push(...current.map(s=>s.text));next=more([...new Set(seen)]).catch(()=>null);};
   $('bal-more').onclick=async()=>{
-    const b=$('bal-more');b.disabled=true;b.textContent='Blomy is thinking…';
+    const b=$('bal-more');
+    if(!more){
+      seen.push(...current.map(s=>s.text));
+      const got=(pool?.()??[]).filter(s=>!seen.includes(s.text)).slice(0,3);
+      if(got.length){current=got;applied.clear();asked++;}else{asked=3;notice('Those are all the ideas that fit this week.');}
+      renderList();return;
+    }
+    b.disabled=true;b.textContent='Blomy is thinking…';
     if(!next)prefetch();
     const t0=performance.now();let got=await next;next=null;
     if(!got?.length&&performance.now()-t0<5000){prefetch();got=await next;next=null;}   // one quick retry (a busy moment), never two slow waits
@@ -280,11 +288,15 @@ export function createBalance({plans,me,friends,clock,checkins,sheets,notice,dew
     renderList();
   };
   function renderList(){
-    const m=$('bal-more');m.hidden=!more;m.disabled=asked>=3;m.textContent=asked>=3?'That’s all the ideas for now':asked?'More ideas':'Other ideas';
+    const m=$('bal-more');m.hidden=!more&&!pool;m.disabled=asked>=3;m.textContent=asked>=3?'That’s all the ideas for now':asked?'More ideas':'Other ideas';
+    if(!current.length){$('bal-suggest').replaceChildren(el('li',{className:'all-done'},el('div',{},el('strong',{textContent:'All done here'}),
+      el('span',{textContent:asked>=3?'Your week has what it needs.':'Other ideas has a few more.'}))));return;}
     $('bal-suggest').replaceChildren(...current.map(s=>{
       const done=applied.has(s.key);
       const btn=el('button',{type:'button',className:'bal-apply',textContent:done?'Done ✓':'Apply',disabled:done||!s.apply});
-      btn.onclick=()=>{s.apply();applied.add(s.key);notice(s.done);render();};
+      // applied: "Done ✓" for a moment, then it folds away and the list holds only what you can still do
+      btn.onclick=()=>{s.apply();applied.add(s.key);notice(s.done);render();
+        setTimeout(()=>{if(!current.includes(s))return;current=current.filter(x=>x!==s);applied.delete(s.key);renderList();},1600);};
       return el('li',{className:`${done?'done':''}${s.ai?' ai':''}`},el('div',{},el('strong',{textContent:s.text}),el('span',{textContent:s.sub})),btn);
     }));
   }
