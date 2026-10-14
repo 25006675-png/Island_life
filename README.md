@@ -20,8 +20,8 @@
 - **Live app:** [https://island-life.onrender.com/](https://island-life.onrender.com/)
 - **Instant demo, no account:** [https://island-life.onrender.com/?enter=demo](https://island-life.onrender.com/?enter=demo)
 - **User guide for judges:** [USER_GUIDE.md](USER_GUIDE.md)
-- **Video Presentation:** [https://www.youtube.com/watch?v=IwbC7wqz-7Q](https://www.youtube.com/watch?v=IwbC7wqz-7Q)
-- **Presentation Slides:** [https://canva.link/7yl54f1zapatoy0](https://canva.link/7yl54f1zapatoy0)
+- **Video Presentation (for preliminary round):** [https://www.youtube.com/watch?v=IwbC7wqz-7Q](https://www.youtube.com/watch?v=IwbC7wqz-7Q)
+- **Presentation Slides (for preliminary round):** [https://canva.link/7yl54f1zapatoy0](https://canva.link/7yl54f1zapatoy0)
 
 ## Island Life in 30 seconds
 
