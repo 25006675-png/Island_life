@@ -432,8 +432,12 @@ let walkedFrom=0, felt=false, invited=false, guided=null, boardAgain=false;   //
 $('moods').addEventListener('click',e=>{if(e.target.closest('.mood'))felt=true;});
 const live=()=>!!world?.live, alone=()=>live()&&world.people.length<2, hasRoom=()=>live()&&vacancies?.list.length>0;
 // the friend's bridge nearest you (not your own), and whose island it leads to
-const nearestBridge=()=>bridges.filter(b=>b.id!==ME).sort((a,b)=>a.start.distanceTo(player.position)-b.start.distanceTo(player.position))[0]??null;
-const bridgeFriend=()=>{const b=nearestBridge();return b?islands.find(i=>i.id===b.id):null;};
+// the friend's bridge with the shortest walk from here (the way she'd actually go, round the pond; not as the crow
+// flies), chosen once when the step starts so Blomy's words and her walk agree
+let bridgeTo=null;
+const walkTo=p=>{const pts=findPath(p);if(!pts)return Infinity;let d=0,a=player.position;for(const q of pts){d+=Math.hypot(q.x-a.x,q.z-a.z);a=q;}return d;};
+const nearestBridge=()=>bridges.filter(b=>b.id!==ME).map(b=>({b,d:walkTo(b.start)})).sort((x,y)=>x.d-y.d)[0]?.b??null;
+const bridgeFriend=()=>bridgeTo?islands.find(i=>i.id===bridgeTo.id):null;
 const nearPractice=()=>{const t=life.api.practice.tree();return !!t&&Math.hypot(t.x-player.position.x,t.z-player.position.z)<3.5;};
 const guide=createGuide({
  demo:{key:'il-guide-demo',next:()=>'home',steps:[
@@ -519,7 +523,7 @@ const guide=createGuide({
   {when:live,say:'One more thing about this island: the golden window. Once a day, at a moment nobody knows in advance, the sky turns gold for a few minutes. Everyone snaps a photo of wherever they are, and the photos hang here together.'},
   // the bridges: Blomy walks you onto the nearest friend's, then Go crosses it
   {say:()=>`Bridges lead to each friend’s island. Let’s go and see ${bridgeFriend()?.owner??'a friend'}.`,
-   start:()=>{const b=nearestBridge();if(b)guided={to:()=>b.start,onto:()=>bridgePoint(b,.05)};},
+   start:()=>{const b=bridgeTo=nearestBridge();if(b)guided={to:()=>b.start,onto:()=>bridgePoint(b,.05)};},
    done:()=>!guided&&player.surface?.kind==='bridge'},
   {say:()=>`Press Go to cross to ${bridgeFriend()?.owner??'their'}’s island.`,target:()=>$('bridge-go').hidden?null:$('bridge-go'),hand:true,
    done:()=>mode==='walk'&&selected!=='community'&&selected!==ME&&!transition},
