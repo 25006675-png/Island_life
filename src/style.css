@@ -1068,11 +1068,11 @@ body.guide-reveal.guide-low #guide{top:auto;bottom:calc(96px + env(safe-area-ins
   #balance-sheet .bal-suggest li{flex-direction:row;align-items:center;gap:10px;padding:10px 12px}
   #balance-sheet .bal-suggest li>div{min-width:0}#balance-sheet .bal-apply{flex:none;padding:7px 14px}
 }
-/* phones and tablets: the buttons whose icons aren't universal (Balance, Planner, Shop) keep a small word under them,
-   plain like an app's tab bar (index.html data-label); Sound and Menu are left bare */
+/* phones and tablets: the header buttons are rounded tiles of one size; the ones whose icons aren't universal
+   (Balance, Planner, Shop) carry a small word inside, under the icon, like an app's icon (index.html data-label) */
 @media(max-width:600px),(pointer:coarse) and (max-width:1024px),(max-height:500px) and (max-width:1000px){
-  .header-actions{align-items:start;padding-bottom:14px}
-  .header-actions [data-label]{position:relative;overflow:visible}
-  .header-actions [data-label]::before{content:attr(data-label);position:absolute;top:calc(100% + 4px);left:50%;translate:-50% 0;white-space:nowrap;
-    font:500 10px/1.2 var(--display);letter-spacing:.01em;color:var(--ink);text-shadow:0 0 3px #fff,0 0 6px #fff,0 0 8px oklch(.98 .01 295);pointer-events:none}
+  .header-actions{grid-auto-columns:minmax(0,52px);gap:6px}
+  .header-actions button,.header-actions .icon-only,.header-actions .dew-capsule button{aspect-ratio:auto;height:52px;border-radius:16px;flex-direction:column;gap:3px}
+  .dew-capsule{border-radius:16px}
+  .header-actions [data-label]::before{content:attr(data-label);order:2;font:600 9.5px/1 var(--display);letter-spacing:.01em;color:currentColor;white-space:nowrap;pointer-events:none}
 }
