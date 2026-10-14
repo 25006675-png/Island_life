@@ -126,6 +126,7 @@ export function createAccount({form,enter,handoff}){
 }
 
 // ---- in the world: your sky's invite, phone prompts (signing out is the menu's Log out, main.js) ----
+const HAND='<span class="tap-hand" aria-hidden="true"><span class="ripple"></span><img src="assets/guide-hand.png" alt="" width="46" height="60" draggable="false"/></span>';   // the guide's tapping hand (guide.js), for the sample
 // the invite window (index.html #invite-dialog): your link to copy or share, and the code to type instead.
 // Every way to invite opens it: a glass island, the balance suggestion, Your sky in the menu.
 // sample: the demo shows the window with a made-up code (the demo sky is full, and isn't a real sky)
@@ -135,19 +136,20 @@ export function openInvite(world,notice,sample=false){
   $('invite-code').textContent=sample?'This is a sample. In your own sky, the link and the code are yours.'
                                      :`Or they can type your sky’s code when they sign up: ${world.sky.invite_code}`;
   const copy=$('invite-copy');copy.textContent='Copy link';
+  const hand=to=>{dialog.querySelector('.tap-hand')?.remove();if(to)to.insertAdjacentHTML('beforeend',HAND);};
   copy.onclick=async()=>{
     try{await navigator.clipboard.writeText(link);}catch{$('invite-link').select();document.execCommand('copy');}
     copy.textContent='Copied!';notice('Invite link copied. Send it to a friend.');
+    if(sample){dialog.classList.add('copied');hand($('invite-close'));$('invite-close').focus();}   // the sample: next, Close
   };
   $('invite-share').hidden=!navigator.share;
   $('invite-share').onclick=()=>navigator.share({title:'Island Life',text:'Come and float in my sky on Island Life.',url:link}).catch(()=>{});
   $('invite-close').onclick=()=>dialog.close();
-  // the demo's sample (shown by the guide, whose box is behind this window): Close is the button to press, with the
-  // guide's hand on it; a real invite keeps Copy link first
-  dialog.classList.toggle('sample',sample);dialog.querySelector('.tap-hand')?.remove();
-  if(sample)$('invite-close').insertAdjacentHTML('beforeend','<span class="tap-hand" aria-hidden="true"><span class="ripple"></span><img src="assets/guide-hand.png" alt="" width="46" height="60" draggable="false"/></span>');
+  // the demo's sample (shown by the guide, whose box is behind this window): the guide's hand on Copy link, then,
+  // once copied, on Close
+  dialog.classList.toggle('sample',sample);dialog.classList.remove('copied');hand(sample?copy:null);
   dialog.showModal();
-  if(sample)$('invite-close').focus();
+  if(sample)copy.focus();
 }
 export function mountSkyPanel(world,notice){
   const box=document.getElementById('sky-section');
