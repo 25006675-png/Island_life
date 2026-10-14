@@ -13,6 +13,7 @@
 //   quiet: Blomy's box steps away entirely while something plays out in the world (the watering, the fairy)
 //   high: Blomy's box sits at the top, leaving the lower half of the view clear (the demo's island sinking into it)
 //   flower: the flower asks even if she's resting (the check-in steps); other steps leave her rest alone
+//   act(): what the step's own button does before moving on (the demo's "Exam week" presses Exam week)
 const $=id=>document.getElementById(id);
 const seen=key=>{try{return localStorage.getItem(key)==='done';}catch{return false;}};
 const remember=key=>{try{localStorage.setItem(key,'done');}catch{}};
@@ -67,7 +68,7 @@ export function createGuide(chapters){
     for(let k=0;k<36;k++){const s=document.createElement('i');s.className='guide-confetti';const a=Math.random()*Math.PI*2,d=120+Math.random()*260;
       s.style.cssText=`--dx:${Math.cos(a)*d}px;--dy:${Math.sin(a)*d-80}px;--c:${cols[k%cols.length]};--r:${Math.random()*540-270}deg`;
       document.body.append(s);setTimeout(()=>s.remove(),1400);}};
-  next.onclick=()=>show(at+1);
+  next.onclick=()=>{step?.act?.();show(at+1);};
   $('guide-skip').onclick=()=>finish(false);
   // the drawn keys press down with yours
   const press=(e,down)=>{const k=KEYS[e.code];if(!k||box.hidden)return;art.querySelector(`[data-k="${k}"]`)?.classList.toggle('down',down);};

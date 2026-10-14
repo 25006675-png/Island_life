@@ -14,9 +14,11 @@ export function createAltitudeRail(parent,{visit}){
   const mk=(tag,cls,text='')=>Object.assign(document.createElement(tag),{className:cls,textContent:text});
   const root=mk('aside','');root.id='altitude-rail';root.setAttribute('aria-label','Altitude: how high each island floats');
   const body=mk('div','rail-body'), track=mk('div','rail-track'), names=mk('div','rail-names');
-  body.append(track,names);
-  const end=(m,words)=>{const s=mk('small','rail-end');s.append(mk('b','',`${m>0?'+':'−'}${Math.abs(m)} m`),words);return s;};
-  root.append(mk('span','rail-kicker','Altitude'),end(HIGH,'lighter week'),body,end(LOW,'heavier week'));
+  // the metres down the left of the bar, each level with its height on it; the names down the right
+  const scale=mk('div','rail-scale');
+  for(const m of [HIGH,0,LOW]){const s=mk('span','',`${m>0?'+':m<0?'−':''}${Math.abs(m)} m`);s.style.top=`${loadFromAltitude(m)*100}%`;scale.append(s);}
+  body.append(scale,track,names);
+  root.append(mk('span','rail-kicker','Altitude'),mk('small','rail-end','Lighter week'),body,mk('small','rail-end','Heavier week'));
   parent.append(root);
   // measured only on resize; the rail stays laid out while hidden (visibility), so the height is always known
   let rows=[],tall=0,right=0,shown=false;
@@ -28,9 +30,9 @@ export function createAltitudeRail(parent,{visit}){
       const own=island.id===ME, zero=!island.owner;
       const dot=mk('i',zero?'rail-zero':own?'rail-dot me':'rail-dot');
       const tag=mk('button',`rail-tag${own?' me':zero?' zero':''}`);tag.type='button';tag.title=`Visit ${island.name}`;
-      const note=mk('span','rail-note',zero?'0 m':'');
+      const note=mk('span','rail-note');
       tag.append(mk('b','',own?'You':zero?'Gathering island':island.owner));
-      if(own||zero)tag.append(note);
+      if(own)tag.append(note);
       tag.onclick=()=>visit(island.id);
       tag.onpointerenter=()=>{dot.classList.add('lit');island.label?.classList.add('pointed');};
       tag.onpointerleave=()=>{dot.classList.remove('lit');island.label?.classList.remove('pointed');};

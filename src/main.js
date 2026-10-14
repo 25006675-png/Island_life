@@ -280,7 +280,8 @@ function focusOn(id){
   // ~110 m out, off to one side, looking down about 30 degrees at a point 22 m below the island: it starts above the
   // middle of the screen and sinks into the lower half, which the guide keeps clear (guide.js `high`)
   const L=Math.hypot(i.x,i.z)||1, ox=i.x/L, oz=i.z/L, look=new T.Vector3(i.x,i.altitude-22,i.z);
-  focus={look,pos:look.clone().add(new T.Vector3(ox*85-oz*35,55,oz*85+ox*35))};
+  const k=Math.max(1,.75/camera.aspect);   // a phone held upright: further out, so the island fits across the screen
+  focus={look,pos:look.clone().add(new T.Vector3((ox*85-oz*35)*k,55*k,(oz*85+ox*35)*k))};
   transition={from:camera.position.clone(),targetFrom:controls.target.clone(),time:0};
 }
 function overview(){if(!ready)return;mode='overview';focus=null;$('app').dataset.mode=mode;$('island-card').open=false;controls.enabled=true;controls.minDistance=14;controls.maxDistance=skyReach();transition={from:camera.position.clone(),targetFrom:controls.target.clone(),time:0};clearTimeout(arriveTimer);document.querySelector('.place').classList.remove('arriving');document.querySelector('.place-title').style.transform='';$('location-kicker').textContent='Your sky neighborhood';$('location-title').textContent='A world of little wonders.';$('hint').textContent='Choose an island. Stay a little while.';$('overview').setAttribute('aria-pressed','true');$('walk').setAttribute('aria-pressed','false');keys.clear();}
@@ -382,18 +383,28 @@ function crossBridge(dt){
   if(player.surface.kind==='island'&&player.surface.id!==selected){selected=player.surface.id;arrive(islands.find(i=>i.id===selected));syncPanel();}
 }
 $('bridge-go').onclick=()=>{const s=player.surface;if(s?.kind!=='bridge')return;travel={bridge:s.id,t:s.t,dir:heading};canvas.focus({preventScroll:true});};
-// Touch screens: a joystick for walking, bottom left, on foot only (?touch shows it with a mouse, for testing).
-// Push to walk, all the way to run; it drives the same walking as WASD. A second finger on the scene still turns
-// the camera. On a phone the island card folds away while you walk, so it isn't under your thumb.
+// Touch screens: a floating joystick for walking, on foot only (?touch shows it with a mouse, for testing). Put a
+// thumb down anywhere on the left half of the scene (#stick-zone, under every button and card) and the stick
+// appears under it; push to walk, all the way to run; lift and it goes back to a faint resting spot that shows it's
+// there. A quick tap there is still a tap on the world (tapWorld). The other half turns the camera. "Joystick on the
+// right" in the menu swaps the halves (remembered per device). On a phone the island card folds away while you walk.
 const TOUCH=matchMedia('(pointer: coarse)').matches||new URLSearchParams(location.search).has('touch');
-const stick={on:false,x:0,y:0,id:null};
-{const base=$('stick'),knob=base.firstElementChild,R=46;
-  const move=e=>{const r=base.getBoundingClientRect();let dx=e.clientX-(r.left+r.width/2),dy=e.clientY-(r.top+r.height/2);
-    const d=Math.hypot(dx,dy);if(d>R){dx*=R/d;dy*=R/d;}stick.x=dx/R;stick.y=dy/R;knob.style.translate=`${dx}px ${dy}px`;};
-  base.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();base.setPointerCapture(e.pointerId);stick.on=true;stick.id=e.pointerId;move(e);});
-  base.addEventListener('pointermove',e=>{if(stick.on&&e.pointerId===stick.id)move(e);});
-  const end=e=>{if(e.pointerId!==stick.id)return;stick.on=false;stick.x=stick.y=0;stick.id=null;knob.style.translate='';};
-  base.addEventListener('pointerup',end);base.addEventListener('pointercancel',end);}
+const stick={on:false,x:0,y:0,id:null}, STICK_SIDE='il-stick-right';
+{const zone=$('stick-zone'),base=$('stick'),knob=base.firstElementChild,R=46;let cx=0,cy=0,sx=0,sy=0,downAt=0,moved=false;
+  const move=e=>{let dx=e.clientX-cx,dy=e.clientY-cy;const d=Math.hypot(dx,dy);if(d>R){dx*=R/d;dy*=R/d;}
+    stick.x=dx/R;stick.y=dy/R;knob.style.translate=`${dx}px ${dy}px`;if(Math.hypot(e.clientX-sx,e.clientY-sy)>8)moved=true;};
+  zone.addEventListener('pointerdown',e=>{if(stick.on)return;e.preventDefault();zone.setPointerCapture(e.pointerId);
+    stick.on=true;stick.id=e.pointerId;cx=sx=e.clientX;cy=sy=e.clientY;moved=false;downAt=performance.now();
+    base.classList.add('live');base.style.left=`${cx}px`;base.style.top=`${cy}px`;move(e);});
+  zone.addEventListener('pointermove',e=>{if(stick.on&&e.pointerId===stick.id)move(e);});
+  const end=e=>{if(e.pointerId!==stick.id)return;const tap=!moved&&performance.now()-downAt<300;
+    stick.on=false;stick.x=stick.y=0;stick.id=null;knob.style.translate='';base.classList.remove('live');base.style.left=base.style.top='';
+    if(tap)tapWorld(e.clientX,e.clientY);};
+  zone.addEventListener('pointerup',end);zone.addEventListener('pointercancel',end);
+  const right=()=>{try{return localStorage.getItem(STICK_SIDE)==='1';}catch{return false;}};
+  $('app').classList.toggle('stick-right',right());$('stick-right').checked=right();$('stick-side-row').hidden=!TOUCH;
+  $('stick-right').onchange=e=>{try{localStorage.setItem(STICK_SIDE,e.target.checked?'1':'0');}catch{}$('app').classList.toggle('stick-right',e.target.checked);};}
+const stickHalf=()=>$('app').classList.contains('stick-right')?'right':'left';
 // It steps aside while something is open over the world: a panel, a sheet, a dialog, the island card unfolded, or
 // the lifted timetable (it doesn't walk there, and would cover the ribbon's labels).
 // On mobile it sits just above the island's name (the block bottom left), clear of its words however tall it grows,
@@ -408,7 +419,7 @@ function liftStick(){const app=$('app');
 function showStick(){
   const foot=TOUCH&&mode==='walk'&&!transition;
   if(foot!==onFoot){onFoot=foot;if(foot&&MOBILE.matches)$('island-card').open=false;}
-  const want=foot&&!overWorld();if(want===stickShown)return;stickShown=want;$('stick').hidden=!want;
+  const want=foot&&!overWorld();if(want===stickShown)return;stickShown=want;$('stick').hidden=$('stick-zone').hidden=!want;
   if(want)liftStick();
   else{stick.on=false;stick.x=stick.y=0;stick.id=null;$('stick').firstElementChild.style.translate='';}
 }
@@ -418,29 +429,26 @@ function showStick(){
 //               about it, and nothing is saved), your balance, then (signed in) the glass places that wait for friends
 //   friends  -- once there is a friend: the gathering island, its task board, the golden window, the bridges
 let walkedFrom=0, felt=false, invited=false, guided=null;   // guided: {to()} the guide's walk, along the path (route)
-const tried={};
 $('moods').addEventListener('click',e=>{if(e.target.closest('.mood'))felt=true;});
-for(const b of document.querySelectorAll('[data-scenario]'))b.addEventListener('click',()=>{tried[b.dataset.scenario]=true;});
-$('reset').addEventListener('click',()=>{tried.reset=true;});
 const live=()=>!!world?.live, alone=()=>live()&&world.people.length<2, hasRoom=()=>live()&&vacancies?.list.length>0;
-const inSettings=sel=>({start:()=>document.querySelector(sel)?.scrollIntoView({block:'center'}),target:()=>$('settings').hidden?null:document.querySelector(sel),hand:true});
 const nearPractice=()=>{const t=life.api.practice.tree();return !!t&&Math.hypot(t.x-player.position.x,t.z-player.position.z)<3.5;};
 const guide=createGuide({
- demo:{key:'il-guide-demo',next:()=>'home',end:()=>setPanel(false),steps:[
+ demo:{key:'il-guide-demo',next:()=>'home',steps:[
   {say:'Hi, I’m Blomy! This is a demo sky: Aisha’s island and her four friends. Every island floats at the height of its owner’s week. Let me show you.',button:'Show me',
    start:()=>focusOn(ME)},
-  // the scenario buttons only exist in the demo: say so, so the menu doesn't read as how the app is used
-  {say:'In your own sky, your plans and check-ins move your island over the days. The demo has a shortcut so you can see it now: a few buttons in the menu, just for showing. Open it.',
-   target:()=>$('settings-toggle'),hand:true,done:()=>!$('settings').hidden},
-  {high:true,say:'Press Exam week, and watch Aisha’s island sink toward the clouds.',...inSettings('[data-scenario=exam]'),done:()=>tried.exam},
-  {high:true,say:'A heavy week sinks it, as far as 55 m down into the clouds. A light one lifts it 45 m up. Now press A rough few days.',...inSettings('[data-scenario=rough]'),done:()=>tried.rough},
-  {say:'Tired and stressed check-ins bring cloud, then rain, even when the week isn’t full. Press Back to this evening.',...inSettings('#reset'),done:()=>tried.reset},
+  // demo-only shortcuts, pressed from Blomy's box (they live in the menu too), so nothing covers the island
+  {high:true,say:'In your own sky, your plans and check-ins move your island over the days. This demo has a shortcut to show it now. Try an exam week.',
+   button:'Exam week',act:()=>document.querySelector('[data-scenario=exam]').click()},
+  {high:true,say:'A heavy week sinks it, as far as 55 m down into the clouds. A light one lifts it 45 m up. Now try a rough few days.',
+   button:'A rough few days',act:()=>document.querySelector('[data-scenario=rough]').click()},
+  {high:true,say:'Tired and stressed check-ins bring cloud, then rain, even when the week isn’t full. The menu keeps these shortcuts, under Try the demo week.',
+   button:'Back to this evening',act:()=>$('reset').click()},
  ]},
  home:{key:'il-guide',next:()=>world.people.length>1?'friends':null,end:()=>life?.api.practice.clear(),steps:[
   {say:()=>live()?'Hi, I’m Blomy! This is your sky, and your island is “My island”. Tap it to come home.'
                  :'For today, Aisha’s island is yours: “My island”. Tap it to go there.',
    target:()=>islands.find(i=>i.id===ME)?.label,hand:true,done:()=>mode==='walk'&&!transition},
-  {say:()=>TOUCH?'This is home! Walk with the joystick, and drag with another finger to look around.'
+  {say:()=>TOUCH?`This is home! Put your thumb anywhere on the ${stickHalf()} side to walk, and drag on the other side to look around.`
                 :'This is home! Try walking: press the keys and watch them light up.',
    art:()=>TOUCH?'stick':'keys',target:()=>TOUCH?$('stick'):null,hand:true,
    start:()=>{walkedFrom=player.distance;},done:()=>player.distance-walkedFrom>8},
@@ -913,7 +921,9 @@ function frame(time){
 
 let down=null;
 canvas.addEventListener('pointerdown',e=>{down=[e.clientX,e.clientY];});
-canvas.addEventListener('pointerup',e=>{if(!ready||!down||Math.hypot(e.clientX-down[0],e.clientY-down[1])>5)return;down=null;pointer.set(e.clientX/innerWidth*2-1,-e.clientY/innerHeight*2+1);raycaster.setFromCamera(pointer,camera);if(life.pick(raycaster))return;if(mode!=='overview')return;const hit=raycaster.intersectObjects([...islands.map(i=>i.group),...vacancies.groups()],true).find(h=>h.object.userData.islandId||h.object.userData.vacant);if(hit?.object.userData.vacant)vacancies.choose(hit.object.userData.vacant);else if(hit)visit(hit.object.userData.islandId);});
+canvas.addEventListener('pointerup',e=>{if(!ready||!down||Math.hypot(e.clientX-down[0],e.clientY-down[1])>5)return;down=null;tapWorld(e.clientX,e.clientY);});
+// a tap on the world: on the canvas, or a quick tap on the joystick's half (its touch area sits over the canvas)
+function tapWorld(x,y){if(!ready)return;pointer.set(x/innerWidth*2-1,-y/innerHeight*2+1);raycaster.setFromCamera(pointer,camera);if(life.pick(raycaster))return;if(mode!=='overview')return;const hit=raycaster.intersectObjects([...islands.map(i=>i.group),...vacancies.groups()],true).find(h=>h.object.userData.islandId||h.object.userData.vacant);if(hit?.object.userData.vacant)vacancies.choose(hit.object.userData.vacant);else if(hit)visit(hit.object.userData.islandId);}
 window.addEventListener('keydown',e=>{if(['INPUT','SELECT','TEXTAREA','BUTTON'].includes(document.activeElement.tagName))return;if(e.code==='Escape'){overview();return;}if(e.code==='Space'&&mode==='walk'){e.preventDefault();jump();return;}if(/^(Key[WASDQERFZX]|Arrow(Up|Down|Left|Right)|Shift(Left|Right))$/.test(e.code)){if(mode==='walk'||/^Key[QERFZX]$/.test(e.code))e.preventDefault();keys.add(e.code);}});
 window.addEventListener('keyup',e=>keys.delete(e.code));window.addEventListener('blur',()=>{keys.clear();helpKeys(null);});
 // the key card at the bottom right (index.html .help) presses down with your keys

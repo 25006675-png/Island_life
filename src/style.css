@@ -978,17 +978,18 @@ footer{z-index:2}
    card's frosted style and the island card gauge's colours -- lighter weeks up top, heavier ones down by the cloud sea,
    0 m (the gathering island) in the middle. It fades in with the sky view, and steps aside on a phone or a short
    window, where the left edge belongs to the islands. */
-#altitude-rail{position:absolute;z-index:2;left:36px;top:calc(var(--header-bottom,112px) + 30px);bottom:calc(var(--stick-bottom,240px) + 14px);width:200px;
+#altitude-rail{position:absolute;z-index:2;left:36px;top:calc(var(--header-bottom,112px) + 30px);bottom:calc(var(--stick-bottom,240px) + 14px);width:240px;
   display:flex;flex-direction:column;gap:6px;pointer-events:none;text-shadow:0 1px 0 #fff,0 0 6px rgb(255 255 255 / .85);
   opacity:0;visibility:hidden;transition:opacity .4s,visibility 0s .4s}
 #altitude-rail.on{opacity:1;visibility:visible;transition:opacity .4s}
 #app:has(#login:not([hidden])) #altitude-rail{visibility:hidden}
 .rail-kicker{font:600 15px var(--display);color:var(--ink)}
-.rail-end{padding-left:28px;font-size:11px;color:var(--muted)}
-.rail-end b{margin-right:4px;font:600 12px var(--display);color:var(--ink)}
+.rail-end{padding-left:87px;font-size:12px;color:var(--muted)}   /* in line with the names: past the metres, the bar and the gaps */
+.rail-scale{position:relative;flex:none;width:46px}
+.rail-scale span{position:absolute;right:0;translate:0 -50%;font:600 14px var(--display);color:var(--ink);white-space:nowrap}
 .rail-body{position:relative;flex:1;min-height:0;display:flex;gap:10px;margin:10px 0}
 /* a white-edged bar with a deeper fill than the card gauge, so it holds on a pale sky as well as a dark one */
-.rail-track{position:relative;flex:none;width:12px;margin-left:5px;border-radius:6px;border:2px solid #fff;box-shadow:0 2px 0 var(--violet-soft),0 4px 12px -4px rgba(79,42,153,.45);
+.rail-track{position:relative;flex:none;width:12px;border-radius:6px;border:2px solid #fff;box-shadow:0 2px 0 var(--violet-soft),0 4px 12px -4px rgba(79,42,153,.45);
   background:linear-gradient(#7cc6f2,#a9b3f0 30%,#b79cee 50%,#9d63f2 75%,#6a3fc4)}
 .rail-names{position:relative;flex:1;min-width:0}
 .rail-dot{position:absolute;left:50%;width:12px;height:12px;translate:-50% -50%;border-radius:50%;background:#fff;border:2px solid var(--orchid);box-shadow:0 2px 4px rgba(79,42,153,.3);transition:scale .15s}
@@ -1007,3 +1008,18 @@ footer{z-index:2}
 @media(prefers-reduced-motion:reduce){#altitude-rail,.rail-dot{transition:none}}
 /* a name on the rail lifts its island's sign, as hovering the sign itself does */
 .island-label.pointed{background:repeating-linear-gradient(94deg,transparent 0 6px,oklch(.3 .05 60 / .06) 6px 8px),linear-gradient(160deg,#eed4ae,#d8b286);transform:translate(-50%,-50%) translateY(-2px)}
+/* the floating joystick (main.js): its touch area is the left half of the scene, between the header and the place
+   title, under every button and card; the stick rests faintly at the bottom of it and jumps to your thumb (.live) */
+#stick-zone{position:absolute;left:0;width:50%;top:var(--header-bottom,96px);bottom:var(--stick-bottom,calc(96px + env(safe-area-inset-bottom,0px)));z-index:0;touch-action:none}
+#app.stick-right #stick-zone{left:auto;right:0}
+#stick{pointer-events:none;opacity:.55;transition:opacity .2s}
+#app.stick-right #stick{left:auto;right:max(24px,env(safe-area-inset-right))}
+#stick.live{position:fixed;left:0;top:0;bottom:auto;right:auto;translate:-50% -50%;opacity:1;transition:none}
+#app.stick-right #stick.live{right:auto}
+/* a phone: island signs at the screen's edge stay small; when a card needs reading (the tree's Done, the board, a
+   gate) Blomy's box waits at the bottom instead of covering it */
+@media(max-width:600px){
+  .island-label{font-size:12px;padding:3px 10px 4px}
+  .island-label.edge{padding-right:22px}.island-label.edge::after{font-size:11px;right:7px}
+  body.guide-reveal #guide{top:auto;bottom:calc(84px + env(safe-area-inset-bottom,0px))}
+}
