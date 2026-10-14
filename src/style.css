@@ -1028,3 +1028,10 @@ footer{z-index:2}
 @keyframes bal-fold{to{opacity:0;transform:translateY(-6px)}}
 .bal-suggest li.all-done{background:none;border:1px dashed oklch(.85 .03 295)}
 @media(prefers-reduced-motion:reduce){.bal-suggest li.done{animation:none}}
+/* the menu, in groups; the demo's shortcuts in their own dashed box, tagged as demo only */
+#settings .set-title{font:600 11px var(--display);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:22px 0 12px}
+#settings .demo-box{border:1.5px dashed oklch(.78 .07 295);border-radius:14px;padding:12px 14px 6px;margin:2px 0 6px;background:oklch(.97 .02 295 / .55)}
+#settings .demo-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
+#settings .demo-head .demo-title{margin:0}
+#settings .demo-box>.panel-note{margin:8px 0 12px}
+#settings .demo-tag{flex:none;font:600 11px var(--display);color:#fff;background:var(--orchid,#9b6bff);border-radius:999px;padding:3px 9px}
