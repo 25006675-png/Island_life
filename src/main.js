@@ -428,7 +428,7 @@ function showStick(){
 //   home     -- come home, walk, tell your flower how you feel, plant and finish a practice block (the fairy asks
 //               about it, and nothing is saved), your balance, then (signed in) the glass places that wait for friends
 //   friends  -- once there is a friend: the gathering island, its task board, the golden window, the bridges
-let walkedFrom=0, felt=false, invited=false, guided=null, boardAgain=false;   // guided: {to()} the guide's walk, along the path (route)
+let walkedFrom=0, triedWalking=0, triedFrom=0, felt=false, invited=false, guided=null, boardAgain=false;   // guided: {to()} the guide's walk, along the path (route)
 $('moods').addEventListener('click',e=>{if(e.target.closest('.mood'))felt=true;});
 const live=()=>!!world?.live, alone=()=>live()&&world.people.length<2, hasRoom=()=>live()&&vacancies?.list.length>0;
 // the friend's bridge nearest you (not your own), and whose island it leads to
@@ -458,14 +458,16 @@ const guide=createGuide({
   {say:()=>TOUCH?`This is home! Put your thumb anywhere on the ${stickHalf()} side to walk, and drag on the other side to look around.`
                 :'This is home! Try walking: press the keys and watch them light up.',
    art:()=>TOUCH?'stick':'keys',target:()=>TOUCH?$('stick'):null,hand:true,
-   start:()=>{walkedFrom=player.distance;},done:()=>player.distance-walkedFrom>8},
+   start:()=>{walkedFrom=player.distance;triedFrom=triedWalking;},done:()=>triedWalking-triedFrom>1.5||player.distance-walkedFrom>6}   /* about 1.5 s of trying is enough, even into a railing: Blomy takes it from there */,
   // a new island honestly floats high (an empty week is a light one): said, not acted out
   {when:live,say:'Your island floats high because your week is still light. Busy weeks sink it toward the clouds, and hard days bring rain. This card keeps count.',
    target:()=>$('island-card'),hand:false},
   // the check-in: your flower asks (flower.js), only on your own island
-  {say:()=>TOUCH?'See the flower by your gate? She asks how you’re feeling. Walk up to her, or tap her.'
-                :'See the flower by your gate? She asks how you’re feeling. Walk up to her, tap her, or press T.',
-   flower:true,target:()=>$('flower-talk').hidden?null:$('flower-talk'),hand:true,done:()=>!$('flower-ask').hidden},
+  // Blomy walks you to your flower; she asks as you arrive (or tap her face, or press T)
+  {say:'Nice! Let’s go and meet your flower by the gate. She asks how you’re feeling.',
+   start:()=>{guided={to:()=>{if(!flower)return null;const f=flower.getWorldPosition(new T.Vector3()),dx=player.position.x-f.x,dz=player.position.z-f.z,d=Math.hypot(dx,dz)||1;
+     return new T.Vector3(f.x+dx/d*2.2,0,f.z+dz/d*2.2);}};},
+   flower:true,target:()=>!guided&&!$('flower-talk').hidden?$('flower-talk'):null,hand:true,done:()=>!$('flower-ask').hidden},
   {say:'Pick the one closest. A bloom in that colour opens beside her, and over a few days your feelings make your island’s weather. She’ll rest for an hour, then ask again.',
    flower:true,start:()=>{felt=false;},target:()=>$('flower-ask').hidden?null:$('moods'),hand:true,done:()=>felt},
   // an open sheet is yours to read: Blomy steps aside (style.css) and waits until you close it yourself
@@ -672,10 +674,12 @@ function walk(dt){
   let ix=Number(keys.has('KeyD')||keys.has('ArrowRight'))-Number(keys.has('KeyA')||keys.has('ArrowLeft'));
   let iz=Number(keys.has('KeyS')||keys.has('ArrowDown'))-Number(keys.has('KeyW')||keys.has('ArrowUp'));
   if(stick.on&&Math.hypot(stick.x,stick.y)>.15){ix=stick.x;iz=stick.y;}   // the touch joystick, analog
+  if(ix||iz)triedWalking+=dt;   // time spent asking to walk, moving or not (the guide's walking lesson)
   if(travel&&(ix||iz))travel=null;   // any walking key takes the controls back from Go
   if(chore||thirst.length){if(ix||iz||travel)quench();else{tend(dt);return;}}   // ...and from the watering
   if(guided){   // ...and from the guide's walk, which waits (up to 3 s) for where it's going: a new tree plants next frame
-    if(ix||iz||travel)guided=null;
+    if(!(ix||iz))guided.clear=true;   // a key still held from before her walk began doesn't take over; a fresh press does
+    if(((ix||iz)&&guided.clear)||travel)guided=null;
     else{if(!guided.r){const to=guided.to();if(to)guided.r=route(to,guided.onto?.());else if((guided.wait=(guided.wait??0)+dt)>3)guided=null;}
          if(guided?.r&&follow(guided.r,WALK,dt))guided=null;return;}
   }
