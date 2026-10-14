@@ -1051,3 +1051,20 @@ body.guide-reveal.guide-low #guide{top:auto;bottom:calc(96px + env(safe-area-ins
 #invite-dialog.sample.copied #invite-close{background:var(--accent);color:oklch(.99 .01 60);text-decoration:none}
 /* a touch screen (main.js TOUCH), whatever its size: the keys card and its tab don't show */
 #app.touch .help,#app.touch #help-toggle{display:none!important}
+/* a phone, the planner and Your balance: one compact row per activity (time | what | Done over Let go), a shorter
+   balance header, and Apply beside each suggestion. Scoped to the sheets, so it wins over the earlier phone rules */
+@media(max-width:600px){
+  #planner-sheet .plan-item{flex-wrap:nowrap;align-items:center;gap:8px;padding:8px 10px 8px 12px}
+  #planner-sheet .plan-open{flex:1 1 auto;min-width:0;grid-template-columns:auto minmax(0,1fr);gap:0 10px;align-items:start}
+  #planner-sheet .plan-when{font-size:11px;padding-top:2px}
+  #planner-sheet .plan-what{min-width:0}#planner-sheet .plan-what strong{display:block;font-size:13px;line-height:1.25}
+  #planner-sheet .plan-what>span{font-size:11px;line-height:1.35}
+  #planner-sheet .plan-acts{flex:none;margin-left:0;flex-direction:column;align-items:flex-end;gap:2px}
+  #planner-sheet .plan-acts .text-button{font-size:11px}#planner-sheet .plan-done{padding:5px 11px}
+  #planner-sheet #mark-all{padding:5px 12px;font-size:12px}
+  #balance-sheet .bal-head{flex-wrap:wrap;gap:8px 10px}#balance-sheet .bal-head h2{flex:1 1 100%;font-size:20px;line-height:1.15}
+  #balance-sheet .bal-head .bal-stats-toggle{margin-left:0}
+  #balance-sheet .bal-stats-toggle{padding:6px 12px;font-size:12px;white-space:nowrap}
+  #balance-sheet .bal-suggest li{flex-direction:row;align-items:center;gap:10px;padding:10px 12px}
+  #balance-sheet .bal-suggest li>div{min-width:0}#balance-sheet .bal-apply{flex:none;padding:7px 14px}
+}
