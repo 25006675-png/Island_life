@@ -24,7 +24,6 @@ import { makeFlower } from './flowermodel.js';
 import { createGuide } from './guide.js';
 import { createWatering } from './watering.js';
 import * as sound from './sound.js';
-import { createLogin } from './login.js';
 import { demoWorld, enterWorld, DEMO_PEOPLE } from './world.js';
 import * as backend from './backend.js';
 import { openInvite } from './account.js';
@@ -672,11 +671,11 @@ function govern(ms,now){
 }
 // ?skiplogin -> straight into the demo world (embedding, tests).
 // ?enter -> arriving from the welcome page (welcome/index.html), which has
-// already signed you in (the session is saved) or chosen the demo (?enter=demo):
-// your sky opens without the sign-in screen. Anything else -- no session, no
-// sky yet, a network hiccup -- falls back to the sign-in screen.
-// Otherwise the world loads behind the sign-in, and its islands are built once
-// we know whose sky it is: the demo's five, or a signed-in student's (world.js).
+// already signed you in (the session is saved) or chosen the demo (?enter=demo).
+// Any visit with a saved session and a sky opens that sky; anything else -- no
+// session, no sky yet, a network hiccup -- goes back to the welcome page, which
+// holds the only sign-in. The islands are built once we know whose sky it is:
+// the demo's five, or a signed-in student's (world.js).
 let world;
 const worldReady=new Promise(resolve=>{
   const QS=new URLSearchParams(location.search);
@@ -685,18 +684,15 @@ const worldReady=new Promise(resolve=>{
     notice(w.live?`Welcome back, ${w.people.find(p=>p.id===ME)?.name||'friend'}. Your island kept growing while you were away.`
                  :'Welcome to the demo sky. This is Aisha’s island, and her four friends.');
   };
-  if(QS.has('skiplogin')){$('login').hidden=true;resolve(demoWorld());return;}
-  if(QS.has('enter')){
-    $('login').hidden=true;
-    if(QS.get('enter')==='demo'||!backend.configured){hello(demoWorld());return;}
-    (async()=>{
-      const user=await backend.currentUser(), sky=user&&await backend.mySky(user.id);
-      if(!sky)throw new Error('no sky yet');
-      hello(enterWorld(await backend.loadWorld(user,sky)));
-    })().catch(e=>{console.warn('Arrival without a sky:',e.message);$('login').hidden=false;createLogin(hello);});
-    return;
-  }
-  createLogin(hello);
+  if(QS.has('skiplogin')){resolve(demoWorld());return;}
+  if(QS.get('enter')==='demo'||!backend.configured){hello(demoWorld());return;}
+  // signed in with a sky: straight in (a phone prompt's ?ask=, Google Calendar's ?calendar= keep working); anyone
+  // else goes to the welcome page, the one way in (the sign-in, a new sky, the demo)
+  (async()=>{
+    const user=await backend.currentUser(), sky=user&&await backend.mySky(user.id);
+    if(!sky)throw new Error('no sky yet');
+    hello(enterWorld(await backend.loadWorld(user,sky)));
+  })().catch(e=>{console.warn('No sky to open here:',e.message);location.replace(`${import.meta.env.BASE_URL}welcome/`);});
 });
 
 async function init(){

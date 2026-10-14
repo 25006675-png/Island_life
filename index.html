@@ -160,6 +160,7 @@
             <section class="bal-panel" aria-labelledby="bal-suggest-title">
               <h3 id="bal-suggest-title">Small changes that would help</h3>
               <ul id="bal-suggest" class="bal-suggest"></ul>
+              <button type="button" id="bal-more" class="text-button" hidden>Other ideas</button>
             </section>
             <section class="bal-panel" aria-labelledby="bal-done-title">
               <h3 id="bal-done-title">Done so far</h3>
@@ -210,58 +211,6 @@
         <div class="dialog-actions"><button type="submit" class="solid-small">Save</button><button id="ed-delete" type="button" class="text-button">Remove</button><button id="ed-cancel" type="button" class="text-button">Cancel</button></div>
       </form>
     </dialog>
-    <section id="login" aria-labelledby="login-title">
-      <div class="login-brand"><img class="brand-logo" src="assets/logo.webp" alt="Island Life" width="351" height="120"/></div>
-      <div class="login-hero">
-        <div class="login-pitch">
-          <h1 id="login-title" class="login-headline" style="--i:0">Your week, grown into an island in the sky.</h1>
-          <p class="login-lede" style="--i:1">Island Life turns your timetable and your feelings into a small floating world. A heavy week shows before it arrives, and friends see your weather, never your plans.</p>
-        </div>
-        <form id="login-form" class="login-card" aria-labelledby="login-form-title">
-          <h2 id="login-form-title">Visit your island</h2>
-          <p>Sign in to see what grew while you were away.</p>
-          <label>Email<input id="login-email" type="email" placeholder="you@example.com" autocomplete="username"/></label>
-          <label>Password<input id="login-password" type="password" placeholder="••••••••" autocomplete="current-password"/></label>
-          <button type="submit" class="solid">Sign in</button>
-          <button type="button" id="login-guest" class="text-button">Try the demo island</button>
-          <p class="login-demo">Demo only. No account is needed, and any details work.</p>
-        </form>
-      </div>
-      <p class="login-hint">← → walk to a sign · Space jump · Q E turn</p>
-      <img class="login-ground" src="/assets/ground.webp" alt="" aria-hidden="true"/>
-      <img class="login-tree login-sakura" src="/assets/tree-sakura.webp" alt="" aria-hidden="true"/>
-      <img class="login-tree login-willow" src="/assets/tree-willow.webp" alt="" aria-hidden="true"/>
-      <div class="login-sign" style="--at:18%">
-        <div class="sign-card" id="sign-island">
-          <ul class="sign-list">
-            <li><i style="--c:#7fc48d"></i><p><b>Activities grow trees</b>Every block you finish plants a tree, and each kind of activity has its own species.</p></li>
-            <li><i style="--c:#f3c55c"></i><p><b>Feelings become lanterns</b>One tap on how you feel sends a coloured lantern into your sky.</p></li>
-            <li><i style="--c:#8fa3c9"></i><p><b>Stress changes the weather</b>A few heavy days gather clouds and rain. Calmer days clear the sky.</p></li>
-            <li><i style="--c:#bba9e0"></i><p><b>A full week sinks your island</b>The busier your plan, the lower it floats toward the clouds.</p></li>
-          </ul>
-        </div>
-        <button type="button" class="sign-post" aria-expanded="false" aria-controls="sign-island"><span class="board">How your island works</span></button>
-      </div>
-      <div class="login-sign" style="--at:40%">
-        <div class="sign-card" id="sign-community">
-          <ul class="sign-list">
-            <li><i style="--c:#ffcf8a"></i><p><b>Share your day</b>Hang photos on the carousel by the pond. Once a day, a two-minute golden window opens by surprise, and those photos hang in gold.</p></li>
-            <li><i style="--c:#c9976a"></i><p><b>Leave notes on wood</b>Drop a few kind words at a friend’s gate.</p></li>
-            <li><i style="--c:#6fb6e6"></i><p><b>Do small things together</b>Join a small task, like a 30-minute walk. Everyone who finishes earns dewdrops.</p></li>
-            <li><i style="--c:#9fdcc8"></i><p><b>Your plans stay private</b>Friends see your weather and height, never your schedule.</p></li>
-          </ul>
-        </div>
-        <button type="button" class="sign-post" aria-expanded="false" aria-controls="sign-community"><span class="board">Engage with your community</span></button>
-      </div>
-      <i class="login-puff" style="--x:8%;--y:16%;--w:340px;--d:46s" aria-hidden="true"></i>
-      <i class="login-puff" style="--x:70%;--y:8%;--w:420px;--d:58s" aria-hidden="true"></i>
-      <i class="login-puff" style="--x:38%;--y:60%;--w:300px;--d:52s" aria-hidden="true"></i>
-      <i class="login-lantern" style="--x:12%;--c:#ffd580;--d:21s;--t:-4s" aria-hidden="true"></i>
-      <i class="login-lantern" style="--x:31%;--c:#9fdcc8;--d:26s;--t:-15s" aria-hidden="true"></i>
-      <i class="login-lantern" style="--x:52%;--c:#bba9e0;--d:23s;--t:-9s" aria-hidden="true"></i>
-      <i class="login-lantern" style="--x:71%;--c:#f39a7c;--d:28s;--t:-20s" aria-hidden="true"></i>
-      <i class="login-lantern" style="--x:88%;--c:#92aede;--d:24s;--t:-2s" aria-hidden="true"></i>
-    </section>
     <div id="loading" role="status"><div class="loading-leaf">♧</div><h2>Your islands are coming into view.</h2><p id="loading-text">Gathering the gardens…</p><progress id="load-progress" max="9" value="0"></progress></div>
     <div id="past-banner" class="past-banner" hidden><span id="past-label"></span><button id="past-back" type="button" class="solid-small">Back to this week</button></div>
     <div id="notice" role="status" aria-live="polite"></div>

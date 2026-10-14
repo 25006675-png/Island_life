@@ -37,3 +37,11 @@ test('only friends in the sky are named; length stays between 15 and 90 minutes'
   assert.equal(checkIdea({...ok,mins:300},offered).mins,90);
   assert.equal(checkIdea({...ok,mins:2},offered).mins,15);
 });
+
+test('only a heavy schedule moves a block; no numbers in the words; friends only for time together', () => {
+  assert.deepEqual(checkIdea({type:'move',move:0,line},{...offered,mode:'schedule'}),{type:'move',move:0,line});
+  assert.equal(checkIdea({type:'move',move:0,line},{...offered,mode:'rest'}),null);
+  assert.equal(checkIdea({type:'move',move:0,line},{...offered,mode:'balance'}),null);
+  assert.equal(checkIdea({type:'add',title:'Early night',cat:'rest',mins:60,slot:0,line:'Try bed by 10 tonight, it might help a lot.'},offered),null);
+  assert.equal(checkIdea({type:'add',title:'A walk',cat:'exercise',mins:30,slot:0,friend:'Ben',line},offered).friend,'');
+});

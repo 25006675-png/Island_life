@@ -14,7 +14,7 @@ const el=(tag,props={},...kids)=>{const e=Object.assign(document.createElement(t
 const h1=h=>`${+h.toFixed(1)} h`;
 const list=parts=>parts.length<2?parts.join(''):`${parts.slice(0,-1).join(', ')} and ${parts.at(-1)}`;
 
-export function createBalance({plans,me,friends,clock,checkins,sheets,notice,dew,warm,invite}){
+export function createBalance({plans,me,friends,clock,checkins,sheets,notice,dew,warm,invite,more}){
   const sheet=$('balance-sheet'), owner=me.id;
   const ahead=b=>!b.done&&(b.date>TODAY||(b.date===TODAY&&b.start>=clock.minutes));
   const when=day=>day===TODAY?'tonight':day===addDays(TODAY,1)?'tomorrow':`on ${DAYS[dow(day)-1]}`;
@@ -257,12 +257,28 @@ export function createBalance({plans,me,friends,clock,checkins,sheets,notice,dew
       return li;
     }):[el('li',{className:'none',textContent:'Nothing yet. After a few activities, answer “How draining was that?” and your island starts to learn.'})]));
   }
+  // "Other ideas" (signed in): three new ones from Gemini per tap, never one already shown, three taps a week's look.
+  // Gemini takes 10-20 s, so the next three are asked for as soon as the sheet opens and again after each tap
+  // (`next`); a tap usually finds them ready, and otherwise waits with "Blomy is thinking…".
+  let asked=0, seen=[], next=null;
+  const prefetch=()=>{if(!more||asked>=3)return;seen.push(...current.map(s=>s.text));next=more([...new Set(seen)]).catch(()=>null);};
+  $('bal-more').onclick=async()=>{
+    const b=$('bal-more');b.disabled=true;b.textContent='Blomy is thinking…';
+    if(!next)prefetch();
+    const t0=performance.now();let got=await next;next=null;
+    if(!got?.length&&performance.now()-t0<5000){prefetch();got=await next;next=null;}   // one quick retry (a busy moment), never two slow waits
+    b.disabled=false;
+    if(got?.length){current=got;applied.clear();asked++;prefetch();}
+    else notice(got?'No new ideas just now. These still fit your week.':'Blomy can’t reach new ideas right now. These still fit your week.');
+    renderList();
+  };
   function renderList(){
+    const m=$('bal-more');m.hidden=!more;m.disabled=asked>=3;m.textContent=asked>=3?'That’s all the ideas for now':asked?'More ideas':'Other ideas';
     $('bal-suggest').replaceChildren(...current.map(s=>{
       const done=applied.has(s.key);
       const btn=el('button',{type:'button',className:'bal-apply',textContent:done?'Done ✓':'Apply',disabled:done||!s.apply});
       btn.onclick=()=>{s.apply();applied.add(s.key);notice(s.done);render();};
-      return el('li',{className:done?'done':''},el('div',{},el('strong',{textContent:s.text}),el('span',{textContent:s.sub})),btn);
+      return el('li',{className:`${done?'done':''}${s.ai?' ai':''}`},el('div',{},el('strong',{textContent:s.text}),el('span',{textContent:s.sub})),btn);
     }));
   }
   function render(){
@@ -298,7 +314,7 @@ export function createBalance({plans,me,friends,clock,checkins,sheets,notice,dew
   $('bal-stats-toggle').onclick=()=>{const on=$('bal-stats').hidden;showStats(on);try{localStorage.setItem(STATS_KEY,on?'1':'0');}catch{}};
   return {
     // at: 'suggest' opens straight at "Small changes that would help" (the gardener's "See why"), lit for a moment
-    open(from,at){current=suggest();applied.clear();sheets.show(sheet,from??$('balance-toggle'));render();
+    open(from,at){current=suggest();applied.clear();asked=0;seen=[];next=null;prefetch();sheets.show(sheet,from??$('balance-toggle'));render();
       if(at==='suggest'){showStats(false);const panel=$('bal-suggest-title').closest('.bal-panel');
         setTimeout(()=>{panel.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'});
           panel.classList.remove('lit');void panel.offsetWidth;panel.classList.add('lit');},380);}},

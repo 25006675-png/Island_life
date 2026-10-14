@@ -295,19 +295,26 @@ export function initLife({world,scene,flower,islands,camera,texture,player,notic
     .sort((a,b)=>(b.date===gardenerNow.heavyDay)-(a.date===gardenerNow.heavyDay));
   const byWarmth=()=>members.filter(i=>i.id!==ME).sort((a,b)=>(warmth[a.id]??1.2)-(warmth[b.id]??1.2));
   let smart={key:null,idea:null};
-  function askGemini(){
-    const key=`${nudgeWhy}|${TODAY}`;
-    if(!LIVE||!['schedule','rest'].includes(nudgeWhy)||smart.key===key)return;
-    smart={key,idea:null};
+  // what Gemini is told about the week (kinds and hours, never titles), and the free times, "can wait" blocks and
+  // friends it may pick from, by number
+  function geminiOffer(mode){
     const hrs=list=>{const h={};for(const b of list)h[b.cat]=Math.round(((h[b.cat]??0)+b.mins/60)*2)/2;return h;};
     const week=plans.week(ME).filter(b=>!b.skipped);
     const days=reading(ME).days.filter(d=>d.date>=TODAY&&d.date<addDays(TODAY,7))
       .map(d=>({day:`${dayName(d.date)}${d.date===TODAY?' (today)':''}`,looks:FORECAST_WORDS[d.label],hours:hrs(plans.on(ME,d.date).filter(b=>!b.skipped))}));
     const slots=freeSlots([8*60,12*60+30,17*60+30,19*60,20*60+30,21*60+30],60,14), waits=canWait().slice(0,6), friends=byWarmth().slice(0,4);
-    backend.gardenerIdea({mode:nudgeWhy,
+    return {slots,waits,friends,summary:{mode,
       week:{sky:me.weather,island:shortBand(loadFromAltitude(me.altitude)),lateNights:week.filter(b=>b.start+b.mins>=22*60).length,hours:hrs(week),days},
-      slots:slots.map(s=>({day:dayName(s.date)+(s.date===TODAY?' (today)':''),time:fmt(s.start)})),
-      canWait:waits.map(b=>({kind:b.cat,day:dayName(b.date),hours:b.mins/60})),friends:friends.map(f=>f.owner)})
+      slots:slots.map(s=>({day:dayName(s.date)+(s.date===TODAY?' (today)':''),time:fmt(s.start),
+        part:s.start<12*60?'morning':s.start<14*60?'midday':s.start<17*60?'afternoon':s.start<21*60?'evening':'night'})),
+      canWait:waits.map(b=>({kind:b.cat,day:dayName(b.date),hours:b.mins/60})),friends:friends.map(f=>f.owner)}};
+  }
+  function askGemini(){
+    const key=`${nudgeWhy}|${TODAY}`;
+    if(!LIVE||!['schedule','rest'].includes(nudgeWhy)||smart.key===key)return;
+    smart={key,idea:null};
+    const {slots,waits,friends,summary}=geminiOffer(nudgeWhy);
+    backend.gardenerIdea(summary)
       .then(g=>{
         if(smart.key!==key||!g)return;
         smart.idea=g.type==='move'?{...g,move:waits[g.move]}:{...g,slot:slots[g.slot],friend:friends.find(f=>f.owner===g.friend)??null};
@@ -345,6 +352,22 @@ export function initLife({world,scene,flower,islands,camera,texture,player,notic
     ].filter(Boolean).sort((a,b)=>b.fit-a.fit);
     for(const i of all)if(!i.move&&!i.ai)i.slot=freeSlot(i.starts,i.mins);
     return all.filter(i=>i.move||i.slot);
+  }
+  // Your balance's "Other ideas": three more from Gemini, none like the ones already shown, each one a suggestion the
+  // sheet can apply (null: Gemini couldn't be reached; []: it had nothing new)
+  async function moreIdeas(avoid){
+    const mode=['schedule','rest'].includes(gardenerNow.mode)?gardenerNow.mode:'balance';
+    const {slots,waits,friends,summary}=geminiOffer(mode);
+    const got=await backend.gardenerIdeas(summary,avoid);if(!got)return null;
+    return got.map((g,i)=>{
+      if(g.type==='move'){const b=waits[g.move];return b&&{key:`ai-m${b.id}`,text:`Push “${b.title}” to next week`,sub:g.line,ai:true,
+        apply:()=>plans.shift(ME,b,7),done:`${b.title} moved to next week.`};}
+      const s=slots[g.slot];if(!s||!fits(s,g.mins))return null;
+      const friend=friends.find(f=>f.owner===g.friend);
+      return {key:`ai-${i}-${g.title}`,text:`${g.title}, ${whenText(s)}`,sub:g.line,ai:true,
+        apply:()=>{plans.add(ME,{date:s.date,start:s.start,mins:g.mins,cat:g.cat,title:g.title,vis:g.cat==='rest'?'hidden':'open'});if(friend)warm(friend.id,.8);},
+        done:`${g.title} is on your plan for ${whenText(s)}.`};
+    }).filter(Boolean);
   }
   const whenText=s=>`${s.date===TODAY?'today':s.date===addDays(TODAY,1)?'tomorrow':dayName(s.date)} at ${fmt(s.start)}`;
   const slotLabel=s=>`${s.date===TODAY?'Today':s.date===addDays(TODAY,1)?'Tomorrow':dayName(s.date)} ${fmt(s.start)}`;
@@ -527,7 +550,7 @@ export function initLife({world,scene,flower,islands,camera,texture,player,notic
   // blocks marked done in the planner take root at once: no walk with the watering can (main.js asks, quick); the fairy comes straight out
   const fromPlanner=new Set();
   const balance=createBalance({plans,me,friends:members.filter(i=>i.id!==ME),clock,checkins:checkins[ME],sheets,notice,dew,warm:id=>warm(id,.8),
-    invite:LIVE?()=>openInvite(world,notice):null});
+    invite:LIVE?()=>openInvite(world,notice):null,more:LIVE&&backend.configured?avoid=>moreIdeas(avoid):null});
   // your gardener waits at the left end of an open sheet's top edge; walk it
   // with ← →, jump with Space, turn it with Q E
   const sheetBuddy=sheet=>{

@@ -252,6 +252,10 @@ export async function gardenerLine(mode,facts,fallback){
   try{return (await fn('gardener',{mode,facts,fallback})).line||fallback;}catch{return fallback;}
 }
 // Gemini's own idea from a summary of the week; null means use the app's own ideas
+// three more ideas for Your balance (avoid: titles already shown); [] when Gemini has none, null when unreachable
+export async function gardenerIdeas(summary,avoid){
+  try{return (await fn('gardener',{...summary,ideas:3,avoid})).ideas??null;}catch{return null;}
+}
 export async function gardenerIdea(summary){
   try{return (await fn('gardener',summary)).idea??null;}catch{return null;}
 }
