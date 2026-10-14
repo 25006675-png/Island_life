@@ -210,11 +210,15 @@ export function initLife({world,scene,flower,islands,camera,texture,player,notic
       }else if(joined){
         const b=mk('button',{type:'button',className:`wood-button${t.practice?' pulse':''}`,textContent:'Mark done'});b.onclick=()=>finishTask(t);
         if(!happened(t.block)){b.disabled=true;b.title='You can mark it done once it has happened';}
-        act.append(mk('span',{className:'task-status',textContent:t.practice?'On your plan, already over':t.block?`On your plan · ${dayName(t.block.date)} ${fmt(t.block.start)}`:'On your plan'}),b);
-      }else{const b=mk('button',{type:'button',className:`wood-button${t.practice?' pulse':''}`,textContent:'Join'});b.onclick=()=>join(t);act.append(b);}
+        act.append(mk('span',{className:'task-status',textContent:t.practice?'On your plan, already over':t.block?`On your plan · ${dayName(t.block.date)} ${fmt(t.block.start)}`:'On your plan'}),t.practice?tapHere(b):b);
+      }else{const b=mk('button',{type:'button',className:`wood-button${t.practice?' pulse':''}`,textContent:'Join'});b.onclick=()=>join(t);act.append(t.practice?tapHere(b):b);}
       li.append(act);return li;
     }));
   }
+  // the guide's hand, drawn inside the board's window (the guide's own hand can't show over a dialog): it taps on
+  // the practice task's next button
+  const tapHere=b=>{const w=mk('span',{className:'tap-here'},b);
+    w.insertAdjacentHTML('beforeend','<span class="tap-hand" aria-hidden="true"><span class="ripple"></span><img src="assets/guide-hand.png" alt="" width="46" height="60" draggable="false"/></span>');return w;};
   function openTasks(){renderTasks();$('goals-dialog').showModal();}
   $('goals-close').onclick=()=>$('goals-dialog').close();
   let boardKey='';

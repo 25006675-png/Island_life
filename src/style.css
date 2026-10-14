@@ -1036,3 +1036,10 @@ body.guide-reveal.guide-low #guide{top:auto;bottom:calc(96px + env(safe-area-ins
 .ic-meter-ends{display:flex;justify-content:space-between}.ic-meter-ends small{font-size:10.5px;color:var(--muted)}
 .ic-bloom{display:inline-flex;vertical-align:-3px;margin-right:1px}
 .ic-feel{display:inline-flex;align-items:center;gap:1px;margin-right:10px}.ic-feel>.ic-bloom:last-of-type{margin-right:5px}
+/* the guide's hand inside the board's window, tapping the practice task's next button (life.js tapHere) */
+.tap-here{position:relative;display:inline-block}
+.tap-hand{position:absolute;left:50%;top:62%;width:46px;height:60px;margin-left:-14px;pointer-events:none;z-index:2;filter:drop-shadow(0 5px 6px rgba(30,14,60,.45));animation:guide-tap 1.3s ease-in-out infinite}
+.tap-hand img{display:block;width:46px;height:60px;user-select:none}
+.tap-hand .ripple{position:absolute;left:18px;top:3px;width:34px;height:34px;margin:-17px 0 0 -17px;border-radius:50%;border:3px solid #fff;animation:guide-ripple 1.3s ease-out infinite}
+@media(prefers-reduced-motion:reduce){.tap-hand,.tap-hand .ripple{animation:none}}
+.task .task-actions{padding-bottom:10px}
