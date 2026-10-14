@@ -800,7 +800,9 @@ renderer=new T.WebGLRenderer({canvas,antialias:false,powerPreference:'high-perfo
   // demo starts with what a week does to an island. A first friend's island, once it has grown in, opens the
   // friends chapter (unless the first-visit chapter is still running: that one leads on to it).
   {const q=new URLSearchParams(location.search);if(!q.has('skiplogin')||q.has('guide')){
-    setTimeout(()=>guide.start(world.live?'home':'demo',q.has('guide')),2600);
+    // ?guide replays the guide; ?guide=demo, ?guide=home or ?guide=friends starts at that chapter (for testing it)
+    const chapter=['demo','home','friends'].includes(q.get('guide'))?q.get('guide'):world.live?'home':'demo';
+    setTimeout(()=>guide.start(chapter,q.has('guide')),2600);
     if(arrivals.length)setTimeout(()=>guide.start('friends'),(3.2+arrivals.length*1.6)*1000+3000);
   }}
   // pieces too small to throw a visible shadow (beads, buttons, little props) stop casting one: each was a draw in the shadow pass
