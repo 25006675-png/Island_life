@@ -142,7 +142,12 @@ export function openInvite(world,notice,sample=false){
   $('invite-share').hidden=!navigator.share;
   $('invite-share').onclick=()=>navigator.share({title:'Island Life',text:'Come and float in my sky on Island Life.',url:link}).catch(()=>{});
   $('invite-close').onclick=()=>dialog.close();
+  // the demo's sample (shown by the guide, whose box is behind this window): Close is the button to press, with the
+  // guide's hand on it; a real invite keeps Copy link first
+  dialog.classList.toggle('sample',sample);dialog.querySelector('.tap-hand')?.remove();
+  if(sample)$('invite-close').insertAdjacentHTML('beforeend','<span class="tap-hand" aria-hidden="true"><span class="ripple"></span><img src="assets/guide-hand.png" alt="" width="46" height="60" draggable="false"/></span>');
   dialog.showModal();
+  if(sample)$('invite-close').focus();
 }
 export function mountSkyPanel(world,notice){
   const box=document.getElementById('sky-section');
