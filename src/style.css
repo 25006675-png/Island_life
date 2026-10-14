@@ -1049,3 +1049,5 @@ body.guide-reveal.guide-low #guide{top:auto;bottom:calc(96px + env(safe-area-ins
 #invite-dialog.sample :is(#invite-copy,#invite-close){position:relative}
 #invite-dialog.sample.copied #invite-copy{background:transparent;color:var(--ink);box-shadow:none}
 #invite-dialog.sample.copied #invite-close{background:var(--accent);color:oklch(.99 .01 60);text-decoration:none}
+/* a touch screen (main.js TOUCH), whatever its size: the keys card and its tab don't show */
+#app.touch .help,#app.touch #help-toggle{display:none!important}

@@ -390,6 +390,7 @@ $('bridge-go').onclick=()=>{const s=player.surface;if(s?.kind!=='bridge')return;
 // right" in the menu swaps the halves (remembered per device). On a phone the island card folds away while you walk.
 const TOUCH=matchMedia('(pointer: coarse)').matches||new URLSearchParams(location.search).has('touch');
 const stick={on:false,x:0,y:0,id:null}, STICK_SIDE='il-stick-right';
+$('app').classList.toggle('touch',TOUCH);   // a touch screen: no keyboard hints (style.css)
 {const zone=$('stick-zone'),base=$('stick'),knob=base.firstElementChild,R=46;let cx=0,cy=0,sx=0,sy=0,downAt=0,moved=false;
   const move=e=>{let dx=e.clientX-cx,dy=e.clientY-cy;const d=Math.hypot(dx,dy);if(d>R){dx*=R/d;dy*=R/d;}
     stick.x=dx/R;stick.y=dy/R;knob.style.translate=`${dx}px ${dy}px`;if(Math.hypot(e.clientX-sx,e.clientY-sy)>8)moved=true;};
@@ -497,8 +498,9 @@ const guide=createGuide({
   {when:()=>!live(),say:'Close the window when you’ve had a look.',start:()=>openInvite({sky:{invite_code:'SAMPLE12'}},notice,true),
    done:()=>!$('invite-dialog').open},
   {say:()=>alone()?'When a friend joins, their island grows in right there, and I’ll show you what you can do together.'
+                  :TOUCH?'That’s your island! Bridges lead to your friends: walk onto one and press Go. Sky view at the bottom takes you up to the sky.'
                   :'That’s your island! Bridges lead to your friends: walk onto one and press Go. Esc takes you up to the sky.',
-   art:()=>alone()?null:'esc'},
+   art:()=>alone()||TOUCH?null:'esc'},   // no keys on a touch screen
  ]},
  friends:{key:'il-guide-friends',end:()=>life?.api.practice.clear(),steps:[
   {say:()=>live()?'Your first friend is here! The gathering island in the middle belongs to everyone. Tap it.'
