@@ -1068,8 +1068,8 @@ body.guide-reveal.guide-low #guide{top:auto;bottom:calc(96px + env(safe-area-ins
   #balance-sheet .bal-suggest li{flex-direction:row;align-items:center;gap:10px;padding:10px 12px}
   #balance-sheet .bal-suggest li>div{min-width:0}#balance-sheet .bal-apply{flex:none;padding:7px 14px}
 }
-/* phones and tablets: the header buttons are rounded tiles of one size; the ones whose icons aren't universal
-   (Balance, Planner, Shop) carry a small word inside, under the icon, like an app's icon (index.html data-label) */
+/* phones and tablets: the header buttons are rounded tiles of one size, each with a small word inside, under its
+   icon, like an app's icon (index.html data-label) */
 @media(max-width:600px),(pointer:coarse) and (max-width:1024px),(max-height:500px) and (max-width:1000px){
   .header-actions{grid-auto-columns:minmax(0,52px);gap:6px}
   .header-actions button,.header-actions .icon-only,.header-actions .dew-capsule button{aspect-ratio:auto;height:52px;border-radius:16px;flex-direction:column;gap:3px}
