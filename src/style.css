@@ -61,7 +61,6 @@ input[type=text],input[type=time],input[type=date],input[type=email],input[type=
 .plan-done:disabled,dialog.wood .wood-button:disabled{cursor:not-allowed}
 .dew-count.gain{animation:dew-pop .9s ease}.dew-count.spend{animation:dew-dip .9s ease}
 .header-actions .icon-only{padding:10px 13px}.header-actions .icon-only span{margin-left:0}
-#sound-toggle svg{display:block;width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}#sound-toggle .spk{fill:currentColor}#sound-toggle .off,#sound-toggle[aria-pressed=true] .on{display:none}#sound-toggle[aria-pressed=true] .off{display:inline}
 /* arriving: the title starts in the middle of the screen, then slides home */
 .place-title{width:max-content;max-width:100%;transition:transform .8s cubic-bezier(.2,.8,.2,1);transform-origin:50% 50%}
 .place p,.island-card{transition:opacity .35s}

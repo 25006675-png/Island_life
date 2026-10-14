@@ -1017,11 +1017,11 @@ function setPanel(open){$('settings').hidden=!open;$('settings-toggle').setAttri
 $('settings-toggle').onclick=()=>setPanel($('settings').hidden);$('settings-close').onclick=()=>setPanel(false);
 $('sky-tone').onchange=e=>{atmosphere?.setTone(e.target.value);};
 $('motion').onchange=e=>{motion=e.target.checked;};
-// Sound: the speaker in the header mutes, the sliders in the settings set the music and effects volumes (all remembered).
+// Sound: "Sound on" in the menu mutes, the sliders beside it set the music and effects volumes (all remembered).
 const rain=sound.ambient('rain_loop',{gain:.6});
 sound.listenForClicks();
-function syncSound(){$('sound-toggle').setAttribute('aria-pressed',String(sound.muted()));$('sound-toggle').title=sound.muted()?'Sound off':'Sound on';$('volume').value=sound.volume();$('music-volume').value=sound.musicVolume();}
-$('sound-toggle').onclick=()=>{sound.setMuted(!sound.muted());syncSound();};
+function syncSound(){$('sound-on').checked=!sound.muted();$('volume').value=sound.volume();$('music-volume').value=sound.musicVolume();}
+$('sound-on').onchange=e=>{sound.setMuted(!e.target.checked);syncSound();};   // in the menu, with the volumes (the header holds only places to go)
 // UI size (the menu): every panel and bar over the world grows or shrinks together (style.css --ui); remembered per browser
 const UI_KEY='il-ui-size';
 function setUiSize(v){v=Math.min(1.3,Math.max(.8,+v||1));document.documentElement.style.setProperty('--ui',v);liftStick();$('ui-size').value=v;$('ui-size-value').textContent=`${Math.round(v*100)}%`;return v;}
