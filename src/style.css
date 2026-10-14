@@ -1035,3 +1035,8 @@ footer{z-index:2}
 #settings .demo-head .demo-title{margin:0}
 #settings .demo-box>.panel-note{margin:8px 0 12px}
 #settings .demo-tag{flex:none;font:600 11px var(--display);color:#fff;background:var(--orchid,#9b6bff);border-radius:999px;padding:3px 9px}
+/* the guide's practice task on the board: its own instructions, and the button to press next breathing (life.js) */
+.task-hint{margin:6px 0 2px;font:600 13px var(--display);color:#6a3fb8}
+.wood-button.pulse{animation:board-pulse 1.3s ease-in-out infinite}
+@keyframes board-pulse{50%{box-shadow:0 0 0 6px oklch(.75 .15 300 / .45)}}
+@media(prefers-reduced-motion:reduce){.wood-button.pulse{animation:none;outline:3px solid oklch(.75 .15 300)}}

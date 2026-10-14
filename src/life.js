@@ -200,14 +200,18 @@ export function initLife({world,scene,flower,islands,camera,texture,player,notic
         b.onclick=()=>view({src,title:t.title,sub:`Finished by ${who(id)}`});return b;
       })));
       const act=mk('div',{className:'task-actions'});
+      // the guide's practice task says what to press, right here (Blomy's box is behind this window), and the
+      // button to press next breathes
+      if(t.practice)li.append(mk('p',{className:'task-hint',textContent:mine?'Blomy: well done! Close the board to go on.'
+        :joined?'Blomy: now press Mark done.':'Blomy: press Join, then Mark done. Nothing is saved.'}));
       if(mine){
-        act.append(mk('span',{className:'task-status',textContent:`Done · +${earned(t)} 💧`}));
-        if(!t.done[ME]){const b=mk('button',{type:'button',className:'text-button',textContent:'Add a photo (optional)'});b.onclick=()=>{photoFor=t;$('task-photo').click();};act.append(b);}
+        act.append(mk('span',{className:'task-status',textContent:t.practice?'Done · practice':`Done · +${earned(t)} 💧`}));
+        if(!t.done[ME]&&!t.practice){const b=mk('button',{type:'button',className:'text-button',textContent:'Add a photo (optional)'});b.onclick=()=>{photoFor=t;$('task-photo').click();};act.append(b);}
       }else if(joined){
-        const b=mk('button',{type:'button',className:'wood-button',textContent:'Mark done'});b.onclick=()=>finishTask(t);
+        const b=mk('button',{type:'button',className:`wood-button${t.practice?' pulse':''}`,textContent:'Mark done'});b.onclick=()=>finishTask(t);
         if(!happened(t.block)){b.disabled=true;b.title='You can mark it done once it has happened';}
-        act.append(mk('span',{className:'task-status',textContent:t.block?`On your plan · ${dayName(t.block.date)} ${fmt(t.block.start)}`:'On your plan'}),b);
-      }else{const b=mk('button',{type:'button',className:'wood-button',textContent:'Join'});b.onclick=()=>join(t);act.append(b);}
+        act.append(mk('span',{className:'task-status',textContent:t.practice?'On your plan, already over':t.block?`On your plan · ${dayName(t.block.date)} ${fmt(t.block.start)}`:'On your plan'}),b);
+      }else{const b=mk('button',{type:'button',className:`wood-button${t.practice?' pulse':''}`,textContent:'Join'});b.onclick=()=>join(t);act.append(b);}
       li.append(act);return li;
     }));
   }
@@ -1073,6 +1077,8 @@ export function initLife({world,scene,flower,islands,camera,texture,player,notic
         clear:()=>{plans.clearPractice(ME);practiceNote=false;const i=TASKS.findIndex(t=>t.practice);if(i>=0){TASKS.splice(i,1);renderTasks();}},
       },
       fairyIdle:()=>fairy.idle(),
+      // where to stand to read the task board: a few steps out in front of it (the way it faces)
+      boardSpot:()=>{const p=board.group.getWorldPosition(new T.Vector3()),f=board.group.rotation.y;return p.add(new T.Vector3(Math.sin(f)*2.6,0,Math.cos(f)*2.6));},
       // "Restore this evening": altitude and weather back to what the plan and check-ins say
       resettle:()=>{members.forEach(i=>{settle(i.id);weather(i);delete warmth[i.id];warm(i.id);});},
       photos:()=>photos.items.map(i=>({member:i.member.id,time:i.time,golden:i.golden,caption:i.caption,hung:!!i.pivot})),

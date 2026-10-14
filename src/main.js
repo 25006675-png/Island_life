@@ -428,7 +428,7 @@ function showStick(){
 //   home     -- come home, walk, tell your flower how you feel, plant and finish a practice block (the fairy asks
 //               about it, and nothing is saved), your balance, then (signed in) the glass places that wait for friends
 //   friends  -- once there is a friend: the gathering island, its task board, the golden window, the bridges
-let walkedFrom=0, felt=false, invited=false, guided=null;   // guided: {to()} the guide's walk, along the path (route)
+let walkedFrom=0, felt=false, invited=false, guided=null, boardAgain=false;   // guided: {to()} the guide's walk, along the path (route)
 $('moods').addEventListener('click',e=>{if(e.target.closest('.mood'))felt=true;});
 const live=()=>!!world?.live, alone=()=>live()&&world.people.length<2, hasRoom=()=>live()&&vacancies?.list.length>0;
 const nearPractice=()=>{const t=life.api.practice.tree();return !!t&&Math.hypot(t.x-player.position.x,t.z-player.position.z)<3.5;};
@@ -496,9 +496,15 @@ const guide=createGuide({
                  :'The gathering island in the middle belongs to everyone in the sky. Tap it.',
    start:()=>{if(mode==='walk')overview();},target:()=>islands[0]?.label,hand:true,done:()=>mode==='walk'&&selected==='community'&&!transition},
   // practice: a task on the board and a note at a friend's gate, neither saved (life.js practice)
-  {say:'This board holds small things to do together. I’ve pinned a practice task on it. Walk up to the board and open it.',
-   start:()=>life.api.practice.task(),reveal:true,target:()=>$('reveal').hidden?null:$('reveal-action'),hand:true,done:()=>$('goals-dialog').open},
-  {say:'Press Join on the practice task, then Mark done, then close the board.',done:()=>life.api.practice.taskDone()&&!$('goals-dialog').open},
+  // the board: Blomy walks you there; View opens it; inside, the practice task says what to press (Blomy's box is
+  // behind the window). Closed before the practice is done, it's back to "open it again"
+  {say:'This board holds small things to do together. I’ve pinned a practice task on it. Let’s walk over.',
+   start:()=>{life.api.practice.task();guided={to:()=>life.api.boardSpot()};},
+   done:()=>!guided&&!$('reveal').hidden&&$('reveal-kicker').textContent.includes('task board')},
+  {say:()=>boardAgain?'Open the board again, then press Join and Mark done on the practice task.':'Press View to open the board.',
+   reveal:true,target:()=>$('reveal').hidden?null:$('reveal-action'),hand:true,done:()=>$('goals-dialog').open},
+  {say:'Follow the notes on the practice task, then close the board.',done:()=>life.api.practice.taskDone()&&!$('goals-dialog').open,
+   back:()=>!$('goals-dialog').open&&!life.api.practice.taskDone()&&(boardAgain=true)},
   {say:'One more thing about this island: the golden window. Once a day, at a moment nobody knows in advance, the sky turns gold for a few minutes. Everyone snaps a photo of wherever they are, and the photos hang here together.'},
   {say:'Bridges lead to each friend’s island. Walk onto one and press Go.',art:'esc',
    done:()=>mode==='walk'&&selected!=='community'&&selected!==ME&&!transition},
@@ -525,7 +531,7 @@ function stepToward(ux,uz,d,dt){
   for(const a of [0,.5,-.5,1,-1,1.5,-1.5]){
     const c=Math.cos(a),s=Math.sin(a),vx=ux*c-uz*s,vz=ux*s+uz*c,n=Math.max(1,Math.ceil(d/.1));let moved=false;
     for(let k=0;k<n;k++){const f=surfaceAt(islands,bridges,player.position.x+vx*d/n,player.position.z+vz*d/n);
-      if(f?.kind!=='island'||f.id!==ME||Math.abs(f.y-player.position.y)>=.65)break;player.position.set(f.x,f.y,f.z);player.surface=f;moved=true;}
+      if(f?.kind!=='island'||f.id!==player.surface?.id||Math.abs(f.y-player.position.y)>=.65)break;player.position.set(f.x,f.y,f.z);player.surface=f;moved=true;}   /* the island you stand on */
     if(moved){player.distance+=d;player.moving=true;turnTo(Math.atan2(vx,vz),dt);return true;}
   }
   return false;
@@ -546,7 +552,7 @@ function follow(r,pace,dt){
   if((r.check+=dt)>=.7){
     if(r.at===r.k&&r.from-d<.5){   // no headway: hop to the point she was making for
       const f=surfaceAt(islands,bridges,p.x,p.z);
-      if(f?.kind==='island'&&f.id===ME){player.position.set(f.x,f.y,f.z);player.surface=f;}else if(r.k<r.pts.length-1)r.k++;else return true;
+      if(f?.kind==='island'&&f.id===player.surface?.id){player.position.set(f.x,f.y,f.z);player.surface=f;}else if(r.k<r.pts.length-1)r.k++;else return true;
     }
     r.at=r.k;r.from=dist(r.pts[r.k]);r.check=0;
   }

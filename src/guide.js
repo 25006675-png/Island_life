@@ -14,6 +14,7 @@
 //   high: Blomy's box sits at the top, leaving the lower half of the view clear (the demo's island sinking into it)
 //   flower: the flower asks even if she's resting (the check-in steps); other steps leave her rest alone
 //   act(): what the step's own button does before moving on (the demo's "Exam week" presses Exam week)
+//   back(): true sends you back a step to do it again (the board closed before its practice task was done)
 const $=id=>document.getElementById(id);
 const seen=key=>{try{return localStorage.getItem(key)==='done';}catch{return false;}};
 const remember=key=>{try{localStorage.setItem(key,'done');}catch{}};
@@ -87,6 +88,7 @@ export function createGuide(chapters){
     start(name,force){if(!chapter)open(name,force);},
     update(dt){
       if(!step)return;place();
+      if(step.back?.()&&at>0){show(at-1);return;}
       if(!step.done||!step.done())return;
       if(!cheered){cheered=true;box.classList.add('yay');spot.hidden=true;hand.hidden=true;}
       since+=dt;if(since>.9)show(at+1);
