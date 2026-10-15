@@ -40,7 +40,7 @@ export function createGuide(chapters){
     else art.replaceChildren();
   };
   const show=i=>{
-    at=i;step=steps[i];cheered=false;box.classList.remove('yay');
+    at=i;step=steps[i];cheered=false;side=null;box.classList.remove('yay');
     if(!step){finish(true);return;}
     since=0;document.body.classList.toggle('guide-over',!!step.over);document.body.classList.toggle('guide-reveal',!!step.reveal);document.body.classList.toggle('guide-high',!!step.high);step.start?.();
     type((typeof step.say==='function'?step.say():step.say)??'');   // a quiet step says nothing
@@ -57,7 +57,7 @@ export function createGuide(chapters){
   };
   const finish=happy=>{
     const c=chapter;
-    box.hidden=true;spot.hidden=true;hand.hidden=true;at=-1;step=null;chapter=null;document.body.classList.remove('guide-over','guide-reveal','guide-high','guide-low');
+    box.hidden=true;spot.hidden=true;hand.hidden=true;at=-1;step=null;chapter=null;document.body.classList.remove('guide-over','guide-reveal','guide-high','guide-low','guide-top');
     if(!c)return;
     remember(c.key);c.end?.();
     const then=happy&&c.next?.();
@@ -75,13 +75,26 @@ export function createGuide(chapters){
   const press=(e,down)=>{const k=KEYS[e.code];if(!k||box.hidden)return;art.querySelector(`[data-k="${k}"]`)?.classList.toggle('down',down);};
   addEventListener('keydown',e=>press(e,true));addEventListener('keyup',e=>press(e,false));
   // the spotlight and the hand follow their target (labels move with the camera), every frame
-  // a card step (`reveal`): Blomy's box sits at the edge of the screen away from the card (it floats by what it's
-  // about, high or low), so its buttons are never under her
-  const dodge=()=>{const r=$('reveal'),high=!!step?.reveal&&!r.hidden&&(()=>{const b=r.getBoundingClientRect();return b.top+b.height/2<innerHeight*.5;})();
-    if(document.body.classList.contains('guide-low')!==high)document.body.classList.toggle('guide-low',high);};
-  const place=()=>{dodge();
+  // Blomy's box never covers what the step is about: if it lands on the target and its hand, or on something to
+  // press that floats in the view (a card, the flower's or the fairy's bubble, the golden window, Go, a notice), it
+  // moves to the far edge of the screen from it, and stays there for the step
+  let side=null;
+  const shown=e=>!e.hidden&&e.getClientRects().length>0&&(s=>s.visibility!=='hidden'&&+s.opacity>.05)(getComputedStyle(e));
+  const hits=(a,b)=>a.bottom>b.top&&a.top<b.bottom&&a.right>b.left&&a.left<b.right;
+  const dodge=aim=>{
+    if(box.hidden)return;
+    const b=box.getBoundingClientRect();
+    const near=[...document.querySelectorAll('#reveal,#golden,#bridge-banner,#notice,.fairy-bubble')].filter(shown).map(e=>e.getBoundingClientRect()).filter(r=>hits(r,b));
+    if(aim&&hits(aim,b))near.unshift(aim);
+    if(near.length){const r=aim??near[0];side=r.top+r.height/2<innerHeight/2?'low':'top';}
+    const body=document.body.classList;
+    if(body.contains('guide-low')!==(side==='low'))body.toggle('guide-low',side==='low');
+    if(body.contains('guide-top')!==(side==='top'))body.toggle('guide-top',side==='top');
+  };
+  const place=()=>{
     const el=step?.target?.(), r=el&&!el.hidden&&el.getClientRects().length?el.getBoundingClientRect():null;
     const lit=!!r&&!cheered;
+    dodge(lit?{left:r.left-8,right:r.right+8,top:r.top-8,bottom:r.bottom+(step.hand?74:8),height:r.height+(step.hand?82:16)}:null);
     spot.hidden=!lit;hand.hidden=!(lit&&step.hand);
     if(!lit)return;
     const pad=8;Object.assign(spot.style,{left:`${r.left-pad}px`,top:`${r.top-pad}px`,width:`${r.width+pad*2}px`,height:`${r.height+pad*2}px`});

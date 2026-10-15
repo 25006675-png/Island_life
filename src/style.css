@@ -1025,7 +1025,10 @@ footer{z-index:2}
 @keyframes board-pulse{50%{box-shadow:0 0 0 6px oklch(.75 .15 300 / .45)}}
 @media(prefers-reduced-motion:reduce){.wood-button.pulse{animation:none;outline:3px solid oklch(.75 .15 300)}}
 /* a card step with the card high on the screen (a gate's sign, the board): Blomy's box goes to the bottom (guide.js dodge) */
-body.guide-reveal.guide-low #guide{top:auto;bottom:calc(96px + env(safe-area-inset-bottom,0px))}
+/* Blomy's box moved off what the step is about (guide.js dodge): to the bottom edge, or up under the header */
+body.guide-low #guide{top:auto;bottom:calc(96px + env(safe-area-inset-bottom,0px))}
+body.guide-top #guide{top:84px;bottom:auto}
+@media(max-width:600px){body.guide-top #guide{top:calc(var(--header-bottom,118px) / var(--ui) + 14px)}}
 /* the island card (life.js): height as one line and a thin bar, heavier to lighter; feelings as small blooms */
 .ic-alt{display:grid;gap:3px;min-width:0;white-space:normal}
 .ic-alt .ic-note{line-height:1.45}
@@ -1075,3 +1078,16 @@ body.guide-reveal.guide-low #guide{top:auto;bottom:calc(96px + env(safe-area-ins
   .dew-capsule{border-radius:16px}
   .header-actions [data-label]::before{content:attr(data-label);order:2;font:600 9.5px/1 var(--display);letter-spacing:.01em;color:currentColor;white-space:nowrap;pointer-events:none}
 }
+/* a phone: the banners under the header take the screen's width rather than half of it (left:50% alone caps a
+   shrink-to-fit box at half the screen); the golden window puts Share on a second row. Over the open planner,
+   Blomy's box sits at the bottom, clear of the sheet's close button and week arrows */
+@media(max-width:600px){
+  #notice,#bridge-banner{width:max-content;max-width:calc(100% - 32px);text-align:center}
+  #golden{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:6px 10px;width:max-content;max-width:calc(100% - 32px);padding:10px 8px 12px 16px;border-radius:22px}
+  #golden-share{grid-column:2;grid-row:2;justify-self:start}
+  #golden-dismiss{grid-column:3;grid-row:1}
+  body.guide-over #guide{top:auto;bottom:calc(16px + env(safe-area-inset-bottom,0px))}
+}
+/* the card of what you walked up to, and Go on a bridge, sit over the golden window's banner: they're what you came to press */
+#reveal,#bridge-banner{z-index:3}
+#settings,#mood-panel{z-index:4}

@@ -1042,7 +1042,8 @@ export function initLife({world,scene,flower,islands,camera,texture,player,notic
       if(card?.at&&!r.hidden){
         rv.copy(card.at).project(camera);
         r.style.setProperty('--x',`${clamp((rv.x*.5+.5)*innerWidth,150,innerWidth-150)}px`);
-        r.style.setProperty('--y',`${clamp((-rv.y*.5+.5)*innerHeight,150,innerHeight-130)}px`);
+        const under=document.querySelector('header').getBoundingClientRect().bottom+r.offsetHeight+28;   // its top stays under the header
+        r.style.setProperty('--y',`${clamp((-rv.y*.5+.5)*innerHeight,Math.min(Math.max(150,under),innerHeight-130),innerHeight-130)}px`);
         r.classList.add('anchored');
       }else r.classList.remove('anchored');
     },

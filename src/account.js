@@ -27,7 +27,7 @@ export function createAccount({form,enter,handoff}){
   const busy=(button,text)=>{button.disabled=true;button.dataset.label=button.textContent;button.textContent=text;
     return ()=>{button.disabled=false;button.textContent=button.dataset.label;};};
   const card=(title,lede,...kids)=>{
-    form.replaceChildren(el('h2',{id:'login-form-title',textContent:title}),el('p',{textContent:lede}),...kids,status);say('');
+    form.replaceChildren(el('h2',{id:'login-form-title',textContent:title}),...(lede?[el('p',{textContent:lede})]:[]),...kids,status);say('');
     form.querySelector('input')?.focus({preventScroll:true});
   };
   const guest=()=>{const b=el('button',{type:'button',className:'text-button',textContent:'Try the demo island'});b.onclick=demo;return b;};
@@ -35,12 +35,10 @@ export function createAccount({form,enter,handoff}){
   // the first card: two ways in. The demo is a sky already full of friends (the way to see everything);
   // starting fresh is the app as a brand-new student meets it
   function chooseCard(){
-    const see=el('button',{type:'submit',className:'solid',textContent:'See it with friends'});
-    const fresh=el('button',{type:'button',className:'solid-ghost',textContent:'Start fresh'});
+    const see=el('button',{type:'submit',className:'solid',textContent:'Open demo island'});
+    const fresh=el('button',{type:'button',className:'solid-ghost',textContent:'Create new island'});
     const back=el('button',{type:'button',className:'text-button',textContent:'Already have an island? Sign in'});
-    card('Two ways in','Look around a sky that is already lived in, or start your own island from nothing.',
-         see,el('p',{className:'login-or',textContent:'A demo sky: Aisha and four friends, with a week of plans and feelings'}),
-         fresh,el('p',{className:'login-or',textContent:'Make an account and grow your own island, then invite friends'}),back);
+    card('Two ways in','',see,fresh,back);
     fresh.onclick=()=>signInCard('up');back.onclick=()=>signInCard('in');
     main=demo;form.onsubmit=e=>{e.preventDefault();demo();};
   }
