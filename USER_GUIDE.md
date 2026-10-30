@@ -20,20 +20,20 @@ Island Life turns a student's timetable and feelings into a floating 3D island. 
 
 | Route | Best for | Data used |
 | --- | --- | --- |
-| **Demo island — recommended first** | Seeing every important feature quickly | Preloaded fictional data for Aisha and four friends; changes remain in this browser only |
+| **Demo island — recommended first** | Seeing every important feature quickly | Preloaded fictional data for Alex and four friends; changes remain in this browser only |
 | **Signed-in island** | Testing accounts, persistence, private data, invitations, Google Calendar and notifications | A Supabase account and data created by the judge |
 
 ## Route A — recommended 10-minute demo
 
-### 1. Enter Aisha's demo sky
+### 1. Enter Alex's demo sky
 
 Open the [instant demo link](https://island-life.onrender.com/?enter=demo). Alternatively, open the [main app](https://island-life.onrender.com/) and watch a star whale carry Blomy, the gardener, to the pier (or press **Skip** at the top right). Then press **Come ashore** and select **Try the demo island** under the sign-in card.
 
-Wait until the floating islands appear with the message "Welcome to the demo sky. This is Aisha’s island, and her four friends." Blomy then offers a short guided tour.
+Wait until the floating islands appear with the message "Welcome to the demo sky. This is Alex’s island, with four friends nearby." Blomy then offers a short guided tour.
 
 **What the tour asks you to do:** tap **My island**, hold `W A S D` to walk, walk up to the flower by your gate and pick a feeling, open and close the **Planner**, open and close **Your balance**, and finally walk onto a bridge. Most steps wait until you have done them. You can press **Skip** at any point.
 
-**Expected result:** six labelled islands appear in one shared sky: **My island** (Aisha's), **Ben's**, **Chen's**, **Dara's** and **Eli's island**, around **The gathering Island** in the middle. Aisha's sample timetable, mood history and friends are already loaded.
+**Expected result:** six labelled islands appear in one shared sky: **My island** (Alex's), **Ben's**, **Chen's**, **Dara's** and **Eli's island**, around **The gathering Island** in the middle. Alex's sample timetable, mood history and friends are already loaded.
 
 ### 2. See how workload changes the island
 
@@ -75,7 +75,7 @@ You can also finish an activity on the island itself: walk along the coloured pa
 ### 5. Inspect and edit the planner
 
 1. Select **Planner**.
-2. Switch between **Day**, **Week** and **Month** to inspect Aisha's sample schedule. The bar under the tabs says how full the week is for her, and each day is marked, for example "Today: heavy for you".
+2. Switch between **Day**, **Week** and **Month** to inspect Alex's sample schedule. The bar under the tabs says how full the week is for Alex, and each day is marked, for example "Today: heavy for you".
 3. Select **+ Add a block**.
 4. Enter a title (**What**), then choose the **Day**, **Starts**, **For** (duration) and **Kind**. **Friends see** controls how much your friends can see: *Kind and size only*, *Everything*, or *Nothing*. You can also tick **Repeats every week** and **Can wait if the week gets full**.
 5. Select **Save**. A message says the block "is on your plan."

@@ -5,7 +5,7 @@
 // A sky holds up to five islands. Each member is one slot, and each slot is
 // an island id: sakura, purple, oak, willow, palm (main.js places them).
 export const SLOT_IDS=['sakura','purple','oak','willow','palm'];
-export let ME='sakura';                 // the viewer's own island (demo: Aisha's)
+export let ME='sakura';                 // the viewer's own island (demo: Alex's)
 export let LIVE=false;                  // true once a signed-in sky is loaded
 export function setViewer(id,live){ME=id;LIVE=live;}
 export const DAWN=7*60, NIGHT=22*60;    // the wisp leaves the arch at dawn, is home by night
@@ -46,7 +46,7 @@ export const fullness=l=>l<.35?'light for you':l<.65?'about usual for you':l<.85
 // Bridge glow = recent interaction warmth with the group (0 quiet ... 3 bright); never breaks.
 export const WARMTH={sakura:1.7,purple:1.4,oak:.6,willow:1.1,palm:.9};
 // Everyone's name, by island. The demo's; a signed-in sky replaces them.
-export const OWNERS={sakura:'Aisha',purple:'Ben',oak:'Chen',willow:'Dara',palm:'Eli'};
+export const OWNERS={sakura:'Alex',purple:'Ben',oak:'Chen',willow:'Dara',palm:'Eli'};
 
 export const toMin=s=>{const [h,m]=s.split(':').map(Number);return h*60+m;};
 export const fmt=m=>`${String(Math.floor(m/60)%24).padStart(2,'0')}:${String(Math.floor(m%60)).padStart(2,'0')}`;
@@ -102,7 +102,7 @@ export const SCHEDULES={};
 // first: they set each demo island's normal week. A signed-in island works
 // these out from its own past blocks instead.
 export const TRENDS={sakura:[24,23,22],purple:[16,15,15],oak:[22,24,25],willow:[27,26,25],palm:[14,15,13]};
-// The demo's answers to "How draining was that?", so Aisha's island has
+// The demo's answers to "How draining was that?", so Alex's island has
 // already learned something: long study days drain her, time with friends
 // doesn't. [days ago, start, minutes, kind, answer]
 export const DEMO_ANSWERS={sakura:[

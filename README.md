@@ -216,7 +216,7 @@ The building phase turned the prototype into something a stranger can use with t
 
 **Live app:** [https://island-life.onrender.com/](https://island-life.onrender.com/) &nbsp;·&nbsp; **Instant demo, no account:** [?enter=demo](https://island-life.onrender.com/?enter=demo) &nbsp;·&nbsp; **A route through it:** [USER_GUIDE.md](USER_GUIDE.md)
 
-The demo sky is Aisha's week and her four friends. It runs entirely in the browser, with no account, camera, or calendar needed.
+The demo sky is Alex's week and four friends. It runs entirely in the browser, with no account, camera, or calendar needed.
 
 ---
 

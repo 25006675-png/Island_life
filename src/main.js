@@ -442,7 +442,7 @@ const bridgeFriend=()=>bridgeTo?islands.find(i=>i.id===bridgeTo.id):null;
 const nearPractice=()=>{const t=life.api.practice.tree();return !!t&&Math.hypot(t.x-player.position.x,t.z-player.position.z)<3.5;};
 const guide=createGuide({
  demo:{key:'il-guide-demo',next:()=>'home',steps:[
-  {say:'Hi, I’m Blomy! This is a demo sky: Aisha’s island and her four friends. Every island floats at the height of its owner’s week. Let me show you.',button:'Show me',
+  {say:'Hi, I’m Blomy! This is a demo sky: Alex’s island and four friends. Every island floats at the height of its owner’s week. Let me show you.',button:'Show me',
    start:()=>focusOn(ME)},
   // demo-only shortcuts, pressed from Blomy's box (they live in the menu too), so nothing covers the island
   {high:true,say:'In your own sky, your plans and check-ins move your island over the days. This demo has a shortcut to show it now. Try an exam week.',
@@ -454,7 +454,7 @@ const guide=createGuide({
  ]},
  home:{key:'il-guide',next:()=>world.people.length>1?'friends':null,end:()=>life?.api.practice.clear(),steps:[
   {say:()=>live()?'Hi, I’m Blomy! This is your sky, and your island is “My island”. Tap it to come home.'
-                 :'For today, Aisha’s island is yours: “My island”. Tap it to go there.',
+                 :'For today, Alex’s island is yours: “My island”. Tap it to go there.',
    target:()=>islands.find(i=>i.id===ME)?.label,hand:true,done:()=>mode==='walk'&&!transition},
   {say:()=>TOUCH?`This is home! Put your thumb anywhere on the ${stickHalf()} side to walk, and drag on the other side to look around.`
                 :'This is home! Try walking: press the keys and watch them light up.',
@@ -785,7 +785,7 @@ const worldReady=new Promise(resolve=>{
   const hello=w=>{
     resolve(w);canvas.focus({preventScroll:true});
     notice(w.live?`Welcome back, ${w.people.find(p=>p.id===ME)?.name||'friend'}. Your island kept growing while you were away.`
-                 :'Welcome to the demo sky. This is Aisha’s island, and her four friends.');
+                 :'Welcome to the demo sky. This is Alex’s island, with four friends nearby.');
   };
   if(QS.has('skiplogin')){resolve(demoWorld());return;}
   if(QS.get('enter')==='demo'||!backend.configured){hello(demoWorld());return;}

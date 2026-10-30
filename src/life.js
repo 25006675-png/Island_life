@@ -379,7 +379,7 @@ export function initLife({world,scene,flower,islands,camera,texture,player,notic
     const all=[
       smartIdea(),
       wait&&{fit:5,move:wait,title:`Move ${wait.title}`,label:`moving “${wait.title}” to next week`,button:'Move it to next week',
-       why:`You marked “${wait.title}” as able to wait.`},
+       why:'You said it can wait.'},
       {fit:late>=2?3:0,title:'Early night',cat:'rest',mins:60,starts:[21*60+30],vis:'hidden',label:'an early night',button:'Plan an early night',
        why:late>=2?`${late} late nights this week.`:'Sleep is the quickest reset.'},
       {fit:moved<90?2.6:rest?2.3:0,title:'A walk outside',cat:'exercise',mins:30,starts:[17*60+30,12*60+30,8*60],vis:'open',label:'a walk outside',button:'Add a walk',
@@ -433,7 +433,7 @@ export function initLife({world,scene,flower,islands,camera,texture,player,notic
   function checkNudge(){
     const mode=nudgeTaken&&gardenerNow.mode!=='support'?null:gardenerNow.mode, on=!!mode&&(mode==='support'||!!idea()), was=nudgeOn;
     if(on===nudgeOn&&mode===nudgeWhy)return;nudgeOn=on;nudgeWhy=mode;if(on)askGemini();
-    if(on&&!was)notice(mode==='support'?'Your gardener has left you a note by the windmill.':`${nudgeTitle()}. Your gardener has an idea.`);
+    if(on&&!was)notice(mode==='support'?'Blomy has left you a note by the windmill.':`${nudgeTitle()}. Blomy has an idea.`);
   }
   function takeIdea(i,slot=i.slot){
     if(i.move){plans.shift(ME,i.move,7);nudgeTaken=true;checkNudge();notice(`${i.move.title} moved to next week. Your island rises a little.`);return;}
@@ -443,16 +443,25 @@ export function initLife({world,scene,flower,islands,camera,texture,player,notic
     notice(`${i.title} is on your plan for ${whenText(slot)}.`);
   }
   // the gardener's advice comes from the same reading as Your balance: "See why" opens it
-  const seeWhy={more:()=>openBalance($('balance-toggle'),'suggest'),moreLabel:'See why'};
+  const seeWhy={more:()=>openBalance($('balance-toggle'),'suggest'),moreLabel:'Why?'};
+  // On the card Blomy asks, and the buttons answer: a few words about the week, then a question you can say yes
+  // to. Gemini's own ideas come with their own question (gemini.ts), so the plain plan goes underneath instead.
+  const nudgeLead=()=>nudgeWhy==='rest'?'It might not be your schedule.'
+    :gardenerNow.heavyDay&&gardenerNow.heavyDay!==TODAY?`${DAYS_LONG[dow(gardenerNow.heavyDay)-1]} looks heavy.`:'Your week looks heavy.';
+  function askLine(i){
+    if(i.ai)return {title:i.line,sub:i.move?`Moves “${i.move.title}” to next week.`:`${i.title}, ${whenText(i.slot)}.`};
+    return {title:i.move?`${nudgeLead()} Want me to move “${i.move.title}” to next week?`:`${nudgeLead()} How about ${i.label} ${whenText(i.slot)}?`,
+            sub:wording(i)};
+  }
   function nudgeCard(key,kicker,at,dismiss){
     if(nudgeWhy==='support')
       return {key:`${key}support`,wood:true,kicker,title:nudgeTitle(),sub:'Your sky has been grey for a while. You don’t have to carry it alone.',
               action:()=>{$('support-dialog').showModal();nudgeTaken=true;},actionLabel:'Where to find support',
               ...(dismiss?{letGo:dismiss,letGoLabel:'Not now'}:{}),...seeWhy,at};
     const i=idea();if(!i)return null;
-    const s=asSuggestion(i), sub=wording(i);
-    return {key:`${key}${ideaAt}${nudgeWhy}${s.key}${sub.length}`,wood:true,kicker:`${kicker}: ${nudgeTitle()}`,title:s.text,sub,
-            action:s.apply,actionLabel:'Apply',alt:()=>{ideaAt++;},altLabel:'Another idea',
+    const s=asSuggestion(i), {title,sub}=askLine(i);
+    return {key:`${key}${ideaAt}${nudgeWhy}${s.key}${sub.length}`,wood:true,kicker,title,sub,
+            action:s.apply,actionLabel:i.move?'Yes, move it':'Yes, add it',alt:()=>{ideaAt++;},altLabel:'Something else?',
             ...(dismiss?{letGo:dismiss,letGoLabel:'Not now'}:{}),...seeWhy,at};
   }
   $('support-close').onclick=()=>$('support-dialog').close();
@@ -788,7 +797,7 @@ export function initLife({world,scene,flower,islands,camera,texture,player,notic
     if(!bubbleSeen){bubbleSeen=true;bubble=player.position.clone();}
     if(bubble&&Math.hypot(player.position.x-bubble.x,player.position.z-bubble.z)>4)bubble=null;
     if(!bubble)return null;
-    return nudgeCard('bubble','Your gardener',new T.Vector3(player.position.x,player.position.y+1.7,player.position.z),
+    return nudgeCard('bubble','Blomy',new T.Vector3(player.position.x,player.position.y+1.7,player.position.z),
                      ()=>{bubble=null;notice('It’ll wait at the windmill.');});
   }
   // the windmill's card: today, from the planner
