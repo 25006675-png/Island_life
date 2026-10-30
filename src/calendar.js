@@ -69,6 +69,34 @@ export function createCalendar({plans,owner,clock,notice,sheets,live=null,rate=n
     {id:'lms',name:'Canvas, Moodle or Blackboard',glyph:'C',color:'#c0613f',soon:true},
   ];
   let conn=live?.connection??null, demoOn=false;
+  // Google shows an "unverified app" screen until its review is done: say so first, then go
+  const viaWarning=go=>{$('gcal-warn-ok').onclick=()=>{$('gcal-warn').close();go();};$('gcal-warn').showModal();};
+  $('gcal-warn-no').onclick=()=>$('gcal-warn').close();
+  // No Google Calendar, or rather not connect one: a typical student week goes on this week's plan, saved like
+  // any plan (so the island moves with it), each block tagged "sample:" so one press takes them all off again.
+  const SAMPLE=[   // [day 0 = Monday, start, minutes, kind, title, 'low' = can wait]
+    [0,'09:00',120,'study','MA1521 Lecture'],[0,'14:00',60,'study','CS2040 Tutorial'],[0,'18:00',60,'exercise','Gym'],
+    [1,'10:00',120,'study','Physics lab'],[1,'17:00',240,'work','Shift at the café'],
+    [2,'09:00',120,'study','MA1521 Lecture'],[2,'13:00',90,'study','Group project meeting'],[2,'19:00',120,'social','Dinner with friends'],
+    [3,'11:00',60,'errands','Dentist'],[3,'14:00',120,'study','Library: revise','low'],[3,'17:00',240,'work','Shift at the café'],
+    [4,'09:00',120,'study','CS2040 Midterm'],[4,'16:00',60,'exercise','Badminton'],
+    [5,'10:00',60,'errands','Groceries and laundry','low'],[5,'15:00',120,'social','Movie with roommates'],
+    [6,'10:00',60,'social','Call home'],[6,'20:00',90,'rest','Slow evening'],
+  ];
+  const isSample=b=>String(b.externalId??'').startsWith('sample:');
+  const sampleBlocks=()=>plans.all(owner).filter(isSample);
+  function addSampleWeek(){
+    const monday=mondayOf(TODAY);
+    SAMPLE.forEach(([d,start,mins,cat,title,priority='normal'],i)=>plans.add(owner,{date:addDays(monday,d),start:toMin(start),mins,cat,title,priority,
+      externalId:`sample:${monday}:${i}`}));
+    renderSync();
+    notice('A sample week is on your plan. Remove it any time from Sync calendars.');
+  }
+  function removeSampleWeek(){
+    for(const b of sampleBlocks())plans.remove(owner,b);
+    renderSync();
+    notice('The sample week is off your plan.');
+  }
   const ago=t=>{if(!t)return 'not synced yet';const m=Math.round((Date.now()-Date.parse(t))/60000);
     return m<2?'synced just now':m<60?`synced ${m} min ago`:m<1440?`synced ${Math.round(m/60)} h ago`:`synced ${Math.round(m/1440)} d ago`;};
   async function reloadImported(){
@@ -89,10 +117,17 @@ export function createCalendar({plans,owner,clock,notice,sheets,live=null,rate=n
         :'Connected · synced just now';
       const btn=el('button',{type:'button',className:connected?'text-button':'solid-small',textContent:connected?'Disconnect':'Connect'});
       const kids=[el('strong',{textContent:s.name}),el('span',{textContent:status})];
+      // under Google, signed in only (the demo already has a week): the sample week, or taking it off again
+      const has=live&&sampleBlocks().length>0;
+      if(live&&s.id==='google'&&(has||!connected)){
+        const b=el('button',{type:'button',className:'text-button',textContent:has?'Remove it':'Try a sample week'});
+        b.onclick=has?removeSampleWeek:addSampleWeek;
+        kids.push(el('small',{className:'sync-sample'},has?'A sample week is on your plan. ':'No Google Calendar? ',b));
+      }
       const row=el('li',{className:connected?'on':''},el('span',{className:'sync-glyph',style:`--c:${s.color}`,textContent:s.glyph,ariaHidden:'true'}),
         el('span',{className:'sync-what'},...kids),btn);
       if(connected&&live){
-        if(conn.status==='needs_reconnect'){btn.textContent='Reconnect';btn.className='solid-small';btn.onclick=()=>google.connect(conn.write_enabled);return row;}
+        if(conn.status==='needs_reconnect'){btn.textContent='Reconnect';btn.className='solid-small';btn.onclick=()=>viaWarning(()=>google.connect(conn.write_enabled));return row;}
         const two=el('input',{type:'checkbox',checked:conn.write_enabled});
         const label=el('label',{className:'check sync-two'},two,' Also send my Island Life plans to Google');
         const note=el('small',{className:'sync-note',textContent:'They go into a separate “Island Life” calendar. Your own calendars are never changed.'});
@@ -118,15 +153,15 @@ export function createCalendar({plans,owner,clock,notice,sheets,live=null,rate=n
           setTimeout(()=>{demoOn=true;renderSync();notice(`${s.name} connected. In the full app its events arrive as blocks.`);},900);
           return;
         }
-        btn.disabled=true;
-        if(connected){
-          btn.textContent='Disconnecting…';
-          try{await google.disconnect();conn=null;await reloadImported();notice('Google Calendar disconnected. Imported plans from today on were removed.');}
-          catch{notice('That didn’t work. Try again in a moment.');}
-          renderSync();return;
+        if(!connected){
+          viaWarning(async()=>{btn.disabled=true;btn.textContent='Opening Google…';
+            try{await google.connect(false);}catch{btn.disabled=false;btn.textContent='Connect';notice('Google couldn’t be reached. Try again in a moment.');}});
+          return;
         }
-        btn.textContent='Opening Google…';
-        try{await google.connect(false);}catch{btn.disabled=false;btn.textContent='Connect';notice('Google couldn’t be reached. Try again in a moment.');}
+        btn.disabled=true;btn.textContent='Disconnecting…';
+        try{await google.disconnect();conn=null;await reloadImported();notice('Google Calendar disconnected. Imported plans from today on were removed.');}
+        catch{notice('That didn’t work. Try again in a moment.');}
+        renderSync();
       };
       return row;
     }));

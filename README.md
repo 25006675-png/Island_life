@@ -275,7 +275,7 @@ Two short questions, each asked by someone who lives on your island. Questions a
 <td width="50%"><a href="docs/videos/fairy.mp4"><img src="docs/images/clips/fairy.webp" alt="A fairy hovers by the newly watered tree and asks: How draining was it? Light, Okay or Draining"/></a><br/><sub>A fairy flies out of the new tree with one question &nbsp;·&nbsp; <a href="docs/videos/fairy.mp4">full clip</a></sub></td>
 </tr>
 <tr>
-<td valign="top"><b>Your flower asks how you feel.</b> A flower grows just inside your gate. Walk up to her, tap her, or press T, and she asks how you feel right now: Calm, Happy, Tired, Stressed or Low, with an optional photo. Your answer lights a lantern on your pier and colours her petals. Over a few days the lanterns make your island's weather. Then she rests for an hour. Signed in, she also asks once in the evening by phone notification.</td>
+<td valign="top"><b>Your flower asks how you feel.</b> A flower grows just inside your gate. Walk up to her, tap her, or press T, and she asks how you feel right now: Calm, Happy, Tired, Stressed or Low, with an optional photo. Your answer lights a lantern on your pier and colours her petals. Over a few days the lanterns make your island's weather. Then she rests for half an hour. Signed in, she also asks once a day by phone notification, from a time you choose (20:00 unless you change it).</td>
 <td valign="top"><b>A fairy asks how draining it was.</b> Every time you finish something, a fairy flies out of its tree and asks one question: Light, Okay or Draining. One tap teaches your island what that kind of time costs you, so a heavy week means heavy <i>for you</i>. Your balance shows what it has learned. Friends never see these answers.</td>
 </tr>
 </table>

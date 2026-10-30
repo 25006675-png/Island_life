@@ -34,6 +34,9 @@ export async function profile(uid){
   return p;
 }
 export const rename=(uid,name)=>quietly(db.from('profiles').update({name}).eq('id',uid));
+// when "How are you?" may ring (minutes after midnight); null if it can't be read
+export const checkinTime=async uid=>{const {data,error}=await db.from('profiles').select('checkin_min').eq('id',uid).single();return error?null:data.checkin_min;};
+export const setCheckinTime=(uid,min)=>quietly(db.from('profiles').update({checkin_min:min}).eq('id',uid));
 
 // ---- skies -------------------------------------------------------------------------
 export async function mySky(uid){
@@ -49,9 +52,10 @@ export const inviteLink=code=>`${location.origin}${location.pathname}?join=${cod
 // ---- rows <-> the app's shapes ---------------------------------------------------------
 const toBlock=r=>({id:r.id,date:r.date,start:r.start_min,mins:r.mins,cat:r.cat,title:r.title??'',vis:r.vis,priority:r.priority??'normal',
   repeat:r.repeat,skipped:r.skipped,done:r.done,skippedOn:r.skipped_on??[],doneOn:r.done_on??[],exceptOn:r.except_on??[],
-  source:r.source??'island',keptCat:!!r.kept_cat});
+  source:r.source??'island',keptCat:!!r.kept_cat,externalId:r.external_id??null});
 const fromBlock=b=>({date:b.date,start_min:Math.round(b.start),mins:Math.round(b.mins),cat:b.cat,title:b.title.slice(0,120),vis:b.vis,
-  priority:b.priority,repeat:b.repeat,skipped:b.skipped,done:b.done,skipped_on:b.skippedOn,done_on:b.doneOn,except_on:b.exceptOn,kept_cat:!!b.keptCat});
+  priority:b.priority,repeat:b.repeat,skipped:b.skipped,done:b.done,skipped_on:b.skippedOn,done_on:b.doneOn,except_on:b.exceptOn,kept_cat:!!b.keptCat,
+  ...(b.externalId?{external_id:b.externalId}:{})});   /* the sample week's blocks carry "sample:…" here (calendar.js) */
 const localDay=ts=>iso(new Date(ts));
 
 async function signed(paths){
@@ -276,6 +280,12 @@ export async function enablePush(){
   const j=sub.toJSON();
   must(await db.from('push_subscriptions').upsert({endpoint:j.endpoint,p256dh:j.keys.p256dh,auth:j.keys.auth}));
   return true;
+}
+// what the evening check-in looks like, shown by this device at once (the guide, right after Allow)
+export async function samplePrompt(){
+  const reg=await navigator.serviceWorker.ready;
+  await reg.showNotification('How are you?',{body:'One tap for a lantern, then a quick word about today.',tag:'sample-mood',
+    icon:'/assets/icons/app-192.png',badge:'/assets/icons/app-192.png',data:{url:'/?ask=mood'}});
 }
 export async function disablePush(){
   const sub=await (await navigator.serviceWorker.getRegistration())?.pushManager.getSubscription();

@@ -68,8 +68,13 @@ export function createFlowerTalk({camera,flower,here=()=>false,near=()=>false,bl
       if(talk.hidden===show)talk.hidden=!show;
       if(show){
         talk.style.left=`${p.x}px`;talk.style.top=`${p.y}px`;
-        const left=rest(), text=left>0?`Resting · asks again in ${left} min`:'How do you feel?';
-        if(tag.textContent!==text){tag.textContent=text;talk.setAttribute('aria-label',left>0?`Your flower is resting. She asks again in ${left} minutes.`:'Talk to your flower: how do you feel?');}
+        // while she rests the tag stays up (phones have no hover), so you can see your feeling was kept
+        const left=rest(), text=left>0?`Zzz… check in again in ${left} min`:'How do you feel?';
+        if(tag.textContent!==text){tag.textContent=text;talk.classList.toggle('resting',left>0);
+          talk.setAttribute('aria-label',left>0?`Your flower is napping. Check in again in ${left} minutes.`:'Talk to your flower: how do you feel?');}
+        // she can stand near the edge of the view: the tag slides along so it stays readable on screen
+        const half=tag.offsetWidth/2, edge=8;
+        tag.style.marginLeft=`${Math.max(0,edge-(p.x-half))+Math.min(0,innerWidth-edge-(p.x+half))}px`;
       }
       if(open)place();
     },

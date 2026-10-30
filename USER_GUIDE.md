@@ -59,7 +59,7 @@ Tip: press **Sky view** at the bottom to watch the island move. When you are wal
 
 <img src="docs/images/flower-ask.jpg" alt="Blomy beside the flower, whose bubble asks How do you feel right now? with five feelings to choose from" width="560"/>
 
-**Expected result:** the check-in is recorded immediately. One check-in opens a small bloom in that feeling's colour in the bed around her and colours her petals (the bed keeps the last seven days); several recent check-ins gradually change the island's weather. Afterwards she rests for an hour: her tag then reads "Resting · asks again in … min".
+**Expected result:** the check-in is recorded immediately. One check-in opens a small bloom in that feeling's colour in the bed around her and colours her petals (the bed keeps the last seven days); several recent check-ins gradually change the island's weather. Afterwards she rests for half an hour: her tag then reads "Zzz… check in again in … min".
 
 ### 4. Finish an activity, and meet the fairy
 
@@ -218,7 +218,7 @@ Tick each item as you check it.
 | The 3D world loads slowly | Wait up to one minute, close heavy browser tabs, and ensure hardware acceleration is enabled. On a slower device, add `&lite` to the demo address (for example `https://island-life.onrender.com/?enter=demo&lite`). |
 | Sign-in or an external service is unavailable | Continue with the [instant demo](https://island-life.onrender.com/?enter=demo); the core judging journey does not depend on Supabase, Google or Gemini. |
 | I cannot find "How do you feel?" | It is the flower just inside the gate on **My island**, not a button. She only talks while you are walking on your own island. Walk up to her, tap her, or press `T`. |
-| The flower does not ask | After you answer, she rests for an hour; her tag says how long. Reloading the demo page starts her fresh. |
+| The flower does not ask | After you answer, she rests for half an hour; her tag says how long. Reloading the demo page starts her fresh. |
 | The fairy did not appear | She waits until any open sheet or dialog is closed, and asks once per finished activity. |
 | The guided tour covers an action | Select **Skip**. To bring it back, open the **☷ icon** and select **Show the guide again**. |
 | The walking step of the tour does not advance | Click on the 3D scene first, then hold `W A S D` for a second or two. |

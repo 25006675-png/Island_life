@@ -451,7 +451,7 @@ export function initLife({world,scene,flower,islands,camera,texture,player,notic
               ...(dismiss?{letGo:dismiss,letGoLabel:'Not now'}:{}),...seeWhy,at};
     const i=idea();if(!i)return null;
     const s=asSuggestion(i), sub=wording(i);
-    return {key:`${key}${ideaAt}${nudgeWhy}${s.key}${sub.length}`,wood:true,kicker:`${kicker} · ${nudgeTitle()}`,title:s.text,sub,
+    return {key:`${key}${ideaAt}${nudgeWhy}${s.key}${sub.length}`,wood:true,kicker:`${kicker}: ${nudgeTitle()}`,title:s.text,sub,
             action:s.apply,actionLabel:'Apply',alt:()=>{ideaAt++;},altLabel:'Another idea',
             ...(dismiss?{letGo:dismiss,letGoLabel:'Not now'}:{}),...seeWhy,at};
   }
@@ -669,14 +669,14 @@ export function initLife({world,scene,flower,islands,camera,texture,player,notic
   }
   // your flower asks how you feel (flower.js), only while you walk your own island: tap her, press T, or walk up to her.
   // After a check-in she rests FLOWER_REST minutes (island time, from the last one) before she asks again.
-  const FLOWER_REST=60, flowerAt=new T.Vector3();
+  const FLOWER_REST=30, flowerAt=new T.Vector3();
   const atHome=()=>getMode()==='walk'&&player.surface?.kind==='island'&&player.surface.id===ME;
   const talk=flower?createFlowerTalk({camera,flower,here:atHome,
     near:()=>{if(!atHome())return false;flower.getWorldPosition(flowerAt);return Math.hypot(flowerAt.x-player.position.x,flowerAt.z-player.position.z)<3.2;},
     rest:()=>{if(flowerTurn())return 0;   // the guide's check-in steps wait for her question: no resting then
       const last=(checkins[ME]??[]).filter(c=>c.day===0).at(-1);if(last?.time==null)return 0;
       return Math.min(FLOWER_REST,Math.max(0,Math.ceil(FLOWER_REST-(clock.minutes-last.time))));},
-    resting:min=>notice(`Your flower is resting. She’ll ask how you feel again in ${min} min.`),
+    resting:min=>notice(`Zzz… your flower is napping. Check in again in ${min} min.`),
     blocked:()=>!$('settings').hidden||!!document.querySelector('.sheet:not([hidden]),dialog[open],#login:not([hidden])'),
     mood:()=>{const c=(checkins[ME]??[]).filter(c=>c.day===0).at(-1);return c?MOODS[c.mood].color:null;}})
     :{request(){},close(){},update(){},isOpen:false};
@@ -1065,6 +1065,12 @@ export function initLife({world,scene,flower,islands,camera,texture,player,notic
       week:id=>plans.week(id??ME).map(({id,date,start,mins,cat,title,skipped,priority})=>({id,date,start,mins,cat,title,skipped,priority})),
       setTime:m=>{clock.live=false;clock.minutes=m;showClock();},
       ringGoldenWindow:()=>photos.ring(),
+      // the guide's golden window: the demo rings its rehearsal (friends' photos arrive), a real sky a practice one
+      golden:{
+        ring:()=>LIVE?photos.practiceRing():photos.ring(),
+        shared:()=>photos.items.some(i=>i.member.id===ME&&(i.golden||i.practice)),
+        open:()=>photos.status.open,
+      },
       garden:id=>gardens[id??ME]?.items()??null,
       dew,
       checkIn,
@@ -1087,7 +1093,7 @@ export function initLife({world,scene,flower,islands,camera,texture,player,notic
         taskDone:()=>TASKS.some(t=>t.practice&&t.done[ME]!==undefined),
         note:on=>{practiceNote=on;practiceNoted=false;},
         noted:()=>practiceNoted,
-        clear:()=>{plans.clearPractice(ME);practiceNote=false;const i=TASKS.findIndex(t=>t.practice);if(i>=0){TASKS.splice(i,1);renderTasks();}},
+        clear:()=>{plans.clearPractice(ME);practiceNote=false;photos.practiceEnd();const i=TASKS.findIndex(t=>t.practice);if(i>=0){TASKS.splice(i,1);renderTasks();}},
       },
       fairyIdle:()=>fairy.idle(),
       // where to stand to read the task board: a few steps out in front of it (the way it faces)

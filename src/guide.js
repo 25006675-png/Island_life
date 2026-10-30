@@ -14,6 +14,7 @@
 //   high: Blomy's box sits at the top, leaving the lower half of the view clear (the demo's island sinking into it)
 //   flower: the flower asks even if she's resting (the check-in steps); other steps leave her rest alone
 //   act(): what the step's own button does before moving on (the demo's "Exam week" presses Exam week)
+//   alt: a second, quiet choice beside the button ("Not now") that just moves on
 //   back(): true sends you back a step to do it again (the board closed before its practice task was done)
 const $=id=>document.getElementById(id);
 const seen=key=>{try{return localStorage.getItem(key)==='done';}catch{return false;}};
@@ -22,7 +23,7 @@ const calm=()=>matchMedia('(prefers-reduced-motion: reduce)').matches;
 const KEYS={KeyW:'w',ArrowUp:'w',KeyA:'a',ArrowLeft:'a',KeyS:'s',ArrowDown:'s',KeyD:'d',ArrowRight:'d',ShiftLeft:'shift',ShiftRight:'shift',Escape:'esc'};
 
 export function createGuide(chapters){
-  const box=$('guide'), text=$('guide-text'), dots=$('guide-dots'), next=$('guide-next'), art=$('guide-art');
+  const box=$('guide'), text=$('guide-text'), dots=$('guide-dots'), next=$('guide-next'), alt=$('guide-alt'), art=$('guide-art');
   const spot=$('guide-spot'), hand=$('guide-hand');
   let at=-1, step=null, since=0, cheered=false, chapter=null, steps=[];
   // Blomy's line types out like the welcome page's: a span per letter, words kept whole
@@ -46,6 +47,7 @@ export function createGuide(chapters){
     type((typeof step.say==='function'?step.say():step.say)??'');   // a quiet step says nothing
     drawArt(typeof step.art==='function'?step.art():step.art);
     [...dots.children].forEach((d,k)=>{d.className=k<i?'done':k===i?'now':'';});
+    alt.hidden=!step.alt;alt.textContent=step.alt??'';
     next.hidden=!!step.done;next.textContent=step.button??(i===steps.length-1?'Let’s go!':'Got it');
     box.hidden=!!step.quiet;box.classList.remove('in');void box.offsetWidth;box.classList.add('in');
   };
@@ -70,6 +72,7 @@ export function createGuide(chapters){
       s.style.cssText=`--dx:${Math.cos(a)*d}px;--dy:${Math.sin(a)*d-80}px;--c:${cols[k%cols.length]};--r:${Math.random()*540-270}deg`;
       document.body.append(s);setTimeout(()=>s.remove(),1400);}};
   next.onclick=()=>{step?.act?.();show(at+1);};
+  alt.onclick=()=>show(at+1);
   $('guide-skip').onclick=()=>finish(false);
   // the drawn keys press down with yours
   const press=(e,down)=>{const k=KEYS[e.code];if(!k||box.hidden)return;art.querySelector(`[data-k="${k}"]`)?.classList.toggle('down',down);};
