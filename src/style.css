@@ -180,6 +180,19 @@ padding:8px 14px 9px;border-radius:6px;background:linear-gradient(160deg,#caa276
 #reveal.wood #reveal-kicker,#reveal.wood #reveal-sub{color:#4a3626}
 #reveal.wood strong{font:normal 19px 'Segoe Print','Bradley Hand',Georgia,serif;color:#2f2116}
 #reveal.wood button{background:#3b2a1c;color:#f3e4c8;font-family:'Segoe Print','Bradley Hand',Georgia,serif}
+/* on wood the main action stays a dark pill; "Another idea" is outlined; "Not now" and "See why" are quiet links */
+#reveal.wood{min-width:min(330px,calc(100vw - 40px))}
+#reveal.wood strong{font-size:17px;line-height:1.4}
+/* two tidy rows: the answers on top, the quiet links under them (left and right) */
+#reveal.wood .reveal-actions{display:grid;grid-template-columns:auto 1fr;align-items:center;gap:2px 8px}
+#reveal.wood #reveal-action{grid-area:1/1}
+#reveal.wood #reveal-alt{grid-area:1/2;justify-self:start}
+#reveal.wood #reveal-letgo{grid-area:2/1;justify-self:start}
+#reveal.wood #reveal-more{grid-area:2/2;justify-self:end;margin-left:0}
+#reveal.wood #reveal-alt{background:transparent;color:#3b2a1c;box-shadow:inset 0 0 0 1.5px #3b2a1c;text-decoration:none;padding-inline:12px}
+#reveal.wood #reveal-alt:hover{background:oklch(.3 .05 60 / .1)}
+#reveal.wood :is(#reveal-letgo,#reveal-more){background:transparent;color:#4a3626;font-family:inherit;font-size:12px;padding:7px 2px;text-decoration:underline;text-underline-offset:3px}
+#reveal.wood :is(#reveal-letgo,#reveal-more):hover{background:transparent;color:#2f2116}
 #reveal.wood.anchored::after{background:#ab7f58}
 @keyframes dew-dip{30%{transform:scale(.9);opacity:.75}}
 .dew-float.spend{top:auto;bottom:-8px;color:oklch(.5 .08 30);animation:dew-fall 1.4s ease-out forwards}
@@ -435,6 +448,8 @@ dialog.wood .task-form input{flex:1;min-width:0;margin:0}dialog.wood .task-form 
 .sync-button{display:inline-flex;align-items:center;gap:7px;border:1px solid oklch(.84 .02 295);border-radius:16px;padding:6px 12px;background:transparent;font-size:12px}
 .sync-dot{width:7px;height:7px;border-radius:50%;background:oklch(.72 .02 295)}.sync-button.on .sync-dot{background:oklch(.64 .13 150)}
 #sync-dialog{width:min(470px,calc(100% - 32px))}
+#gcal-warn{width:min(420px,calc(100% - 32px))}
+.gcal-steps{margin:4px 0 10px;padding-left:22px;line-height:1.7}
 .sync-list{list-style:none;margin:0 0 12px;padding:0}
 .sync-list li{display:grid;grid-template-columns:34px 1fr auto;align-items:center;gap:12px;padding:12px 0;border-top:1px solid oklch(.88 .015 295)}
 .sync-list li:last-child{border-bottom:1px solid oklch(.88 .015 295)}
@@ -443,6 +458,8 @@ dialog.wood .task-form input{flex:1;min-width:0;margin:0}dialog.wood .task-form 
 .sync-list li.on .sync-what>span{color:oklch(.42 .1 150)}
 .sync-what input{width:100%;margin-top:6px;background:oklch(1 0 0);border:1px solid oklch(.82 .02 295);color:var(--ink);padding:7px 8px;border-radius:7px;font-size:11px}
 .sync-demo{font-size:11px;color:var(--muted);margin:0 0 12px}
+.sync-what .sync-sample{font-size:12px;color:var(--muted);margin-top:2px}
+.sync-sample .text-button{font-size:inherit;padding:0}
 .dialog-actions .solid-small{background:var(--accent);color:oklch(.99 .01 60)}.dialog-actions .solid-small:hover{background:oklch(.48 .12 36)}
 /* species icons beside category names */
 .cat-icon{width:18px;height:18px;object-fit:contain;vertical-align:-4px;margin-right:5px;flex:none}
@@ -560,6 +577,8 @@ label:has(> .ed-cat-icon){position:relative}
 .bal-learned li.none{border-left:0;color:var(--muted);font-size:12px}
 .sky-section{margin-bottom:6px}.sky-section h3{font:normal 16px var(--display);margin:0 0 6px}.sky-section .text-button{display:block;margin:8px 0 0}
 .sky-section+label{margin-top:16px}
+.sky-section .checkin-time{margin:12px 0 0}
+#guide-alt{white-space:nowrap}
 /* past islands: the week list, and the bar shown while a past week stands on your island */
 .past-list li{padding:0}.past-list li.past-empty{padding:10px 12px;font-size:13px}
 .past-list button{display:flex;flex-direction:column;gap:3px;width:100%;padding:10px 12px;border:0;border-radius:8px;background:none;color:inherit;font:inherit;text-align:left}
@@ -934,7 +953,7 @@ footer{z-index:2}
 .flower-talk:hover{background:transparent}
 .flower-talk span{position:absolute;bottom:calc(100% - 4px);left:50%;translate:-50% 0;white-space:nowrap;padding:5px 11px;border-radius:999px;background:#fff;color:var(--violet);
   font:600 12px var(--display);box-shadow:0 3px 0 var(--violet-soft),0 10px 20px -12px rgba(60,24,120,.5);opacity:0;transition:opacity .15s;pointer-events:none}
-.flower-talk:hover span,.flower-talk:focus-visible span{opacity:1}
+.flower-talk:hover span,.flower-talk:focus-visible span,.flower-talk.resting span{opacity:1}
 .flower-talk:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
 #app:has(#login:not([hidden])) .flower-talk{visibility:hidden}
 .flower-bubble .moods{margin:0;gap:7px}

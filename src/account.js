@@ -170,8 +170,16 @@ export function mountSkyPanel(world,notice){
     }catch(e){console.error(e);notice('Prompts couldn’t be turned on here.');}
     showPush();
   };
+  // when the evening "How are you?" may ring: shown once it can be read (the server keeps it)
+  const ASK_AT=[12,15,17,18,19,20,21].map(h=>h*60);
+  const when=el('select',{id:'checkin-time'},...ASK_AT.map(m=>el('option',{value:String(m),textContent:`${String(m/60).padStart(2,'0')}:00`})));
+  const whenRow=el('label',{className:'checkin-time',hidden:true},'Ask how I feel from ',when);
+  backend.checkinTime(world.uid).then(m=>{if(m==null)return;
+    if(!ASK_AT.includes(m))when.append(el('option',{value:String(m),textContent:`${String(Math.floor(m/60)).padStart(2,'0')}:${String(m%60).padStart(2,'0')}`}));
+    when.value=String(m);whenRow.hidden=false;});
+  when.onchange=()=>{backend.setCheckinTime(world.uid,+when.value);notice(`Your phone will ask how you feel from ${when.selectedOptions[0].textContent}, once a day.`);};
   box.replaceChildren(el('h3',{textContent:'Your sky'}),
     el('p',{className:'panel-note',textContent:count<5?`${count} of 5 islands. Invite code ${world.sky.invite_code}.`:'All five islands are taken.'}),
-    ...(count<5?[copy]:[]),push);
+    ...(count<5?[copy]:[]),push,whenRow);
   showPush();
 }

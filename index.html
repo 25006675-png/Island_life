@@ -14,12 +14,12 @@
       <!-- demo only (life.js hides it in a real sky): first, since it is what the demo menu is for -->
       <section id="demo-controls" class="demo-box" aria-labelledby="demo-title">
       <div class="demo-head"><h3 id="demo-title" class="demo-title">Try the demo week</h3><span class="demo-tag">Demo only</span></div>
-      <p class="panel-note">Shortcuts for Aisha’s sample sky. In your own sky, your plan and check-ins move your island over the days.</p>
+      <p class="panel-note">Shortcuts for Alex’s sample sky. In your own sky, your plan and check-ins move your island over the days.</p>
       <div class="scenarios" role="group" aria-label="Demo scenarios">
         <button type="button" data-scenario="exam"><b>Exam week</b><span>Twice the hours of a normal week: the island sinks toward the clouds</span></button>
         <button type="button" data-scenario="light"><b>A light week</b><span>Half the usual load: it floats high</span></button>
         <button type="button" data-scenario="rough"><b>A rough few days</b><span>Tired and stressed check-ins: cloud, then rain</span></button>
-        <button type="button" id="reset"><b>Back to this evening</b><span>Aisha’s week as it really reads</span></button>
+        <button type="button" id="reset"><b>Back to this evening</b><span>Alex’s week as it really reads</span></button>
       </div>
       <details class="demo-more"><summary>More: set it by hand</summary>
       <label>Time of day <output id="clock-value"></output><input id="clock" type="range" min="360" max="1380" step="5"/></label>
@@ -94,7 +94,14 @@
       <p id="sync-demo" class="sync-demo">Demo only. Nothing leaves this page and no account is touched.</p>
       <div class="dialog-actions"><button id="sync-done" class="solid-small">Done</button></div>
     </dialog>
-    <div id="arrival" hidden role="status"><span id="arrival-kicker"></span><h2 id="arrival-title"></h2><i class="arrival-rule" aria-hidden="true"></i><div id="arrival-stats"></div></div><div id="guide-spot" hidden aria-hidden="true"></div><div id="guide-hand" hidden aria-hidden="true"><span class="ripple"></span><img src="assets/guide-hand.png" alt="" width="60" height="78" draggable="false"/></div><div id="guide" hidden role="dialog" aria-live="polite" aria-labelledby="guide-name"><img src="assets/gardener_1.png" alt=""/><div class="guide-body"><span class="guide-name" id="guide-name">Blomy</span><span class="guide-yay" aria-hidden="true">Nice!</span><p id="guide-text"></p><div id="guide-art" class="guide-art" hidden></div><div class="guide-row"><span id="guide-dots" class="guide-dots" aria-hidden="true"></span><button id="guide-skip" type="button" class="text-button">Skip</button><button id="guide-next" type="button" class="solid-small">Got it</button></div></div></div><div id="stick" hidden aria-hidden="true"><i></i></div><div id="bridge-banner" hidden role="status"><span id="bridge-to"></span><button id="bridge-go" type="button">Go</button></div><div id="golden" hidden><span class="golden-spark" aria-hidden="true">✦</span><div><strong id="golden-title">The golden window is open</strong><span id="golden-time"></span></div><button id="golden-share">Share this moment</button><button id="golden-dismiss" aria-label="Hide the golden window">×</button></div>
+    <dialog id="gcal-warn" aria-labelledby="gcal-warn-title">
+      <h2 id="gcal-warn-title">Google will show a warning</h2>
+      <p class="panel-note">Island Life is new, and Google is still reviewing it. Until that’s done, Google says it hasn’t verified the app. You can carry on safely:</p>
+      <ol class="gcal-steps"><li>Tap <strong>Advanced</strong>.</li><li>Tap <strong>Go to Island Life</strong>.</li><li>Tick the calendar box and press <strong>Continue</strong>.</li></ol>
+      <p class="panel-note">Island Life only reads your calendars. It never changes or deletes your events, and you can disconnect at any time.</p>
+      <div class="dialog-actions"><button id="gcal-warn-ok" class="solid-small">I understand</button><button id="gcal-warn-no" class="text-button">Not now</button></div>
+    </dialog>
+    <div id="arrival" hidden role="status"><span id="arrival-kicker"></span><h2 id="arrival-title"></h2><i class="arrival-rule" aria-hidden="true"></i><div id="arrival-stats"></div></div><div id="guide-spot" hidden aria-hidden="true"></div><div id="guide-hand" hidden aria-hidden="true"><span class="ripple"></span><img src="assets/guide-hand.png" alt="" width="60" height="78" draggable="false"/></div><div id="guide" hidden role="dialog" aria-live="polite" aria-labelledby="guide-name"><img src="assets/gardener_1.png" alt=""/><div class="guide-body"><span class="guide-name" id="guide-name">Blomy</span><span class="guide-yay" aria-hidden="true">Nice!</span><p id="guide-text"></p><div id="guide-art" class="guide-art" hidden></div><div class="guide-row"><span id="guide-dots" class="guide-dots" aria-hidden="true"></span><button id="guide-skip" type="button" class="text-button">Skip</button><button id="guide-alt" type="button" class="text-button" hidden></button><button id="guide-next" type="button" class="solid-small">Got it</button></div></div></div><div id="stick" hidden aria-hidden="true"><i></i></div><div id="bridge-banner" hidden role="status"><span id="bridge-to"></span><button id="bridge-go" type="button">Go</button></div><div id="golden" hidden><span class="golden-spark" aria-hidden="true">✦</span><div><strong id="golden-title">The golden window is open</strong><span id="golden-time"></span></div><button id="golden-share">Share this moment</button><button id="golden-dismiss" aria-label="Hide the golden window">×</button></div>
     <dialog id="capture" aria-labelledby="capture-title">
       <h2 id="capture-title">Share this moment</h2>
       <div class="capture-frame"><video id="capture-video" playsinline muted></video><img id="capture-preview" hidden alt="Your photo, ready to send"/></div>

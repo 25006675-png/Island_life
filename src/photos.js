@@ -224,10 +224,10 @@ export function createCarousel({island,members,me,notice,view,time,live=null}){
   function remove(item){unhang(item);item.tex.dispose();items.splice(items.indexOf(item),1);}
 
   // Several photos a day for everyone; one golden one each per window.
-  function post(member,canvas,{golden=false,at,caption='',src,quiet}={}){
+  function post(member,canvas,{golden=false,at,caption='',src,quiet,practice=false}={}){
     if(golden&&items.some(i=>i.golden&&i.member.id===member.id))golden=false;
     const item={member,canvas,golden,caption,time:at??time(),name:member.id===me?'You':member.owner,
-                src:src??canvas.toDataURL('image/jpeg',.9),slot:-1};
+                src:src??canvas.toDataURL('image/jpeg',.9),slot:-1,practice};
     item.tex=polaroid(item);items.push(item);hang(item);
     if(!quiet)notice(member.id===me?`Your ${golden?'golden moment':'photo'} is hanging on the carousel.`
                     :golden?`${member.owner}’s golden moment is on the carousel.`:`${member.owner} hung a photo on the carousel.`);
@@ -265,6 +265,21 @@ export function createCarousel({island,members,me,notice,view,time,live=null}){
                         late?WINDOW_MS+8000:5000+i*9000+Math.random()*5000);
     });
     refresh();
+  }
+  // The guide's practice window when signed in: it rings on this screen only, and the photo hangs here
+  // only (never uploaded), so a real sky's window and friends are untouched. practiceEnd() puts it all back.
+  let practice=null;   // what the real window looked like before: {rung,windowAt}
+  function practiceRing(){
+    if(open)return;
+    practice={rung,windowAt};
+    open=true;rung=true;windowAt=time();endsAt=Date.now()+WINDOW_MS;clearInterval(timer);timer=setInterval(tick,500);tick();
+    notice('✦ A practice golden window. Two minutes to share this moment.');
+    refresh();
+  }
+  function practiceEnd(){
+    if(!practice)return;
+    for(const i of items.filter(i=>i.practice))remove(i);
+    open=false;clearInterval(timer);({rung,windowAt}=practice);practice=null;refresh();
   }
   function close(){open=false;clearInterval(timer);refresh();setTimeout(()=>{if(!open)$('golden').hidden=true;},9000);}
   function refresh(){
@@ -304,6 +319,8 @@ export function createCarousel({island,members,me,notice,view,time,live=null}){
     if(!pending)return;
     const canvas=pending, caption=$('capture-caption').value.trim();
     if(!live){post(owner,canvas,{golden:open,caption});$('capture').close();return;}
+    if(practice){post(owner,canvas,{golden:open,caption,practice:true,quiet:true});$('capture').close();
+      notice('Your practice photo hangs in gold on the carousel. It stays on this screen and isn’t shared.');return;}
     $('capture-send').disabled=true;$('capture-status').textContent='Hanging it up…';
     const dataUrl=canvas.toDataURL('image/jpeg',.88), row=await live.hang({dataUrl,caption});
     $('capture-send').disabled=false;$('capture').close();
@@ -377,7 +394,7 @@ export function createCarousel({island,members,me,notice,view,time,live=null}){
 
   const wp=new T.Vector3();
   return {
-    ring,openAlbum,receive,schedule,capture:openCapture,
+    ring,practiceRing,practiceEnd,openAlbum,receive,schedule,capture:openCapture,
     get items(){return items;},
     get status(){return {open,rung};},
     update(t,motion){

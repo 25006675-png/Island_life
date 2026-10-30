@@ -427,8 +427,8 @@ function showStick(){
 // The first-time guide (guide.js), in chapters. Each step lights up what to touch and waits until you have touched it.
 //   demo     -- the demo sky first shows its idea: a heavy week sinks an island, hard days bring rain
 //   home     -- come home, walk, tell your flower how you feel, plant and finish a practice block (the fairy asks
-//               about it, and nothing is saved), your balance, then (signed in) the glass places that wait for friends
-//   friends  -- once there is a friend: the gathering island, its task board, the golden window, the bridges
+//               about it, and nothing is saved), your balance, the golden window (rung, not told), then (signed in) the glass places that wait for friends
+//   friends  -- once there is a friend: the gathering island, its task board, the carousel, the bridges
 let walkedFrom=0, triedWalking=0, triedFrom=0, felt=false, invited=false, guided=null, boardAgain=false;   // guided: {to()} the guide's walk, along the path (route)
 $('moods').addEventListener('click',e=>{if(e.target.closest('.mood'))felt=true;});
 const live=()=>!!world?.live, alone=()=>live()&&world.people.length<2, hasRoom=()=>live()&&vacancies?.list.length>0;
@@ -442,7 +442,7 @@ const bridgeFriend=()=>bridgeTo?islands.find(i=>i.id===bridgeTo.id):null;
 const nearPractice=()=>{const t=life.api.practice.tree();return !!t&&Math.hypot(t.x-player.position.x,t.z-player.position.z)<3.5;};
 const guide=createGuide({
  demo:{key:'il-guide-demo',next:()=>'home',steps:[
-  {say:'Hi, I’m Blomy! This is a demo sky: Aisha’s island and her four friends. Every island floats at the height of its owner’s week. Let me show you.',button:'Show me',
+  {say:'Hi, I’m Blomy! This is a demo sky: Alex’s island and four friends. Every island floats at the height of its owner’s week. Let me show you.',button:'Show me',
    start:()=>focusOn(ME)},
   // demo-only shortcuts, pressed from Blomy's box (they live in the menu too), so nothing covers the island
   {high:true,say:'In your own sky, your plans and check-ins move your island over the days. This demo has a shortcut to show it now. Try an exam week.',
@@ -454,7 +454,7 @@ const guide=createGuide({
  ]},
  home:{key:'il-guide',next:()=>world.people.length>1?'friends':null,end:()=>life?.api.practice.clear(),steps:[
   {say:()=>live()?'Hi, I’m Blomy! This is your sky, and your island is “My island”. Tap it to come home.'
-                 :'For today, Aisha’s island is yours: “My island”. Tap it to go there.',
+                 :'For today, Alex’s island is yours: “My island”. Tap it to go there.',
    target:()=>islands.find(i=>i.id===ME)?.label,hand:true,done:()=>mode==='walk'&&!transition},
   {say:()=>TOUCH?`This is home! Put your thumb anywhere on the ${stickHalf()} side to walk, and drag on the other side to look around.`
                 :'This is home! Try walking: press the keys and watch them light up.',
@@ -469,7 +469,7 @@ const guide=createGuide({
    start:()=>{guided={to:()=>{if(!flower)return null;const f=flower.getWorldPosition(new T.Vector3()),dx=player.position.x-f.x,dz=player.position.z-f.z,d=Math.hypot(dx,dz)||1;
      return new T.Vector3(f.x+dx/d*2.2,0,f.z+dz/d*2.2);}};},
    flower:true,target:()=>!guided&&!$('flower-talk').hidden?$('flower-talk'):null,hand:true,done:()=>!$('flower-ask').hidden},
-  {say:'Pick the one closest. A bloom in that colour opens beside her, and over a few days your feelings make your island’s weather. She’ll rest for an hour, then ask again.',
+  {say:'Pick the one closest. A bloom in that colour opens beside her, and over a few days your feelings make your island’s weather. She’ll rest for half an hour, then ask again.',
    flower:true,start:()=>{felt=false;},target:()=>$('flower-ask').hidden?null:$('moods'),hand:true,done:()=>felt},
   // an open sheet is yours to read: Blomy steps aside (style.css) and waits until you close it yourself
   {say:'Your week lives in the Planner. When an activity’s time has passed, press Done and it grows a tree on your island. Open it.',
@@ -489,6 +489,24 @@ const guide=createGuide({
   {say:'And Your balance shows how heavy your week is, with small changes that would help. Have a look, then close it.',
    target:()=>$('balance-toggle'),hand:true,done:()=>!$('balance-sheet').hidden},
   {say:'Close your balance when you’re done looking.',done:()=>$('balance-sheet').hidden},
+  // the golden window, rung now rather than told: the demo's rehearsal (friends' golden photos arrive), or in a
+  // real sky a practice one on this screen only (life.js golden; cleared with the chapter's other practice)
+  {say:'One more thing: the golden window. Once a day, at a moment nobody knows in advance, the sky turns gold for two minutes and your phone rings. Let me ring one now.',
+   button:'Ring it',act:()=>life.api.golden.ring()},
+  {say:()=>live()?'Press Share this moment and snap whatever is in front of you. This one is practice, so nobody else sees it.'
+                 :'Press Share this moment and snap whatever is in front of you, just as it is.',
+   target:()=>$('golden').hidden?null:$('golden-share'),hand:true,
+   done:()=>life.api.golden.shared()||!life.api.golden.open()||$('golden').hidden},
+  {say:()=>live()?'Your photo hangs in gold on the carousel on the gathering island. On the real day, your friends’ photos hang right beside it.'
+                 :'Your photo hangs in gold on the carousel on the gathering island, and your friends’ golden photos are arriving there too.'},
+  // signed in, on a device that can, and never asked before: ask now, when it means something. Allow shows the
+  // evening check-in at once (backend.samplePrompt), so you see what will arrive and know it works
+  {when:()=>live()&&backend.pushSupported()&&Notification.permission==='default',
+   say:'Want your phone to ring when the real golden window opens? It will also ask how you feel once a day. You choose the time, or turn it off, in the menu.',
+   button:'Allow notifications',alt:'Not now',
+   act:()=>backend.enablePush().then(on=>{if(!on){notice('No notifications. You can turn them on later in the menu.');return;}
+     notice('Notifications are on. Here’s what your daily check-in looks like.');return backend.samplePrompt();})
+     .catch(e=>{console.error(e);notice('Notifications couldn’t be turned on here.');})},
   {when:hasRoom,say:'Now press Sky view to see your whole sky.',target:()=>$('overview'),hand:true,done:()=>mode==='overview'&&!transition},
   {when:hasRoom,say:'Those glass islands are places waiting for friends. Tap one to invite someone.',
    start:()=>{invited=false;},target:()=>vacancies.list.find(v=>!v.label.hidden)?.label,hand:true,done:()=>invited&&!$('invite-dialog').open},
@@ -516,15 +534,11 @@ const guide=createGuide({
    reveal:true,target:()=>$('reveal').hidden?null:$('reveal-action'),hand:true,done:()=>$('goals-dialog').open},
   {say:'Follow the notes on the practice task, then close the board.',done:()=>life.api.practice.taskDone()&&!$('goals-dialog').open,
    back:()=>!$('goals-dialog').open&&!life.api.practice.taskDone()&&(boardAgain=true)},
-  // the golden window: in the demo Blomy rings one (the rehearsal: the banner, the timer, friends' golden photos
-  // arriving) and walks you to the carousel; a real sky only hears about it (its windows are the server's)
-  {when:()=>!live(),say:'One more thing about this island: the golden window. Once a day, at a moment nobody knows in advance, the sky turns gold for a few minutes. Let me ring one for you.',
-   button:'Ring it',act:()=>life.api.ringGoldenWindow()},
-  {when:()=>!live(),say:'Everyone snaps a photo of wherever they are, and the photos hang together on the carousel by the pond. Let’s walk over.',
+  // the golden window was rung in the first chapter: here Blomy walks you to the carousel where its photos hang
+  {say:'Remember the golden window? Its photos hang together on the carousel by the pond. Let’s walk over.',
    start:()=>{guided={to:()=>{const c=life.api.carousel(),dx=player.position.x-c.x,dz=player.position.z-c.z,d=Math.hypot(dx,dz)||1;return new T.Vector3(c.x+dx/d*2.8,0,c.z+dz/d*2.8);}};},
    done:()=>{if(guided)return false;const c=life.api.carousel();return Math.hypot(player.position.x-c.x,player.position.z-c.z)<6;}},
-  {when:()=>!live(),say:'Your friends’ golden photos are arriving now. Tap Share to add yours, or just watch them hang.'},
-  {when:live,say:'One more thing about this island: the golden window. Once a day, at a moment nobody knows in advance, the sky turns gold for a few minutes. Everyone snaps a photo of wherever they are, and the photos hang here together.'},
+  {say:'Tap a photo to see it bigger. Each day’s photos stay in the album until midnight.'},
   // the bridges: Blomy walks you onto the nearest friend's, then Go crosses it
   {say:()=>`Bridges lead to each friend’s island. Let’s go and see ${bridgeFriend()?.owner??'a friend'}.`,
    start:()=>{const b=bridgeTo=nearestBridge();if(b)guided={to:()=>b.start,onto:()=>bridgePoint(b,.05)};},
@@ -771,7 +785,7 @@ const worldReady=new Promise(resolve=>{
   const hello=w=>{
     resolve(w);canvas.focus({preventScroll:true});
     notice(w.live?`Welcome back, ${w.people.find(p=>p.id===ME)?.name||'friend'}. Your island kept growing while you were away.`
-                 :'Welcome to the demo sky. This is Aisha’s island, and her four friends.');
+                 :'Welcome to the demo sky. This is Alex’s island, with four friends nearby.');
   };
   if(QS.has('skiplogin')){resolve(demoWorld());return;}
   if(QS.get('enter')==='demo'||!backend.configured){hello(demoWorld());return;}

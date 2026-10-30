@@ -18,7 +18,7 @@ export const tier=mins=>mins<=30?{scale:.72,label:'Small'}:mins<=90?{scale:1,lab
 let nextId=0;
 const t=(day,cat,mins,title,vis='silhouette')=>({id:++nextId,day,cat,mins,title,vis});
 export const HISTORY={
-  sakura:[   // Aisha: a study-heavy week
+  sakura:[   // Alex: a study-heavy week
     t(1,'study',180,'Essay research','open'),t(2,'study',60,'Flashcards','open'),
     t(3,'study',120,'Chemistry lab write-up','open'),t(5,'study',30,'Vocab review','open'),
     t(1,'social',90,'Dinner with Ben','open'),t(3,'social',60,'Coffee with Mei','open'),

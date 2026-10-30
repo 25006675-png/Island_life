@@ -1,6 +1,7 @@
 // Phone prompts (docs/algorithm.md 5.2), run every 15 minutes by pg_cron.
 //
-//   "How are you?"  once in the evening, unless already answered: the whole
+//   "How are you?"  once a day from the student's chosen time (20:00 unless they
+//                   changed it), unless already answered: the whole
 //                   day costs one notification. (How draining an activity was
 //                   is asked in the app, when you mark it done.)
 //
@@ -47,7 +48,7 @@ async function send(userId: string, payload: Record<string, string>,
   return delivered;
 }
 
-async function promptUser(userId: string, tz: string) {
+async function promptUser(userId: string, tz: string, askAt = 20 * 60) {
   const now = localNow(tz);
   if (now.minute < 8 * 60 || now.minute >= 22 * 60) return 'quiet hours';
 
@@ -65,8 +66,8 @@ async function promptUser(userId: string, tz: string) {
   const ignored = (recent ?? []).slice(0, 3);
   const backingOff = ignored.length === 3 && ignored.every(p => !p.answered_at);
 
-  // "How are you?" -- once, between 20:00 and 22:00, unless already answered today
-  if (now.minute >= 20 * 60 && !sentToday.some(p => p.kind === 'mood') && !(backingOff && new Date().getUTCDate() % 2)) {
+  // "How are you?" -- once, from their chosen time until 22:00, unless already answered today
+  if (now.minute >= askAt && !sentToday.some(p => p.kind === 'mood') && !(backingOff && new Date().getUTCDate() % 2)) {
     const { count } = await admin.from('checkins').select('id', { count: 'exact', head: true }).eq('owner', userId).eq('local_date', now.date);
     if (!count) {
       const { error } = await admin.from('prompts').insert({ user_id: userId, kind: 'mood', occurred_on: now.date });
@@ -113,10 +114,10 @@ Deno.serve(async req => {
   if (new URL(req.url).pathname.split('/').pop() === 'golden') return json({ rung: await ringGolden() });
   const { data: subs } = await admin.from('push_subscriptions').select('user_id');
   const users = [...new Set((subs ?? []).map(s => s.user_id))];
-  const { data: profiles } = users.length ? await admin.from('profiles').select('id,timezone').in('id', users) : { data: [] };
+  const { data: profiles } = users.length ? await admin.from('profiles').select('id,timezone,checkin_min').in('id', users) : { data: [] };
   const results: Record<string, string> = {};
   for (const p of profiles ?? []) {
-    try { results[p.id] = await promptUser(p.id, p.timezone || 'UTC'); }
+    try { results[p.id] = await promptUser(p.id, p.timezone || 'UTC', p.checkin_min ?? 20 * 60); }
     catch (e) { console.error('prompt', p.id, e); results[p.id] = 'error'; }
   }
   return json({ users: users.length, results });

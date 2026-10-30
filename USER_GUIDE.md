@@ -20,20 +20,20 @@ Island Life turns a student's timetable and feelings into a floating 3D island. 
 
 | Route | Best for | Data used |
 | --- | --- | --- |
-| **Demo island — recommended first** | Seeing every important feature quickly | Preloaded fictional data for Aisha and four friends; changes remain in this browser only |
+| **Demo island — recommended first** | Seeing every important feature quickly | Preloaded fictional data for Alex and four friends; changes remain in this browser only |
 | **Signed-in island** | Testing accounts, persistence, private data, invitations, Google Calendar and notifications | A Supabase account and data created by the judge |
 
 ## Route A — recommended 10-minute demo
 
-### 1. Enter Aisha's demo sky
+### 1. Enter Alex's demo sky
 
 Open the [instant demo link](https://island-life.onrender.com/?enter=demo). Alternatively, open the [main app](https://island-life.onrender.com/) and watch a star whale carry Blomy, the gardener, to the pier (or press **Skip** at the top right). Then press **Come ashore** and select **Try the demo island** under the sign-in card.
 
-Wait until the floating islands appear with the message "Welcome to the demo sky. This is Aisha’s island, and her four friends." Blomy then offers a short guided tour.
+Wait until the floating islands appear with the message "Welcome to the demo sky. This is Alex’s island, with four friends nearby." Blomy then offers a short guided tour.
 
 **What the tour asks you to do:** tap **My island**, hold `W A S D` to walk, walk up to the flower by your gate and pick a feeling, open and close the **Planner**, open and close **Your balance**, and finally walk onto a bridge. Most steps wait until you have done them. You can press **Skip** at any point.
 
-**Expected result:** six labelled islands appear in one shared sky: **My island** (Aisha's), **Ben's**, **Chen's**, **Dara's** and **Eli's island**, around **The gathering Island** in the middle. Aisha's sample timetable, mood history and friends are already loaded.
+**Expected result:** six labelled islands appear in one shared sky: **My island** (Alex's), **Ben's**, **Chen's**, **Dara's** and **Eli's island**, around **The gathering Island** in the middle. Alex's sample timetable, mood history and friends are already loaded.
 
 ### 2. See how workload changes the island
 
@@ -59,7 +59,7 @@ Tip: press **Sky view** at the bottom to watch the island move. When you are wal
 
 <img src="docs/images/flower-ask.jpg" alt="Blomy beside the flower, whose bubble asks How do you feel right now? with five feelings to choose from" width="560"/>
 
-**Expected result:** the check-in is recorded immediately. One check-in opens a small bloom in that feeling's colour in the bed around her and colours her petals (the bed keeps the last seven days); several recent check-ins gradually change the island's weather. Afterwards she rests for an hour: her tag then reads "Resting · asks again in … min".
+**Expected result:** the check-in is recorded immediately. One check-in opens a small bloom in that feeling's colour in the bed around her and colours her petals (the bed keeps the last seven days); several recent check-ins gradually change the island's weather. Afterwards she rests for half an hour: her tag then reads "Zzz… check in again in … min".
 
 ### 4. Finish an activity, and meet the fairy
 
@@ -75,7 +75,7 @@ You can also finish an activity on the island itself: walk along the coloured pa
 ### 5. Inspect and edit the planner
 
 1. Select **Planner**.
-2. Switch between **Day**, **Week** and **Month** to inspect Aisha's sample schedule. The bar under the tabs says how full the week is for her, and each day is marked, for example "Today: heavy for you".
+2. Switch between **Day**, **Week** and **Month** to inspect Alex's sample schedule. The bar under the tabs says how full the week is for Alex, and each day is marked, for example "Today: heavy for you".
 3. Select **+ Add a block**.
 4. Enter a title (**What**), then choose the **Day**, **Starts**, **For** (duration) and **Kind**. **Friends see** controls how much your friends can see: *Kind and size only*, *Everything*, or *Nothing*. You can also tick **Repeats every week** and **Can wait if the week gets full**.
 5. Select **Save**. A message says the block "is on your plan."
@@ -218,7 +218,7 @@ Tick each item as you check it.
 | The 3D world loads slowly | Wait up to one minute, close heavy browser tabs, and ensure hardware acceleration is enabled. On a slower device, add `&lite` to the demo address (for example `https://island-life.onrender.com/?enter=demo&lite`). |
 | Sign-in or an external service is unavailable | Continue with the [instant demo](https://island-life.onrender.com/?enter=demo); the core judging journey does not depend on Supabase, Google or Gemini. |
 | I cannot find "How do you feel?" | It is the flower just inside the gate on **My island**, not a button. She only talks while you are walking on your own island. Walk up to her, tap her, or press `T`. |
-| The flower does not ask | After you answer, she rests for an hour; her tag says how long. Reloading the demo page starts her fresh. |
+| The flower does not ask | After you answer, she rests for half an hour; her tag says how long. Reloading the demo page starts her fresh. |
 | The fairy did not appear | She waits until any open sheet or dialog is closed, and asks once per finished activity. |
 | The guided tour covers an action | Select **Skip**. To bring it back, open the **☷ icon** and select **Show the guide again**. |
 | The walking step of the tour does not advance | Click on the 3D scene first, then hold `W A S D` for a second or two. |
