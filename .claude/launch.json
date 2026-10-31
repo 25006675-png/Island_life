@@ -4,14 +4,42 @@
     {
       "name": "island-life",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev", "--", "--port", "5181"],
+      "runtimeArgs": [
+        "run",
+        "dev",
+        "--",
+        "--port",
+        "5181"
+      ],
       "port": 5181
     },
     {
       "name": "island-life-alt",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev", "--", "--port", "5190", "--strictPort"],
+      "runtimeArgs": [
+        "run",
+        "dev",
+        "--",
+        "--port",
+        "5190",
+        "--strictPort"
+      ],
       "port": 5190
+    },
+    {
+      "name": "island-life-mobile-wt",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "--prefix",
+        "C:/Users/happy/Project Hackathon/Codenection 2026/Island_life/.claude/worktrees/mobile",
+        "run",
+        "dev",
+        "--",
+        "--port",
+        "5192",
+        "--strictPort"
+      ],
+      "port": 5192
     }
   ]
 }

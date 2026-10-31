@@ -222,6 +222,12 @@ On an iPhone or iPad, web notifications only work once the app has been added to
 
 The same links work on a phone. The buttons along the top have a word under each icon: **Balance**, **Planner**, **Menu** (the ☷ panel, which also holds sound and the UI size) and **Shop**. On foot, put your thumb down anywhere on the left half of the screen and a joystick appears under it: push to walk, all the way to run. Drag on the right half to look around. **Joystick on the right** in the Menu swaps the two halves. Tap the flower to check in. The app can be added to the home screen from the browser's menu.
 
+A few things are laid out differently on a phone:
+- **Cards and questions** (a tree's or path stop's card, a gate sign, Blomy's idea, the fairy, the flower) appear compact at the top of the screen, clear of the joystick.
+- **Planner → Day:** **Synced**, **Sync now** and **+ Add** share one row; each card shows the time, title, kind and length, with **Done** and **Let go** in the same place on every card.
+- **Planner → Week:** blocks show their kind icon and name (a long word ends in "…"). Tap a block for its full details and **Edit**; tap empty time to add a block there. Swipe anywhere on the grid to scroll the day; on a phone blocks are moved and resized through **Edit** rather than by dragging.
+- **Schedule** (bottom bar) lifts today's path into a timetable that runs top to bottom, 07:00 to 22:00, with each block's time and name beside it. Held sideways, it stays a horizontal strip.
+
 <img src="docs/images/phone.jpg" alt="Island Life on a phone: the sky view, walking with the touch joystick, and the planner" width="640"/>
 
 ## Checklist

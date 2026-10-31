@@ -610,11 +610,14 @@ function findPath(to){
   }
   if(!end)return null;
   const cells=[end];for(let c=end;came.has(K(...c));){c=came.get(K(...c));cells.unshift(c);}
-  // pulled straight: from each corner, on to the farthest cell still in plain sight (every quarter metre walkable)
-  const sight=(a,b)=>{const ax=a[0]*G,az=a[1]*G,bx=b[0]*G,bz=b[1]*G,d=Math.hypot(bx-ax,bz-az),n=Math.ceil(d/.25);let py=yAt(...a);
-    for(let s=1;s<=n;s++){const y=ground(cell(ax+(bx-ax)*s/n),cell(az+(bz-az)*s/n));if(y===null||Math.abs(y-py)>=.6)return false;py=y;}return true;};
+  // pulled straight: from each corner on along the cells for as long as the straight line stays walkable. The line is
+  // tested where she will really tread (every 5 cm, as she steps), not cell by cell: a line whose cells are all ground
+  // can still clip a pond bank or a trunk between them, and there she'd stall and hop. From her own spot, not her cell.
+  const at=i=>i?[cells[i][0]*G,cells[i][1]*G]:[player.position.x,player.position.z];
+  const sight=(a,b)=>{const [ax,az]=at(a),[bx,bz]=at(b),n=Math.ceil(Math.hypot(bx-ax,bz-az)/.05);let py=a?ground(...cells[a]):player.position.y;
+    for(let s=1;s<=n;s++){const f=surfaceAt(islands,bridges,ax+(bx-ax)*s/n,az+(bz-az)*s/n);if(!(f?.kind==='island'&&f.id===id)||Math.abs(f.y-py)>=.6)return false;py=f.y;}return true;};
   const pts=[];let a=0;
-  while(a<cells.length-1){let b=cells.length-1;while(b>a+1&&!sight(cells[a],cells[b]))b--;pts.push(new T.Vector3(cells[b][0]*G,0,cells[b][1]*G));a=b;}
+  while(a<cells.length-1){let b=a+1;while(b<cells.length-1&&sight(a,b+1))b++;pts.push(new T.Vector3(cells[b][0]*G,0,cells[b][1]*G));a=b;}
   if(ground(cell(to.x),cell(to.z))!==null)pts.push(new T.Vector3(to.x,0,to.z));
   return pts.length?pts:null;
 }
@@ -642,7 +645,7 @@ function carouselWalk(){
 // one frame along a route; true once she stands at its end
 function follow(r,pace,dt){
   const dist=p=>Math.hypot(p.x-player.position.x,p.z-player.position.z);
-  while(r.k<r.pts.length-1&&dist(r.pts[r.k])<.7)r.k++;
+  while(r.k<r.pts.length-1&&dist(r.pts[r.k])<.3)r.k++;   // turns at the corner, not well before it (cutting it clips the bank)
   const p=r.pts[r.k],d=dist(p);
   if(r.k===r.pts.length-1&&d<(r.onto?.2:.6))return true;   // a last step onto a bridge or the carousel's deck goes all the way
   if((r.check+=dt)>=.7){
