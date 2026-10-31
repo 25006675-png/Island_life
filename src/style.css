@@ -1121,7 +1121,38 @@ body.guide-top #guide{top:84px;bottom:auto}
 #settings,#mood-panel{z-index:4}
 
 /* ==== mobile 1: planner Day list and its header row ==== */
-/* phone-only rules for this task go between these two lines, inside @media(max-width:600px),(pointer:coarse) and (max-width:1024px),(max-height:500px) and (max-width:1000px) */
+/* a phone, the planner's header: Sync calendars, Sync now and + Add sit together on a row of their own (+ Add at its
+   end). The empty full-width ::after breaks the line before them, so they never split; rows are spaced by margins, not
+   row-gap, so that empty line adds no space. The close button keeps clear of whatever ends the title row.
+   Each Day card: what it is on the left, its buttons on the right in slots of one width in every card (Done beside
+   Let go; Undo, Bring back or Didn't happen alone in Let go's place), and "How draining was it?" across the card's foot */
+@media(max-width:600px),(pointer:coarse) and (max-width:1024px),(max-height:500px) and (max-width:1000px){
+  #planner-sheet .sheet-head{row-gap:0;column-gap:10px;padding:0 26px 5px}
+  #planner-sheet .sheet-head>*{margin-block:5px}
+  #planner-sheet .sheet-head::after{content:'';order:1;flex-basis:100%}
+  #planner-sheet .sheet-head :is(.tabs,.cal-nav){margin-right:22px}
+  #planner-sheet :is(#cal-sync,#cal-sync-now,#cal-add){order:2;flex:none;white-space:nowrap}
+  #planner-sheet #cal-add{margin-left:auto}
+  #planner-sheet .plan-item{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:8px 10px;padding:10px 10px 10px 12px}
+  #planner-sheet .plan-open{min-width:0}
+  #planner-sheet .plan-acts{display:grid;grid-template-columns:repeat(2,88px);gap:5px;margin:0}
+  #planner-sheet .plan-acts>:only-child{grid-column:2}
+  #planner-sheet .plan-acts button{width:100%;min-height:30px;padding:4px 6px;border-radius:999px;font:500 12px/1.1 var(--display);white-space:nowrap;text-align:center}
+  #planner-sheet .plan-acts .text-button{border:1.5px solid var(--violet-soft);background:#fff;color:var(--violet);text-decoration:none;font-size:12px}
+  #planner-sheet .plan-rate{grid-column:1/-1;margin-top:0}
+}
+/* a narrow phone: the time over the title, Done over Let go; the status and notes after the kind and length, and
+   "· Google Calendar" and "a block" in the header, are left to screen readers (calendar.js tuck puts them in .narrow-sr);
+   the drain question over its three answers, side by side */
+@media(max-width:600px){
+  .narrow-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+  #planner-sheet .plan-acts{grid-template-columns:88px}
+  #planner-sheet .plan-acts>:only-child{grid-column:auto}
+  #planner-sheet .plan-open{grid-template-columns:minmax(0,1fr);gap:2px;align-items:start}
+  #planner-sheet .plan-when{padding-top:0}
+  #planner-sheet .plan-rate:has(.ask-pick) .plan-rate-q{flex-basis:100%;margin:0 0 2px}
+  #planner-sheet .plan-rate .ask-pick{flex:1 1 0;min-width:0;min-height:30px;padding:4px}
+}
 /* ==== end of mobile 1 ==== */
 
 /* -------------------------------------------------------------------------------------------------- */
