@@ -1028,6 +1028,11 @@ footer{z-index:2}
    title, under every button and card; the stick rests faintly at the bottom of it and jumps to your thumb (.live) */
 #stick-zone{position:absolute;left:0;width:50%;top:var(--header-bottom,96px);bottom:var(--stick-bottom,calc(96px + env(safe-area-inset-bottom,0px)));z-index:0;touch-action:none}
 #app.stick-right #stick-zone{left:auto;right:0}
+/* its mirror on the other half turns the camera (main.js #look-zone): one thumb on each half, both at once */
+#look-zone{position:absolute;right:0;width:50%;top:var(--header-bottom,96px);bottom:var(--stick-bottom,calc(96px + env(safe-area-inset-bottom,0px)));z-index:0;touch-action:none}
+#app.stick-right #look-zone{right:auto;left:0}
+/* no grey tap flash over half the screen, no text selection or long-press menu under a held thumb */
+#stick-zone,#look-zone{-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 #stick{pointer-events:none;opacity:.55;transition:opacity .2s}
 #app.stick-right #stick{left:auto;right:max(24px,env(safe-area-inset-right))}
 #stick.live{position:fixed;left:0;top:0;bottom:auto;right:auto;translate:-50% -50%;opacity:1;transition:none}

@@ -402,10 +402,35 @@ $('app').classList.toggle('touch',TOUCH);   // a touch screen: no keyboard hints
     stick.on=false;stick.x=stick.y=0;stick.id=null;knob.style.translate='';base.classList.remove('live');base.style.left=base.style.top='';
     if(tap)tapWorld(e.clientX,e.clientY);};
   zone.addEventListener('pointerup',end);zone.addEventListener('pointercancel',end);
+  zone.addEventListener('contextmenu',e=>e.preventDefault());
   const right=()=>{try{return localStorage.getItem(STICK_SIDE)==='1';}catch{return false;}};
   $('app').classList.toggle('stick-right',right());$('stick-right').checked=right();$('stick-side-row').hidden=!TOUCH;
   $('stick-right').onchange=e=>{try{localStorage.setItem(STICK_SIDE,e.target.checked?'1':'0');}catch{}$('app').classList.toggle('stick-right',e.target.checked);};}
 const stickHalf=()=>$('app').classList.contains('stick-right')?'right':'left';
+// The other half (#look-zone, the stick's mirror) turns the camera: one thumb drags to turn and tilt, two pinch to
+// zoom. It turns straight from the finger and stops when it lifts (the orbit controls' glide kept the view spinning
+// and lagging on a phone), and it only answers fingers that started on its own half: a thumb on the stick never
+// turns the view, a thumb here never walks, and the two never add up to a pinch. A quick tap is a tap on the world.
+const looks=new Map();
+{const zone=$('look-zone');let tap=null,spread=0;
+  const orbit=(turn,tilt,zoom)=>{off.subVectors(camera.position,controls.target);sph.setFromVector3(off);
+    sph.theta-=turn;sph.phi=T.MathUtils.clamp(sph.phi-tilt,controls.minPolarAngle,controls.maxPolarAngle);
+    sph.radius=T.MathUtils.clamp(sph.radius*zoom,controls.minDistance,controls.maxDistance);
+    camera.position.copy(controls.target).add(off.setFromSpherical(sph));camera.lookAt(controls.target);};
+  const apart=()=>{const [a,b]=[...looks.values()];return Math.hypot(a.x-b.x,a.y-b.y);};
+  zone.addEventListener('pointerdown',e=>{if(looks.size>=2)return;e.preventDefault();zone.setPointerCapture(e.pointerId);
+    looks.set(e.pointerId,{x:e.clientX,y:e.clientY});
+    tap=looks.size===1?{id:e.pointerId,x:e.clientX,y:e.clientY,at:performance.now()}:null;
+    spread=looks.size===2?apart():0;});
+  zone.addEventListener('pointermove',e=>{const p=looks.get(e.pointerId);if(!p||transition)return;
+    const dx=e.clientX-p.x,dy=e.clientY-p.y;p.x=e.clientX;p.y=e.clientY;
+    if(looks.size===2){const s=apart();if(spread&&s)orbit(0,0,spread/s);spread=s;return;}
+    const h=innerHeight||1;orbit(2*Math.PI*dx/h,2*Math.PI*dy/h,1);});   // the same turn per pixel as the orbit controls' drag
+  const end=e=>{if(!looks.delete(e.pointerId))return;spread=0;
+    if(tap?.id===e.pointerId&&performance.now()-tap.at<300&&Math.hypot(e.clientX-tap.x,e.clientY-tap.y)<8)tapWorld(e.clientX,e.clientY);
+    tap=null;};
+  zone.addEventListener('pointerup',end);zone.addEventListener('pointercancel',end);
+  zone.addEventListener('contextmenu',e=>e.preventDefault());}
 // It steps aside while something is open over the world: a panel, a sheet, a dialog, the island card unfolded, or
 // the lifted timetable (it doesn't walk there, and would cover the ribbon's labels).
 // On mobile it sits just above the island's name (the block bottom left), clear of its words however tall it grows,
@@ -420,9 +445,9 @@ function liftStick(){const app=$('app');
 function showStick(){
   const foot=TOUCH&&mode==='walk'&&!transition;
   if(foot!==onFoot){onFoot=foot;if(foot&&MOBILE.matches)$('island-card').open=false;}
-  const want=foot&&!overWorld();if(want===stickShown)return;stickShown=want;$('stick').hidden=$('stick-zone').hidden=!want;
+  const want=foot&&!overWorld();if(want===stickShown)return;stickShown=want;$('stick').hidden=$('stick-zone').hidden=$('look-zone').hidden=!want;
   if(want)liftStick();
-  else{stick.on=false;stick.x=stick.y=0;stick.id=null;$('stick').firstElementChild.style.translate='';}
+  else{stick.on=false;stick.x=stick.y=0;stick.id=null;$('stick').firstElementChild.style.translate='';$('stick').classList.remove('live');looks.clear();}
 }
 // The first-time guide (guide.js), in chapters. Each step lights up what to touch and waits until you have touched it.
 //   demo     -- the demo sky first shows its idea: a heavy week sinks an island, hard days bring rain
@@ -917,7 +942,7 @@ renderer=new T.WebGLRenderer({canvas,antialias:false,powerPreference:'high-perfo
 $('loading').hidden=true;$('motion').checked=motion;syncPanel();
   renderer.setAnimationLoop(frame);
   // A small inspection API also exposes meaningful world state for embedding.
-  window.islandLife={visit,overview,setAltitude:(id,h)=>{if(!Number.isFinite(h))return;updateAltitude(islands.find(i=>i.id===id),T.MathUtils.clamp(h,LOW,HIGH));syncPanel();},setWeather:(id,s)=>{const i=islands.find(i=>i.id===id),v=typeof s==='number'?s:{clear:.05,cloudy:.45,mist:.45,rain:.85}[s];if(!i||v==null)return;setStrain(i,v);syncPanel();},getState:()=>({ready,mode,selected,gpu,perf:{calls:renderer.info.render.calls,triangles:renderer.info.render.triangles,pixelRatio,rung,tier:TIER},player:{x:player.position.x,y:player.position.y,z:player.position.z,surface:player.surface},watering:chore&&{pouring:chore.pouring,time:chore.time},thirsty:thirst.length,islands:islands.map(({id,altitude,altTarget,weather,strain})=>({id,altitude:altTarget??altitude,weather,strain})),bridges:bridges.map(({id,start,end,width,arch,glow})=>({id,start,end,width,arch,glow})),render:renderer.info.render}),surfaceAt:(x,z)=>surfaceAt(islands,bridges,x,z),life:life.api};
+  window.islandLife={visit,overview,setAltitude:(id,h)=>{if(!Number.isFinite(h))return;updateAltitude(islands.find(i=>i.id===id),T.MathUtils.clamp(h,LOW,HIGH));syncPanel();},setWeather:(id,s)=>{const i=islands.find(i=>i.id===id),v=typeof s==='number'?s:{clear:.05,cloudy:.45,mist:.45,rain:.85}[s];if(!i||v==null)return;setStrain(i,v);syncPanel();},getState:()=>({ready,mode,selected,gpu,perf:{calls:renderer.info.render.calls,triangles:renderer.info.render.triangles,pixelRatio,rung,tier:TIER},player:{x:player.position.x,y:player.position.y,z:player.position.z,surface:player.surface},camera:{yaw:Math.atan2(camera.position.x-controls.target.x,camera.position.z-controls.target.z),distance:camera.position.distanceTo(controls.target)},watering:chore&&{pouring:chore.pouring,time:chore.time},thirsty:thirst.length,islands:islands.map(({id,altitude,altTarget,weather,strain})=>({id,altitude:altTarget??altitude,weather,strain})),bridges:bridges.map(({id,start,end,width,arch,glow})=>({id,start,end,width,arch,glow})),render:renderer.info.render}),surfaceAt:(x,z)=>surfaceAt(islands,bridges,x,z),life:life.api};
 }
 
 // Shadows follow you. From the sky the shadow box spans the middle of the neighbourhood; on foot it covers the
