@@ -97,15 +97,15 @@ export async function loadWorld(user,sky){
   for(const r of friends){const id=byUser[r.owner];if(id)(blocks[id]??=[]).push(toBlock(r));}
   const firstDate=mine.reduce((a,b)=>!a||b.date<a?b.date:a,null);
 
-  const lanterns={};
+  const felt={};
   for(const c of checkins){
     const id=byUser[c.owner];if(!id)continue;
     const day=daysBetween(c.local_date,TODAY);if(id!==me&&day>7)continue;
-    (lanterns[id]??=[]).push({day,mood:c.mood,time:c.minute,photoPath:c.photo_path});
+    (felt[id]??=[]).push({day,mood:c.mood,time:c.minute,photoPath:c.photo_path});
   }
   const paths=[...checkins.map(c=>c.photo_path),...joins.map(j=>j.photo_path),...moments.map(m=>m.photo_path)];
   const urls=await signed(paths);
-  for(const list of Object.values(lanterns))for(const l of list)l.photo=urls[l.photoPath]??null;
+  for(const list of Object.values(felt))for(const l of list)l.photo=urls[l.photoPath]??null;
 
   // notes: words for the ones you sent or received; just who-for-whom for the rest
   const noteList=notes.map(n=>({id:n.id,from:byUser[n.from_id],to:byUser[n.to_id],text:n.text,day:daysBetween(localDay(n.created_at),TODAY),read:!!n.read_at}))
@@ -125,7 +125,7 @@ export async function loadWorld(user,sky){
   return {
     me,uid,sky,people,byUser,blocks,started:firstDate,
     answers:answers.map(a=>({date:a.occurred_on,start:a.start_min,mins:a.mins,cat:a.cat,answer:a.answer,blockId:a.block_id})),
-    checkins:lanterns,
+    checkins:felt,
     status:Object.fromEntries(status.filter(s=>byUser[s.user_id]).map(s=>[byUser[s.user_id],{sink:s.sink,strain:s.strain}])),
     notes:noteList,tasks:taskList,moments:momentList,
     golden:golden?{opensAt:Date.parse(golden.opens_at)}:null,
@@ -284,7 +284,7 @@ export async function enablePush(){
 // what the evening check-in looks like, shown by this device at once (the guide, right after Allow)
 export async function samplePrompt(){
   const reg=await navigator.serviceWorker.ready;
-  await reg.showNotification('How are you?',{body:'One tap for a lantern, then a quick word about today.',tag:'sample-mood',
+  await reg.showNotification('How are you?',{body:'One tap, and a bloom opens by your flower.',tag:'sample-mood',
     icon:'/assets/icons/app-192.png',badge:'/assets/icons/app-192.png',data:{url:'/?ask=mood'}});
 }
 export async function disablePush(){

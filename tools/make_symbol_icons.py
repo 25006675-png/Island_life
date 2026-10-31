@@ -1,9 +1,10 @@
-"""Draw the small lantern and sky symbols used beside feelings and weather.
+"""Draw the small bloom and sky symbols used beside feelings and weather.
 
-Lanterns take their colour from data.js MOODS; the sky symbols run clear ->
-light cloud -> cloudy -> drizzle -> rain, in the app's own warm palette. Both
-are drawn big and saved small, so the edges stay soft. Writes
-public/assets/icons/lantern-<mood>.webp and sky-<state>.webp.
+Blooms take their colour from data.js MOODS, drawn like the ones that open in the
+bed round your flower (mood.js): five round petals, a yellow centre, a short stem.
+The sky symbols run clear -> light cloud -> cloudy -> drizzle -> rain, in the
+app's own warm palette. Both are drawn big and saved small, so the edges stay
+soft. Writes public/assets/icons/bloom-<mood>.webp and sky-<state>.webp.
 
 Run: python tools/make_symbol_icons.py
 """
@@ -15,7 +16,7 @@ OUT = pathlib.Path(__file__).resolve().parent.parent / 'public' / 'assets' / 'ic
 OUT.mkdir(parents=True, exist_ok=True)
 S = 256
 MOODS = {'calm': '#9fdcc8', 'happy': '#ffd580', 'tired': '#bba9e0', 'stressed': '#f39a7c', 'low': '#92aede'}
-PAPER = (252, 246, 238, 255)          # the lantern's cap and base
+STEM, LEAF, CENTRE = '#6f9e43', '#8fbf5a', '#ffd23c'   # as mood.js draws them
 LIT, SHADE = '#fdf1e4', '#d9c3b4'     # cloud in the light, cloud underneath
 HEAVY_LIT, HEAVY_SHADE = '#e8d8cf', '#b49c94'   # the same cloud, rained through
 RAIN, SUN = '#7f9dc4', '#ffc978'
@@ -30,17 +31,23 @@ def save(im, name):
     print(name)
 
 
-def lantern(colour):
+def bloom(colour):
+    """A five-petal bloom in a feeling's colour, with a soft glow, on a short stem with one leaf."""
+    import math
     im = Image.new('RGBA', (S, S), (0, 0, 0, 0))
     glow = Image.new('RGBA', (S, S), (0, 0, 0, 0))
-    ImageDraw.Draw(glow).ellipse((30, 40, 226, 236), fill=rgb(colour) + (130,))
-    im.alpha_composite(glow.filter(ImageFilter.GaussianBlur(24)))
+    ImageDraw.Draw(glow).ellipse((34, 18, 222, 206), fill=rgb(colour) + (120,))
+    im.alpha_composite(glow.filter(ImageFilter.GaussianBlur(22)))
     d, c = ImageDraw.Draw(im), rgb(colour)
-    d.line((128, 26, 128, 60), fill=(150, 132, 120, 200), width=5)     # the string
-    d.rounded_rectangle((62, 72, 194, 204), radius=54, fill=c + (255,))   # the paper body
-    d.rounded_rectangle((84, 96, 132, 180), radius=26, fill=(255, 255, 255, 55))   # a highlight down one side
-    d.rounded_rectangle((80, 56, 176, 80), radius=11, fill=PAPER)      # cap
-    d.rounded_rectangle((92, 198, 164, 220), radius=10, fill=PAPER)    # base
+    d.line((128, 140, 128, 236), fill=rgb(STEM) + (255,), width=12)                    # the stem
+    d.ellipse((128, 178, 190, 206), fill=rgb(LEAF) + (255,))                            # a leaf
+    cx, cy, r, out = 128, 108, 40, 46
+    for k in range(5):                                                                  # five round petals
+        a = -math.pi / 2 + k * 2 * math.pi / 5
+        px, py = cx + math.cos(a) * out, cy + math.sin(a) * out
+        d.ellipse((px - r, py - r, px + r, py + r), fill=c + (255,))
+    d.ellipse((cx - 24, cy - 24, cx + 24, cy + 24), fill=rgb(CENTRE) + (255,))         # the centre
+    d.ellipse((cx - 13, cy - 15, cx + 3, cy - 1), fill=(255, 255, 255, 110))            # its shine
     return im
 
 
@@ -80,7 +87,7 @@ def sky(kind):
 
 
 for name, colour in MOODS.items():
-    save(lantern(colour), f'lantern-{name}')
+    save(bloom(colour), f'bloom-{name}')
 for name in ('clear', 'light-cloud', 'cloudy', 'drizzle', 'rain'):
     save(sky(name), f'sky-{name}')
 

@@ -309,8 +309,8 @@ dialog h2{font:normal 21px var(--display);margin:0 0 14px}
 .bal-moodkey{grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:6px 18px}
 .bal-moods{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;margin-bottom:14px}
 .mood-day{display:flex;flex-direction:column;align-items:center;gap:7px;font-size:11px;color:oklch(.4 .035 295)}
-.mood-day .lantern{width:18px;height:24px;border-radius:6px 6px 8px 8px;background:var(--c);box-shadow:0 0 12px 3px color-mix(in oklch,var(--c) 55%,transparent)}
-.mood-day .lantern.none{background:none;box-shadow:inset 0 0 0 1.5px oklch(.85 .02 295)}
+.mood-day .bloom{width:30px;height:30px;object-fit:contain}
+.bloom.none{filter:grayscale(1);opacity:.28}
 .mood-day.today small,.day-col.today small{color:var(--ink);font-weight:600}
 .bal-moodmix{display:flex;gap:2px;height:10px;border-radius:5px;overflow:hidden;margin-bottom:10px}
 .bal-moodmix i{background:var(--c)}
@@ -337,12 +337,11 @@ dialog h2{font:normal 21px var(--display);margin:0 0 14px}
 @media(max-width:900px){.bal-area-list{grid-template-columns:1fr 1fr;gap:10px 0}.bal-area-list li:nth-child(odd){border-left:0;padding-left:0}}
 .bal-head{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:12px;padding-right:40px}   /* clear of the sheet's × */
 .balance-body .bal-head h2{margin:0}
-/* month view: a calendar of lanterns and week-by-week bars */
+/* month view: a calendar of blooms and week-by-week bars */
 .bal-moods.month{gap:7px 4px}
 .bal-moods .wk-letter{text-align:center;font-size:10px;color:oklch(.45 .035 295)}
 .mood-cell{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:9.5px;color:oklch(.45 .035 295)}
-.mood-cell .lantern{width:12px;height:15px;border-radius:4px 4px 5px 5px;background:var(--c);box-shadow:0 0 8px 2px color-mix(in oklch,var(--c) 50%,transparent)}
-.mood-cell .lantern.none{background:none;box-shadow:inset 0 0 0 1.2px oklch(.85 .02 295)}
+.mood-cell .bloom{width:18px;height:18px;object-fit:contain}
 .mood-cell.future{opacity:.35}
 .mood-cell.today small{color:var(--ink);font-weight:700}
 .bal-days.weeks{grid-template-columns:repeat(5,minmax(0,1fr))}
@@ -811,7 +810,7 @@ body.guide-over #guide{left:16px;transform:none}
 /* the bottom bar (island card, view switcher, keys) draws over the islands' name signs (#island-labels, z 1), under the panels and sheets */
 footer{z-index:2}
 /* the altitude gauge and its words share a narrow card: the words wrap, and drop under the gauge when there's no room beside it */
-/* "Add a photo to your lantern" (How do you feel?): a full-width pill like the menu's Log out; the file input hides inside it */
+/* "Add a photo" (How do you feel?): a full-width pill like the menu's Log out; the file input hides inside it */
 .file-line{display:grid;gap:8px;font-size:12px}
 .photo-pick{position:relative;display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:11px 16px;border-radius:22px;border:2px solid var(--violet-soft);background:#fff;color:var(--violet);
   font:600 14px var(--display);box-shadow:0 3px 0 var(--violet-soft);cursor:pointer;transition:transform .14s ease,box-shadow .14s ease,background .14s,color .14s}

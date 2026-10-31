@@ -88,8 +88,8 @@ await a.keyboard.press('Escape');
 // check in
 await a.evaluate(() => window.islandLife.life.checkIn('tired'));
 await a.waitForTimeout(2500);
-const lantern = (await admin.from('checkins').select('mood').eq('owner', aid)).data ?? [];
-check('check-in: the lantern is saved', lantern.some(c => c.mood === 'tired'));
+const felt = (await admin.from('checkins').select('mood').eq('owner', aid)).data ?? [];
+check('check-in: the feeling is saved', felt.some(c => c.mood === 'tired'));
 const status = (await admin.from('island_status').select('sink,strain').eq('user_id', aid)).data?.[0];
 check('status: the island publishes what friends may see', !!status, JSON.stringify(status));
 
@@ -133,10 +133,10 @@ check('this week: earlier days stand as trees without a tap', new RegExp(`(^|\\D
 await a.waitForTimeout(8000);
 await a.screenshot({ path: `${OUT}/live-grown.png`, timeout: 180_000 });
 
-// the evening check-in: a lantern, and no questions after it
+// the evening check-in: a bloom, and no questions after it
 await a.evaluate(() => window.islandLife.life.checkIn('calm'));
 await a.waitForTimeout(2500);
-check('evening: the check-in lights a lantern', /calm lantern/.test(await a.textContent('#notice')), await a.textContent('#notice'));
+check('evening: the check-in opens a bloom', /calm bloom/.test(await a.textContent('#notice')), await a.textContent('#notice'));
 
 // past islands
 const altNow = (await a.evaluate(() => window.islandLife.getState())).islands.find(i => i.id === 'sakura').altitude;

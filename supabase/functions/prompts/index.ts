@@ -72,7 +72,7 @@ async function promptUser(userId: string, tz: string, askAt = 20 * 60) {
     if (!count) {
       const { error } = await admin.from('prompts').insert({ user_id: userId, kind: 'mood', occurred_on: now.date });
       if (!error) {
-        await send(userId, { title: 'How are you?', body: 'One tap for a lantern, then a quick word about today.', url: '/?ask=mood', tag: `mood-${now.date}` });
+        await send(userId, { title: 'How are you?', body: 'One tap, and a bloom opens by your flower.', url: '/?ask=mood', tag: `mood-${now.date}` });
         return 'asked mood';
       }
     }

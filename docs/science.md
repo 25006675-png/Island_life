@@ -113,7 +113,7 @@ A planner only sees the schedule, and a mood tracker only sees feelings. Island 
 
 | Question | When | It changes |
 |---|---|---|
-| "How are you?" | Once, in the evening | The sky (a lantern, then the weather) |
+| "How are you?" | Once, in the evening | The sky (a bloom, then the weather) |
 | "How draining was that?" | Straight after, about one or two of the day's activities | The island's height |
 
 Questions about **things** move the island. Questions about **you** change the sky. Feelings are never predicted, only asked.

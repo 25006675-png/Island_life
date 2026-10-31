@@ -493,10 +493,10 @@ export function initLife({world,scene,flower,islands,camera,texture,player,notic
   // the trees standing on it by kind, activity capacity, and this week's feelings.
   // Trees = what the island shows: this week's grown trees (groves.js HISTORY) plus
   // one per block today -- solid once Done, glass until then; let-go ones drift off.
-  // While a past week is shown, that week's trees and lanterns instead.
+  // While a past week is shown, that week's trees and check-ins instead.
   function islandPanel(){
     const past=pastWeek?pastWeek.blocks:HISTORY[ME]??[], today=pastWeek?[]:plans.on(ME,TODAY).filter(b=>!b.skipped), feel={};
-    for(const c of pastWeek?pastWeek.lanterns:checkins[ME].filter(c=>c.day<=6))feel[c.mood]=(feel[c.mood]??0)+1;
+    for(const c of pastWeek?pastWeek.checkins:checkins[ME].filter(c=>c.day<=6))feel[c.mood]=(feel[c.mood]??0)+1;
     return {trees:Object.keys(CATEGORIES).map(c=>({c,done:past.filter(e=>e.cat===c).length+today.filter(b=>b.cat===c&&b.done).length,
                                                    glass:today.filter(b=>b.cat===c&&!b.done).length})),
             load:Math.round(loadFromAltitude(me.altitude)*100)/100,altitude:Math.round(me.altitude*10)/10,
@@ -876,10 +876,10 @@ export function initLife({world,scene,flower,islands,camera,texture,player,notic
   function weekOf(monday){
     const blocks=plans.range(ME,monday,7).filter(b=>!b.skipped)
       .map((b,n)=>({id:`p${monday}${n}`,day:daysBetween(b.date,TODAY),cat:b.cat,mins:b.mins,title:b.title,vis:b.vis}));
-    const end=daysBetween(addDays(monday,6),TODAY), lanterns=checkins[ME].filter(c=>c.day>=end&&c.day<end+7);
+    const end=daysBetween(addDays(monday,6),TODAY), felt=checkins[ME].filter(c=>c.day>=end&&c.day<end+7);
     // that week's sky as it stood on its Sunday evening
     const strain=deriveStrain(checkins[ME].filter(c=>c.day>=end).map(c=>({...c,day:c.day-end})));
-    return {monday,blocks,lanterns,strain,sink:weekReading(ME,monday).sink};
+    return {monday,blocks,checkins:felt,strain,sink:weekReading(ME,monday).sink};
   }
   function pastMondays(){
     const first=mondayOf(world.started??TODAY), out=[];
@@ -890,7 +890,7 @@ export function initLife({world,scene,flower,islands,camera,texture,player,notic
     const weeks=pastMondays().map(weekOf);
     $('past-list').replaceChildren(...(weeks.length?weeks.map(w=>{
       const b=mk('button',{type:'button'},mk('strong',{textContent:weekRange(w.monday)}),
-        mk('span',{textContent:`${shortBand(w.sink)} · ${w.lanterns.length?weatherLabel(w.strain):'no check-ins'} · ${plural(w.blocks.length,'tree')}`}));
+        mk('span',{textContent:`${shortBand(w.sink)} · ${w.checkins.length?weatherLabel(w.strain):'no check-ins'} · ${plural(w.blocks.length,'tree')}`}));
       b.onclick=()=>showPast(w);
       return mk('li',{},b);
     }):[mk('li',{className:'past-empty',textContent:'No earlier weeks yet. Next Monday, this one will be here.'})]));

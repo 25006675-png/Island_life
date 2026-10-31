@@ -9,9 +9,9 @@ Island Life turns a student's timetable and feelings into a floating 3D island. 
 - **App:** [https://island-life.onrender.com/](https://island-life.onrender.com/) (opens the welcome page first)
 - **Instant demo:** [https://island-life.onrender.com/?enter=demo](https://island-life.onrender.com/?enter=demo) (skips the welcome page and goes straight into the demo sky)
 - **Recommended browser:** the latest Chrome or Edge on a laptop or desktop, with the window full-screen. A phone works too; see [On a phone](#on-a-phone).
-- **Suggested test time:** 10–12 minutes
+- **Suggested test time:** about 20 minutes: 5–10 minutes for Blomy's guided tour, then 10–12 minutes for the steps below. To go straight to the steps, press **Skip** on the tour.
 - Please allow up to one minute for the 3D world to load on the first visit.
-- No account, camera, notification or calendar permission is required for the demo route.
+- No account, notification or calendar permission is required for the demo route. The tour's golden-window step asks for a photo: allow the camera, or choose any photo from your device instead. To leave it out, close the gold banner with **×**.
 - **Sound:** gentle music and sound effects start after your first click. Use the speaker button at the top to mute.
 - **Good to know:** the demo's clock opens in the evening, after the day's activities have passed. Today's blocks therefore read "did it happen?" in the Planner. This is expected.
 - **Found a bug or issue?** Please report it on GitHub; see [Report a bug or issue](#report-a-bug-or-issue).
@@ -29,9 +29,24 @@ Island Life turns a student's timetable and feelings into a floating 3D island. 
 
 Open the [instant demo link](https://island-life.onrender.com/?enter=demo). Alternatively, open the [main app](https://island-life.onrender.com/) and watch a star whale carry Blomy, the gardener, to the pier (or press **Skip** at the top right). Then press **Come ashore** and select **Try the demo island** under the sign-in card.
 
-Wait until the floating islands appear with the message "Welcome to the demo sky. This is Alex’s island, with four friends nearby." Blomy then offers a short guided tour.
+Wait until the floating islands appear with the message "Welcome to the demo sky. This is Alex’s island, with four friends nearby." Blomy then starts a guided tour in three short chapters, one after the other. Most steps wait until you have done what she asks, and a dot under her words shows how far you are. You can press **Skip** at any point.
 
-**What the tour asks you to do:** tap **My island**, hold `W A S D` to walk, walk up to the flower by your gate and pick a feeling, open and close the **Planner**, open and close **Your balance**, and finally walk onto a bridge. Most steps wait until you have done them. You can press **Skip** at any point.
+**What the tour asks you to do:**
+
+1. **The demo sky.** Press **Exam week** and watch Alex's island sink, then **A rough few days** for cloud and rain, then **Back to this evening**. These buttons are in Blomy's box.
+2. **Your island.**
+   - Tap **My island**, then hold `W A S D` to walk.
+   - Blomy walks you to the flower by the gate: pick a feeling.
+   - Open the **Planner** and press **OK, plant it** for a practice tree. Blomy walks you to it: press **Done** on its card. She waters it, and the fairy asks how draining it was.
+   - Open and close **Your balance**.
+   - Press **Ring it** to open a golden window, then **Share this moment** and take or choose a photo. It hangs in gold on the carousel.
+   - Last, a sample invite window shows how friends join a sky. Press **Close**.
+3. **Friends.**
+   - Tap **The gathering Island**, open the task board and **Join** and **Mark done** its practice task.
+   - Blomy walks you to the carousel, then onto a bridge: press **Go** to cross.
+   - At the friend's gate, **Write** a note.
+
+The practice tree and practice task are not kept. To see the tour again later, open the **☷ icon** and select **Show the guide again**.
 
 **Expected result:** six labelled islands appear in one shared sky: **My island** (Alex's), **Ben's**, **Chen's**, **Dara's** and **Eli's island**, around **The gathering Island** in the middle. Alex's sample timetable, mood history and friends are already loaded.
 
@@ -40,9 +55,11 @@ Wait until the floating islands appear with the message "Welcome to the demo sky
 1. Open the settings panel with the **☷ icon** at the top right (its tooltip reads "Tune the world"). The panel's heading is **Make it your evening**.
 2. Scroll down inside the panel to **Try the demo week**.
 3. Select **Exam week** and observe the island sink. The **At a glance** card at the bottom left shows "38 m below" and the sky becomes **Drizzle**.
-4. Select **A light week** and observe it float 38 m higher with a clear sky.
-5. Select **A rough few days** and observe cloud and rain appear.
+4. Select **A light week** and observe it float to 38 m above the gathering island, with a **Clear** sky.
+5. Select **A rough few days** and observe rain appear. The island sits 8 m below: the load is only a little above usual, but the feelings are heavy.
 6. Select **Back to this evening** to restore the original sample.
+
+Each scenario sets a fixed height. **Back to this evening** returns to what Alex's own week says, and that depends on the day you open the demo, because the sample week is laid around the real current week. Late in the week Alex's island already sits low (on a Sunday about 26 m below), so the difference from **Exam week** is smaller, and **A rough few days** may even sit higher than this evening.
 
 <img src="docs/images/demo-week.jpg" alt="The Try the demo week section of the settings panel: Exam week, A light week, A rough few days, Back to this evening" width="240"/>
 
@@ -93,7 +110,10 @@ Each activity kind has its own tree species. **Done** makes the tree take root i
 
 <img src="docs/images/balance-page.jpg" alt="Your week, in balance: how full the week is, five areas, small changes that would help, done so far, and what your island has learned" width="640"/>
 
-The gardener makes the same kind of offer on its own. When you arrive home on **My island**, Blomy speaks up with one idea (for example **Move it to next week**). **Another idea** shows the next one. Saying yes to an idea that adds something asks **When suits you?** with two free times, or **Pick a time** to choose your own in the planner. **See why** opens Your balance.
+The gardener makes the same kind of offer on her own. When you arrive home on **My island**, Blomy asks you about one idea, for example "Your week looks heavy. Want me to move “Room tidy” to next week?" or "How about a slow evening tomorrow at 20:30?". The buttons answer her:
+- **Yes, move it** or **Yes, add it** does exactly what she asked, at the free time she named.
+- **Something else?** brings her next idea.
+- **Not now** closes the card. **Why?** opens Your balance.
 
 Notes:
 - A suggestion that adds an activity also adds load, so the island may sit a little lower afterwards. The point is that the student chooses what to do about it.
@@ -142,11 +162,20 @@ Use this route after the demo. Select **Continue with Google** or **New here? Ma
 2. Select **Continue with Google**, or create an account.
 3. If this is a new account, choose **Start a new sky**. A friend's invite code can instead be entered under **Invite code from a friend**, then **Join their sky**. A sky holds up to five islands.
 4. Select **Enter your island** if asked.
-5. Add a planner block and refresh the page to confirm that it persists.
-6. Check in with your flower and confirm that it appears in **Your balance**.
-7. Open **Planner** → **Sync calendars** and select **Connect** beside **Google Calendar**. Calendar access is optional and can be skipped. Outlook, iCloud and Canvas or Moodle are marked *Coming soon*.
-8. Open the **☷ icon** (the **Make it your evening** panel) to find **Your sky**, with your invite code, **Copy invite link**, and **Get notifications on this device**. To bring a friend in, follow [Invite a friend to your sky](#invite-a-friend-to-your-sky) below.
-9. Use **Log out** at the bottom of the same panel when finished.
+5. Blomy's tour starts at your own island. It is the demo tour's second chapter, with four differences:
+   - A step explains why a new island floats high: an empty week is a light one.
+   - The golden window it rings is a practice one. Your photo stays on your screen and is not shared.
+   - She asks **Want your phone to ring when the real golden window opens?** Choose **Allow notifications** or **Not now**. Allow shows a sample "How are you?" notification straight away. (This step is left out if your browser can't show notifications, or you have already answered.)
+   - She takes you to **Sky view** and asks you to tap a glass island to invite someone.
+
+   The friends chapter waits until your first friend joins.
+6. Add a planner block and refresh the page to confirm that it persists.
+7. Check in with your flower and confirm that it appears in **Your balance**.
+8. Open **Planner** → **Sync calendars**. Calendar access is optional. Outlook, iCloud and Canvas or Moodle are marked *Coming soon*.
+   - **With Google Calendar:** select **Connect** beside **Google Calendar**. A window first explains that Google will show a warning, because Google is still reviewing the app. Select **I understand**, then on Google's screen tap **Advanced**, then **Go to Island Life**, tick the calendar box and press **Continue**. Your classes and plans arrive as blocks on your island. Once connected, **Sync now** fetches changes at once, and **Also send my Island Life plans to Google** turns on two-way sync.
+   - **Without Google Calendar:** under the Google row, select **Try a sample week**. It puts 17 typical student plans on this week (lectures, a café shift, the gym, dinner with friends), two of them marked *can wait*, so the island, the planner and Your balance have a real week to work with. **Remove it** takes them all off again. Plans earlier in the week count as done straight away, as any past plan does, so add it early in the week to see the most.
+9. Open the **☷ icon** (the **Make it your evening** panel) to find **Your sky**: your invite code, **Copy invite link**, **Get notifications on this device**, and **Ask how I feel from** (see [Notifications](#notifications)). To bring a friend in, follow [Invite a friend to your sky](#invite-a-friend-to-your-sky) below.
+10. Use **Log out** at the bottom of the same panel when finished.
 
 ### Invite a friend to your sky
 
@@ -167,7 +196,7 @@ A **sky** is you and up to four friends: five islands joined by bridges around T
 4. On the next card, the invite code is already filled in under **Invite code from a friend**. They select **Join their sky**. If the box is empty, for example after confirming the email in a new tab, they type the code; capitals don't matter.
 5. Their island opens in your sky, with its own bridge to The Gathering Island.
 
-**Back on your side:** the glass island where they will live turns gold, with "Someone new joined your sky. Their island is glowing: tap it to welcome them." Tap it: the page reloads and their island grows in out of the glass, with their name. From then on their check-ins, notes, tasks, carousel photos and decorations reach you as they happen. You see their weather, lanterns and height, never their plans or hours.
+**Back on your side:** the glass island where they will live turns gold, with "Someone new joined your sky. Their island is glowing: tap it to welcome them." Tap it: the page reloads and their island grows in out of the glass, with their name. From then on their check-ins, notes, tasks, carousel photos and decorations reach you as they happen. You see their weather, the feeling blooms by their gate and their height, never their plans or hours.
 
 Good to know:
 - **One sky per account.** Someone who has already started or joined a sky opens their own sky when they sign in, and cannot join a second one with the same account.
@@ -183,7 +212,13 @@ Good to know:
 
 ### Notifications
 
-Notifications are optional and only sent after you turn them on. When on, the island rings the **golden window** the minute it opens, asks **How are you?** once in the evening, and may ask **How draining was that?** after an activity. It never asks between 22:00 and 08:00.
+Notifications are optional and only sent after you turn them on, either from Blomy's question during the tour or with **Get notifications on this device** under **Your sky**. When on:
+- **The golden window** rings the minute it opens. It opens once a day at a surprise time between 10:00 and 20:00, for everyone in the sky. Tapping the notification opens the camera.
+- **How are you?** asks once a day, unless you have already checked in. It asks from the time chosen under **Ask how I feel from** in **Your sky** (12:00, 15:00, 17:00, 18:00, 19:00, 20:00 or 21:00; 20:00 unless you change it). Tapping it opens your flower's question.
+- It never asks between 22:00 and 08:00, or while an activity on your plan is happening.
+- **How draining was it?** is not a notification. The fairy asks it in the app when you finish something.
+
+On an iPhone or iPad, web notifications only work once the app has been added to the home screen (Safari → Share → **Add to Home Screen**) and opened from there.
 
 ## On a phone
 
@@ -204,10 +239,13 @@ Tick each item as you check it.
 - [ ] Balance recommendations and the gardener's offers update the planner in one action, and only after the student chooses. *(step 6)*
 - [ ] Friends receive useful wellbeing signals without receiving private calendar details. *(step 7)*
 - [ ] Dewdrops reward engagement and can be spent on island decorations and on Blomy's clothes. *(step 8)*
+- [ ] The golden window opens for two minutes, and a photo shared inside it hangs in gold on the carousel. *(the tour, or step 7's album)*
 
 **Signed-in island (Route B)**
 
-- [ ] Signed-in data persists after refresh, subject to a working network connection. *(steps 5–6)*
+- [ ] Signed-in data persists after refresh, subject to a working network connection. *(steps 6–7)*
+- [ ] Google Calendar brings classes and plans onto the island, or **Try a sample week** fills a week without it, and **Remove it** takes it off again. *(step 8)*
+- [ ] Notifications can be turned on, and "How are you?" asks from the time chosen under **Your sky**. *([Notifications](#notifications))*
 - [ ] A friend can join your sky with your invite link or code, and appears as a new island with its own bridge. *([Invite a friend to your sky](#invite-a-friend-to-your-sky))*
 
 ## Troubleshooting
@@ -222,6 +260,10 @@ Tick each item as you check it.
 | The fairy did not appear | She waits until any open sheet or dialog is closed, and asks once per finished activity. |
 | The guided tour covers an action | Select **Skip**. To bring it back, open the **☷ icon** and select **Show the guide again**. |
 | The walking step of the tour does not advance | Click on the 3D scene first, then hold `W A S D` for a second or two. |
+| The tour waits on "Press Share this moment" | Press **Share this moment** and allow the camera, or select **Choose a photo** to use any picture. To leave it out, close the gold banner with **×**; the tour moves on. |
+| The tour waits on "Press Write" at a friend's gate | If you already left that friend a note in this visit, the gate has no **Write** button. Select **Skip**, or reload the page and replay the tour. |
+| Google says "Google hasn’t verified this app" | Expected while Google's review is pending. Tap **Advanced**, then **Go to Island Life**. Or skip Google and use **Try a sample week** instead. |
+| No notifications arrive on an iPhone | Add the app to the home screen (Safari → Share → **Add to Home Screen**), open it from there, and turn notifications on again under **Your sky**. |
 | I cannot find "Tune the world" | It is the **☷ icon** at the top right. Its panel is titled **Make it your evening**, and the demo scenarios are further down under **Try the demo week**. |
 | Sound is unwanted | Use the speaker button at the top, or the **Music volume** and **Effects volume** sliders in the **☷** panel. The core experience does not require audio. |
 | Text or buttons look too small or too large | Use the **UI size** slider in the **☷** panel. |

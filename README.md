@@ -214,9 +214,11 @@ The building phase turned the prototype into something a stranger can use with t
 
 ## 3.1 Prototype
 
-**Live app:** [https://island-life.onrender.com/](https://island-life.onrender.com/) &nbsp;·&nbsp; **Instant demo, no account:** [?enter=demo](https://island-life.onrender.com/?enter=demo) &nbsp;·&nbsp; **A route through it:** [USER_GUIDE.md](USER_GUIDE.md)
+**Live app:** [https://island-life.onrender.com/](https://island-life.onrender.com/)  
+**Instant demo, no account:** [?enter=demo](https://island-life.onrender.com/?enter=demo)   
+**A route through it:** [USER_GUIDE.md](USER_GUIDE.md)
 
-The demo sky is Alex's week and four friends. It runs entirely in the browser, with no account, camera, or calendar needed.
+The demo sky is Alex's week and four friends. It runs entirely in the browser, with no account or calendar needed. A camera is optional/any photo from your device will do.
 
 ---
 
@@ -239,7 +241,7 @@ In a normal week for you, your island floats level with The Gathering Island. Li
 </tr>
 <tr>
 <td valign="top"><h3>Your feelings become the weather</h3>
-Tell your flower how you feel, and a coloured lantern lights up on your pier. A few tired, stressed or low days gather cloud, then rain. Calm and happy days clear it again. The weather is never predicted, and never compared with your normal week.</td>
+Tell your flower how you feel, and a bloom in that feeling's colour opens in the bed around her. A few tired, stressed or low days gather cloud, then rain. Calm and happy days clear it again. The weather is never predicted, and never compared with your normal week.</td>
 <td valign="top"><h3>Your friends are a bridge away</h3>
 Friends' islands connect to yours through The Gathering Island. Walk onto a bridge and press Go. On arrival you see their weather and how high they float, in words, never their hours or plans. A rainy island is your cue to leave a note at their gate.</td>
 </tr>
@@ -251,13 +253,13 @@ Friends' islands connect to yours through The Gathering Island. Walk onto a brid
 
 The same little trees mark each kind of activity everywhere in the app, so you can spot a study-heavy week from across the sky.
 
-**How you feel** hangs as a lantern on your pier, one colour per feeling.
+**How you feel** opens a bloom round your flower, one colour per feeling.
 
-| <img src="public/assets/icons/lantern-calm.webp" width="34" alt=""/> | <img src="public/assets/icons/lantern-happy.webp" width="34" alt=""/> | <img src="public/assets/icons/lantern-tired.webp" width="34" alt=""/> | <img src="public/assets/icons/lantern-stressed.webp" width="34" alt=""/> | <img src="public/assets/icons/lantern-low.webp" width="34" alt=""/> |
+| <img src="public/assets/icons/bloom-calm.webp" width="34" alt=""/> | <img src="public/assets/icons/bloom-happy.webp" width="34" alt=""/> | <img src="public/assets/icons/bloom-tired.webp" width="34" alt=""/> | <img src="public/assets/icons/bloom-stressed.webp" width="34" alt=""/> | <img src="public/assets/icons/bloom-low.webp" width="34" alt=""/> |
 |:---:|:---:|:---:|:---:|:---:|
 | Calm | Happy | Tired | Stressed | Low |
 
-**Your sky** then clouds over or clears, following those lanterns across the week.
+**Your sky** then clouds over or clears, following those feelings across the week.
 
 | <img src="public/assets/icons/sky-clear.webp" width="34" alt=""/> | <img src="public/assets/icons/sky-light-cloud.webp" width="34" alt=""/> | <img src="public/assets/icons/sky-cloudy.webp" width="34" alt=""/> | <img src="public/assets/icons/sky-drizzle.webp" width="34" alt=""/> | <img src="public/assets/icons/sky-rain.webp" width="34" alt=""/> |
 |:---:|:---:|:---:|:---:|:---:|
@@ -275,7 +277,7 @@ Two short questions, each asked by someone who lives on your island. Questions a
 <td width="50%"><a href="docs/videos/fairy.mp4"><img src="docs/images/clips/fairy.webp" alt="A fairy hovers by the newly watered tree and asks: How draining was it? Light, Okay or Draining"/></a><br/><sub>A fairy flies out of the new tree with one question &nbsp;·&nbsp; <a href="docs/videos/fairy.mp4">full clip</a></sub></td>
 </tr>
 <tr>
-<td valign="top"><b>Your flower asks how you feel.</b> A flower grows just inside your gate. Walk up to her, tap her, or press T, and she asks how you feel right now: Calm, Happy, Tired, Stressed or Low, with an optional photo. Your answer lights a lantern on your pier and colours her petals. Over a few days the lanterns make your island's weather. Then she rests for half an hour. Signed in, she also asks once a day by phone notification, from a time you choose (20:00 unless you change it).</td>
+<td valign="top"><b>Your flower asks how you feel.</b> A flower grows just inside your gate. Walk up to her, tap her, or press T, and she asks how you feel right now: Calm, Happy, Tired, Stressed or Low, with an optional photo. Your answer opens a bloom in the bed around her and colours her petals. Over a few days the blooms make your island's weather. Then she rests for half an hour, and her tag says when she'll ask again ("Zzz… check in again in 30 min"). Signed in, she also asks once a day by phone notification, from a time you choose (20:00 unless you change it).</td>
 <td valign="top"><b>A fairy asks how draining it was.</b> Every time you finish something, a fairy flies out of its tree and asks one question: Light, Okay or Draining. One tap teaches your island what that kind of time costs you, so a heavy week means heavy <i>for you</i>. Your balance shows what it has learned. Friends never see these answers.</td>
 </tr>
 </table>
@@ -288,11 +290,11 @@ Burnout creeps up, so Island Life watches for it. When your week gets heavier th
 
 <table>
 <tr>
-<td width="50%"><a href="docs/videos/gardener-nudge.mp4"><img src="docs/images/clips/gardener-nudge.webp" alt="Arriving home, the gardener speaks up; asking for another idea brings a slow evening, then two free times to choose from"/></a><br/><sub>Blomy speaks up when you get home, and you pick a time &nbsp;·&nbsp; <a href="docs/videos/gardener-nudge.mp4">full clip</a></sub></td>
+<td width="50%"><a href="docs/videos/gardener-nudge.mp4"><img src="docs/images/clips/gardener-nudge.webp" alt="Arriving home, the gardener speaks up; asking for another idea brings a slow evening, then two free times to choose from"/></a><br/><sub>Blomy speaks up when you get home (recorded before her ideas became questions) &nbsp;·&nbsp; <a href="docs/videos/gardener-nudge.mp4">full clip</a></sub></td>
 <td width="50%"><img src="docs/images/balance-page.jpg" alt="Your balance: how full the week is, five areas in plain words, small changes that would help, done so far, and what your island has learned"/></td>
 </tr>
 <tr>
-<td valign="top"><b>Your gardener avatar speaks up.</b> The moment you get home, Blomy offers one idea: move something you marked <i>can wait</i> to next week, an early night, a walk, tea with the friend you've seen least, or a slow evening. Say yes and choose between two free times, or pick your own in the planner. Nothing lands on your plan until you choose. Ask for another idea, say not now, or press See why. If your sky has been grey for two weeks, she points you gently to real support instead.</td>
+<td valign="top"><b>Your gardener avatar speaks up.</b> The moment you get home, Blomy asks you about one idea, for example <i>"Your week looks heavy. Want me to move “Room tidy” to next week?"</i> or <i>"How about tea with Chen tomorrow at 18:00?"</i> Her ideas: move something you marked <i>can wait</i> to next week, an early night, a walk, tea with the friend you've seen least, or a slow evening, always at a time that is free. <b>Yes, move it</b> or <b>Yes, add it</b> does exactly what she asked, and nothing lands on your plan until you say yes. <b>Something else?</b> brings another idea, and <b>Not now</b> and <b>Why?</b> are there too. If your sky has been grey for two weeks, she points you gently to real support instead.</td>
 <td valign="top"><b>Your balance.</b> How full the week is for you, five areas in plain words (time, mental, physical, social and errands), and small changes that apply in one tap, like pushing a block you marked "can wait" to next week. Below them are how much is done and what your island has learned from your answers. <b>Show your stats</b> opens where your time goes and how you've felt.</td>
 </tr>
 </table>
@@ -338,9 +340,10 @@ Burnout creeps up, so Island Life watches for it. When your week gets heavier th
 <p align="center"><img src="docs/images/accounts.jpg" alt="Signing in to your island, and connecting Google Calendar" width="80%"/></p>
 
 - **Sign in** with email or Google. A **sky** is you and up to four friends: start one and share the invite link, or join a friend's with their code.
-- **Google Calendar** brings in classes, shifts and deadlines, and re-syncs every three hours. Import is read-only. Two-way sync is off by default, and when on it writes only to a separate calendar named "Island Life". Outlook, iCloud and Canvas or Moodle feeds are marked *coming soon*.
+- **Google Calendar** brings in classes, shifts and deadlines, and re-syncs every three hours. Import is read-only. Two-way sync is off by default, and when on it writes only to a separate calendar named "Island Life". While Google's review of the app is pending, Google shows an "unverified app" screen, so Connect first explains how to get past it (**Advanced**, then **Go to Island Life**). Outlook, iCloud and Canvas or Moodle feeds are marked *coming soon*.
+- **No Google Calendar? Try a sample week.** Under Google in **Sync calendars**, one press puts 17 typical student plans on this week (lectures, a café shift, the gym, dinner with friends), saved like any plan, two of them marked *can wait*. **Remove it** takes them all off again.
 - **Live with friends.** Check-ins, notes, tasks, photos and decorations arrive on friends' islands as they happen.
-- **Phone notifications**, if you allow them: the golden window the minute it opens, one "How are you?" in the evening, and "How draining was that?" after an activity, never between 22:00 and 08:00.
+- **Phone notifications**, if you allow them: the golden window the minute it opens, and one "How are you?" a day, from a time you choose under **Your sky** in the menu (12:00 to 21:00; 20:00 unless you change it). Never between 22:00 and 08:00, never during an activity. "How draining was it?" is asked in the app, by the fairy, when you finish something. On an iPhone, notifications need the app added to the home screen first.
 
 ---
 
@@ -363,7 +366,7 @@ Burnout creeps up, so Island Life watches for it. When your week gets heavier th
 
 - **No streaks, no guilt.** Letting go of a plan is fine. Its glass tree drifts away and stops counting this week. You can bring it back any time.
 - **It rewards balance, not hustle.** A finished rest block earns the same as a finished study block, and dewdrops only ever decorate.
-- **Private by default.** Friends see your weather, your lanterns, and how high you float, in words. Your hours, plans and "How draining was it?" answers stay yours. For each block, you choose whether friends see the whole thing, only its kind and size, or nothing.
+- **Private by default.** Friends see your weather, the blooms by your gate, and how high you float, in words. Your hours, plans and "How draining was it?" answers stay yours. For each block, you choose whether friends see the whole thing, only its kind and size, or nothing.
 - **AI suggests, rules decide.** Gemini only sorts imported event titles into kinds, and suggests and words the gardener's idea from options the app offers and then checks. Every number on the island comes from plain arithmetic.
 
 
@@ -384,7 +387,7 @@ Every part of the world is driven by something the student did, not by decoratio
 | **Solid trees** | What you did this week | Today's blocks you marked Done, and earlier days' blocks you didn't let go. Fresh every Monday. |
 | **Glowing path** | Today's timetable | Your blocks from 07:00 to 22:00, laid out like a clock face |
 | **The light on the path** | Right now | It walks the path in real time |
-| **Lanterns on your pier** | Your feelings | Each check-in you make this week |
+| **Blooms by your gate** | Your feelings | Each check-in of the last seven days, one bloom in that feeling's colour; today's are a little bigger |
 | **Bridge glow** | Warmth with your friends | Notes, shared moments, visits and time together |
 | **Carousel photos** | The day's shared moments | One photo per person from the golden window, plus moments through the day |
 | **Decorations and costumes** | What you chose to grow | Dewdrops spent in the shop |
@@ -487,7 +490,7 @@ Asset pipeline: Blender + Python + GLB/glTF, meshopt-compressed
 |---|---|---|---|
 | **Google Calendar API** | Imports classes, shifts and deadlines, including repeating events. Optional two-way sync writes only to a separate "Island Life" calendar. | Many students already keep their timetable there. | Built |
 | **Gemini API** | Sorts imported event titles into the app's kinds of activity, and suggests and words the gardener's idea. The app checks the choice, and falls back to its own ideas if Gemini is unavailable. | Reading messy event titles and wording a suggestion are what a model does well. | Built |
-| **Web Push** | Rings the golden window, asks "How are you?" in the evening, and asks "How draining was that?" after an activity, outside quiet hours. | Reaches the student without an app store. | Built |
+| **Web Push** | Rings the golden window, and asks "How are you?" once a day from a time each student chooses, outside quiet hours. | Reaches the student without an app store. | Built |
 | **Microsoft Graph Calendar API** | Connects Outlook, Microsoft 365, and supported university calendars. | This matters for schools that run on Microsoft 365. | Planned, shown as *coming soon* |
 | **ICS Calendar Feeds** | Imports coursework and deadlines from Canvas, Moodle, Blackboard, and similar systems. | ICS links are common and need no app approval. | Planned, shown as *coming soon* |
 | **CalDAV** | Connects iCloud Calendar and other compatible calendars. | Broader calendar support. | Planned, shown as *coming soon* |
@@ -498,7 +501,7 @@ Asset pipeline: Blender + Python + GLB/glTF, meshopt-compressed
 | Technology | Role | Reason for Selection | Status |
 |---|---|---|---|
 | **Render** | Hosts the built welcome page and app at [island-life.onrender.com](https://island-life.onrender.com/). | The built site is static, so a static host is a simple fit. | Built |
-| **Node.js Test Runner** | Runs 25 unit tests for the learned workload, altitude, forecasts, calendar events, the gardener's ideas, and when the island asks. Local suites also check row-level security and the Edge Functions against a local Supabase stack. | Node already includes it, so we can test the core logic without adding another framework. | Built |
+| **Node.js Test Runner** | Runs 26 unit tests for the learned workload, altitude, forecasts, calendar events, the gardener's ideas, and when the island asks. Local suites also check row-level security and the Edge Functions against a local Supabase stack. | Node already includes it, so we can test the core logic without adding another framework. | Built |
 | **Playwright** | Runs the judging journey in a real browser: a check-in with the flower, the balance, a suggestion, and the planner. | It runs the same flows a judge or student would click through. | Built |
 | **GitHub and GitHub Actions** | Every push and pull request runs the unit tests, a production build, and the browser test. | A broken merge is caught before it reaches the live app. | Built |
 
@@ -558,7 +561,7 @@ flowchart LR
 
 ## 5.3 Build Plan for the Final
 
-The plan follows the competition's own phases. The building phase is done, and the deploy phase has begun.
+The plan follows the competition's own phases. The building phase and deploy phase are done, the app is live at [island-life.onrender.com](https://island-life.onrender.com/)
 
 ```mermaid
 flowchart LR
@@ -586,20 +589,23 @@ flowchart LR
 | **Accounts and data** | Supabase project, a schema for profiles, skies, blocks, check-ins, drain answers, notes, tasks, moments and purchases, row-level security, and email and Google sign-in. Plans, check-ins, notes, the task board and the carousel read and write the database and survive a refresh. |
 | **Friends for real** | Skies of up to five, joined with an invite link or code. Each island publishes only how far it sinks and how heavy its sky is, so hours and titles never leave the owner's account, and friends' changes arrive live. |
 | **Calendar import** | Google Calendar, connected for real: read-only import, repeating events, a re-sync every three hours, and optional two-way sync into a separate calendar. Gemini sorts event titles into kinds. |
-| **An island that learns** | "How draining was that?", asked by the fairy and by phone, teaches each student's own normal week. The planner forecasts heavy days, and the gardener chooses between a schedule fix, rest, or support. |
+| **An island that learns** | "How draining was it?", asked by the fairy when you finish something, teaches each student's own normal week. The planner forecasts heavy days, and the gardener chooses between a schedule fix, rest, or support. |
 | **Phone pass** | Touch joystick, icon-only header, sheets and the island card laid out for a narrow screen, a UI size setting, and an installable app with push notifications. |
 | **Lighter world** | Models compressed from 125 MB to 19 MB, low-detail far trees, merged meshes, and a smoothness governor for weaker devices. |
-| **Tests** | 25 unit tests and a browser test of the judging journey, run by GitHub Actions on every push. |
+| **Tests** | 26 unit tests and a browser test of the judging journey, run by GitHub Actions on every push. |
 | **Beyond the plan** | The welcome page's star-whale arrival, Blomy's first-time guide, the flower and the fairy, watering, the dewdrop shop and wardrobe, music and sound effects, and golden-window notifications. |
 
-### Deploy, 12 October to 31 October
+### Done in the deploy phase
 
-| Week | What we do | Done when |
-|---|---|---|
-| **12 to 18 Oct** | **Production deploy.** The live app at [island-life.onrender.com](https://island-life.onrender.com/) with the Supabase production project behind it, backups, and error reporting. | A clean visit from the public URL works with no local setup. |
-| | **Performance and accessibility.** First-load budget, keyboard path through every screen, visible focus, contrast, reduced motion, and Safari, Firefox and Chrome on desktop and phone. | Every task can be completed without a mouse, and the world holds a steady frame rate on the phones we have. |
-| **19 to 25 Oct** | **Pilot with students outside the team.** Around ten of them for a week: connect a calendar, check in daily, answer the fairy, meet one nudge. We watch the first five minutes without explaining anything. | We can say what people misunderstood, and how many connected a calendar, marked something done, and accepted a suggestion. |
-| **26 to 31 Oct** | **Fix what the pilot found**, then harden the edges: first run with nothing on the plan, a calendar that fails to connect, a friend who never checks in, and an offline start. | The top issues from the pilot are closed, and no empty state is a blank screen. |
+| Area | What changed |
+|---|---|
+| **Live** | The app and its Supabase backend at [island-life.onrender.com](https://island-life.onrender.com/), with the [instant demo](https://island-life.onrender.com/?enter=demo) for anyone without an account. |
+| **Phones** | A floating joystick, header buttons with a word under each icon, a compact planner row, Blomy's box moving off whatever a step asks you to press, and no keyboard hints on touch screens. |
+| **For judges without Google Calendar** | A sample week of 17 typical student plans, added and removed in one press, and a screen that explains Google's "unverified app" warning before it appears. |
+| **Check-ins** | Each student chooses when "How are you?" may ring (12:00 to 21:00), and the flower shows she is napping, and for how long, after a check-in. |
+| **Performance & Optimization** |	Met initial page-load budget constraints and optimized canvas/rendering performance to maintain a stable, steady frame rate on desktop and mobile devices.
+| **Accessibility & Cross-Platform** |	Implemented full keyboard navigation across all screens, visible focus indicators, high contrast compliance, reduced-motion preferences, and cross-browser testing across desktop and mobile.
+| **User Testing & Analytics** |	Conducted 1-week pilot testing with ten non-team students, monitoring unassisted 5-minute onboarding sessions, calendar integrations, daily check-ins, fairy interactions, and nudge completions to capture quantitative engagement metrics.
 
 
 

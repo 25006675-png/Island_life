@@ -7,7 +7,7 @@ Island Life shows two things about a student's week, and keeps them apart on pur
 | | Comes from | Shown as | Can it be predicted? |
 |---|---|---|---|
 | **How heavy the week is for you** | The plan, weighed by what you have told the island about your activities | **Altitude**: the island sinks | Yes. It is forecast days ahead and improves as you answer. |
-| **How you feel** | What you tell the island each evening | **Lanterns and weather**: the sky | No. It is never predicted, only asked. |
+| **How you feel** | What you tell the island each evening | **Blooms and weather**: the sky | No. It is never predicted, only asked. |
 
 A third thing is measured quietly underneath: **how much your feelings follow your workload**. It is never drawn. It decides which kind of help the gardener offers.
 
@@ -21,7 +21,7 @@ The island asks two short questions, and each feeds one side of the world.
 
 | Question | When | Answers | Feeds |
 |---|---|---|---|
-| **"How are you?"** | Once, in the evening | Calm · Happy · Tired · Stressed · Low | A lantern, then the weather |
+| **"How are you?"** | Once, in the evening | Calm · Happy · Tired · Stressed · Low | A bloom, then the weather |
 | **"How draining was that?"** | Straight after, about one or two of the day's activities (see section 5) | Light · Okay · Draining | Altitude |
 
 Questions about *things* move the island. Questions about *you* change the sky.
@@ -141,12 +141,12 @@ Comparing you with your own normal can hide chronic overload: if every week is t
 
 ## 3. Weather: how you feel
 
-Each evening's answer becomes a **lantern** that rises over your island and stays for the week. The **weather is the sum of your lanterns**:
+Each answer opens a **bloom** in its feeling's colour in the bed round your flower, and stays for the week. The **weather is the sum of your blooms**:
 
 ```
 heaviness of a feeling   Calm 0 · Happy 0 · Tired 0.55 · Low 0.8 · Stressed 1
 weight of a day          1 today, falling by 0.13 for each day back (a week ago weighs 0.22)
-weather                  weighted average of the week's lanterns
+weather                  weighted average of the week's blooms
 ```
 
 | Weather value | Sky |
@@ -159,7 +159,7 @@ weather                  weighted average of the week's lanterns
 
 The weather is **never learned and never compared with your normal**. A rainy week is a rainy week, even for someone whose weeks are often rainy. What is normal for you may change what counts as *unusual*, never what counts as *bad*.
 
-Friends see your lanterns and weather. They never see your plan, hours, or the titles of anything you do.
+Friends see your blooms and weather. They never see your plan, hours, or the titles of anything you do.
 
 ---
 

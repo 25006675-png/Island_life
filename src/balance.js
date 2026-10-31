@@ -1,4 +1,4 @@
-import { CATEGORIES, TRENDS, MOODS, LIVE, hours, weatherLabel, fullness, catImg, WEEK } from './data.js';
+import { CATEGORIES, TRENDS, MOODS, LIVE, hours, weatherLabel, fullness, catImg, symbolImg, WEEK } from './data.js';
 import { TODAY, addDays, mondayOf, dow, fromIso, daysBetween, isDone } from './plan.js';
 import { reading, weekReading, learned } from './readings.js';
 import { sinkOf } from './climate.js';
@@ -89,15 +89,15 @@ export function createBalance({plans,me,friends,clock,checkins,sheets,notice,dew
       li.style.setProperty('--c',CATEGORIES[r.c].color);return li;
     }));
   }
-  // How you've felt: the last seven days' lanterns, the mix of feelings, one gentle line.
+  // a day's feeling as the bloom it opened by your flower (mood.js); a day without a check-in, a faint grey one
+  const bloomOf=mood=>{const b=symbolImg(`bloom-${mood??'calm'}`,`bloom${mood?'':' none'}`);if(mood)b.title=MOODS[mood].label;return b;};
+  // How you've felt: the last seven days' blooms, the mix of feelings, one gentle line.
   function moods(){
     $('bal-moods').classList.remove('month');
     const days=[];
     for(let d=6;d>=0;d--){const es=checkins.filter(c=>c.day===d);days.push({d,e:es[es.length-1],name:d===0?'Today':DAYN[dow(addDays(TODAY,-d))-1],full:d===0?'today':DAYS[dow(addDays(TODAY,-d))-1]});}
     $('bal-moods').replaceChildren(...days.map(x=>{
-      const lantern=el('span',{className:'lantern'});
-      if(x.e){lantern.style.setProperty('--c',MOODS[x.e.mood].color);lantern.title=MOODS[x.e.mood].label;}else lantern.classList.add('none');
-      return el('div',{className:`mood-day${x.d===0?' today':''}`},lantern,el('small',{textContent:x.name}));
+      return el('div',{className:`mood-day${x.d===0?' today':''}`},bloomOf(x.e?.mood),el('small',{textContent:x.name}));
     }));
     const counts={};for(const x of days)if(x.e)counts[x.e.mood]=(counts[x.e.mood]||0)+1;
     const n=Object.values(counts).reduce((a,b)=>a+b,0)||1, order=Object.keys(MOODS).filter(k=>counts[k]);
@@ -165,7 +165,7 @@ export function createBalance({plans,me,friends,clock,checkins,sheets,notice,dew
     });
     return {weeks,crunch,days,bars,byCat};
   }
-  // a signed-in island's last five weeks, from its own plan and lanterns
+  // a signed-in island's last five weeks, from its own plan and check-ins
   function liveMonth(weeks){
     const days=[], byCat={};
     for(let i=0;i<35;i++){
@@ -190,10 +190,8 @@ export function createBalance({plans,me,friends,clock,checkins,sheets,notice,dew
     const box=$('bal-moods');box.classList.add('month');
     box.replaceChildren(...['M','T','W','T','F','S','S'].map(t=>el('span',{className:'wk-letter',textContent:t})),
       ...m.days.map(x=>{
-        const lantern=el('span',{className:'lantern'});
-        if(x.mood)lantern.style.setProperty('--c',MOODS[x.mood].color);else lantern.classList.add('none');
         return el('div',{className:`mood-cell${x.future?' future':''}${x.date===TODAY?' today':''}`,title:`${dayLabel(x.date)}${x.mood?`: ${MOODS[x.mood].label}`:''}`},
-          lantern,el('small',{textContent:String(fromIso(x.date).getDate())}));
+          bloomOf(x.mood),el('small',{textContent:String(fromIso(x.date).getDate())}));
       }));
     const felt=m.days.filter(x=>x.mood), counts={};
     for(const x of felt)counts[x.mood]=(counts[x.mood]||0)+1;
