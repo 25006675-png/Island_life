@@ -3,6 +3,7 @@
 // W A S D keys press down as you press them, or the joystick moves on a phone. Each step waits until you have
 // done it (`done()`), cheers ("Nice!"), then moves on; steps without `done` wait for the button. Skippable at any
 // point; finished or skipped, it stays away on this device until "Show the guide again" in the settings panel.
+// Left half-way (the app closed mid-chapter), that chapter comes back on the next visit.
 // It comes in chapters, each remembered on its own, so it can teach a thing when it first matters (the friends
 // chapter waits for a first friend); a finished chapter may lead straight on to the next (`next`).
 //   chapter: {key, steps, next?()=>name|null, end?()}   end() runs however the chapter closes
@@ -17,8 +18,12 @@
 //   alt: a second, quiet choice beside the button ("Not now") that just moves on
 //   back(): true sends you back a step to do it again (the board closed before its practice task was done)
 const $=id=>document.getElementById(id);
-const seen=key=>{try{return localStorage.getItem(key)==='done';}catch{return false;}};
-const remember=key=>{try{localStorage.setItem(key,'done');}catch{}};
+// a chapter's key holds 'started' once it opens and 'done' once it closes (finished or skipped); one left
+// half-way (the app closed, a reload) is 'started', and comes back next time (`resume`)
+const stateOf=key=>{try{return localStorage.getItem(key);}catch{return null;}};
+const seen=key=>stateOf(key)==='done';
+const remember=(key,state='done')=>{try{localStorage.setItem(key,state);}catch{}};
+const keyOf=c=>typeof c.key==='function'?c.key():c.key;   // a function: the demo sky and your own keep separate keys
 const calm=()=>matchMedia('(prefers-reduced-motion: reduce)').matches;
 const KEYS={KeyW:'w',ArrowUp:'w',KeyA:'a',ArrowLeft:'a',KeyS:'s',ArrowDown:'s',KeyD:'d',ArrowRight:'d',ShiftLeft:'shift',ShiftRight:'shift',Escape:'esc'};
 
@@ -52,7 +57,8 @@ export function createGuide(chapters){
     box.hidden=!!step.quiet;box.classList.remove('in');void box.offsetWidth;box.classList.add('in');
   };
   const open=(name,force)=>{
-    const c=chapters[name];if(!c||(!force&&seen(c.key)))return false;
+    const c=chapters[name];if(!c||(!force&&seen(keyOf(c))))return false;
+    if(!seen(keyOf(c)))remember(keyOf(c),'started');   // (a replay from the menu doesn't undo 'done')
     chapter=c;steps=c.steps.filter(s=>!s.when||s.when());
     dots.replaceChildren(...steps.map(()=>document.createElement('i')));
     show(0);return true;
@@ -61,7 +67,7 @@ export function createGuide(chapters){
     const c=chapter;
     box.hidden=true;spot.hidden=true;hand.hidden=true;at=-1;step=null;chapter=null;document.body.classList.remove('guide-over','guide-reveal','guide-high','guide-low','guide-top');
     if(!c)return;
-    remember(c.key);c.end?.();
+    remember(keyOf(c));c.end?.();
     const then=happy&&c.next?.();
     if(then&&open(then,true))return;   // leading on, the next chapter plays even if seen before: you're mid-way
     if(happy&&!calm())confetti();
@@ -106,6 +112,8 @@ export function createGuide(chapters){
   };
   return {
     start(name,force){if(!chapter)open(name,force);},
+    // of these chapters, the first one left half-way last time (null if none)
+    unfinished(names){return names.find(n=>chapters[n]&&stateOf(keyOf(chapters[n]))==='started')??null;},
     update(dt){
       if(!step)return;place();
       if(step.back?.()&&at>0){show(at-1);return;}

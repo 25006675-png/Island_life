@@ -452,7 +452,9 @@ const guide=createGuide({
   {high:true,say:'Tired and stressed check-ins bring cloud, then rain, even when the week isn’t full. The menu keeps these shortcuts, under Try the demo week.',
    button:'Back to this evening',act:()=>$('reset').click()},
  ]},
- home:{key:'il-guide',next:()=>world.people.length>1?'friends':null,end:()=>life?.api.practice.clear(),steps:[
+ // home and friends are kept apart in the demo sky and your own: trying the demo first doesn't use up your own
+ // sky's guide (its notifications, its invitations)
+ home:{key:()=>live()?'il-guide':'il-guide-demo-home',next:()=>world.people.length>1?'friends':null,end:()=>life?.api.practice.clear(),steps:[
   {say:()=>live()?'Hi, I’m Blomy! This is your sky, and your island is “My island”. Tap it to come home.'
                  :'For today, Alex’s island is yours: “My island”. Tap it to go there.',
    target:()=>islands.find(i=>i.id===ME)?.label,hand:true,done:()=>mode==='walk'&&!transition},
@@ -520,7 +522,7 @@ const guide=createGuide({
                   :'That’s your island! Bridges lead to your friends: walk onto one and press Go. Esc takes you up to the sky.',
    art:()=>alone()||TOUCH?null:'esc'},   // no keys on a touch screen
  ]},
- friends:{key:'il-guide-friends',end:()=>life?.api.practice.clear(),steps:[
+ friends:{key:()=>live()?'il-guide-friends':'il-guide-demo-friends',end:()=>life?.api.practice.clear(),steps:[
   {say:()=>live()?'Your first friend is here! The gathering island in the middle belongs to everyone. Tap it.'
                  :'The gathering island in the middle belongs to everyone in the sky. Tap it.',
    start:()=>{if(mode==='walk')overview();},target:()=>islands[0]?.label,hand:true,done:()=>mode==='walk'&&selected==='community'&&!transition},
@@ -901,8 +903,10 @@ renderer=new T.WebGLRenderer({canvas,antialias:false,powerPreference:'high-perfo
   // demo starts with what a week does to an island. A first friend's island, once it has grown in, opens the
   // friends chapter (unless the first-visit chapter is still running: that one leads on to it).
   {const q=new URLSearchParams(location.search);if(!q.has('skiplogin')||q.has('guide')){
-    // ?guide replays the guide; ?guide=demo, ?guide=home or ?guide=friends starts at that chapter (for testing it)
-    const chapter=['demo','home','friends'].includes(q.get('guide'))?q.get('guide'):world.live?'home':'demo';
+    // ?guide replays the guide; ?guide=demo, ?guide=home or ?guide=friends starts at that chapter (for testing it).
+    // Otherwise a chapter left half-way last time picks up again (from its start), or else the first one
+    const order=world.live?['home','friends']:['demo','home','friends'];
+    const chapter=['demo','home','friends'].includes(q.get('guide'))?q.get('guide'):guide.unfinished(order)??order[0];
     setTimeout(()=>guide.start(chapter,q.has('guide')),2600);
     if(arrivals.length)setTimeout(()=>guide.start('friends'),(3.2+arrivals.length*1.6)*1000+3000);
   }}
