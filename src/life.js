@@ -1,6 +1,6 @@
 import * as T from 'three';
 import { ME, LIVE, DAWN, NIGHT, CATEGORIES, MOODS, CHECKINS, WARMTH, NOTES, NOTE_PRESETS, TASKS, fmt, hours, toMin,
-         deriveStrain, weatherLabel, loadFromAltitude, altitudeFromLoad, catImg, fullness, WEEK, symbolImg } from './data.js';
+         deriveStrain, weatherLabel, loadFromAltitude, altitudeFromLoad, catImg, fullness, WEEK, symbolImg, onPhone } from './data.js';
 import { reading, weekReading, gardener as gardenerFor, answer as recordAnswer, ANSWERS, forecast } from './readings.js';
 import { FORECAST_WORDS } from './climate.js';
 import * as backend from './backend.js';
@@ -704,13 +704,28 @@ export function initLife({world,scene,flower,islands,camera,texture,player,notic
   showClock();
 
   // ---- schedule: lift the path into a readable ribbon ----------------------------
-  let lifted=null;
+  let lifted=null, column=null, upLabels=false;
   const labels=[];
+  // On a phone the ribbon fills a box of the screen, along its long side (timetable.js aim). Held upright that's
+  // a column between the header and the island's name: the day hangs top to bottom, 07:00 first, its labels in
+  // one column beside it (`column`, in pixels). Held sideways there's too little height for that, so it stays a
+  // strip across, but just under the header, leaving its rows of labels the most room above the island card and
+  // the bottom bar. Asked every frame, so turning the phone while it's up reshapes it. A computer: null, as ever.
+  const ribbonBox=()=>{
+    column=null;if(!onPhone())return null;
+    const W=innerWidth, H=innerHeight, top=document.querySelector('header').getBoundingClientRect().bottom+18;
+    let b;
+    if(H>W){
+      const w=40, x=Math.max(16+w/2,W/2-150);   // ribbon and labels about the middle, never off the left
+      b=column={left:x-w/2,right:x+w/2,top,bottom:Math.max(top+160,document.querySelector('.place').getBoundingClientRect().top-16)};
+    }else b={left:W*.08,right:W*.92,top,bottom:top+Math.min(44,H*.075)};
+    return {left:b.left/W*2-1,right:b.right/W*2-1,top:1-b.top/H*2,bottom:1-b.bottom/H*2};
+  };
   // on the lifted timetable the block happening now lights up; the 3D gardener
   // is already standing right there, so no 2D one is drawn here
   function setLift(id){
     if(lifted&&lifted!==id)tables[lifted].setLift(false);
-    lifted=id;if(id)tables[id].setLift(true);
+    lifted=id;if(id)tables[id].setLift(true,ribbonBox);
     $('schedule').setAttribute('aria-pressed',String(!!id));
     $('ribbon-labels').replaceChildren();labels.length=0;
     if(!id)return;
@@ -1028,18 +1043,48 @@ export function initLife({world,scene,flower,islands,camera,texture,player,notic
       const ro=table?Math.max(0,table.lift*4-3):0;
       if(ro!==ribbonO){ribbonO=ro;$('ribbon-labels').style.opacity=ro;}
       if(table&&table.lift>.75){
-        // the labels alternate between two rows under the ribbon; one that would still overlap a neighbour (a narrow
-        // screen squeezes the day) drops to the next free row below
-        const ends=[];
-        labels.forEach((l,i)=>{
-          const {el,block}=l, mid=block.start+block.mins/2;l.w??=el.offsetWidth;
-          table.ribbonPoint(mid,.35,v).project(camera);const x=(v.x*.5+.5)*innerWidth;
-          let row=[i%2,1-i%2].find(r=>!(x-l.w/2<(ends[r]??-Infinity)+4));
-          if(row===undefined){row=2;while(x-l.w/2<(ends[row]??-Infinity)+4)row++;}
-          ends[row]=x+l.w/2;
-          table.ribbonPoint(mid,.35+row*1.1,v).project(camera);
-          el.style.left=`${(v.x*.5+.5)*innerWidth}px`;el.style.top=`${(-v.y*.5+.5)*innerHeight}px`;
-        });
+        // hung as a column (a phone held upright) the labels take another shape: measure them afresh on a turn
+        if(upLabels!==!!column){upLabels=!!column;$('ribbon-labels').classList.toggle('upright',upLabels);for(const l of labels)l.w=l.h=undefined;}
+        if(column){
+          // one column right of the ribbon, each label level with the middle of its block; a crowded stretch pushes
+          // them down (then back up from the bottom) just enough not to overlap, and a short line leads each one
+          // back to its block. A day too full for the screen spreads them evenly, overlapping a little.
+          table.ribbonPoint(DAWN,0,v).project(camera);const x=(v.x*.5+.5)*innerWidth+12;
+          $('ribbon-labels').style.setProperty('--label-x',`${x}px`);
+          let next=column.top;
+          for(const l of labels){
+            l.h??=l.el.offsetHeight;
+            table.ribbonPoint(l.block.start+l.block.mins/2,0,v).project(camera);l.at=(-v.y*.5+.5)*innerHeight;
+            l.top=Math.max(l.at-l.h/2,next);next=l.top+l.h+3;
+          }
+          next=column.bottom;for(const l of [...labels].reverse()){l.top=Math.min(l.top,next-l.h);next=l.top-3;}
+          if(labels.length>1&&labels[0].top<column.top){const step=(column.bottom-column.top-labels.at(-1).h)/(labels.length-1);labels.forEach((l,i)=>l.top=column.top+i*step);}
+          for(const {el,at,top,h} of labels){
+            const dy=at-top-h/2;
+            el.style.left=`${x}px`;el.style.top=`${top}px`;
+            el.style.setProperty('--lead',`${Math.hypot(12,dy)}px`);el.style.setProperty('--tilt',`${Math.atan2(-dy,12)}rad`);
+          }
+        }else{
+          // the labels alternate between two rows under the ribbon; one that would still overlap a neighbour (a narrow
+          // screen squeezes the day) drops to the next free row below. On a phone held sideways the rows are only
+          // ~25px apart, less than a label is tall, so there each steps down a whole label height at least, and stops
+          // short of the island's name and card and the bottom bar: a day too crowded for that overlaps a little.
+          const ends=[], low=onPhone()?[...document.querySelectorAll('footer .place,footer .view-controls')].map(e=>e.getBoundingClientRect()):null;
+          labels.forEach((l,i)=>{
+            const {el,block}=l, mid=block.start+block.mins/2;l.w??=el.offsetWidth;
+            table.ribbonPoint(mid,.35,v).project(camera);const x=(v.x*.5+.5)*innerWidth, y0=(-v.y*.5+.5)*innerHeight;
+            let row=[i%2,1-i%2].find(r=>!(x-l.w/2<(ends[r]??-Infinity)+4));
+            if(row===undefined){row=2;while(x-l.w/2<(ends[row]??-Infinity)+4)row++;}
+            ends[row]=x+l.w/2;
+            table.ribbonPoint(mid,.35+row*1.1,v).project(camera);
+            let top=(-v.y*.5+.5)*innerHeight;
+            if(low){
+              l.h??=el.offsetHeight;top=Math.max(top,y0+row*(l.h+4));
+              for(const r of low)if(x+l.w/2>r.left&&x-l.w/2<r.right)top=Math.max(y0,Math.min(top,r.top-8-l.h));
+            }
+            el.style.left=`${(v.x*.5+.5)*innerWidth}px`;el.style.top=`${top}px`;
+          });
+        }
         labels.forEach(({el,block})=>el.classList.toggle('here',clock.minutes>=block.start&&clock.minutes<block.start+block.mins));
       }
       if(!$('planner-sheet').hidden)buddies.planner.step(dt);
