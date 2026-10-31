@@ -1,4 +1,4 @@
-import { CATEGORIES, DAWN, fmt, hours, toMin, fullness, catImg } from './data.js';
+import { CATEGORIES, DAWN, fmt, hours, toMin, fullness, catImg, onPhone } from './data.js';
 import { TODAY, iso, fromIso, addDays, dow, mondayOf, isDone } from './plan.js';
 import { blockStatus } from './timetable.js';
 import { confirmLetGo } from './confirm.js';
@@ -21,6 +21,8 @@ const MONTHS=['January','February','March','April','May','June','July','August',
 const STATUS={done:'done',now:'happening now',planned:'planned',skipped:'let go',waiting:'did it happen?'};
 const el=(tag,props={},...kids)=>{const e=Object.assign(document.createElement(tag),props);e.append(...kids);return e;};
 const option=(value,text)=>el('option',{value,textContent:text});
+// words a narrow phone leaves to screen readers (style.css .narrow-sr): on a phone `rest` gets its own span; elsewhere it's one plain text
+const tuck=(shown,rest)=>onPhone()?[shown,el('span',{className:'narrow-sr',textContent:rest})]:[shown+rest];
 
 // rate: {state(b), answer(b,value), done(blocks)} -- today's finished blocks ask "How draining was it?" in the Day list (life.js);
 // done hears the blocks you just marked done (the firefly fairy asks about them)
@@ -59,7 +61,7 @@ export function createCalendar({plans,owner,clock,notice,sheets,live=null,rate=n
   };
   $('ed-delete').onclick=()=>{if(editing){plans.remove(owner,editing);notice(`${editing.title} removed.`);}$('block-editor').close();};
   $('ed-cancel').onclick=()=>$('block-editor').close();
-  $('cal-add').onclick=()=>edit(null);
+  $('cal-add').onclick=()=>edit(null);$('cal-add').replaceChildren(...tuck('+ Add',' a block'));   // "+ Add" on a narrow phone
   // Calendar sync. Signed in, Google Calendar is real: import, then an
   // optional toggle that sends your island blocks to a separate "Island Life"
   // calendar. Outlook, Apple and course calendars are coming later. In the
@@ -175,7 +177,7 @@ export function createCalendar({plans,owner,clock,notice,sheets,live=null,rate=n
       return row;
     }));
     const on=live?!!conn:demoOn;
-    $('cal-sync-label').textContent=on?'Synced · Google Calendar':'Sync calendars';
+    $('cal-sync-label').replaceChildren(...(on?tuck('Synced',' · Google Calendar'):['Sync calendars']));   // "Synced" on a narrow phone
     $('cal-sync').classList.toggle('on',on);
     $('cal-sync-now').hidden=!(live&&conn&&conn.status!=='needs_reconnect');
   }
@@ -202,7 +204,8 @@ export function createCalendar({plans,owner,clock,notice,sheets,live=null,rate=n
       const open=el('button',{type:'button',className:'plan-open'},
         el('span',{className:'plan-when',textContent:`${fmt(b.start)}–${fmt(b.start+b.mins)}`}),
         el('span',{className:'plan-what'},el('strong',{textContent:b.title}),
-          el('span',{},catImg(b.cat),`${CATEGORIES[b.cat].label} · ${hours(b.mins)} · ${STATUS[st]}${b.repeat?' · weekly':''}${b.priority==='low'?' · can wait':''}`)));
+          // a narrow phone shows the kind and length; the status and notes are left to screen readers
+          el('span',{},catImg(b.cat),...tuck(`${CATEGORIES[b.cat].label} · ${hours(b.mins)}`,` · ${STATUS[st]}${b.repeat?' · weekly':''}${b.priority==='low'?' · can wait':''}`))));
       open.onclick=()=>edit(b);
       const li=el('li',{className:`plan-item ${st}`},open);li.style.setProperty('--cat',CATEGORIES[b.cat].color);
       // every block can be answered: Done grows its tree, Let go lets it drift away
