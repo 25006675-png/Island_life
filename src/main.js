@@ -536,7 +536,7 @@ const guide=createGuide({
    back:()=>!$('goals-dialog').open&&!life.api.practice.taskDone()&&(boardAgain=true)},
   // the golden window was rung in the first chapter: here Blomy walks you to the carousel where its photos hang
   {say:'Remember the golden window? Its photos hang together on the carousel by the pond. Let’s walk over.',
-   start:()=>{guided={to:()=>{const c=life.api.carousel(),dx=player.position.x-c.x,dz=player.position.z-c.z,d=Math.hypot(dx,dz)||1;return new T.Vector3(c.x+dx/d*2.8,0,c.z+dz/d*2.8);}};},
+   start:()=>{let w;guided={to:()=>(w??=carouselWalk())?.to,onto:()=>w?.onto};},
    done:()=>{if(guided)return false;const c=life.api.carousel();return Math.hypot(player.position.x-c.x,player.position.z-c.z)<6;}},
   {say:'Tap a photo to see it bigger. Each day’s photos stay in the album until midnight.'},
   // the bridges: Blomy walks you onto the nearest friend's, then Go crosses it
@@ -623,12 +623,28 @@ function route(to,onto=null){
   if(onto)pts.push(new T.Vector3(onto.x,0,onto.z));
   return {pts,k:0,check:0,from:Infinity,at:0,onto:!!onto,length:pts.reduce((l,p,i)=>l+(i?p.distanceTo(pts[i-1]):Math.hypot(p.x-player.position.x,p.z-player.position.z)),0)};
 }
+// The guide's walk to the carousel ends on its deck, under the photos, on the side you come from. The deck's walkable
+// rim (round the plinth) is too thin for the path's half-metre grid, so the path goes to the ground beside the deck
+// (the rocks, the boardwalk) and a last straight step (`onto`) climbs on. A side whose path ends anywhere else (across
+// the water, out of reach) is passed over; without the rim she'd stop on the rocks at the end of the planks.
+function carouselWalk(){
+  const c=life.api.carousel(), id=player.surface?.id, a0=Math.atan2(player.position.z-c.z,player.position.x-c.x);
+  const rim=a=>{for(const r of [2.6,2.55,2.65]){const f=surfaceAt(islands,bridges,c.x+Math.cos(a)*r,c.z+Math.sin(a)*r);if(f?.kind==='island'&&f.id===id)return new T.Vector3(f.x,0,f.z);}return null;};
+  if(Math.hypot(player.position.x-c.x,player.position.z-c.z)<2.8)return {to:player.position.clone().setY(0)};   // on the deck already
+  for(const da of [0,.4,-.4,.8,-.8,1.2,-1.2,1.6,-1.6,2.1,-2.1,2.6,-2.6,Math.PI]){
+    const near=rim(a0+da), end=near&&findPath(near)?.at(-1);
+    if(!end||Math.hypot(end.x-c.x,end.z-c.z)>3.6)continue;
+    return {to:end,onto:rim(Math.atan2(end.z-c.z,end.x-c.x))??near};   // straight in from where the path ends
+  }
+  const d=Math.hypot(player.position.x-c.x,player.position.z-c.z)||1;   // no way found: head for the near side
+  return {to:new T.Vector3(c.x+(player.position.x-c.x)/d*2.6,0,c.z+(player.position.z-c.z)/d*2.6)};
+}
 // one frame along a route; true once she stands at its end
 function follow(r,pace,dt){
   const dist=p=>Math.hypot(p.x-player.position.x,p.z-player.position.z);
   while(r.k<r.pts.length-1&&dist(r.pts[r.k])<.7)r.k++;
   const p=r.pts[r.k],d=dist(p);
-  if(r.k===r.pts.length-1&&d<.6)return true;
+  if(r.k===r.pts.length-1&&d<(r.onto?.2:.6))return true;   // a last step onto a bridge or the carousel's deck goes all the way
   if((r.check+=dt)>=.7){
     if(r.at===r.k&&r.from-d<.5){   // no headway: hop to the point she was making for
       const f=surfaceAt(islands,bridges,p.x,p.z);
