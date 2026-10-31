@@ -188,7 +188,7 @@ The building phase turned the prototype into something a stranger can use with t
 
 | Decision | Why we made it | What we turned down |
 |---|---|---|
-| **Real accounts, skies of five** | A demo that forgets you on refresh cannot be piloted. A sky is you and up to four friends, joined with an invite code, and friends only ever receive derived values: weather, lanterns, height, and the kind and size of what you share. | Open friend lists and follower counts, which invite comparison. |
+| **Real accounts, skies of five** | A demo that forgets you on refresh cannot be piloted. A sky is you and up to four friends, joined with an invite code, and friends only ever receive derived values: weather, feeling blooms, height, and the kind and size of what you share. | Open friend lists and follower counts, which invite comparison. |
 | **Altitude that learns** | The same lecture is easy for one student and draining for another. One tap on "How draining was it?" teaches the island what an hour of each kind costs *you*, so the island compares this week with your own normal week. The method is written up in [docs/algorithm.md](docs/algorithm.md). | One fixed weight per category, which would call the same week heavy for everyone. |
 | **Questions inside the world** | The check-in moved from a header button to a flower by your gate, and the drain question from a pop-up to a fairy who flies out of the tree you just grew. Each question now lives where it is about. | Forms and modal dialogs, which feel like homework. |
 | **Watering before a tree takes root** | Finishing something should feel like a moment. When you press Done on your island, Blomy walks over with her can and waters the glass tree. From the planner it takes root at once, so a backlog stays quick. | A colour change alone, which made finishing feel like ticking a box. |
@@ -273,7 +273,7 @@ Two short questions, each asked by someone who lives on your island. Questions a
 
 <table>
 <tr>
-<td width="50%"><a href="docs/videos/flower.mp4"><img src="docs/images/clips/flower.webp" alt="Blomy walks up to the flower by the gate; she asks how you feel, and a calm check-in lights a lantern on the pier"/></a><br/><sub>Walk up to your flower, and she asks how you feel &nbsp;·&nbsp; <a href="docs/videos/flower.mp4">full clip</a></sub></td>
+<td width="50%"><a href="docs/videos/flower.mp4"><img src="docs/images/clips/flower.webp" alt="Blomy walks up to her flower by the gate; the flower asks how you feel, Calm is picked, a calm bloom opens beside her, and her tag says she is napping for 30 minutes"/></a><br/><sub>Walk up to your flower, and she asks how you feel &nbsp;·&nbsp; <a href="docs/videos/flower.mp4">full clip</a></sub></td>
 <td width="50%"><a href="docs/videos/fairy.mp4"><img src="docs/images/clips/fairy.webp" alt="A fairy hovers by the newly watered tree and asks: How draining was it? Light, Okay or Draining"/></a><br/><sub>A fairy flies out of the new tree with one question &nbsp;·&nbsp; <a href="docs/videos/fairy.mp4">full clip</a></sub></td>
 </tr>
 <tr>
