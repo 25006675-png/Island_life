@@ -2,8 +2,6 @@
 
 Island Life turns a student's timetable and feelings into a floating 3D island. A week that is heavy *for you* makes the island sit lower in the sky, while recent mood check-ins shape its weather. This guide provides a simple route through the main experience.
 
-<!-- Submission owner: before sharing this guide, open both links below in an incognito window and confirm they load. The app now lives at island-life.onrender.com. The older Vercel addresses (island-life-one.vercel.app, which asks for a Vercel login, and island-life-r21r.vercel.app) are not the judging links, so do not use them. Do not commit judge passwords to this file. -->
-
 ## Before you begin
 
 - **App:** [https://island-life.onrender.com/](https://island-life.onrender.com/) (opens the welcome page first)
@@ -12,7 +10,7 @@ Island Life turns a student's timetable and feelings into a floating 3D island. 
 - **Suggested test time:** about 20 minutes: 5–10 minutes for Blomy's guided tour, then 10–12 minutes for the steps below. To go straight to the steps, press **Skip** on the tour.
 - Please allow up to one minute for the 3D world to load on the first visit.
 - No account, notification or calendar permission is required for the demo route. The tour's golden-window step asks for a photo: allow the camera, or choose any photo from your device instead. To leave it out, close the gold banner with **×**.
-- **Sound:** gentle music and sound effects start after your first click. Use the speaker button at the top to mute.
+- **Sound:** gentle music and sound effects start after your first click. To mute, open the **☷ Menu** at the top right and turn off **Sound on**.
 - **Good to know:** the demo's clock opens in the evening, after the day's activities have passed. Today's blocks therefore read "did it happen?" in the Planner. This is expected.
 - **Found a bug or issue?** Please report it on GitHub; see [Report a bug or issue](#report-a-bug-or-issue).
 
@@ -222,7 +220,7 @@ On an iPhone or iPad, web notifications only work once the app has been added to
 
 ## On a phone
 
-The same links work on a phone. The top buttons show icons only: ◐ Your balance, ◷ Planner, the speaker, ☷ settings, and the bag for the shop. On foot, walk with the joystick at the bottom left and drag with a second finger to look around. Tap the flower to check in. The app can be added to the home screen from the browser's menu.
+The same links work on a phone. The buttons along the top have a word under each icon: **Balance**, **Planner**, **Menu** (the ☷ panel, which also holds sound and the UI size) and **Shop**. On foot, put your thumb down anywhere on the left half of the screen and a joystick appears under it: push to walk, all the way to run. Drag on the right half to look around. **Joystick on the right** in the Menu swaps the two halves. Tap the flower to check in. The app can be added to the home screen from the browser's menu.
 
 <img src="docs/images/phone.jpg" alt="Island Life on a phone: the sky view, walking with the touch joystick, and the planner" width="640"/>
 
@@ -265,7 +263,7 @@ Tick each item as you check it.
 | Google says "Google hasn’t verified this app" | Expected while Google's review is pending. Tap **Advanced**, then **Go to Island Life**. Or skip Google and use **Try a sample week** instead. |
 | No notifications arrive on an iPhone | Add the app to the home screen (Safari → Share → **Add to Home Screen**), open it from there, and turn notifications on again under **Your sky**. |
 | I cannot find "Tune the world" | It is the **☷ icon** at the top right. Its panel is titled **Make it your evening**, and the demo scenarios are further down under **Try the demo week**. |
-| Sound is unwanted | Use the speaker button at the top, or the **Music volume** and **Effects volume** sliders in the **☷** panel. The core experience does not require audio. |
+| Sound is unwanted | Turn off **Sound on** in the **☷ Menu**, or lower its **Music volume** and **Effects volume** sliders. The core experience does not require audio. |
 | Text or buttons look too small or too large | Use the **UI size** slider in the **☷** panel. |
 | A previous demo purchase remains | Open the demo in an incognito/private window for a clean browser state. |
 | A panel fills a mobile screen | Use its **×** button to close it, or rotate the device to landscape. |

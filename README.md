@@ -356,7 +356,7 @@ Burnout creeps up, so Island Life watches for it. When your week gets heavier th
 </tr>
 <tr>
 <td valign="top"><b>A welcome, not a form.</b> The first visit opens with a star whale carrying Blomy through the clouds to your pier. Come ashore to sign in or try the demo, or skip it. Blomy then shows you round your island once, and you can bring the guide back from the menu.</td>
-<td valign="top"><b>On a phone.</b> A touch joystick to walk and a second finger to look around, the same planner and balance as on desktop, and a lighter render for weaker devices. It can be installed to the home screen. Calm background music and small sounds (footsteps that change on wood, grass, stone and water, rain, the watering can) each have their own volume.</td>
+<td valign="top"><b>On a phone.</b> A floating joystick wherever your thumb lands on one half of the screen, the other half to look around, header buttons with a word under each icon (Balance, Planner, Menu, Shop), the same planner and balance as on desktop, and a lighter render for weaker devices. It can be installed to the home screen. Calm background music and small sounds (footsteps that change on wood, grass, stone and water, rain, the watering can) each have their own volume in the menu.</td>
 </tr>
 </table>
 
