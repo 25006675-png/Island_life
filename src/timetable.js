@@ -86,8 +86,8 @@ export function createTimetable(island,{texture,own,blocks:initial}){
     }
   }
 
-  let blocks=[],lift=0,target=0,morphed=false,painted=null,wispScale=0;
-  const nodes=[], frame={centre:new T.Vector3(),right:new T.Vector3(),up:new T.Vector3(),length:RIBBON.length};
+  let blocks=[],lift=0,target=0,morphed=false,painted=null,wispScale=0,fit=null;
+  const nodes=[], frame={centre:new T.Vector3(),right:new T.Vector3(),up:new T.Vector3(),length:RIBBON.length,width:RIBBON.height,down:false};
 
   function setBlocks(list){
     blocks=[...list].sort((a,b)=>a.start-b.start);
@@ -133,18 +133,29 @@ export function createTimetable(island,{texture,own,blocks:initial}){
     geometry.attributes.color.needsUpdate=true;
   }
 
-  // The lifted ribbon hangs in front of the camera, laid out by clock time.
+  // The lifted ribbon hangs in front of the camera, laid out by clock time: a strip across, morning on the left.
+  // Given a box of the screen (`fit`, life.js: phones) it fills that instead, along its long side: top to bottom
+  // down a tall one.
   const q=new T.Vector3(), fwd=new T.Vector3();
   function aim(camera){
     camera.updateMatrixWorld();camera.matrixWorld.extractBasis(frame.right,frame.up,fwd);fwd.negate();
-    const visible=2*RIBBON.distance*Math.tan(T.MathUtils.degToRad(camera.fov/2))*camera.aspect;
-    frame.length=Math.min(RIBBON.length,visible*.84);
-    frame.centre.copy(camera.position).addScaledVector(fwd,RIBBON.distance).addScaledVector(frame.up,1.8);
+    const box=fit?.();
+    if(box){   // its edges are in screen units (-1..1); at the ribbon's distance one unit up is `half` across
+      const half=RIBBON.distance*Math.tan(T.MathUtils.degToRad(camera.fov/2)), wide=half*camera.aspect;
+      const w=(box.right-box.left)*wide, h=(box.top-box.bottom)*half;
+      frame.down=h>w;frame.length=Math.max(w,h);frame.width=Math.min(w,h);
+      frame.centre.copy(camera.position).addScaledVector(fwd,RIBBON.distance).addScaledVector(frame.right,(box.left+box.right)/2*wide).addScaledVector(frame.up,(box.top+box.bottom)/2*half);
+    }else{
+      const visible=2*RIBBON.distance*Math.tan(T.MathUtils.degToRad(camera.fov/2))*camera.aspect;
+      frame.down=false;frame.length=Math.min(RIBBON.length,visible*.84);frame.width=RIBBON.height;
+      frame.centre.copy(camera.position).addScaledVector(fwd,RIBBON.distance).addScaledVector(frame.up,1.8);
+    }
     const gp=island.group.position;
     for(let i=0;i<SAMPLES;i++){
       const x=(uToTime(i/(SAMPLES-1))-DAWN)/(NIGHT-DAWN)-.5;
       for(const v of [0,1]){
-        q.copy(frame.centre).addScaledVector(frame.right,x*frame.length).addScaledVector(frame.up,(v?-.5:.5)*RIBBON.height).sub(gp);
+        if(frame.down)q.copy(frame.centre).addScaledVector(frame.up,-x*frame.length).addScaledVector(frame.right,(v?.5:-.5)*frame.width).sub(gp);
+        else q.copy(frame.centre).addScaledVector(frame.right,x*frame.length).addScaledVector(frame.up,(v?-.5:.5)*frame.width).sub(gp);
         sky.set([q.x,q.y,q.z],(i*2+v)*3);
       }
     }
@@ -161,7 +172,9 @@ export function createTimetable(island,{texture,own,blocks:initial}){
   return {
     setBlocks,
     show(on){group.visible=on;},   // hidden while the island shows a past week
-    setLift(on){target=on?1:0;},
+    // `fitTo` (optional) is asked each frame while lifted for the part of the screen to fill, or null for the
+    // strip across; lowering keeps the shape it rose with
+    setLift(on,fitTo){target=on?1:0;if(fitTo!==undefined)fit=fitTo;},
     get lifted(){return target===1;},
     get lift(){return lift;},
     get blocks(){return blocks;},
@@ -203,10 +216,11 @@ export function createTimetable(island,{texture,own,blocks:initial}){
         if(dropped)g.setIndex(kept);
       }
     },
-    // world point on the lifted ribbon, `drop` units below its lower edge
+    // world point on the lifted ribbon, `drop` units below its lower edge (hung down the screen: right of its right edge)
     ribbonPoint(minutes,drop,out){
       const x=(minutes-DAWN)/(NIGHT-DAWN)-.5;
-      return out.copy(frame.centre).addScaledVector(frame.right,x*frame.length).addScaledVector(frame.up,-RIBBON.height/2-drop);
+      if(frame.down)return out.copy(frame.centre).addScaledVector(frame.up,-x*frame.length).addScaledVector(frame.right,frame.width/2+drop);
+      return out.copy(frame.centre).addScaledVector(frame.right,x*frame.length).addScaledVector(frame.up,-frame.width/2-drop);
     },
     near(world,radius){
       const gp=island.group.position;let best=null;

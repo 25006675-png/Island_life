@@ -1119,3 +1119,180 @@ body.guide-top #guide{top:84px;bottom:auto}
 /* the card of what you walked up to, and Go on a bridge, sit over the golden window's banner: they're what you came to press */
 #reveal,#bridge-banner{z-index:3}
 #settings,#mood-panel{z-index:4}
+
+/* ==== mobile 1: planner Day list and its header row ==== */
+/* a phone, the planner's header: Sync calendars, Sync now and + Add sit together on a row of their own (+ Add at its
+   end). The empty full-width ::after breaks the line before them, so they never split; rows are spaced by margins, not
+   row-gap, so that empty line adds no space. The close button keeps clear of whatever ends the title row.
+   Each Day card: what it is on the left, its buttons on the right in slots of one width in every card (Done beside
+   Let go; Undo, Bring back or Didn't happen alone in Let go's place), and "How draining was it?" across the card's foot */
+@media(max-width:600px),(pointer:coarse) and (max-width:1024px),(max-height:500px) and (max-width:1000px){
+  #planner-sheet .sheet-head{row-gap:0;column-gap:10px;padding:0 26px 5px}
+  #planner-sheet .sheet-head>*{margin-block:5px}
+  #planner-sheet .sheet-head::after{content:'';order:1;flex-basis:100%}
+  #planner-sheet .sheet-head :is(.tabs,.cal-nav){margin-right:22px}
+  #planner-sheet :is(#cal-sync,#cal-sync-now,#cal-add){order:2;flex:none;white-space:nowrap}
+  #planner-sheet #cal-add{margin-left:auto}
+  #planner-sheet .plan-item{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:8px 10px;padding:10px 10px 10px 12px}
+  #planner-sheet .plan-open{min-width:0}
+  #planner-sheet .plan-acts{display:grid;grid-template-columns:repeat(2,88px);gap:5px;margin:0}
+  #planner-sheet .plan-acts>:only-child{grid-column:2}
+  #planner-sheet .plan-acts button{width:100%;min-height:30px;padding:4px 6px;border-radius:999px;font:500 12px/1.1 var(--display);white-space:nowrap;text-align:center}
+  #planner-sheet .plan-acts .text-button{border:1.5px solid var(--violet-soft);background:#fff;color:var(--violet);text-decoration:none;font-size:12px}
+  #planner-sheet .plan-rate{grid-column:1/-1;margin-top:0}
+}
+/* a narrow phone: the time over the title, Done over Let go; the status and notes after the kind and length, and
+   "· Google Calendar" and "a block" in the header, are left to screen readers (calendar.js tuck puts them in .narrow-sr);
+   the drain question over its three answers, side by side */
+@media(max-width:600px){
+  .narrow-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+  #planner-sheet .plan-acts{grid-template-columns:88px}
+  #planner-sheet .plan-acts>:only-child{grid-column:auto}
+  #planner-sheet .plan-open{grid-template-columns:minmax(0,1fr);gap:2px;align-items:start}
+  #planner-sheet .plan-when{padding-top:0}
+  #planner-sheet .plan-rate:has(.ask-pick) .plan-rate-q{flex-basis:100%;margin:0 0 2px}
+  #planner-sheet .plan-rate .ask-pick{flex:1 1 0;min-width:0;min-height:30px;padding:4px}
+}
+/* ==== end of mobile 1 ==== */
+
+/* -------------------------------------------------------------------------------------------------- */
+
+/* ==== mobile 2: Your balance stats header ==== */
+/* a phone, Your balance: the stats switch and Week/Month are a matching pair, big enough to tap (32px tall at the phone's 80% UI size) */
+@media(max-width:600px),(pointer:coarse) and (max-width:1024px),(max-height:500px) and (max-width:1000px){
+  #balance-sheet .bal-head .bal-stats-toggle{min-height:40px;padding:0 16px;border-radius:20px;font-size:13px}
+  #balance-sheet .bal-head .tabs{flex:none;border-radius:20px}
+  #balance-sheet .bal-head .tabs button{min-height:34px;padding:0 15px;border-radius:17px;font-size:13px}
+}
+/* a phone held upright: the title has a row of its own, so only it keeps clear of the ×, and the stats switch and Week/Month
+   share the row under it. With the stats showing, the switch reads "‹ Back"; its full name stays for screen readers */
+@media(max-width:600px){
+  #balance-sheet .bal-head{padding-right:0;gap:10px}
+  #balance-sheet .bal-head h2{padding-right:40px}
+  #balance-sheet .bal-head .tabs{margin-left:auto}
+  #balance-sheet .bal-stats-toggle[aria-pressed=true] svg{display:none}
+  #balance-sheet .bal-stats-toggle[aria-pressed=true]>span{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+  #balance-sheet .bal-stats-toggle[aria-pressed=true]::before{content:'';width:7px;height:7px;margin-left:3px;border:solid currentColor;border-width:0 0 2.2px 2.2px;transform:rotate(45deg)}
+  #balance-sheet .bal-stats-toggle[aria-pressed=true]::after{content:'Back';content:'Back' / ''}
+}
+/* ==== end of mobile 2 ==== */
+
+/* -------------------------------------------------------------------------------------------------- */
+
+/* ==== mobile 3: planner Week grid ==== */
+/* phone-only rules for this task go between these two lines, inside @media(max-width:600px),(pointer:coarse) and (max-width:1024px),(max-height:500px) and (max-width:1000px) */
+/* A phone's week: the grid is the one thing that scrolls. It fills the sheet down to its bottom edge (the body and
+   the week pane flex, so the sheet's own body never scrolls as well) and a finger scrolls it anywhere, columns
+   included (pan-y; calendar.js drags nothing on a phone). Blocks are colour only, their state shown by fill and edge;
+   a tap opens the block's details (.wk-peek, calendar.js peek). No forecast words under the dates. */
+@media(max-width:600px),(pointer:coarse) and (max-width:1024px),(max-height:500px) and (max-width:1000px){
+  #planner-sheet .sheet-body:has(>#pane-week:not([hidden])){display:flex;flex-direction:column;padding-bottom:10px}
+  #pane-week{display:flex;flex-direction:column;flex:1 1 auto;min-height:0}
+  #pane-week .panel-note{flex:none}
+  .week-grid{position:relative;flex:1 1 auto;min-height:0;max-height:none;grid-template-columns:38px repeat(7,minmax(0,1fr));column-gap:3px}
+  .wk-forecast{display:none}
+  .wk-gutter span{right:5px}
+  .wk-col{touch-action:pan-y;cursor:pointer}
+  .week-grid .wk-block{padding:0;cursor:pointer}
+  .week-grid .wk-block>span,.week-grid .wk-block .grip{display:none}
+  /* the name, not the time: the kind icon on top, then the name wrapped by word in the lines the block has room for
+     (--lines, calendar.js card), ending in … ; a half-hour block keeps the icon only. The time is where it sits. */
+  .week-grid .wk-block{padding:3px 2px 2px}
+  .week-grid .wk-block>strong{display:flex;flex-direction:column;align-items:center;gap:2px;width:100%;overflow:hidden;white-space:normal;text-align:center}
+  .week-grid .wk-block>strong .cat-icon{flex:none;width:14px;height:14px;margin:0}
+  .week-grid .wk-block .wk-name{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:var(--lines,0);line-clamp:var(--lines,0);overflow:hidden;
+    width:100%;font-size:9.5px;line-height:11.5px;font-weight:600;color:oklch(.27 .05 295);overflow-wrap:normal;word-break:normal}
+  .week-grid .wk-block[style*='--lines: 0'] .wk-name{display:none}
+  .week-grid .wk-block.done::after{content:'✓';position:absolute;right:3px;bottom:1px;font:700 10px/1 var(--display);color:oklch(.3 .05 295 / .65)}
+  .week-grid .wk-block.now{box-shadow:0 0 0 2px var(--accent)}
+  .week-grid .wk-block.skipped{background:repeating-linear-gradient(135deg,color-mix(in oklch,var(--cat) 34%,white) 0 3px,oklch(.99 .005 295) 3px 6px)}
+  .week-grid .wk-block.picked{z-index:1;box-shadow:0 0 0 2px #fff,0 0 0 4px var(--violet)}
+  .wk-peek{position:absolute;grid-column:1/-1;grid-row:2;left:0;right:0;z-index:2;display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:3px 12px;
+    padding:10px 10px 12px 14px;border-radius:14px;border-left:4px solid var(--cat);background:#fff;font-size:12px;color:var(--muted);
+    box-shadow:0 0 0 1px oklch(.9 .015 295),0 10px 26px -8px oklch(.3 .04 295 / .4);outline:none}
+  .wk-peek strong{font:600 15px/1.25 var(--display);color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .wk-peek .solid-small{grid-row:2/4;grid-column:2;padding:8px 18px}
+  .wk-peek-close{justify-self:end;border:0;background:none;font-size:22px;line-height:1;padding:0 4px;margin:-4px -2px 0 0;color:var(--muted)}
+}
+/* a phone held sideways: little height, so the week keeps the note to one line and each day's name and date to one
+   line ("Mon 26"): more of the day shows */
+@media(max-height:500px) and (max-width:1000px){
+  #pane-week .panel-note{margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .wk-day{padding:0 0 6px}
+  .wk-day strong{display:inline;margin-left:5px;font-size:16px}
+}
+/* ==== end of mobile 3 ==== */
+
+/* -------------------------------------------------------------------------------------------------- */
+
+/* ==== mobile 4: pop-ups (cards, fairy, flower, signs): smaller, at the top ==== */
+/* phone-only rules for this task go between these two lines, inside @media(max-width:600px),(pointer:coarse) and (max-width:1024px),(max-height:500px) and (max-width:1000px) */
+/* a phone: every pop-up in the world -- the card of what you walk up to (a tree, a path stop, a gate, a sign, a bloom,
+   Blomy's idea) and the fairy's and your flower's questions -- is compact and waits at the top, centred under the
+   header and whatever hangs from it while it shows (the golden window, Go, a notice: bubble.js topBand, --pop-top from
+   life.js). So it never covers the joystick, the island's name or the view bar, and stays above Blomy; a third of the
+   screen at most. One at a time: the card steps aside while your flower asks, as it does for the fairy. The card's
+   tail goes (it points at nothing up there); the bubbles' tail points down at her while she's below it (bubble.js) */
+@media(max-width:600px),(pointer:coarse) and (max-width:1024px),(max-height:500px) and (max-width:1000px){
+  #reveal,#reveal.anchored{left:50%;right:auto;top:var(--pop-top,calc(var(--header-bottom,118px) + 8px));bottom:auto;transform:translateX(-50%);
+    width:max-content;min-width:min(240px,calc(100% - 24px));max-width:min(360px,calc(100% - 24px));max-height:34svh;overflow-y:auto;overscroll-behavior:contain;
+    padding:8px 12px 8px 11px;gap:2px;transition:top .25s}
+  #reveal.anchored::after{display:none}
+  #reveal-kicker{font-size:11px}
+  #reveal strong{font-size:15px;line-height:1.3}
+  #reveal.wood{min-width:min(300px,calc(100% - 24px))}
+  #reveal.wood strong{font-size:14.5px;line-height:1.35}
+  #reveal-sub{gap:4px}.rv-chip{padding:1px 7px;font-size:11.5px}
+  #reveal-icon{top:8px;right:10px;width:28px;height:28px}
+  #reveal:has(#reveal-icon:not([hidden])){padding-right:44px}
+  .reveal-actions{gap:0 10px}
+  #reveal button{min-height:32px;margin-top:4px;padding:6px 12px;font-size:12.5px}
+  #reveal.wood .reveal-actions{gap:0 8px}
+  #reveal.wood :is(#reveal-letgo,#reveal-more){margin-top:0;padding-block:4px}
+  #app:has(#flower-ask:not([hidden])) #reveal{visibility:hidden}
+  .fairy-bubble{padding:8px 12px;border-radius:16px;transition:opacity .2s,scale .2s,top .25s}
+  .fairy-bubble::before{display:none}
+  .fairy-bubble.over::before{display:block}
+  .fairy-kicker{font-size:11px}
+  .fairy-q{margin:2px 0 7px;font-size:15px}
+  .fairy-picks,.flower-bubble .moods{gap:6px}
+  .fairy-pick,.flower-bubble .mood{min-height:32px;padding:4px 12px;font-size:12.5px}
+  /* the fairy's "Not now" shares the row of her answers */
+  .fairy-bubble:not(.flower-bubble){display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;column-gap:8px}
+  .fairy-bubble:not(.flower-bubble) :is(.fairy-kicker,.fairy-q){grid-column:1/-1}
+  .fairy-bubble:not(.flower-bubble) .fairy-later{min-height:32px;margin:0;padding:0 2px}
+  .flower-foot{margin-top:6px}
+  .flower-photo{min-height:32px;margin:0;padding:3px 11px}   /* no label's margin under it: "Not now" lines up beside it */
+  .flower-bubble .flower-later{min-height:32px;padding:0 2px}
+  .flower-note{margin-top:5px;line-height:1.35}
+}
+/* a phone held sideways: little height, so the pop-ups run wider and shorter (a wooden sign's links go beside its
+   buttons, your flower's photo and "Not now" beside the moods), leaving room under them for Blomy's box */
+@media(max-height:500px) and (max-width:1000px){
+  #reveal,#reveal.anchored{max-width:min(520px,calc(100% - 24px))}
+  #reveal.wood .reveal-actions{display:flex;flex-wrap:wrap;gap:0 10px}
+  #reveal.wood #reveal-more{margin-left:auto}
+  .fairy-bubble{width:min(440px,calc(100vw - 24px))}
+  .flower-bubble{width:min(640px,calc(100vw - 24px));display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;column-gap:12px}
+  .flower-bubble :is(.fairy-kicker,.fairy-q){grid-column:1/-1}
+  .flower-bubble .flower-foot{margin:0}
+  .flower-note{display:none}
+}
+/* ==== end of mobile 4 ==== */
+
+/* -------------------------------------------------------------------------------------------------- */
+
+/* ==== mobile 5: the lifted Schedule timetable, vertical ==== */
+/* phone-only rules for this task go between these two lines, inside @media(max-width:600px),(pointer:coarse) and (max-width:1024px),(max-height:500px) and (max-width:1000px) */
+/* a phone held upright hangs the day down the screen (life.js upright): its labels make one column right of the
+   ribbon, one line each (time, then the title cut short to fit), the block's colour on the side facing it, and a
+   short line (--lead long, turned --tilt) back to the block when a crowded stretch pushes a label off it */
+@media(max-width:600px),(pointer:coarse) and (max-width:1024px),(max-height:500px) and (max-width:1000px){
+  #ribbon-labels.upright .ribbon-label{transform:none;transform-origin:0 50%;flex-direction:row;gap:6px;max-width:calc(100% - var(--label-x,60px) - 16px);padding:4px 9px 4px 7px;border-top:0;border-left:3px solid var(--cat);font-size:11px}
+  #ribbon-labels.upright .ribbon-label span{flex:none}
+  #ribbon-labels.upright .ribbon-label strong{min-width:0;max-width:none}
+  #ribbon-labels.upright .ribbon-label::before{content:'';position:absolute;right:100%;top:50%;width:var(--lead,12px);height:2px;margin-top:-1px;border-radius:1px;background:var(--cat);transform-origin:100% 50%;rotate:var(--tilt,0rad)}
+}
+/* ==== end of mobile 5 ==== */
+
+/* -------------------------------------------------------------------------------------------------- */

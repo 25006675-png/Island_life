@@ -1,4 +1,4 @@
-import { CATEGORIES, DAWN, fmt, hours, toMin, fullness, catImg } from './data.js';
+import { CATEGORIES, DAWN, fmt, hours, toMin, fullness, catImg, onPhone } from './data.js';
 import { TODAY, iso, fromIso, addDays, dow, mondayOf, isDone } from './plan.js';
 import { blockStatus } from './timetable.js';
 import { confirmLetGo } from './confirm.js';
@@ -21,6 +21,8 @@ const MONTHS=['January','February','March','April','May','June','July','August',
 const STATUS={done:'done',now:'happening now',planned:'planned',skipped:'let go',waiting:'did it happen?'};
 const el=(tag,props={},...kids)=>{const e=Object.assign(document.createElement(tag),props);e.append(...kids);return e;};
 const option=(value,text)=>el('option',{value,textContent:text});
+// words a narrow phone leaves to screen readers (style.css .narrow-sr): on a phone `rest` gets its own span; elsewhere it's one plain text
+const tuck=(shown,rest)=>onPhone()?[shown,el('span',{className:'narrow-sr',textContent:rest})]:[shown+rest];
 
 // rate: {state(b), answer(b,value), done(blocks)} -- today's finished blocks ask "How draining was it?" in the Day list (life.js);
 // done hears the blocks you just marked done (the firefly fairy asks about them)
@@ -59,7 +61,7 @@ export function createCalendar({plans,owner,clock,notice,sheets,live=null,rate=n
   };
   $('ed-delete').onclick=()=>{if(editing){plans.remove(owner,editing);notice(`${editing.title} removed.`);}$('block-editor').close();};
   $('ed-cancel').onclick=()=>$('block-editor').close();
-  $('cal-add').onclick=()=>edit(null);
+  $('cal-add').onclick=()=>edit(null);$('cal-add').replaceChildren(...tuck('+ Add',' a block'));   // "+ Add" on a narrow phone
   // Calendar sync. Signed in, Google Calendar is real: import, then an
   // optional toggle that sends your island blocks to a separate "Island Life"
   // calendar. Outlook, Apple and course calendars are coming later. In the
@@ -175,7 +177,7 @@ export function createCalendar({plans,owner,clock,notice,sheets,live=null,rate=n
       return row;
     }));
     const on=live?!!conn:demoOn;
-    $('cal-sync-label').textContent=on?'Synced · Google Calendar':'Sync calendars';
+    $('cal-sync-label').replaceChildren(...(on?tuck('Synced',' · Google Calendar'):['Sync calendars']));   // "Synced" on a narrow phone
     $('cal-sync').classList.toggle('on',on);
     $('cal-sync-now').hidden=!(live&&conn&&conn.status!=='needs_reconnect');
   }
@@ -202,7 +204,8 @@ export function createCalendar({plans,owner,clock,notice,sheets,live=null,rate=n
       const open=el('button',{type:'button',className:'plan-open'},
         el('span',{className:'plan-when',textContent:`${fmt(b.start)}–${fmt(b.start+b.mins)}`}),
         el('span',{className:'plan-what'},el('strong',{textContent:b.title}),
-          el('span',{},catImg(b.cat),`${CATEGORIES[b.cat].label} · ${hours(b.mins)} · ${STATUS[st]}${b.repeat?' · weekly':''}${b.priority==='low'?' · can wait':''}`)));
+          // a narrow phone shows the kind and length; the status and notes are left to screen readers
+          el('span',{},catImg(b.cat),...tuck(`${CATEGORIES[b.cat].label} · ${hours(b.mins)}`,` · ${STATUS[st]}${b.repeat?' · weekly':''}${b.priority==='low'?' · can wait':''}`))));
       open.onclick=()=>edit(b);
       const li=el('li',{className:`plan-item ${st}`},open);li.style.setProperty('--cat',CATEGORIES[b.cat].color);
       // every block can be answered: Done grows its tree, Let go lets it drift away
@@ -246,11 +249,41 @@ export function createCalendar({plans,owner,clock,notice,sheets,live=null,rate=n
     const st=statusOn(b), c=el('button',{type:'button',className:`wk-block ${st}${b.mins<=SLOT?' short':''}`});
     c.style.cssText=`--cat:${CATEGORIES[b.cat].color};top:${(b.start-FROM)/SLOT*ROW}px;height:${Math.max(ROW,Math.min(b.mins,TO-b.start)/SLOT*ROW)-2}px;`+
                     `left:calc(${lane/of*100}% + 2px);width:calc(${100/of}% - 4px)`;
-    c.append(el('strong',{},catImg(b.cat),b.title),el('span',{textContent:`${fmt(b.start)}–${fmt(b.start+b.mins)}${b.repeat?' · weekly':''}`}));
+    // a phone: the name sits under the kind icon in as many lines as the block's height holds (style.css, mobile 3)
+    const phone=onPhone();
+    c.append(el('strong',{},catImg(b.cat),phone?el('span',{className:'wk-name',textContent:b.title}):b.title),el('span',{textContent:`${fmt(b.start)}–${fmt(b.start+b.mins)}${b.repeat?' · weekly':''}`}));
+    if(phone)c.style.setProperty('--lines',Math.max(0,Math.floor((Math.max(ROW,Math.min(b.mins,TO-b.start)/SLOT*ROW)-2-20)/11.5)));
     const grip=el('i',{className:'grip'});grip.setAttribute('aria-hidden','true');c.append(grip);
     c.setAttribute('aria-label',`${b.title}, ${DAYS[dow(b.date)-1]} ${fmt(b.start)} to ${fmt(b.start+b.mins)}, ${CATEGORIES[b.cat].label}, ${STATUS[st]}`);
     c.occ=b;return c;
   }
+  // A phone: the blocks are too narrow for words (style.css shows their colour only) and a finger scrolls the
+  // day, so a tap on a block opens its details here, under it (over it near the end of the day), with Edit.
+  // A tap anywhere else, or on the same block, closes them; they stay open through the clock's redraws.
+  const weekNote=$('pane-week').querySelector('.panel-note'), dragNote=weekNote.textContent;
+  let peeked=null;                             // the id of the block whose details show
+  function peek(c,{focus=null,scroll=false}={}){
+    grid.querySelector('.wk-peek')?.remove();grid.querySelector('.wk-block.picked')?.classList.remove('picked');
+    peeked=c?c.occ.id:null;if(!c)return;
+    const b=c.occ, st=statusOn(b);
+    const open=el('button',{type:'button',className:'solid-small',textContent:'Edit'});open.onclick=()=>{peek(null);edit(b);};
+    const shut=el('button',{type:'button',className:'wk-peek-close',textContent:'×',ariaLabel:'Close the details'});
+    shut.onclick=()=>{peek(null);c.focus({preventScroll:true});};
+    const box=el('div',{className:'wk-peek',tabIndex:-1},el('strong',{},catImg(b.cat),b.title),shut,
+      el('span',{textContent:`${short(b.date)} · ${fmt(b.start)}–${fmt(b.start+b.mins)}`}),open,
+      el('span',{textContent:[CATEGORIES[b.cat].label,hours(b.mins),STATUS[st],b.repeat&&'weekly',b.priority==='low'&&'can wait'].filter(Boolean).join(' · ')}));
+    box.style.setProperty('--cat',CATEGORIES[b.cat].color);box.setAttribute('role','dialog');box.setAttribute('aria-label',b.title);
+    c.classList.add('picked');grid.append(box);
+    const h=box.offsetHeight, below=c.offsetTop+c.offsetHeight+6;
+    box.style.top=`${below+h<=slots*ROW?below:Math.max(0,c.offsetTop-6-h)}px`;
+    if(scroll){                                // into the grid's view, clear of the pinned day names
+      const head=grid.querySelector('.wk-day').offsetHeight, y=box.offsetTop;
+      const to=y-head-8<grid.scrollTop?y-head-8:y+h+8>grid.scrollTop+grid.clientHeight?y+h+8-grid.clientHeight:null;
+      if(to!==null)grid.scrollTo({top:to,behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});
+    }
+    if(focus)(focus==='edit'?open:box).focus({preventScroll:true});
+  }
+  document.addEventListener('click',e=>{if(peeked!==null&&!grid.contains(e.target))peek(null);});
   // opening the week (or moving to another one) scrolls the day to the morning, or to an earlier block that week
   let toMorning=true;
   function scrollToMorning(){
@@ -277,10 +310,26 @@ export function createCalendar({plans,owner,clock,notice,sheets,live=null,rate=n
       if(day===TODAY&&clock.minutes>FROM&&clock.minutes<TO)col.append(el('div',{className:'wk-now',style:`top:${(clock.minutes-FROM)/SLOT*ROW}px`}));
       grid.append(col);
     }
+    const phone=onPhone();
+    weekNote.textContent=phone?'Tap empty time to add a block, or tap a block to see it.':dragNote;
+    if(peeked!==null)peek(phone?[...grid.querySelectorAll('.wk-block')].find(c=>c.occ.id===peeked):null);
+    if(phone)fitNames();
+  }
+  // A phone's blocks are narrow: a word too wide for its block is shortened with "…" rather than broken mid-word
+  // ("Chemistry" -> "Chemi…"); the full name is in the block's details and its accessible name
+  let measure=null;
+  function fitNames(){
+    measure??=document.createElement('canvas').getContext('2d');
+    for(const n of grid.querySelectorAll('.wk-name')){
+      const w=n.clientWidth;if(!w)continue;measure.font=getComputedStyle(n).font;
+      const fit=word=>{if(measure.measureText(word).width<=w)return word;let s=word;while(s.length>1&&measure.measureText(s+'…').width>w)s=s.slice(0,-1);return s+'…';};
+      n.textContent=n.closest('.wk-block').occ.title.split(/\s+/).map(fit).join(' ');
+    }
   }
   const clampSlot=s=>Math.max(0,Math.min(slots-1,s));
   let drag=null;
   grid.addEventListener('pointerdown',e=>{
+    if(onPhone())return;                       // a phone drags nothing: a finger scrolls, a tap is a click (below)
     const col=e.target.closest('.wk-col');if(e.button!==0||!col)return;
     const c=e.target.closest('.wk-block'), top=col.getBoundingClientRect().top;
     drag=c?{kind:e.target.classList.contains('grip')?'resize':'move',card:c,occ:c.occ,h0:c.offsetHeight}
@@ -312,9 +361,23 @@ export function createCalendar({plans,owner,clock,notice,sheets,live=null,rate=n
       plans.update(owner,d.occ,{start,date:target?.dataset.date??d.occ.date});
     }else plans.update(owner,d.occ,{mins:Math.min(TO-d.occ.start,Math.max(SLOT,Math.round((d.h0+2+e.clientY-d.y0)/ROW)*SLOT))});
   });
-  grid.addEventListener('pointercancel',()=>{drag?.ghost?.remove();drag=null;render();});
+  // (a phone's swipe cancels its pointer as the scroll begins: nothing was dragged, so nothing to redraw)
+  grid.addEventListener('pointercancel',()=>{if(!drag&&onPhone())return;drag?.ghost?.remove();drag=null;render();});
   // keyboard: Enter/Space on a block fires a click with detail 0
-  grid.addEventListener('click',e=>{const c=e.target.closest('.wk-block');if(c&&e.detail===0)edit(c.occ);});
+  grid.addEventListener('click',e=>{
+    const c=e.target.closest('.wk-block');
+    if(onPhone()){
+      // a phone: a block shows (or hides) its details; empty time closes them, or else adds an hour's block at that half hour
+      if(e.target.closest('.wk-peek'))return;
+      if(c)return peek(c.occ.id===peeked?null:c,{focus:e.detail===0?'edit':'box',scroll:true});
+      const col=e.target.closest('.wk-col');
+      if(peeked!==null)return peek(null);
+      if(!col)return;
+      const r=col.getBoundingClientRect(), s=clampSlot(Math.floor((e.clientY-r.top)/(r.height/slots)));
+      return edit(null,{date:col.dataset.date,start:FROM+s*SLOT,mins:60});
+    }
+    if(c&&e.detail===0)edit(c.occ);
+  });
 
   // ---- Month -----------------------------------------------------------------------
   function renderMonth(){
