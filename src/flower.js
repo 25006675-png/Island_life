@@ -21,7 +21,7 @@ export function createFlowerTalk({camera,flower,here=()=>false,near=()=>false,bl
     flower.userData.head.getWorldPosition(v).project(camera);
     return v.z<1&&Math.abs(v.x)<1.02&&Math.abs(v.y)<1.02?{x:(v.x*.5+.5)*innerWidth,y:(-v.y*.5+.5)*innerHeight}:null;
   }
-  function place(){placeBubble(box,face()??{x:innerWidth*.55,y:innerHeight*.36},{gap:GAP,rise:64});}
+  function place(){placeBubble(box,face()??{x:innerWidth*.55,y:innerHeight*.36,lost:true},{gap:GAP,rise:64});}
   function setOpen(on,byWalking=false){
     if(on===open)return;
     open=on;auto=on&&byWalking;flower.userData.setTalking(on);

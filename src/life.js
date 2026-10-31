@@ -21,6 +21,8 @@ import { createBuddy } from './buddy.js';
 import * as sound from './sound.js';
 import { createFairy } from './fairy.js';
 import { createFlowerTalk } from './flower.js';
+import { topBand } from './bubble.js';
+import { onPhone } from './data.js';
 
 // Everything README.md says the world should show: the timetable path and wisp,
 // feeling blooms, weather and altitude from the plan, the shared photo
@@ -1046,9 +1048,11 @@ export function initLife({world,scene,flower,islands,camera,texture,player,notic
       if(!$('balance-sheet').hidden)buddies.balance.step(dt);
       if(!$('shop-sheet').hidden)buddies.shop.step(dt);
       reveal(lifted?null:nearest());
-      // the card floats beside what it describes, kept inside the screen
-      const r=$('reveal');
-      if(card?.at&&!r.hidden){
+      // the card floats beside what it describes, kept inside the screen; on a phone it waits at the top instead, under
+      // the header and what hangs from it (bubble.js topBand), clear of the joystick, the island's name and Blomy
+      const r=$('reveal'), phone=!r.hidden&&onPhone();
+      if(phone)r.style.setProperty('--pop-top',`${topBand()}px`);
+      if(card?.at&&!r.hidden&&!phone){
         rv.copy(card.at).project(camera);
         r.style.setProperty('--x',`${clamp((rv.x*.5+.5)*innerWidth,150,innerWidth-150)}px`);
         const under=document.querySelector('header').getBoundingClientRect().bottom+r.offsetHeight+28;   // its top stays under the header

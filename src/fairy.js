@@ -1,6 +1,7 @@
 import * as T from 'three';
 import { makeFairy } from './fairymodel.js';
-import { placeBubble } from './bubble.js';
+import { placeBubble, topBand } from './bubble.js';
+import { onPhone } from './data.js';
 
 // The fairy: after you finish a block (Done in the planner, "Mark all as done", the walk-up card), she flies out of
 // that block's tree -- a real 3D figure in the world (fairymodel.js) -- and hovers by you, about TALL pixels high, to
@@ -62,6 +63,9 @@ export function createFairy({scene,camera,ask,answer,title,blocked=()=>false,wai
     bubble.querySelector('.fairy-picks').replaceChildren(...Object.entries(CHOICES).map(([val,label])=>{
       const x=document.createElement('button');x.type='button';x.className='fairy-pick';x.textContent=label;
       x.onclick=()=>{answer(b,val);leave(true);};return x;}));
+    // a phone: her bubble waits at the top (bubble.js), and she hovers just under it, so it's plainly hers
+    if(onPhone()){bubble.hidden=false;const w=bubble.offsetWidth,h=bubble.offsetHeight;bubble.hidden=true;
+      rest.x=Math.min(Math.max(rest.x,(W-w)/2+40),(W+w)/2-40);rest.y=topBand()+h+GAP;}
     model.visible=true;document.getElementById('app').classList.add('fairy-out');
     if(seen?.in&&!still())for(let k=0;k<10;k++){const a=k/10*Math.PI*2,d=14+Math.random()*16;spark(seen.x,seen.y,Math.cos(a)*d,Math.sin(a)*d);}   // a puff where she comes out
     if(still())settle();
@@ -79,8 +83,9 @@ export function createFairy({scene,camera,ask,answer,title,blocked=()=>false,wai
     if(still())done();
   }
   function done(){model.visible=false;cur=null;document.getElementById('app').classList.remove('fairy-out');}
-  // the bubble sits beside her on screen (bubble.js), or under her on a narrow screen
-  function place(){placeBubble(bubble,cur.rest,{gap:GAP,rise:58});}
+  // the bubble sits beside her on screen (bubble.js), or under her on a narrow screen; on a phone she keeps just
+  // under it, should a notice above push it down
+  function place(){placeBubble(bubble,cur.rest,{gap:GAP,rise:58});if(onPhone())cur.rest.y=bubble.offsetTop+bubble.offsetHeight+GAP;}
 
   // one frame of her: where she is, how big, which way she faces
   const at=new T.Vector3(), end=new T.Vector3(), mid=new T.Vector3(), up=new T.Vector3();

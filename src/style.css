@@ -1140,6 +1140,57 @@ body.guide-top #guide{top:84px;bottom:auto}
 
 /* ==== mobile 4: pop-ups (cards, fairy, flower, signs): smaller, at the top ==== */
 /* phone-only rules for this task go between these two lines, inside @media(max-width:600px),(pointer:coarse) and (max-width:1024px),(max-height:500px) and (max-width:1000px) */
+/* a phone: every pop-up in the world -- the card of what you walk up to (a tree, a path stop, a gate, a sign, a bloom,
+   Blomy's idea) and the fairy's and your flower's questions -- is compact and waits at the top, centred under the
+   header and whatever hangs from it while it shows (the golden window, Go, a notice: bubble.js topBand, --pop-top from
+   life.js). So it never covers the joystick, the island's name or the view bar, and stays above Blomy; a third of the
+   screen at most. One at a time: the card steps aside while your flower asks, as it does for the fairy. The card's
+   tail goes (it points at nothing up there); the bubbles' tail points down at her while she's below it (bubble.js) */
+@media(max-width:600px),(pointer:coarse) and (max-width:1024px),(max-height:500px) and (max-width:1000px){
+  #reveal,#reveal.anchored{left:50%;right:auto;top:var(--pop-top,calc(var(--header-bottom,118px) + 8px));bottom:auto;transform:translateX(-50%);
+    width:max-content;min-width:min(240px,calc(100% - 24px));max-width:min(360px,calc(100% - 24px));max-height:34svh;overflow-y:auto;overscroll-behavior:contain;
+    padding:8px 12px 8px 11px;gap:2px;transition:top .25s}
+  #reveal.anchored::after{display:none}
+  #reveal-kicker{font-size:11px}
+  #reveal strong{font-size:15px;line-height:1.3}
+  #reveal.wood{min-width:min(300px,calc(100% - 24px))}
+  #reveal.wood strong{font-size:14.5px;line-height:1.35}
+  #reveal-sub{gap:4px}.rv-chip{padding:1px 7px;font-size:11.5px}
+  #reveal-icon{top:8px;right:10px;width:28px;height:28px}
+  #reveal:has(#reveal-icon:not([hidden])){padding-right:44px}
+  .reveal-actions{gap:0 10px}
+  #reveal button{min-height:32px;margin-top:4px;padding:6px 12px;font-size:12.5px}
+  #reveal.wood .reveal-actions{gap:0 8px}
+  #reveal.wood :is(#reveal-letgo,#reveal-more){margin-top:0;padding-block:4px}
+  #app:has(#flower-ask:not([hidden])) #reveal{visibility:hidden}
+  .fairy-bubble{padding:8px 12px;border-radius:16px;transition:opacity .2s,scale .2s,top .25s}
+  .fairy-bubble::before{display:none}
+  .fairy-bubble.over::before{display:block}
+  .fairy-kicker{font-size:11px}
+  .fairy-q{margin:2px 0 7px;font-size:15px}
+  .fairy-picks,.flower-bubble .moods{gap:6px}
+  .fairy-pick,.flower-bubble .mood{min-height:32px;padding:4px 12px;font-size:12.5px}
+  /* the fairy's "Not now" shares the row of her answers */
+  .fairy-bubble:not(.flower-bubble){display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;column-gap:8px}
+  .fairy-bubble:not(.flower-bubble) :is(.fairy-kicker,.fairy-q){grid-column:1/-1}
+  .fairy-bubble:not(.flower-bubble) .fairy-later{min-height:32px;margin:0;padding:0 2px}
+  .flower-foot{margin-top:6px}
+  .flower-photo{min-height:32px;margin:0;padding:3px 11px}   /* no label's margin under it: "Not now" lines up beside it */
+  .flower-bubble .flower-later{min-height:32px;padding:0 2px}
+  .flower-note{margin-top:5px;line-height:1.35}
+}
+/* a phone held sideways: little height, so the pop-ups run wider and shorter (a wooden sign's links go beside its
+   buttons, your flower's photo and "Not now" beside the moods), leaving room under them for Blomy's box */
+@media(max-height:500px) and (max-width:1000px){
+  #reveal,#reveal.anchored{max-width:min(520px,calc(100% - 24px))}
+  #reveal.wood .reveal-actions{display:flex;flex-wrap:wrap;gap:0 10px}
+  #reveal.wood #reveal-more{margin-left:auto}
+  .fairy-bubble{width:min(440px,calc(100vw - 24px))}
+  .flower-bubble{width:min(640px,calc(100vw - 24px));display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;column-gap:12px}
+  .flower-bubble :is(.fairy-kicker,.fairy-q){grid-column:1/-1}
+  .flower-bubble .flower-foot{margin:0}
+  .flower-note{display:none}
+}
 /* ==== end of mobile 4 ==== */
 
 /* -------------------------------------------------------------------------------------------------- */
