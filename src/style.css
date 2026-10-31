@@ -1119,3 +1119,33 @@ body.guide-top #guide{top:84px;bottom:auto}
 /* the card of what you walked up to, and Go on a bridge, sit over the golden window's banner: they're what you came to press */
 #reveal,#bridge-banner{z-index:3}
 #settings,#mood-panel{z-index:4}
+
+/* ==== mobile 1: planner Day list and its header row ==== */
+/* phone-only rules for this task go between these two lines, inside @media(max-width:600px),(pointer:coarse) and (max-width:1024px),(max-height:500px) and (max-width:1000px) */
+/* ==== end of mobile 1 ==== */
+
+/* -------------------------------------------------------------------------------------------------- */
+
+/* ==== mobile 2: Your balance stats header ==== */
+/* phone-only rules for this task go between these two lines, inside @media(max-width:600px),(pointer:coarse) and (max-width:1024px),(max-height:500px) and (max-width:1000px) */
+/* ==== end of mobile 2 ==== */
+
+/* -------------------------------------------------------------------------------------------------- */
+
+/* ==== mobile 3: planner Week grid ==== */
+/* phone-only rules for this task go between these two lines, inside @media(max-width:600px),(pointer:coarse) and (max-width:1024px),(max-height:500px) and (max-width:1000px) */
+/* ==== end of mobile 3 ==== */
+
+/* -------------------------------------------------------------------------------------------------- */
+
+/* ==== mobile 4: pop-ups (cards, fairy, flower, signs): smaller, at the top ==== */
+/* phone-only rules for this task go between these two lines, inside @media(max-width:600px),(pointer:coarse) and (max-width:1024px),(max-height:500px) and (max-width:1000px) */
+/* ==== end of mobile 4 ==== */
+
+/* -------------------------------------------------------------------------------------------------- */
+
+/* ==== mobile 5: the lifted Schedule timetable, vertical ==== */
+/* phone-only rules for this task go between these two lines, inside @media(max-width:600px),(pointer:coarse) and (max-width:1024px),(max-height:500px) and (max-width:1000px) */
+/* ==== end of mobile 5 ==== */
+
+/* -------------------------------------------------------------------------------------------------- */

@@ -8,6 +8,10 @@ export const SLOT_IDS=['sakura','purple','oak','willow','palm'];
 export let ME='sakura';                 // the viewer's own island (demo: Alex's)
 export let LIVE=false;                  // true once a signed-in sky is loaded
 export function setViewer(id,live){ME=id;LIVE=live;}
+// Phones (and touch tablets, and phones held sideways): the same screens style.css lays out for a phone. Desktop never
+// matches, so anything behind onPhone() leaves the desktop version exactly as it is.
+export const MOBILE_QUERY='(max-width: 600px), (pointer: coarse) and (max-width: 1024px), (max-height: 500px) and (max-width: 1000px)';
+export const onPhone=()=>typeof matchMedia==='function'&&matchMedia(MOBILE_QUERY).matches;
 export const DAWN=7*60, NIGHT=22*60;    // the wisp leaves the arch at dawn, is home by night
 
 // One category = one tree species (groves.js) = one colour. The colours must
