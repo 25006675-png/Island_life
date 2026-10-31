@@ -22,7 +22,6 @@ import * as sound from './sound.js';
 import { createFairy } from './fairy.js';
 import { createFlowerTalk } from './flower.js';
 import { topBand } from './bubble.js';
-import { onPhone } from './data.js';
 
 // Everything README.md says the world should show: the timetable path and wisp,
 // feeling blooms, weather and altitude from the plan, the shared photo
