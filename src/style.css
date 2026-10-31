@@ -252,7 +252,10 @@ dialog h2{font:normal 21px var(--display);margin:0 0 14px}
 .sheet-body{overflow:auto;padding:0 26px 26px;flex:1;min-height:0}
 .sheet .plan-list{max-width:680px}
 /* week grid */
-.week-grid{display:grid;grid-template-columns:46px repeat(7,minmax(0,1fr));grid-template-rows:auto calc(var(--rows)*var(--row));column-gap:4px;user-select:none}
+.week-grid{display:grid;grid-template-columns:46px repeat(7,minmax(0,1fr));grid-template-rows:auto calc(var(--rows)*var(--row));column-gap:4px;user-select:none;
+  /* the whole day, 00:00-24:00, scrolls inside its own box (it opens at the morning, calendar.js); the days stay on top */
+  max-height:min(600px,56svh);overflow-y:auto;overscroll-behavior:contain;padding-bottom:6px}
+.week-grid .wk-day,.week-grid .wk-corner{position:sticky;top:0;z-index:3;background:#f6effd}
 .wk-day{text-align:center;font-size:11px;color:var(--muted);padding:2px 0 8px}
 .wk-day strong{display:block;font:normal 18px var(--display);color:var(--ink)}.wk-day.today strong{color:var(--accent)}
 .wk-gutter{position:relative}.wk-gutter span{position:absolute;right:6px;transform:translateY(-50%);font-size:10px;color:var(--muted);font-variant-numeric:tabular-nums}

@@ -1,4 +1,4 @@
-import { CATEGORIES, DAWN, NIGHT, fmt, hours, toMin, fullness, catImg } from './data.js';
+import { CATEGORIES, DAWN, fmt, hours, toMin, fullness, catImg } from './data.js';
 import { TODAY, iso, fromIso, addDays, dow, mondayOf, isDone } from './plan.js';
 import { blockStatus } from './timetable.js';
 import { confirmLetGo } from './confirm.js';
@@ -14,6 +14,8 @@ import { calendar as google } from './backend.js';
 // Each coming day carries how heavy it looks for you (docs/algorithm.md 2.4).
 const $=id=>document.getElementById(id);
 const ROW=22, SLOT=30;                       // px per half hour, minutes per slot
+// the week grid covers the whole day (the island's path keeps DAWN..NIGHT); it opens scrolled to the morning
+const FROM=0, TO=24*60;
 const DAYS=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
 const MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
 const STATUS={done:'done',now:'happening now',planned:'planned',skipped:'let go',waiting:'did it happen?'};
@@ -39,11 +41,11 @@ export function createCalendar({plans,owner,clock,notice,sheets,live=null,rate=n
   $('ed-vis').append(option('silhouette','Kind and size only'),option('open','Everything'),option('hidden','Nothing'));
   function edit(occ,defaults={}){
     editing=occ;
-    const b=occ??{title:defaults.title??'',date:defaults.date??date,start:defaults.start??Math.max(DAWN,Math.ceil(clock.minutes/SLOT)*SLOT),
+    const b=occ??{title:defaults.title??'',date:defaults.date??date,start:defaults.start??Math.min(TO-SLOT,Math.max(DAWN,Math.ceil(clock.minutes/SLOT)*SLOT)),
                   mins:defaults.mins??60,cat:defaults.cat??'study',vis:defaults.vis??'silhouette',priority:'normal',repeat:false};
     $('editor-title').textContent=occ?'Edit block':'New block';
     if(![...$('ed-mins').options].some(o=>+o.value===b.mins))$('ed-mins').append(option(b.mins,hours(b.mins)));
-    $('ed-title').value=b.title;$('ed-date').value=b.date;$('ed-start').value=fmt(Math.min(b.start,NIGHT-SLOT));
+    $('ed-title').value=b.title;$('ed-date').value=b.date;$('ed-start').value=fmt(Math.min(b.start,TO-SLOT));
     $('ed-mins').value=b.mins;$('ed-cat').value=b.cat;showKind();$('ed-vis').value=b.vis;
     $('ed-repeat').checked=!!b.repeat;$('ed-low').checked=b.priority==='low';$('ed-delete').hidden=!occ;
     $('block-editor').showModal();$('ed-title').focus();
@@ -233,7 +235,7 @@ export function createCalendar({plans,owner,clock,notice,sheets,live=null,rate=n
   }
 
   // ---- Week ------------------------------------------------------------------------
-  const grid=$('week-grid'), slots=(NIGHT-DAWN)/SLOT;
+  const grid=$('week-grid'), slots=(TO-FROM)/SLOT;
   grid.style.setProperty('--rows',slots);grid.style.setProperty('--row',`${ROW}px`);
   function lanes(blocks){                      // overlapping blocks sit side by side
     const ends=[];
@@ -242,12 +244,19 @@ export function createCalendar({plans,owner,clock,notice,sheets,live=null,rate=n
   }
   function card(b,lane,of){
     const st=statusOn(b), c=el('button',{type:'button',className:`wk-block ${st}${b.mins<=SLOT?' short':''}`});
-    c.style.cssText=`--cat:${CATEGORIES[b.cat].color};top:${(b.start-DAWN)/SLOT*ROW}px;height:${Math.max(ROW,b.mins/SLOT*ROW)-2}px;`+
+    c.style.cssText=`--cat:${CATEGORIES[b.cat].color};top:${(b.start-FROM)/SLOT*ROW}px;height:${Math.max(ROW,Math.min(b.mins,TO-b.start)/SLOT*ROW)-2}px;`+
                     `left:calc(${lane/of*100}% + 2px);width:calc(${100/of}% - 4px)`;
     c.append(el('strong',{},catImg(b.cat),b.title),el('span',{textContent:`${fmt(b.start)}–${fmt(b.start+b.mins)}${b.repeat?' · weekly':''}`}));
     const grip=el('i',{className:'grip'});grip.setAttribute('aria-hidden','true');c.append(grip);
     c.setAttribute('aria-label',`${b.title}, ${DAYS[dow(b.date)-1]} ${fmt(b.start)} to ${fmt(b.start+b.mins)}, ${CATEGORIES[b.cat].label}, ${STATUS[st]}`);
     c.occ=b;return c;
+  }
+  // opening the week (or moving to another one) scrolls the day to the morning, or to an earlier block that week
+  let toMorning=true;
+  function scrollToMorning(){
+    if(!toMorning)return;toMorning=false;
+    const first=Math.min(DAWN,...plans.week(owner,date).filter(b=>!b.skipped).map(b=>Math.floor((b.start-30)/60)*60));
+    grid.scrollTop=Math.max(0,(first-FROM)/SLOT*ROW-12);   // a little above, so that hour's label shows
   }
   function renderWeek(){
     grid.replaceChildren(el('div',{className:'wk-corner'}));
@@ -260,12 +269,12 @@ export function createCalendar({plans,owner,clock,notice,sheets,live=null,rate=n
       grid.append(head);
     }
     const gutter=el('div',{className:'wk-gutter'});
-    for(let m=DAWN;m<NIGHT;m+=60)gutter.append(el('span',{textContent:fmt(m),style:`top:${(m-DAWN)/SLOT*ROW}px`}));
+    for(let m=FROM+60;m<TO;m+=60)gutter.append(el('span',{textContent:fmt(m),style:`top:${(m-FROM)/SLOT*ROW}px`}));
     grid.append(gutter);
     for(let d=0;d<7;d++){
       const day=addDays(monday,d), col=el('div',{className:`wk-col${day===TODAY?' today':''}`});col.dataset.date=day;
       for(const {b,lane,of} of lanes(plans.on(owner,day)))col.append(card(b,lane,of));
-      if(day===TODAY&&clock.minutes>DAWN&&clock.minutes<NIGHT)col.append(el('div',{className:'wk-now',style:`top:${(clock.minutes-DAWN)/SLOT*ROW}px`}));
+      if(day===TODAY&&clock.minutes>FROM&&clock.minutes<TO)col.append(el('div',{className:'wk-now',style:`top:${(clock.minutes-FROM)/SLOT*ROW}px`}));
       grid.append(col);
     }
   }
@@ -294,14 +303,14 @@ export function createCalendar({plans,owner,clock,notice,sheets,live=null,rate=n
     const d=drag;drag=null;if(!d)return;
     if(d.kind==='create'){
       d.ghost?.remove();const a=Math.min(d.s0,d.s1), b=Math.max(d.s0,d.s1);
-      return edit(null,{date:d.col.dataset.date,start:DAWN+a*SLOT,mins:d.moved?(b-a+1)*SLOT:60});
+      return edit(null,{date:d.col.dataset.date,start:FROM+a*SLOT,mins:d.moved?Math.min((b-a+1)*SLOT,TO-FROM-a*SLOT):60});
     }
     if(!d.moved)return edit(d.occ);
     if(d.kind==='move'){
       const target=document.elementsFromPoint(e.clientX,e.clientY).find(n=>n.classList?.contains('wk-col'));
-      const start=Math.max(DAWN,Math.min(NIGHT-d.occ.mins,d.occ.start+Math.round((e.clientY-d.y0)/ROW)*SLOT));
+      const start=Math.max(FROM,Math.min(TO-d.occ.mins,d.occ.start+Math.round((e.clientY-d.y0)/ROW)*SLOT));
       plans.update(owner,d.occ,{start,date:target?.dataset.date??d.occ.date});
-    }else plans.update(owner,d.occ,{mins:Math.max(SLOT,Math.round((d.h0+2+e.clientY-d.y0)/ROW)*SLOT)});
+    }else plans.update(owner,d.occ,{mins:Math.min(TO-d.occ.start,Math.max(SLOT,Math.round((d.h0+2+e.clientY-d.y0)/ROW)*SLOT))});
   });
   grid.addEventListener('pointercancel',()=>{drag?.ghost?.remove();drag=null;render();});
   // keyboard: Enter/Space on a block fires a click with detail 0
@@ -320,7 +329,7 @@ export function createCalendar({plans,owner,clock,notice,sheets,live=null,rate=n
         el('span',{className:'mo-bar'},el('i',{style:`width:${Math.min(100,h/8*100)}%`})),
         el('span',{className:'mo-dots'},...cats.map(c=>el('i',{style:`background:${CATEGORIES[c].color}`}))));
       cell.setAttribute('aria-label',`${short(day)}: ${h?`${hours(h*60)} planned`:'nothing planned'}`);
-      cell.onclick=()=>{date=day;tab='week';render();};
+      cell.onclick=()=>{date=day;tab='week';toMorning=true;render();};
       box.append(cell);
     }
   }
@@ -328,12 +337,12 @@ export function createCalendar({plans,owner,clock,notice,sheets,live=null,rate=n
   // ---- chrome ----------------------------------------------------------------------
   function step(n){
     if(tab==='day')date=addDays(date,n);
-    else if(tab==='week')date=addDays(date,7*n);
+    else if(tab==='week'){date=addDays(date,7*n);toMorning=true;}
     else{const d=fromIso(date);date=iso(new Date(d.getFullYear(),d.getMonth()+n,1));}
     render();
   }
-  $('cal-prev').onclick=()=>step(-1);$('cal-next').onclick=()=>step(1);$('cal-today').onclick=()=>{date=TODAY;render();};
-  for(const t of sheet.querySelectorAll('[role=tab]'))t.onclick=()=>{tab=t.dataset.tab;render();};
+  $('cal-prev').onclick=()=>step(-1);$('cal-next').onclick=()=>step(1);$('cal-today').onclick=()=>{date=TODAY;toMorning=true;render();};
+  for(const t of sheet.querySelectorAll('[role=tab]'))t.onclick=()=>{if(t.dataset.tab==='week'&&tab!=='week')toMorning=true;tab=t.dataset.tab;render();};
   function render(){
     if(sheet.hidden)return;
     for(const t of sheet.querySelectorAll('[role=tab]'))t.setAttribute('aria-selected',String(t.dataset.tab===tab));
@@ -344,10 +353,10 @@ export function createCalendar({plans,owner,clock,notice,sheets,live=null,rate=n
     const meter=el('span',{className:'fullness'},el('i',{style:`width:${Math.min(100,w.sink*100)}%`}));meter.setAttribute('aria-hidden','true');
     $('plan-load').replaceChildren(el('span',{textContent:`${mondayOf(date)===mondayOf(TODAY)?'This week':'That week'} is ${fullness(w.sink)}`}),meter,
       ...(f?[el('span',{className:`plan-forecast fc-${f.label.replace(' ','-')}`,textContent:`${date===TODAY?'Today':'This day'}: ${FORECAST_WORDS[f.label].toLowerCase()}`})]:[]));
-    if(tab==='day')renderDay();else if(tab==='week')renderWeek();else renderMonth();
+    if(tab==='day')renderDay();else if(tab==='week'){renderWeek();scrollToMorning();}else renderMonth();
   }
   return {
-    open(which){if(which)tab=which;sheets.show(sheet,$('planner-toggle'));render();},
+    open(which){if(which)tab=which;toMorning=true;sheets.show(sheet,$('planner-toggle'));render();},
     edit,
     render,
     openSync,
