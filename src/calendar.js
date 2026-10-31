@@ -249,7 +249,10 @@ export function createCalendar({plans,owner,clock,notice,sheets,live=null,rate=n
     const st=statusOn(b), c=el('button',{type:'button',className:`wk-block ${st}${b.mins<=SLOT?' short':''}`});
     c.style.cssText=`--cat:${CATEGORIES[b.cat].color};top:${(b.start-FROM)/SLOT*ROW}px;height:${Math.max(ROW,Math.min(b.mins,TO-b.start)/SLOT*ROW)-2}px;`+
                     `left:calc(${lane/of*100}% + 2px);width:calc(${100/of}% - 4px)`;
-    c.append(el('strong',{},catImg(b.cat),b.title),el('span',{textContent:`${fmt(b.start)}–${fmt(b.start+b.mins)}${b.repeat?' · weekly':''}`}));
+    // a phone: the name sits under the kind icon in as many lines as the block's height holds (style.css, mobile 3)
+    const phone=onPhone();
+    c.append(el('strong',{},catImg(b.cat),phone?el('span',{className:'wk-name',textContent:b.title}):b.title),el('span',{textContent:`${fmt(b.start)}–${fmt(b.start+b.mins)}${b.repeat?' · weekly':''}`}));
+    if(phone)c.style.setProperty('--lines',Math.max(0,Math.floor((Math.max(ROW,Math.min(b.mins,TO-b.start)/SLOT*ROW)-2-20)/11.5)));
     const grip=el('i',{className:'grip'});grip.setAttribute('aria-hidden','true');c.append(grip);
     c.setAttribute('aria-label',`${b.title}, ${DAYS[dow(b.date)-1]} ${fmt(b.start)} to ${fmt(b.start+b.mins)}, ${CATEGORIES[b.cat].label}, ${STATUS[st]}`);
     c.occ=b;return c;
@@ -310,6 +313,18 @@ export function createCalendar({plans,owner,clock,notice,sheets,live=null,rate=n
     const phone=onPhone();
     weekNote.textContent=phone?'Tap empty time to add a block, or tap a block to see it.':dragNote;
     if(peeked!==null)peek(phone?[...grid.querySelectorAll('.wk-block')].find(c=>c.occ.id===peeked):null);
+    if(phone)fitNames();
+  }
+  // A phone's blocks are narrow: a word too wide for its block is shortened with "…" rather than broken mid-word
+  // ("Chemistry" -> "Chemi…"); the full name is in the block's details and its accessible name
+  let measure=null;
+  function fitNames(){
+    measure??=document.createElement('canvas').getContext('2d');
+    for(const n of grid.querySelectorAll('.wk-name')){
+      const w=n.clientWidth;if(!w)continue;measure.font=getComputedStyle(n).font;
+      const fit=word=>{if(measure.measureText(word).width<=w)return word;let s=word;while(s.length>1&&measure.measureText(s+'…').width>w)s=s.slice(0,-1);return s+'…';};
+      n.textContent=n.closest('.wk-block').occ.title.split(/\s+/).map(fit).join(' ');
+    }
   }
   const clampSlot=s=>Math.max(0,Math.min(slots-1,s));
   let drag=null;
