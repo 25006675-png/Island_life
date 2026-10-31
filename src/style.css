@@ -708,8 +708,12 @@ label:has(> .ed-cat-icon){position:relative}
 #guide-text .w{display:inline-block;white-space:nowrap}
 #guide-text .c{opacity:0;animation:guide-type .01s linear forwards;animation-delay:calc(var(--i) * 15ms)}
 @keyframes guide-type{to{opacity:1}}
-.guide-row{display:flex;align-items:center;gap:14px}
-.guide-dots{display:flex;gap:5px;margin-right:auto}
+/* the dots take what's left and wrap onto a second row; the buttons never squeeze (a long chapter on a phone pushed
+   "Got it" out of the box). If the buttons can't fit beside the dots, they drop to their own row, on the right */
+.guide-row{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px}
+.guide-dots{display:flex;flex-wrap:wrap;gap:5px;flex:1 1 96px;min-width:0}
+.guide-acts{display:flex;flex-wrap:wrap;justify-content:flex-end;align-items:center;gap:8px 14px;flex:0 1 auto;max-width:100%;margin-left:auto}
+.guide-acts button{white-space:nowrap}
 .guide-dots i{width:7px;height:7px;border-radius:4px;background:var(--violet-soft);transition:width .3s,background .3s}
 .guide-dots i.done{background:#c9a2ff}
 .guide-dots i.now{width:20px;background:var(--orchid)}
@@ -1114,6 +1118,10 @@ body.guide-top #guide{top:84px;bottom:auto}
   #golden{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:6px 10px;width:max-content;max-width:calc(100% - 32px);padding:10px 8px 12px 16px;border-radius:22px}
   #golden-share{grid-column:2;grid-row:2;justify-self:start}
   #golden-dismiss{grid-column:3;grid-row:1}
+  /* Blomy's spotlight ring around Share (8px out, 3px thick) would cut through the time left above it */
+  body:has(#guide-spot:not([hidden])) #golden{row-gap:18px}
+  /* both sit under the header: while the golden window is open, a notice drops below it instead of covering its title */
+  body:has(#golden:not([hidden])) #notice{top:calc(var(--header-bottom,118px) / var(--ui) + 128px)}
   body.guide-over #guide{top:auto;bottom:calc(16px + env(safe-area-inset-bottom,0px))}
 }
 /* the card of what you walked up to, and Go on a bridge, sit over the golden window's banner: they're what you came to press */
