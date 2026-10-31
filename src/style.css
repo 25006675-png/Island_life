@@ -1127,7 +1127,23 @@ body.guide-top #guide{top:84px;bottom:auto}
 /* -------------------------------------------------------------------------------------------------- */
 
 /* ==== mobile 2: Your balance stats header ==== */
-/* phone-only rules for this task go between these two lines, inside @media(max-width:600px),(pointer:coarse) and (max-width:1024px),(max-height:500px) and (max-width:1000px) */
+/* a phone, Your balance: the stats switch and Week/Month are a matching pair, big enough to tap (32px tall at the phone's 80% UI size) */
+@media(max-width:600px),(pointer:coarse) and (max-width:1024px),(max-height:500px) and (max-width:1000px){
+  #balance-sheet .bal-head .bal-stats-toggle{min-height:40px;padding:0 16px;border-radius:20px;font-size:13px}
+  #balance-sheet .bal-head .tabs{flex:none;border-radius:20px}
+  #balance-sheet .bal-head .tabs button{min-height:34px;padding:0 15px;border-radius:17px;font-size:13px}
+}
+/* a phone held upright: the title has a row of its own, so only it keeps clear of the ×, and the stats switch and Week/Month
+   share the row under it. With the stats showing, the switch reads "‹ Back"; its full name stays for screen readers */
+@media(max-width:600px){
+  #balance-sheet .bal-head{padding-right:0;gap:10px}
+  #balance-sheet .bal-head h2{padding-right:40px}
+  #balance-sheet .bal-head .tabs{margin-left:auto}
+  #balance-sheet .bal-stats-toggle[aria-pressed=true] svg{display:none}
+  #balance-sheet .bal-stats-toggle[aria-pressed=true]>span{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+  #balance-sheet .bal-stats-toggle[aria-pressed=true]::before{content:'';width:7px;height:7px;margin-left:3px;border:solid currentColor;border-width:0 0 2.2px 2.2px;transform:rotate(45deg)}
+  #balance-sheet .bal-stats-toggle[aria-pressed=true]::after{content:'Back';content:'Back' / ''}
+}
 /* ==== end of mobile 2 ==== */
 
 /* -------------------------------------------------------------------------------------------------- */
