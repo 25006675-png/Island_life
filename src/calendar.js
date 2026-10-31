@@ -99,6 +99,16 @@ export function createCalendar({plans,owner,clock,notice,sheets,live=null,rate=n
   }
   const ago=t=>{if(!t)return 'not synced yet';const m=Math.round((Date.now()-Date.parse(t))/60000);
     return m<2?'synced just now':m<60?`synced ${m} min ago`:m<1440?`synced ${Math.round(m/60)} h ago`:`synced ${Math.round(m/1440)} d ago`;};
+  // Sync now: the dialog's link and the planner's own button (beside Sync calendars) do the same thing
+  let syncing=false;
+  async function syncNow(){
+    if(syncing||!live)return;syncing=true;
+    const b=$('cal-sync-now');b.disabled=true;b.classList.add('busy');$('cal-sync-now-label').textContent='Syncing…';
+    try{await google.sync();conn=await google.connection();await reloadImported();notice('Google Calendar synced.');}
+    catch{notice('Sync didn’t finish. Try again in a moment.');}
+    syncing=false;b.disabled=false;b.classList.remove('busy');$('cal-sync-now-label').textContent='Sync now';
+    renderSync();render();
+  }
   async function reloadImported(){
     if(!live)return;
     plans.load(owner,await google.reloadMine(live.uid));forget(owner);
@@ -140,10 +150,7 @@ export function createCalendar({plans,owner,clock,notice,sheets,live=null,rate=n
           catch(e){two.checked=!two.checked;notice('That didn’t work. Try again in a moment.');}
           two.disabled=false;
         };
-        now.onclick=async()=>{now.disabled=true;now.textContent='Syncing…';
-          try{await google.sync();conn=await google.connection();await reloadImported();notice('Google Calendar synced.');}
-          catch{notice('Sync didn’t finish. Try again in a moment.');}
-          renderSync();};
+        now.onclick=()=>{now.disabled=true;now.textContent='Syncing…';syncNow();};
         row.querySelector('.sync-what').replaceChildren(...kids);
       }
       btn.onclick=async()=>{
@@ -168,8 +175,10 @@ export function createCalendar({plans,owner,clock,notice,sheets,live=null,rate=n
     const on=live?!!conn:demoOn;
     $('cal-sync-label').textContent=on?'Synced · Google Calendar':'Sync calendars';
     $('cal-sync').classList.toggle('on',on);
+    $('cal-sync-now').hidden=!(live&&conn&&conn.status!=='needs_reconnect');
   }
   $('cal-sync').onclick=()=>{renderSync();$('sync-dialog').showModal();};
+  $('cal-sync-now').onclick=syncNow;
   $('sync-done').onclick=()=>$('sync-dialog').close();
   renderSync();
   // back from Google's consent screen (life.js reads ?calendar=)
