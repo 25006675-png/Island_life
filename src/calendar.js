@@ -254,6 +254,33 @@ export function createCalendar({plans,owner,clock,notice,sheets,live=null,rate=n
     c.setAttribute('aria-label',`${b.title}, ${DAYS[dow(b.date)-1]} ${fmt(b.start)} to ${fmt(b.start+b.mins)}, ${CATEGORIES[b.cat].label}, ${STATUS[st]}`);
     c.occ=b;return c;
   }
+  // A phone: the blocks are too narrow for words (style.css shows their colour only) and a finger scrolls the
+  // day, so a tap on a block opens its details here, under it (over it near the end of the day), with Edit.
+  // A tap anywhere else, or on the same block, closes them; they stay open through the clock's redraws.
+  const weekNote=$('pane-week').querySelector('.panel-note'), dragNote=weekNote.textContent;
+  let peeked=null;                             // the id of the block whose details show
+  function peek(c,{focus=null,scroll=false}={}){
+    grid.querySelector('.wk-peek')?.remove();grid.querySelector('.wk-block.picked')?.classList.remove('picked');
+    peeked=c?c.occ.id:null;if(!c)return;
+    const b=c.occ, st=statusOn(b);
+    const open=el('button',{type:'button',className:'solid-small',textContent:'Edit'});open.onclick=()=>{peek(null);edit(b);};
+    const shut=el('button',{type:'button',className:'wk-peek-close',textContent:'×',ariaLabel:'Close the details'});
+    shut.onclick=()=>{peek(null);c.focus({preventScroll:true});};
+    const box=el('div',{className:'wk-peek',tabIndex:-1},el('strong',{},catImg(b.cat),b.title),shut,
+      el('span',{textContent:`${short(b.date)} · ${fmt(b.start)}–${fmt(b.start+b.mins)}`}),open,
+      el('span',{textContent:[CATEGORIES[b.cat].label,hours(b.mins),STATUS[st],b.repeat&&'weekly',b.priority==='low'&&'can wait'].filter(Boolean).join(' · ')}));
+    box.style.setProperty('--cat',CATEGORIES[b.cat].color);box.setAttribute('role','dialog');box.setAttribute('aria-label',b.title);
+    c.classList.add('picked');grid.append(box);
+    const h=box.offsetHeight, below=c.offsetTop+c.offsetHeight+6;
+    box.style.top=`${below+h<=slots*ROW?below:Math.max(0,c.offsetTop-6-h)}px`;
+    if(scroll){                                // into the grid's view, clear of the pinned day names
+      const head=grid.querySelector('.wk-day').offsetHeight, y=box.offsetTop;
+      const to=y-head-8<grid.scrollTop?y-head-8:y+h+8>grid.scrollTop+grid.clientHeight?y+h+8-grid.clientHeight:null;
+      if(to!==null)grid.scrollTo({top:to,behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});
+    }
+    if(focus)(focus==='edit'?open:box).focus({preventScroll:true});
+  }
+  document.addEventListener('click',e=>{if(peeked!==null&&!grid.contains(e.target))peek(null);});
   // opening the week (or moving to another one) scrolls the day to the morning, or to an earlier block that week
   let toMorning=true;
   function scrollToMorning(){
@@ -280,10 +307,14 @@ export function createCalendar({plans,owner,clock,notice,sheets,live=null,rate=n
       if(day===TODAY&&clock.minutes>FROM&&clock.minutes<TO)col.append(el('div',{className:'wk-now',style:`top:${(clock.minutes-FROM)/SLOT*ROW}px`}));
       grid.append(col);
     }
+    const phone=onPhone();
+    weekNote.textContent=phone?'Tap empty time to add a block, or tap a block to see it.':dragNote;
+    if(peeked!==null)peek(phone?[...grid.querySelectorAll('.wk-block')].find(c=>c.occ.id===peeked):null);
   }
   const clampSlot=s=>Math.max(0,Math.min(slots-1,s));
   let drag=null;
   grid.addEventListener('pointerdown',e=>{
+    if(onPhone())return;                       // a phone drags nothing: a finger scrolls, a tap is a click (below)
     const col=e.target.closest('.wk-col');if(e.button!==0||!col)return;
     const c=e.target.closest('.wk-block'), top=col.getBoundingClientRect().top;
     drag=c?{kind:e.target.classList.contains('grip')?'resize':'move',card:c,occ:c.occ,h0:c.offsetHeight}
@@ -315,9 +346,23 @@ export function createCalendar({plans,owner,clock,notice,sheets,live=null,rate=n
       plans.update(owner,d.occ,{start,date:target?.dataset.date??d.occ.date});
     }else plans.update(owner,d.occ,{mins:Math.min(TO-d.occ.start,Math.max(SLOT,Math.round((d.h0+2+e.clientY-d.y0)/ROW)*SLOT))});
   });
-  grid.addEventListener('pointercancel',()=>{drag?.ghost?.remove();drag=null;render();});
+  // (a phone's swipe cancels its pointer as the scroll begins: nothing was dragged, so nothing to redraw)
+  grid.addEventListener('pointercancel',()=>{if(!drag&&onPhone())return;drag?.ghost?.remove();drag=null;render();});
   // keyboard: Enter/Space on a block fires a click with detail 0
-  grid.addEventListener('click',e=>{const c=e.target.closest('.wk-block');if(c&&e.detail===0)edit(c.occ);});
+  grid.addEventListener('click',e=>{
+    const c=e.target.closest('.wk-block');
+    if(onPhone()){
+      // a phone: a block shows (or hides) its details; empty time closes them, or else adds an hour's block at that half hour
+      if(e.target.closest('.wk-peek'))return;
+      if(c)return peek(c.occ.id===peeked?null:c,{focus:e.detail===0?'edit':'box',scroll:true});
+      const col=e.target.closest('.wk-col');
+      if(peeked!==null)return peek(null);
+      if(!col)return;
+      const r=col.getBoundingClientRect(), s=clampSlot(Math.floor((e.clientY-r.top)/(r.height/slots)));
+      return edit(null,{date:col.dataset.date,start:FROM+s*SLOT,mins:60});
+    }
+    if(c&&e.detail===0)edit(c.occ);
+  });
 
   // ---- Month -----------------------------------------------------------------------
   function renderMonth(){
