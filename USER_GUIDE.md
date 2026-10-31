@@ -226,7 +226,7 @@ The same links work on a phone. The top buttons show icons only: ◐ Your balanc
 
 <img src="docs/images/phone.jpg" alt="Island Life on a phone: the sky view, walking with the touch joystick, and the planner" width="640"/>
 
-## What judges should be able to verify
+## Checklist
 
 Tick each item as you check it.
 
